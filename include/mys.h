@@ -9,5 +9,6 @@
 
 #define MYS_VERSION 220829L
 
+#include "./mys/debug.h"
 #include "./mys/headers.h"
 #include "./mys/partition.h"

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mys/debug.h"
 #include "mys/headers.hpp"
 
 enum class MatrixType: int {
