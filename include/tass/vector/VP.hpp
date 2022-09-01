@@ -53,6 +53,26 @@ public:
         ierr = VecAssemblyEnd(this->vec); CHKERRV(ierr);
     }
 
+    static async<PetscScalar> dot(const VP &x, const VP &y) {
+        PetscScalar result;
+        VecDot(x.vec, y.vec, &result);
+        return async<PetscScalar>(result);
+    }
+
+    static async<PetscScalar> idot(const VP &x, const VP &y) {
+        VecDotBegin(x.vec, y.vec, NULL);
+        return async<PetscScalar>(0, &x, &y, &VP::idot_await);
+    }
+
+    static PetscScalar idot_await(const async<PetscScalar> *as) {
+        const VP &x = *(static_cast<const VP *>(as->context1));
+        const VP &y = *(static_cast<const VP *>(as->context2));
+        PetscScalar result = 0;
+        VecDotEnd(x.vec, y.vec, &result);
+        return result;
+    }
+
+
     VP& operator+=(const VP &x) { VecAXPY(this->vec, 1, x.vec); return *this; }
     friend VP operator+(VP x, const VP& y) { return x += y; }
 
@@ -63,9 +83,9 @@ public:
     friend VP operator*(VP x, PetscScalar alpha) { return x *= alpha; }
     friend VP operator*(PetscScalar alpha, VP x) { return x * alpha; }
 
-    friend PetscScalar operator,(const VP &x, const VP& y) {
-        PetscScalar result;
-        VecDot(x.vec, y.vec, &result);
-        return result;
+    friend async<PetscScalar> operator,(const VP &x, const VP& y) {
+        return VP::idot(x, y);
+        // return VP::dot(x, y);
     }
+
 };

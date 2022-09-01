@@ -31,7 +31,8 @@ public:
         u = B * r;
         w = A * u;
 
-        intermediate_t gamma, gammaold, delta, alpha, beta;
+        intermediate_t gammaold, alpha, beta;
+        async<intermediate_t> gamma, delta;
 
         for (this->iter = 0; this->iter < this->maxiter; this->iter++) {
             intermediate_t rnorm = std::sqrt((r, r));
