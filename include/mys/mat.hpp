@@ -22,6 +22,12 @@ enum class NonzeroOrder: int {
     StrictAscending,    /* Aj[i] < Aj[j] for i < j on each row */
     DiagFirstAscending, /* Aj[Ap[i]] == i */
 };
+enum class FindZerosStrategy: int {
+    DiagZeros,         /* count missing Aj[jj] == i or Aj[jj] == i && Av[jj] == 0 */
+    DiagMissing,       /* count missing Aj[jj] == i */
+    ExplicitZeros,     /* count Av[jj] == 0 */
+    ExplicitDiagZeros, /* count Av[jj] == 0 */
+};
 enum class DataCleanStrategy: int {
     ToSquare,     /* Eliminate col < 0 || col >= nrows */
     OnlyNegative, /* Eliminate col < 0 */
@@ -31,18 +37,19 @@ enum class VectorNorm: int {
     Norm2NoSquareRoot,
 };
 
+/* reindex Ap and Aj between Fortran and C */
 template<typename index_t = int, typename data_t = double>
 static int reindex(
     index_t nrow, index_t *Ap, index_t *Aj,
     MatrixIndexing oldindexing, MatrixIndexing newindexing)
 {
-    index_t old_base = static_cast<index_t>(oldindexing);
-    index_t new_base = static_cast<index_t>(newindexing);
-    index_t move = new_base - old_base;
+    index_t oindexing = static_cast<index_t>(oldindexing);
+    index_t nindexing = static_cast<index_t>(newindexing);
+    index_t move = nindexing - oindexing;
 
     for (index_t ii = 0; ii < nrow; ii++) {
-        index_t rowstart = Ap[ii] - old_base;
-        index_t rowstop = Ap[ii + 1] - old_base;
+        index_t rowstart = Ap[ii] - oindexing;
+        index_t rowstop = Ap[ii + 1] - oindexing;
         for (index_t jj = rowstart; jj < rowstop; jj++) {
             Aj[jj] = Aj[jj] + move;
         }
@@ -53,13 +60,43 @@ static int reindex(
     return 0;
 }
 
+/* rebase Aj only */
+template<typename index_t = int, typename data_t = double>
+static void rebase(index_t nrow, index_t *Ap, index_t *Aj, index_t oldbase, index_t newbase = 0)
+{
+    const index_t move = newbase - oldbase;
+    for (index_t i = 0; i < nrow; i++) {
+        const index_t rowstart = Ap[i];
+        const index_t rowstop = Ap[i + 1];
+        for (index_t jj = rowstart; jj < rowstop; jj++) {
+            Aj[jj] += move;
+        }
+    }
+}
+
+template<typename index_t = int, typename data_t = double>
+static void dupcopy(
+    const index_t nrows,
+    const index_t *Ap, const index_t *Aj, const data_t *Av,
+    index_t **tAp_, index_t **tAj_, data_t **tAv_)
+{
+    const index_t nnz = Ap[nrows];
+    (*tAp_) = (index_t *)malloc((nrows + 1) * sizeof(index_t));
+    (*tAj_) = (index_t *)malloc(nnz * sizeof(index_t));
+    (*tAv_) = (data_t *)malloc(nnz * sizeof(data_t));
+    std::copy(Ap, Ap + nrows + 1, (*tAp_));
+    std::copy(Aj, Aj + nnz, (*tAj_));
+    std::copy(Av, Av + nnz, (*tAv_));
+}
+
+
+
+
 template<typename index_t = int, typename data_t = double>
 static int reorder(
     index_t nrow, index_t *Ap, index_t *Aj, data_t *Av,
-    MatrixIndexing indexing, NonzeroOrder neworder)
+    index_t base = 0, NonzeroOrder neworder = NonzeroOrder::StrictAscending)
 {
-    index_t base = static_cast<index_t>(indexing);
-
     for (index_t ii = 0; ii < nrow; ii++) {
         index_t i = ii + base;
         index_t rowstart = Ap[ii] - base;
@@ -104,17 +141,55 @@ static int reorder(
     return 0;
 }
 
+
 template<typename index_t = int>
-static index_t findncols(const index_t nrows, const index_t * const Ap, const index_t * const Aj)
+static index_t findncols(const index_t nrows, const index_t * const Ap, const index_t * const Aj, const index_t base = 0)
 {
-    index_t maxcol = -1;
-    for (index_t jj = 0; jj < Ap[nrows]; jj++)
+    index_t mincol = std::numeric_limits<index_t>::max();
+    index_t maxcol = std::numeric_limits<index_t>::min();
+    for (index_t jj = 0; jj < Ap[nrows]; jj++) {
+        mincol = std::min(mincol, Aj[jj]);
         maxcol = std::max(maxcol, Aj[jj]);
-    return maxcol + 1;
+    }
+    return maxcol + 1 - base;
 }
 
 template<typename index_t = int, typename data_t = double>
-static void dataclean(const index_t nrows, index_t *Ap, index_t * Aj, data_t *Av, DataCleanStrategy strategy = DataCleanStrategy::ToSquare)
+static index_t findzeros(const index_t nrows, index_t *Ap, index_t * Aj, data_t *Av, FindZerosStrategy strategy = FindZerosStrategy::DiagZeros, const index_t base = 0)
+{
+    index_t nmissingdiags = 0;
+    index_t nexpdiagzeros = 0;
+    index_t nexpzeros = 0;
+    for (index_t i = 0; i < nrows; i++) {
+        const index_t I = base + i;
+        const index_t rowstart = Ap[i];
+        const index_t rowend = Ap[i + 1];
+        bool missingdiag = true;
+        for (index_t jj = rowstart; jj < rowend; jj++) {
+            const index_t J = Aj[jj];
+            const data_t v = Av[jj];
+            if (v == 0) nexpzeros += 1;
+            if (I == J) {
+                missingdiag = false;
+                if (v == 0) {
+                    nexpdiagzeros += 1;
+                }
+            }
+        }
+    }
+    if (strategy == FindZerosStrategy::DiagZeros)
+        return nmissingdiags + nexpdiagzeros;
+    if (strategy == FindZerosStrategy::DiagMissing)
+        return nmissingdiags;
+    else if (strategy == FindZerosStrategy::ExplicitDiagZeros)
+        return nexpdiagzeros;
+    else if (strategy == FindZerosStrategy::ExplicitZeros)
+        return nexpzeros;
+    return -1;
+}
+
+template<typename index_t = int, typename data_t = double>
+static void dataclean(const index_t nrows, index_t *Ap, index_t * Aj, data_t *Av, DataCleanStrategy strategy = DataCleanStrategy::ToSquare, const index_t base = 0)
 {
     index_t nnz = Ap[nrows];
     std::vector<index_t> newAp(nrows + 1, 0);
@@ -125,17 +200,21 @@ static void dataclean(const index_t nrows, index_t *Ap, index_t * Aj, data_t *Av
     std::copy(Av, Av + nnz, newAv.begin());
     index_t count = 0;
     for (index_t i = 0; i < nrows; i++) {
+        const index_t I = base + i;
         const index_t rowstart = Ap[i];
         const index_t rowend = Ap[i + 1];
         index_t rownnz = 0;
         for (index_t jj = rowstart; jj < rowend; jj++) {
-            const index_t j = Aj[jj];
+            const index_t J = Aj[jj];
             const data_t v = Av[jj];
-            if (strategy == DataCleanStrategy::ToSquare && j < 0 && j >= nrows)
+            bool uf = J < base;
+            bool of = J >= base + nrows;
+            bool out = uf || of;
+            if (strategy == DataCleanStrategy::ToSquare && out)
                 continue;
-            else if (strategy == DataCleanStrategy::OnlyNegative && j < 0)
+            else if (strategy == DataCleanStrategy::OnlyNegative && uf)
                 continue;
-            newAj[count] = j;
+            newAj[count] = J;
             newAv[count] = v;
             count += 1;
         }
@@ -245,6 +324,8 @@ static data_t vecnorm(const index_t narr, const data_t *arr, const VectorNorm re
         return norm;
     return 0;
 }
+
+
 
 
 

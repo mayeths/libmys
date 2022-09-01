@@ -1,0 +1,5 @@
+.vscode/*
+mpi-include/*
+*.f90
+*namelist*
+.VSCode*
