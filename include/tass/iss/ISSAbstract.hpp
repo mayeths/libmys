@@ -16,8 +16,8 @@ public:
     index_t maxiter = 100;
     data_t rtol = 1e-6, atol = 1e-6;
 
-    mutable index_t final_iter, converged;
-    mutable data_t final_norm;
+    mutable index_t iter, converged;
+    mutable data_t norm;
 
     ISS() : A(nullptr), B(nullptr) { }
     ISS(AType &A) { this->A = &A; this->B = nullptr; }
@@ -28,9 +28,9 @@ public:
     void SetMaxIter(index_t num) { this->maxiter = num; }
     void SetPrintLevel(index_t num) { this->verbose = num; }
 
-    index_t GetNumIterations() const { return final_iter; }
+    index_t GetNumIterations() const { return iter; }
     index_t GetConverged() const { return converged; }
-    data_t GetFinalNorm() const { return final_norm; }
+    data_t GetFinalNorm() const { return norm; }
 
     void SetOperator(const AType &op) { this->A = &op; }
     void SetPreconditioner(const BType &op) { this->B = op; }

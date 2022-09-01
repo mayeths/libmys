@@ -107,4 +107,9 @@ public:
         ierr = MatCreateVecs(this->mat, &x.vec, &b.vec); CHKERRV(ierr);
     }
 
+    friend VP operator*(const MP &A, const VP &x) {
+        VP y(x);
+        MatMult(A.mat, x.vec, y.vec);
+        return y;
+    }
 };

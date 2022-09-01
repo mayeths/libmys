@@ -38,6 +38,8 @@ static inline void BARRIER()
 #ifdef DEBUG
 #warning DEBUG was predefined, skipped definition from libmys
 #else
+// FIXME: The VA_ARGS after if() will cause collective OP. hang
+// use snprintf() before if() to trigger function calls in VA_ARGS
 #define DEBUG(who, fmt, ...) do {                          \
     int nranks = NRANKS(), myrank = MYRANK();              \
     int nprefix = trunc(log10(nranks)) + 1;                \

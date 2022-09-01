@@ -40,7 +40,7 @@ public:
         intermediate_t norm_r = BLAS1::norm(r);
         intermediate_t old_r_dot_p, d_dot_Ad, r_dot_p;
 
-        index_t &iter = this->final_iter;
+        index_t &iter = this->iter;
         iter = 0;
 
         if (MYRANK() == 0) printf("iter %4d %21s ||r||/||b|| = %20.16e\n", iter, "", (double)(norm_r / norm_b));

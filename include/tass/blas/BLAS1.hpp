@@ -25,6 +25,12 @@ namespace BLAS1
         ierr = VecCopy(x.vec, y.vec); CHKERRV(ierr);
     }
 
+    /* y = alpha y */
+    static void scale(VP &y, const PetscScalar alpha) {
+        PetscErrorCode ierr;
+        ierr = VecScale(y.vec, alpha); CHKERRV(ierr);
+    }
+
     /* y = alpha x + y */
     static void axpy(VP &y, const PetscScalar alpha, const VP &x) {
         PetscErrorCode ierr;
