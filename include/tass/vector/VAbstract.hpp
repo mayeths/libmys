@@ -8,14 +8,12 @@ public:
 private:
     mutable data_t val;
     mutable AwaitFunction waitfn = nullptr;
+    mutable const void *ctx = nullptr;
 public:
-    const void *context1 = nullptr;
-    const void *context2 = nullptr;
 
-    async(data_t val = 0, const void *ctx1 = nullptr, const void *ctx2 = nullptr, AwaitFunction waitfn = nullptr) {
+    async(data_t val = 0, const void *ctx = nullptr, AwaitFunction waitfn = nullptr) {
         this->val = val;
-        this->context1 = ctx1;
-        this->context2 = ctx2;
+        this->ctx = ctx;
         this->waitfn = waitfn;
     }
 
@@ -23,9 +21,12 @@ public:
         if (this->waitfn != nullptr) {
             this->val = this->waitfn(this);
             this->waitfn = nullptr;
+            this->ctx = nullptr;
         }
         return this->val;
     }
+
+    const void *context() const { return this->ctx; }
 
     operator data_t() const {
         return this->await();

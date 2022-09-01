@@ -61,14 +61,18 @@ public:
 
     static async<PetscScalar> idot(const VP &x, const VP &y) {
         VecDotBegin(x.vec, y.vec, NULL);
-        return async<PetscScalar>(0, &x, &y, &VP::idot_await);
+        auto context = new std::pair<const VP*, const VP*>(&x, &y);
+        return async<PetscScalar>(0, context, &VP::idot_await);
     }
 
     static PetscScalar idot_await(const async<PetscScalar> *as) {
-        const VP &x = *(static_cast<const VP *>(as->context1));
-        const VP &y = *(static_cast<const VP *>(as->context2));
+        auto context = (std::pair<const VP*, const VP*> *)as->context();
+        const VP *x = context->first;
+        const VP *y = context->second;
+        free(context);
+
         PetscScalar result = 0;
-        VecDotEnd(x.vec, y.vec, &result);
+        VecDotEnd(x->vec, y->vec, &result);
         return result;
     }
 
