@@ -31,7 +31,7 @@ public:
     void Apply(const VType &b, VType &x, bool xzero = false) const
     {
         PetscErrorCode ierr;
-        ierr = PCApply(this->pc, *b.vec, *x.vec); CHKERRV(ierr);
+        ierr = PCApply(this->pc, b.vec, x.vec); CHKERRV(ierr);
     }
 
 };

@@ -12,6 +12,6 @@ namespace BLAS2
 {
     static void mult(const MP &mat, const VP &x, VP &y) {
         PetscErrorCode ierr;
-        ierr = MatMult(mat.mat, *x.vec, *y.vec); CHKERRV(ierr);
+        ierr = MatMult(mat.mat, x.vec, y.vec); CHKERRV(ierr);
     }
 };

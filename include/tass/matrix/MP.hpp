@@ -104,7 +104,7 @@ public:
 
     void CreateVecs(VP &x, VP &b) {
         PetscErrorCode ierr;
-        ierr = MatCreateVecs(this->mat, &*x.vec, &*b.vec); CHKERRV(ierr);
+        ierr = MatCreateVecs(this->mat, &x.vec, &b.vec); CHKERRV(ierr);
     }
 
 };
