@@ -24,6 +24,7 @@ public:
     void SetOperator(const AType &op) { this->A = &op; }
 
     virtual void Apply(const VType &input, VType &output, bool xzero = false) const = 0;
+
     friend VType operator*(const PCAbstract &pc, const VType &b) {
         VType x(b);
         pc.Apply(b, x);

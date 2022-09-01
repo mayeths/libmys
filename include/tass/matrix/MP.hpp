@@ -5,7 +5,7 @@
 #include "MAbstract.hpp"
 #include "../vector/VP.hpp"
 
-class MP : public MAbstract<PetscInt, PetscScalar>
+class MP : public MAbstract<VP, PetscInt, PetscScalar>
 {
 public:
     PetscInt Istart, Iend, Jstart, Jend;
@@ -107,9 +107,8 @@ public:
         ierr = MatCreateVecs(this->mat, &x.vec, &b.vec); CHKERRV(ierr);
     }
 
-    friend VP operator*(const MP &A, const VP &x) {
-        VP y(x);
-        MatMult(A.mat, x.vec, y.vec);
-        return y;
+    void Apply(const VP &x, VP &y, bool xzero = false) const {
+        MatMult(this->mat, x.vec, y.vec);
     }
+
 };

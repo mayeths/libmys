@@ -1,8 +1,6 @@
 #pragma once
 
 #include "ISSAbstract.hpp"
-#include "../blas/BLAS1.hpp"
-#include "../blas/BLAS2.hpp"
 
 template<
     typename matrix_t,
