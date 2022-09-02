@@ -3,7 +3,7 @@
 #include <map>
 #include <petsc.h>
 #include "MAbstract.hpp"
-#include "../vector/VP.hpp"
+#include "../vec/VP.hpp"
 
 class MP : public MAbstract<VP, PetscInt, PetscScalar>
 {

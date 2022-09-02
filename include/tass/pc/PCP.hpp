@@ -2,8 +2,8 @@
 
 #include <petsc.h>
 #include "PCAbstract.hpp"
-#include "../matrix/MP.hpp"
-#include "../vector/VP.hpp"
+#include "../mat/MP.hpp"
+#include "../vec/VP.hpp"
 
 class PCP : public PCAbstract<MP, VP, PetscInt, PetscScalar>
 {

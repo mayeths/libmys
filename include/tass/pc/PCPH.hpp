@@ -2,8 +2,8 @@
 
 #include <petsc.h>
 #include "PCAbstract.hpp"
-#include "../matrix/MP.hpp"
-#include "../vector/VP.hpp"
+#include "../mat/MP.hpp"
+#include "../vec/VP.hpp"
 #include <hpss_c.h>
 
 #if 1
