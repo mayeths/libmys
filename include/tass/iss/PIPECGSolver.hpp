@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ISSAbstract.hpp"
+#include "../util/async.hpp"
 
 template<
     typename matrix_t,

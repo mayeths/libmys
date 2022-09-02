@@ -3,6 +3,7 @@
 #include <petsc.h>
 #include <memory>
 #include "VAbstract.hpp"
+#include "../util/async.hpp"
 
 class VP : public VAbstract<PetscInt, PetscScalar>
 {
