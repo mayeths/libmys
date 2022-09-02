@@ -9,16 +9,16 @@ template<
     typename data_t = double,
     typename pcdata_t = data_t,       /* preconditioner data_t */
     typename intermediate_t = data_t> /* intermediate data_t */
-class PIPECGSolver : public ISS<matrix_t, vector_t, index_t, data_t, pcdata_t>
+class PIPECG : public ISS<matrix_t, vector_t, index_t, data_t, pcdata_t>
 {
 public:
     using BASE = ISS<matrix_t, vector_t, index_t, data_t, pcdata_t>;
     using VType = typename BASE::VType;
     using AType = typename BASE::AType;
     using BType = typename BASE::BType;
-    PIPECGSolver() : BASE() { }
-    PIPECGSolver(AType &A) : BASE(A) { }
-    PIPECGSolver(AType &A, BType &B) : BASE(A, B) { }
+    PIPECG() : BASE() { }
+    PIPECG(AType &A) : BASE(A) { }
+    PIPECG(AType &A, BType &B) : BASE(A, B) { }
 
     void Apply(const VType &b, VType &x, bool xzero = false) const
     {
@@ -31,8 +31,8 @@ public:
         u = B * r;
         w = A * u;
 
-        intermediate_t gammaold, alpha, beta;
-        async<intermediate_t> gamma, delta, rnorm;
+        intermediate_t gammaold = 0, alpha = 1, beta = 1;
+        async<intermediate_t> gamma = 0, delta, rnorm;
 
         for (this->iter = 0; this->iter < this->maxiter; this->iter++) {
             rnorm = (r, r);

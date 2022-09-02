@@ -14,7 +14,7 @@
 #include "pc/PCPH.hpp"
 
 #include "iss/ISSAbstract.hpp"
-#include "iss/CGSolver.hpp"
-#include "iss/PIPECGSolver.hpp"
+#include "iss/CG.hpp"
+#include "iss/PIPECG.hpp"
 
 #endif /*TASS_H_*/

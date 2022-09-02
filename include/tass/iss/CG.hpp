@@ -10,16 +10,16 @@ template<
     typename data_t = double,
     typename pcdata_t = data_t,       /* preconditioner data_t */
     typename intermediate_t = data_t> /* intermediate data_t */
-class CGSolver : public ISS<matrix_t, vector_t, index_t, data_t, pcdata_t>
+class CG : public ISS<matrix_t, vector_t, index_t, data_t, pcdata_t>
 {
 public:
     using BASE = ISS<matrix_t, vector_t, index_t, data_t, pcdata_t>;
     using VType = typename BASE::VType;
     using AType = typename BASE::AType;
     using BType = typename BASE::BType;
-    CGSolver() : BASE() { }
-    CGSolver(AType &A) : BASE(A) { }
-    CGSolver(AType &A, BType &B) : BASE(A, B) { }
+    CG() : BASE() { }
+    CG(AType &A) : BASE(A) { }
+    CG(AType &A, BType &B) : BASE(A, B) { }
 
     void Apply(const VType &b, VType &x, bool xzero = false) const
     {
