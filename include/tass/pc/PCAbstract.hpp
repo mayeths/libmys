@@ -9,7 +9,7 @@ public:
     AType *A = nullptr;
 
     index_t verbose = -1;
-    data_t rtol = 1e-6, atol = 1e-6;
+    data_t rtol = 1e-15, atol = 1e-6;
 
     index_t final_iter, converged;
     data_t final_norm;

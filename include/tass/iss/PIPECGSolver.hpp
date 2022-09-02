@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ISSAbstract.hpp"
-#include "../util/async.hpp"
 
 template<
     typename matrix_t,
@@ -33,13 +32,11 @@ public:
         w = A * u;
 
         intermediate_t gammaold, alpha, beta;
-        async<intermediate_t> gamma, delta;
+        async<intermediate_t> gamma, delta, rnorm;
 
         for (this->iter = 0; this->iter < this->maxiter; this->iter++) {
-            intermediate_t rnorm = std::sqrt((r, r));
-            intermediate_t rel = rnorm / bnorm;
-            DEBUG(0, "iteration %4d ||r|| %.17e ||r||/||b|| %.17e", this->iter, rnorm, rel);
-            if (rnorm < this->atol)
+            rnorm = (r, r);
+            if (this->Converged(std::sqrt(rnorm), bnorm))
                 break;
 
             gammaold = gamma;
@@ -48,14 +45,8 @@ public:
             m = B * w;
             n = A * m;
 
-            if (this->iter > 0) {
-                beta = gamma / gammaold;
-                alpha = gamma / (delta - beta / alpha * gamma);
-            } else {
-                beta = 0;
-                alpha = gamma / delta;
-            }
-
+            beta = this->iter == 0 ? 0 : gamma / gammaold;
+            alpha = gamma / (delta - beta / alpha * gamma);
             z = beta * z + n;
             q = beta * q + m;
             p = beta * p + u;

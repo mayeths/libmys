@@ -33,16 +33,14 @@ public:
         p = u;
 
         intermediate_t gammaold, alpha, beta;
-        async<intermediate_t> gamma, delta;
+        async<intermediate_t> gamma, delta, rnorm;
 
         for (this->iter = 0; this->iter < this->maxiter; this->iter++) {
-            gammaold = this->iter == 0 ? (r, u) : gamma;
-            intermediate_t rnorm = std::sqrt((r, r));
-            intermediate_t rel = rnorm / bnorm;
-            DEBUG(0, "iteration %4d ||r|| %.17e ||r||/||b|| %.17e", this->iter, rnorm, rel);
-            if (rnorm < this->atol)
+            rnorm = (r, r);
+            if (this->Converged(std::sqrt(rnorm), bnorm))
                 break;
 
+            gammaold = this->iter == 0 ? (r, u) : gamma;
             s = A * p;
             delta = (s, p);
             alpha = gammaold / delta;
