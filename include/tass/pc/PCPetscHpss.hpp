@@ -2,16 +2,16 @@
 
 #include <petsc.h>
 #include "PCAbstract.hpp"
-#include "../mat/MP.hpp"
-#include "../vec/VP.hpp"
+#include "../mat/MPetsc.hpp"
+#include "../vec/VPetsc.hpp"
 #include <hpss_c.h>
 
 #if 1
 static HpssSmootherHandle smoother = nullptr;
-class PCPH : public PCAbstract<MP, VP, PetscInt, PetscScalar>
+class PCPetscHpss : public PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>
 {
 public:
-    using BASE = PCAbstract<MP, VP, PetscInt, PetscScalar>;
+    using BASE = PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>;
     using VType = typename BASE::VType;
     using AType = typename BASE::AType;
 
@@ -22,12 +22,12 @@ public:
     PetscInt *Aj = nullptr;
     PetscScalar *Av = nullptr;
 
-    PCPH() : BASE() {
+    PCPetscHpss() : BASE() {
         PetscErrorCode ierr;
         ierr = PCCreate(MPI_COMM_WORLD, &this->pc); CHKERRV(ierr);
     }
 
-    PCPH(AType &A, PetscInt nrows, PetscInt *Ap, PetscInt *Aj, PetscScalar *Av, PetscInt Istart = 0) : BASE(A) {
+    PCPetscHpss(AType &A, PetscInt nrows, PetscInt *Ap, PetscInt *Aj, PetscScalar *Av, PetscInt Istart = 0) : BASE(A) {
         // PetscErrorCode ierr;
         // ierr = PCCreate(MPI_COMM_WORLD, &this->pc); CHKERRV(ierr);
         // ierr = PCSetType(this->pc, PCSOR); CHKERRV(ierr);
@@ -43,14 +43,14 @@ public:
         ierr = PCSetType(this->pc, PCSHELL); CHKERRV(ierr);
         ierr = PCSetOperators(this->pc, A.mat, A.mat); CHKERRV(ierr);
         ierr = PCShellSetContext(this->pc, (void*)this); CHKERRV(ierr);
-        ierr = PCShellSetApply(this->pc, &PCPH::MyPCapply); CHKERRV(ierr);
-        ierr = PCShellSetSetUp(this->pc, &PCPH::MyPCsetup); CHKERRV(ierr);
+        ierr = PCShellSetApply(this->pc, &PCPetscHpss::MyPCapply); CHKERRV(ierr);
+        ierr = PCShellSetSetUp(this->pc, &PCPetscHpss::MyPCsetup); CHKERRV(ierr);
         ierr = PCSetUp(this->pc); CHKERRV(ierr);
     }
 
     static PetscErrorCode MyPCsetup(PC pc) {
         PetscErrorCode ierr;
-        PCPH* self = NULL;
+        PCPetscHpss* self = NULL;
         ierr = PCShellGetContext(pc, &self); CHKERRQ(ierr);
         HpssAnalyseConfig analyseConfig;
         HpssInitAnalyseConfig(&analyseConfig);
@@ -87,7 +87,7 @@ public:
     static PetscErrorCode MyPCapply(PC pc, Vec petsc_b, Vec petsc_x) {
         PetscFunctionBegin;
         PetscErrorCode ierr;
-        PCPH* self = NULL;
+        PCPetscHpss* self = NULL;
         // DEBUG(0, "1.0"); BARRIER();
         ierr = PCShellGetContext(pc, &self); CHKERRQ(ierr);
         PetscInt Istart, Iend;
@@ -140,10 +140,10 @@ public:
 static HpssSmootherHandle hpss_smoother;
 
 
-class PCPH : public PCAbstract<MP, VP, PetscInt, PetscScalar>
+class PCPetscHpss : public PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>
 {
 public:
-    using BASE = PCAbstract<MP, VP, PetscInt, PetscScalar>;
+    using BASE = PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>;
     using VType = typename BASE::VType;
     using AType = typename BASE::AType;
 
@@ -153,12 +153,12 @@ public:
     PetscInt *Aj = nullptr;
     PetscScalar *Av = nullptr;
 
-    PCPH() : BASE() {
+    PCPetscHpss() : BASE() {
         PetscErrorCode ierr;
         ierr = PCCreate(MPI_COMM_WORLD, &this->pc); CHKERRV(ierr);
     }
 
-    PCPH(AType &A, PetscInt nrows, PetscInt *Ap, PetscInt *Aj, PetscScalar *Av, PetscInt Istart = 0) : BASE(A) {
+    PCPetscHpss(AType &A, PetscInt nrows, PetscInt *Ap, PetscInt *Aj, PetscScalar *Av, PetscInt Istart = 0) : BASE(A) {
         PetscErrorCode ierr;
         ierr = PCCreate(MPI_COMM_WORLD, &this->pc); CHKERRV(ierr);
         ierr = PCSetType(this->pc, PCSOR); CHKERRV(ierr);

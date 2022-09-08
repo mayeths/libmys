@@ -3,22 +3,22 @@
 #include <map>
 #include <petsc.h>
 #include "MAbstract.hpp"
-#include "../vec/VP.hpp"
+#include "../vec/VPetsc.hpp"
 
-class MP : public MAbstract<VP, PetscInt, PetscScalar>
+class MPetsc : public MAbstract<VPetsc, PetscInt, PetscScalar>
 {
 public:
     PetscInt Istart, Iend, Jstart, Jend;
     PetscInt NROWS, NCOLS, nrows, ncols;
     Mat mat;
 
-    MP(const MP &source) {
+    MPetsc(const MPetsc &source) {
         PetscErrorCode ierr;
         MatDuplicate(source.mat, MAT_DO_NOT_COPY_VALUES, &this->mat); CHKERRV(ierr);
     }
 
     /* Construct by COO */
-    MP(PetscInt nnz, PetscInt *Ia, PetscInt *Ja, PetscScalar *Va) {
+    MPetsc(PetscInt nnz, PetscInt *Ia, PetscInt *Ja, PetscScalar *Va) {
         PetscInt Istart = std::numeric_limits<PetscInt>::max();
         PetscInt Jstart = std::numeric_limits<PetscInt>::max();
         PetscInt Iend = std::numeric_limits<PetscInt>::min();
@@ -62,7 +62,7 @@ public:
     }
 
     /* Construct by CSR */
-    MP(PetscInt nrows, PetscInt ncols, PetscInt *Ap, PetscInt *Aj, PetscScalar *Av) {
+    MPetsc(PetscInt nrows, PetscInt ncols, PetscInt *Ap, PetscInt *Aj, PetscScalar *Av) {
         this->nrows = nrows;
         this->ncols = ncols;
         PetscInt maxrownnz = std::numeric_limits<PetscInt>::min();
@@ -96,13 +96,13 @@ public:
         ierr = MatAssemblyEnd(this->mat, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
     }
 
-    ~MP() {
+    ~MPetsc() {
         PetscErrorCode ierr;
         ierr = MatDestroy(&this->mat); CHKERRV(ierr);
     }
 
 
-    void CreateVecs(VP &x, VP &b) {
+    void CreateVecs(VPetsc &x, VPetsc &b) {
         PetscErrorCode ierr;
         ierr = MatCreateVecs(this->mat, &x.vec, &b.vec); CHKERRV(ierr);
     }
@@ -113,7 +113,7 @@ public:
         return norm;
     }
 
-    void Apply(const VP &x, VP &y, bool xzero = false) const {
+    void Apply(const VPetsc &x, VPetsc &y, bool xzero = false) const {
         MatMult(this->mat, x.vec, y.vec);
     }
 

@@ -3,15 +3,16 @@
 #define TASS_H_
 
 #include "vec/VAbstract.hpp"
-#include "vec/VD.hpp"
-#include "vec/VP.hpp"
+#include "vec/VDense.hpp"
+#include "vec/VPetsc.hpp"
 
 #include "mat/MAbstract.hpp"
-#include "mat/MP.hpp"
+#include "mat/MPetsc.hpp"
 
 #include "pc/PCAbstract.hpp"
-#include "pc/PCP.hpp"
-#include "pc/PCPH.hpp"
+#include "pc/PCNone.hpp"
+#include "pc/PCPetsc.hpp"
+#include "pc/PCPetscHpss.hpp"
 
 #include "iss/ISSAbstract.hpp"
 #include "iss/CG.hpp"

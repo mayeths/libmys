@@ -2,31 +2,31 @@
 
 #include <petsc.h>
 #include "PCAbstract.hpp"
-#include "../mat/MP.hpp"
-#include "../vec/VP.hpp"
+#include "../mat/MPetsc.hpp"
+#include "../vec/VPetsc.hpp"
 
-class PCP : public PCAbstract<MP, VP, PetscInt, PetscScalar>
+class PCPetsc : public PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>
 {
 public:
-    using BASE = PCAbstract<MP, VP, PetscInt, PetscScalar>;
+    using BASE = PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>;
     using VType = typename BASE::VType;
     using AType = typename BASE::AType;
 
     PC pc = nullptr;
 
-    PCP() : BASE() {
+    PCPetsc() : BASE() {
         PetscErrorCode ierr;
         ierr = PCCreate(MPI_COMM_WORLD, &this->pc); CHKERRV(ierr);
     }
-    ~PCP() {
+    ~PCPetsc() {
         PetscErrorCode ierr;
         if (this->pc != nullptr) {
             ierr = PCDestroy(&pc); CHKERRV(ierr);
         }
         this->pc = nullptr;
     }
-    static void duplicate(const PCP &src, PCP &dst) {
-        if (&src != &dst) dst.~PCP(); else return;
+    static void duplicate(const PCPetsc &src, PCPetsc &dst) {
+        if (&src != &dst) dst.~PCPetsc(); else return;
         PetscErrorCode ierr;
         MPI_Comm comm;
         PCType type;
@@ -38,17 +38,17 @@ public:
         ierr = PCSetType(dst.pc, type); CHKERRV(ierr);
         ierr = PCSetOperators(dst.pc, Amat, Pmat); CHKERRV(ierr);
     }
-    static void swap(PCP &src, PCP &dst) {
-        if (&src != &dst) dst.~PCP(); else return;
+    static void swap(PCPetsc &src, PCPetsc &dst) {
+        if (&src != &dst) dst.~PCPetsc(); else return;
         std::swap(src.pc, dst.pc);
     }
-    PCP(const PCP &src)     { PCP::duplicate(src, *this); } /* Copy Ctor. */
-    PCP(PCP&& src) noexcept { PCP::swap(src, *this);      } /* Move Ctor. */
-    PCP& operator=(const PCP &src)     { PCP::duplicate(src, *this); return *this; } /* Copy Assign. */
-    PCP& operator=(PCP&& src) noexcept { PCP::swap(src, *this); return *this;      } /* Move Assign. */
+    PCPetsc(const PCPetsc &src)     { PCPetsc::duplicate(src, *this); } /* Copy Ctor. */
+    PCPetsc(PCPetsc&& src) noexcept { PCPetsc::swap(src, *this);      } /* Move Ctor. */
+    PCPetsc& operator=(const PCPetsc &src)     { PCPetsc::duplicate(src, *this); return *this; } /* Copy Assign. */
+    PCPetsc& operator=(PCPetsc&& src) noexcept { PCPetsc::swap(src, *this); return *this;      } /* Move Assign. */
 
 
-    PCP(AType &A, PCType type = PCSOR) : BASE(A) {
+    PCPetsc(AType &A, PCType type = PCSOR) : BASE(A) {
         PetscErrorCode ierr;
         ierr = PCCreate(MPI_COMM_WORLD, &this->pc); CHKERRV(ierr);
         ierr = PCSetType(this->pc, type); CHKERRV(ierr);
