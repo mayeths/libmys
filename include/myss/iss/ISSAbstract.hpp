@@ -43,7 +43,7 @@ public:
 
     static bool DefaultConvergeTest(const data_t &rnorm, const data_t &bnorm, const data_t &atol, const data_t &rtol, const index_t &iter) {
         data_t abs = std::abs(rnorm);
-        data_t rel = abs / bnorm;
+        data_t rel = abs / std::abs(bnorm);
         PRINTF(0, "Iteration %4d ||r|| %.17e ||r||/||b|| %.17e\n", iter, abs, rel);
         return (abs < atol || rel < rtol) ? true : false;
     }
