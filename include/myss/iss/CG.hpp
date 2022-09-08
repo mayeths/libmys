@@ -9,21 +9,25 @@ template<
     typename data_t = double,
     typename pcdata_t = data_t,       /* preconditioner data_t */
     typename intermediate_t = data_t> /* intermediate data_t */
-class CG : public ISS<matrix_t, vector_t, index_t, data_t, pcdata_t>
+class CG : public ISSAbstract<matrix_t, vector_t, index_t, data_t, pcdata_t>
 {
 public:
-    using BASE = ISS<matrix_t, vector_t, index_t, data_t, pcdata_t>;
+    using BASE = ISSAbstract<matrix_t, vector_t, index_t, data_t, pcdata_t>;
     using VType = typename BASE::VType;
     using AType = typename BASE::AType;
     using BType = typename BASE::BType;
-    CG() : BASE() { }
-    CG(AType &A) : BASE(A) { }
-    CG(AType &A, BType &B) : BASE(A, B) { }
+    CG() = delete;
+    CG(const AType &A) : BASE(A) { }
+    CG(const AType &A, const BType &B) : BASE(A, B) { }
 
-    void Apply(const VType &b, VType &x, bool xzero = false) const
+    virtual const char *GetName() const {
+        return "CG";
+    }
+
+    virtual void Apply(const VType &b, VType &x, bool xzero = false) const
     {
-        const AType &A = *(this->A);
-        const BType &B = *(this->B);
+        const AType &A = this->GetMatrix();
+        const BType &B = this->GetPreconditioner();
         VType r(x), u(x), p(x), s(x);
 
         intermediate_t bnorm, rnorm, alpha, beta, gamma, gammaold, delta;
@@ -32,7 +36,7 @@ public:
         u = B * r;
         p = u;
 
-        for (this->iter = 0; this->iter < this->maxiter; this->iter++) {
+        do {
             rnorm = (r, r);
             if (this->Converged(std::sqrt(rnorm), std::sqrt(bnorm)))
                 break;
@@ -47,7 +51,7 @@ public:
             gamma = (r, u);
             beta = gamma / gammaold;
             p = u + beta * p;
-        }
+        } while (++this->iter);
     }
 
 };

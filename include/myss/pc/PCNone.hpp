@@ -21,9 +21,11 @@ public:
     PCNone& operator=(const PCNone &src)     { PCNone::copy(src, *this); return *this; } /* Copy Assign. */
     PCNone& operator=(PCNone&& src) noexcept { PCNone::swap(src, *this); return *this; } /* Move Assign. */
 
-    void Apply(const VType &b, VType &x, bool xzero = false) const
-    {
+    virtual void Apply(const VType &b, VType &x, bool xzero = false) const {
         x = b;
+    }
+    virtual const char *GetName() const {
+        return "PCNone";
     }
 
 };

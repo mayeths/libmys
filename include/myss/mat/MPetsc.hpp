@@ -113,8 +113,11 @@ public:
         return norm;
     }
 
-    void Apply(const VPetsc &x, VPetsc &y, bool xzero = false) const {
+    virtual void Apply(const VPetsc &x, VPetsc &y, bool xzero = false) const {
         MatMult(this->mat, x.vec, y.vec);
+    }
+    virtual const char *GetName() const {
+        return "MPetsc";
     }
 
 };

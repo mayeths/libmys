@@ -122,10 +122,13 @@ public:
         PetscFunctionReturn(0);
     }
 
-    void Apply(const VType &b, VType &x, bool xzero = false) const
+    virtual void Apply(const VType &b, VType &x, bool xzero = false) const
     {
         PetscErrorCode ierr;
         ierr = PCApply(this->pc, b.vec, x.vec); CHKERRV(ierr);
+    }
+    virtual const char *GetName() const {
+        return "PCPetscHpss";
     }
 
 };

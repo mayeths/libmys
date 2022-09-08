@@ -18,6 +18,7 @@
 #include "mys/memory.hpp"
 #include "mys/mpi.hpp"
 #include "mys/sor.hpp"
+#include "mys/string.hpp"
 #include "mys/util.hpp"
 #include "mys/vec.hpp"
 
