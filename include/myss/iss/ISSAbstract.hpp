@@ -126,7 +126,7 @@ public:
         PRINTF(0, "Iteration %4d ||r|| %.17e ||r||/||b|| %.17e\n", iter, abs, rel);
         if (abs <= atol) return StopReason::ConvergedByAtol;
         else if (rel <= rtol) return StopReason::ConvergedByRtol;
-        else if (rel >= dtol) return StopReason::DivergedByDtol;
+        else if (rel >= dtol && iter != 0) return StopReason::DivergedByDtol;
         else if (iter >= maxiter) return StopReason::DivergedByMaxIter;
         return StopReason::NoStopped;
     }
