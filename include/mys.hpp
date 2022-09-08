@@ -12,10 +12,33 @@
 #pragma once
 
 #include "mys.h"
+
 #include "mys/headers.hpp"
-#include "mys/allocator.hpp"
-#include "mys/blas.hpp"
 #include "mys/mat.hpp"
+#include "mys/memory.hpp"
+#include "mys/mpi.hpp"
 #include "mys/sor.hpp"
 #include "mys/util.hpp"
 #include "mys/vec.hpp"
+
+#include "myss/vec/VAbstract.hpp"
+#include "myss/vec/VDense.hpp"
+#ifdef PETSC_DIR
+#include "myss/vec/VPetsc.hpp"
+#endif /*PETSC_DIR*/
+
+#include "myss/mat/MAbstract.hpp"
+#ifdef PETSC_DIR
+#include "myss/mat/MPetsc.hpp"
+#endif /*PETSC_DIR*/
+
+#include "myss/pc/PCAbstract.hpp"
+#include "myss/pc/PCNone.hpp"
+#ifdef PETSC_DIR
+#include "myss/pc/PCPetsc.hpp"
+#include "myss/pc/PCPetscHpss.hpp"
+#endif /*PETSC_DIR*/
+
+#include "myss/iss/ISSAbstract.hpp"
+#include "myss/iss/CG.hpp"
+#include "myss/iss/PIPECG.hpp"

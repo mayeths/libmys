@@ -188,14 +188,3 @@ void sor_setup()
 void apply(double *x, double *b) {
 
 }
-
-int main() {
-    int Lp[]={0, 1, 2, 4, 6, 9, 12, 17, 19};
-    int Lj[]={0, 1, 1, 2, 1, 3, 0, 2, 4, 1, 2, 5, 0, 1, 2, 3, 6, 4, 7};
-    double Lv[]={1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-
-    MPI_Init(NULL, NULL);
-
-    levelset_analyse(Lp, Lj, Lv, 8, 8);
-}
-
