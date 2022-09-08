@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ISSAbstract.hpp"
-#include "../util/async.hpp"
 
 template<
     typename matrix_t,
@@ -27,20 +26,18 @@ public:
         const BType &B = *(this->B);
         VType r(x), u(x), p(x), s(x);
 
-        intermediate_t bnorm = std::sqrt((b, b));
+        intermediate_t bnorm, rnorm, alpha, beta, gamma, gammaold, delta;
+        bnorm = (b, b);
         r = b - A * x;
         u = B * r;
         p = u;
 
-        intermediate_t gammaold, alpha, beta;
-        async<intermediate_t> gamma, delta, rnorm;
-
         for (this->iter = 0; this->iter < this->maxiter; this->iter++) {
             rnorm = (r, r);
-            if (this->Converged(std::sqrt(rnorm), bnorm))
+            if (this->Converged(std::sqrt(rnorm), std::sqrt(bnorm)))
                 break;
 
-            gammaold = this->iter == 0 ? (r, u) : gamma;
+            gammaold = this->iter == 0 ? (intermediate_t)(r, u) : gamma;
             s = A * p;
             delta = (s, p);
             alpha = gammaold / delta;

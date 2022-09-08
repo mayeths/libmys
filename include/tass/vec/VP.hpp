@@ -3,7 +3,7 @@
 #include <petsc.h>
 #include <memory>
 #include "VAbstract.hpp"
-#include "../util/async.hpp"
+#include "../util/AsyncProxy.hpp"
 
 class VP : public VAbstract<PetscInt, PetscScalar>
 {
@@ -54,23 +54,29 @@ public:
         ierr = VecAssemblyEnd(this->vec); CHKERRV(ierr);
     }
 
-    static async<PetscScalar> dot(const VP &x, const VP &y) {
+    PetscReal Norm() {
+        PetscReal norm;
+        VecNorm(this->vec, NORM_2, &norm);
+        return norm;
+    }
+
+    static AsyncProxy<PetscScalar> dot(const VP &x, const VP &y) {
         PetscScalar result;
         VecDot(x.vec, y.vec, &result);
-        return async<PetscScalar>(result);
+        return AsyncProxy<PetscScalar>(result);
     }
 
-    static async<PetscScalar> idot(const VP &x, const VP &y) {
+    static AsyncProxy<PetscScalar> idot(const VP &x, const VP &y) {
         VecDotBegin(x.vec, y.vec, NULL);
         auto context = new std::pair<const VP*, const VP*>(&x, &y);
-        return async<PetscScalar>(0, context, &VP::idot_await);
+        return AsyncProxy<PetscScalar>(0, context, &VP::idot_await);
     }
 
-    static PetscScalar idot_await(const async<PetscScalar> *as) {
+    static PetscScalar idot_await(const AsyncProxy<PetscScalar> *as) {
         auto context = (std::pair<const VP*, const VP*> *)as->context();
         const VP *x = context->first;
         const VP *y = context->second;
-        free(context);
+        delete context;
 
         PetscScalar result = 0;
         VecDotEnd(x->vec, y->vec, &result);
@@ -88,7 +94,7 @@ public:
     friend VP operator*(VP x, PetscScalar alpha) { return x *= alpha; }
     friend VP operator*(PetscScalar alpha, VP x) { return x * alpha; }
 
-    friend async<PetscScalar> operator,(const VP &x, const VP& y) {
+    friend AsyncProxy<PetscScalar> operator,(const VP &x, const VP& y) {
         return VP::idot(x, y);
         // return VP::dot(x, y);
     }

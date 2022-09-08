@@ -3,6 +3,7 @@
 #include <atomic>
 #include <memory>
 #include <map>
+#include <stdlib.h>
 #include <sys/resource.h>
 #include <string.h>
 
@@ -23,6 +24,23 @@
 #error No supprted CPU model
 #endif
 #endif
+
+
+/* Cache clean */
+static void cachebrush(std::size_t nbytes = 10 * 1024 * 1024)
+{
+    char * volatile arr = (char * volatile)malloc(nbytes * sizeof(char));
+    memset(arr, 0, nbytes);
+    for (std::size_t i = 0; i < nbytes; i++) {
+        arr[i] = i;
+    }
+    // std::vector<char> arr(nbytes);
+    // std::fill(arr.begin(), arr.end(), 0);
+    // memset()
+    // for (std::size_t i = 0; i < arr.size(); i++) {
+    //     arr[i] = i;
+    // }
+}
 
 
 /* Custom Allocator */
@@ -63,7 +81,7 @@ public:
 };
 template <class T, class U>
 bool
-operator==(allocator<T> const&, allocator<U> const&) noexcept
+operator==(allocator<T> const&, allocator<U> const&) noexcept /* Allocator of different type T & U is not equal */
 {
     return false;
 }

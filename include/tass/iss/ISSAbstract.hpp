@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../pc/PCAbstract.hpp"
-#include "../util/async.hpp"
+#include "../util/AsyncProxy.hpp"
 
 template<typename matrix_t, typename vector_t, typename index_t, typename data_t, typename pcdata_t>
 class ISS

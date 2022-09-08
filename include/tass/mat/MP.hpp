@@ -107,6 +107,12 @@ public:
         ierr = MatCreateVecs(this->mat, &x.vec, &b.vec); CHKERRV(ierr);
     }
 
+    PetscReal Norm() {
+        PetscReal norm;
+        MatNorm(this->mat, NORM_FROBENIUS, &norm);
+        return norm;
+    }
+
     void Apply(const VP &x, VP &y, bool xzero = false) const {
         MatMult(this->mat, x.vec, y.vec);
     }
