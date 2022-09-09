@@ -5,12 +5,14 @@
 #include "../mat/MPetsc.hpp"
 #include "../vec/VPetsc.hpp"
 
-class PCPetsc : public PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>
+class PCPetsc : public PCAbstract<MPetsc>
 {
 public:
-    using BASE = PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>;
+    using BASE = PCAbstract<MPetsc>;
     using VType = typename BASE::VType;
     using AType = typename BASE::AType;
+    using index_t = typename BASE::index_t;
+    using data_t = typename BASE::data_t;
 
     PC pc = nullptr;
 

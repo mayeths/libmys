@@ -105,12 +105,12 @@ AsyncProxy<typename VType::data_t> dot(const VType &x, const VType &y) {
         return result;
 }
 
-// template <typename VType>
-// AsyncProxy<typename VType::data_t> operator,(const VType &x, const VType& y) {
-//     // return trycall_async_dot(x, y, std::integral_constant<bool, has_async_dot<VType>::value>());
-//     // return dot(x, y);
-//     return VType::async_dot(x, y);
-// }
+template <typename VType>
+AsyncProxy<typename VType::data_t> operator,(const VType &x, const VType& y) {
+    // return trycall_async_dot(x, y, std::integral_constant<bool, has_async_dot<VType>::value>());
+    // return dot(x, y);
+    return VType::async_dot(x, y);
+}
 
 
 // https://en.cppreference.com/w/cpp/meta

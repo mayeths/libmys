@@ -3,8 +3,9 @@
 #include "../pc/PCAbstract.hpp"
 #include "../pc/PCNone.hpp"
 #include "../util/AsyncProxy.hpp"
+#include "../vec/VAbstract.hpp"
 
-template<typename matrix_t, typename vector_t, typename index_t, typename data_t, typename pcdata_t>
+template<typename matrix_t>
 class ISSAbstract
 {
 public:
@@ -15,9 +16,12 @@ public:
         DivergedByDtol,
         DivergedByMaxIter,
     };
-    using VType = vector_t;
     using AType = matrix_t;
-    using BType = PCAbstract<matrix_t, vector_t, index_t, pcdata_t>;
+    using index_t = typename AType::index_t;
+    using data_t = typename AType::data_t;
+    using VType = typename AType::VType;
+    // using BType = preconditioner_t;
+    using BType = PCAbstract<matrix_t>;
     using ConvergeTestFunction = StopReason(*)(
         const data_t &abs, const data_t &rel,
         const data_t &atol, const data_t &rtol, const data_t &dtol,
@@ -42,7 +46,7 @@ public:
     ISSAbstract(const AType &A) {
         this->A = &A;
         this->B = nullptr;
-        this->defaultB = new PCNone<matrix_t, vector_t, index_t, pcdata_t>();
+        this->defaultB = new PCNone<typename BType::AType>();
     }
     ISSAbstract(const AType &A, const BType &B) {
         this->A = &A;

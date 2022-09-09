@@ -1,11 +1,13 @@
 #pragma once
 
-template<typename matrix_t, typename vector_t, typename index_t, typename data_t>
+template<typename mt>
 class PCAbstract
 {
 public:
-    using VType = vector_t;
-    using AType = matrix_t; /*MAbstract<index_t, data_t>;*/
+    using AType = mt;
+    using VType = typename AType::VType;
+    using index_t = typename AType::index_t;
+    using data_t = typename AType::data_t;
     AType *A = nullptr;
 
     PCAbstract() : A(nullptr) { }

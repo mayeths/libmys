@@ -1,9 +1,12 @@
 #pragma once
 
-template<typename VType, typename index_t, typename data_t>
+template<typename vt>
 class MAbstract
 {
 public:
+    using VType = vt;
+    using index_t = typename VType::index_t;
+    using data_t = typename VType::data_t;
     virtual void Apply(const VType &input, VType &output, bool xzero = false) const = 0;
     virtual const char *GetName() const = 0;
 

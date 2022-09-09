@@ -7,13 +7,22 @@ template<typename vt, typename it, typename dt>
 class VAbstract
 {
 public:
-    using RealVType = vt;
+    using vector_t = vt;
     using index_t = it;
     using data_t = dt;
     explicit VAbstract() { }
     explicit VAbstract(const VAbstract&) { } /* Copy */
     explicit VAbstract(VAbstract&&) { } /* Move */
 
+    vector_t& operator+=(const vector_t &x) { static_cast<vector_t const&>(*this) += x; return *this; }
+    friend vector_t operator+(vector_t x, const vector_t& y) { return x += y; }
+
+    vector_t& operator-=(const vector_t &x) { static_cast<vector_t const&>(*this) -= x; return *this; }
+    friend vector_t operator-(vector_t x, const vector_t& y) { return x -= y; }
+
+    vector_t& operator*=(PetscScalar alpha) { static_cast<vector_t const&>(*this) *= alpha; return *this; }
+    friend vector_t operator*(vector_t x, PetscScalar alpha) { return x *= alpha; }
+    friend vector_t operator*(PetscScalar alpha, vector_t x) { return x * alpha; }
 };
 
 

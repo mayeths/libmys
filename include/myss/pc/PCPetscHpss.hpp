@@ -8,12 +8,14 @@
 
 #if 1
 static HpssSmootherHandle smoother = nullptr;
-class PCPetscHpss : public PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>
+class PCPetscHpss : public PCAbstract<MPetsc>
 {
 public:
-    using BASE = PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>;
+    using BASE = PCAbstract<MPetsc>;
     using VType = typename BASE::VType;
     using AType = typename BASE::AType;
+    using index_t = typename BASE::index_t;
+    using data_t = typename BASE::data_t;
 
 
     PC pc = nullptr;
@@ -143,10 +145,10 @@ public:
 static HpssSmootherHandle hpss_smoother;
 
 
-class PCPetscHpss : public PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>
+class PCPetscHpss : public PCAbstract<MPetsc>
 {
 public:
-    using BASE = PCAbstract<MPetsc, VPetsc, PetscInt, PetscScalar>;
+    using BASE = PCAbstract<MPetsc>;
     using VType = typename BASE::VType;
     using AType = typename BASE::AType;
 

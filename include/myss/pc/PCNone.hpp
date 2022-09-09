@@ -2,11 +2,11 @@
 
 #include "PCAbstract.hpp"
 
-template<typename matrix_t, typename vector_t, typename index_t = int, typename data_t = double>
-class PCNone : public PCAbstract<matrix_t, vector_t, index_t, data_t>
+template<typename matrix_t>
+class PCNone : public PCAbstract<matrix_t>
 {
 public:
-    using BASE = PCAbstract<matrix_t, vector_t, index_t, data_t>;
+    using BASE = PCAbstract<matrix_t>;
     using VType = typename BASE::VType;
     using AType = typename BASE::AType;
 

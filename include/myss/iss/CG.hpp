@@ -4,15 +4,14 @@
 
 template<
     typename matrix_t,
-    typename vector_t,
-    typename index_t = int,
-    typename data_t = double,
-    typename pcdata_t = data_t,       /* preconditioner data_t */
-    typename intermediate_t = data_t> /* intermediate data_t */
-class CG : public ISSAbstract<matrix_t, vector_t, index_t, data_t, pcdata_t>
+    typename intermediate_t = typename matrix_t::data_t> /* intermediate data_t */
+class CG : public ISSAbstract<matrix_t>
 {
 public:
-    using BASE = ISSAbstract<matrix_t, vector_t, index_t, data_t, pcdata_t>;
+    using BASE = ISSAbstract<matrix_t>;
+    using index_t = typename BASE::index_t;
+    using data_t = typename BASE::data_t;
+    using pcdata_t = typename BASE::data_t;
     using VType = typename BASE::VType;
     using AType = typename BASE::AType;
     using BType = typename BASE::BType;
