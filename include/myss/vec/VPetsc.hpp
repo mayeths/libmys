@@ -3,12 +3,12 @@
 #include <petsc.h>
 #include <memory>
 #include "VAbstract.hpp"
-#include "../util/AsyncProxy.hpp"
 
-class VPetsc : public VAbstract<PetscInt, PetscScalar>
+class VPetsc : public VAbstract<VPetsc, PetscInt, PetscScalar>
 {
 public:
-    using data_t = VAbstract<PetscInt, PetscScalar>::data_t;
+    using index_t = VAbstract<VPetsc, PetscInt, PetscScalar>::index_t;
+    using data_t = VAbstract<VPetsc, PetscInt, PetscScalar>::data_t;
     Vec vec = nullptr;
 
     VPetsc() { }
@@ -78,16 +78,23 @@ public:
         return result;
     }
 
+    void axpy(VPetsc &y, PetscScalar alpha, const VPetsc &x) {
+        VecAXPY(y.vec, alpha, x.vec);
+    }
+
+    // operator RType<VPetsc, PetscInt, PetscScalar>() const {
+    //     return RType<VPetsc, PetscInt, PetscScalar>(*this);
+    // }
 
     VPetsc& operator+=(const VPetsc &x) { VecAXPY(this->vec, 1, x.vec); return *this; }
-    friend VPetsc operator+(VPetsc x, const VPetsc& y) { return x += y; }
+    // friend VPetsc operator+(VPetsc x, const VPetsc& y) { return x += y; }
 
     VPetsc& operator-=(const VPetsc &x) { VecAXPY(this->vec, -1, x.vec); return *this; }
-    friend VPetsc operator-(VPetsc x, const VPetsc& y) { return x -= y; }
+    // friend VPetsc operator-(VPetsc x, const VPetsc& y) { return x -= y; }
 
     VPetsc& operator*=(PetscScalar alpha) { VecScale(this->vec, alpha); return *this; }
-    friend VPetsc operator*(VPetsc x, PetscScalar alpha) { return x *= alpha; }
-    friend VPetsc operator*(PetscScalar alpha, VPetsc x) { return x * alpha; }
+    // friend VPetsc operator*(VPetsc x, PetscScalar alpha) { return x *= alpha; }
+    // friend VPetsc operator*(PetscScalar alpha, VPetsc x) { return x * alpha; }
 };
 
 
@@ -98,12 +105,12 @@ AsyncProxy<typename VType::data_t> dot(const VType &x, const VType &y) {
         return result;
 }
 
-template <typename VType>
-AsyncProxy<typename VType::data_t> operator,(const VType &x, const VType& y) {
-    // return trycall_async_dot(x, y, std::integral_constant<bool, has_async_dot<VType>::value>());
-    // return dot(x, y);
-    return VType::async_dot(x, y);
-}
+// template <typename VType>
+// AsyncProxy<typename VType::data_t> operator,(const VType &x, const VType& y) {
+//     // return trycall_async_dot(x, y, std::integral_constant<bool, has_async_dot<VType>::value>());
+//     // return dot(x, y);
+//     return VType::async_dot(x, y);
+// }
 
 
 // https://en.cppreference.com/w/cpp/meta

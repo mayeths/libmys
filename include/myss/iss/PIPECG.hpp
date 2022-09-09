@@ -33,12 +33,12 @@ public:
     {
         const AType &A = this->GetMatrix();
         const BType &B = this->GetPreconditioner();
-        VType r(x), z(x), p(x), n(x), w(x), q(x), u(x), m(x), s(x);
+        LValue<VType> f(b), v(x), r(x), z(x), p(x), n(x), w(x), q(x), u(x), m(x), s(x);
 
         intermediate_t bnorm = 0, alpha = 1, beta = 1, gammaold = 0;
         pipe_intermediate_t rnorm = 0, delta = 0, gamma = 0;
-        bnorm = (b, b);
-        r = b - A * x;
+        bnorm = (f, f);
+        r = f - A * v;
         u = B * r;
         w = A * u;
 
@@ -59,11 +59,13 @@ public:
             q = beta * q + m;
             p = beta * p + u;
             s = beta * s + w;
-            x += alpha * p;
+            v += alpha * p;
             u -= alpha * q;
             w -= alpha * z;
             r -= alpha * s;
         } while (++this->iter);
+
+        x = v;
     }
 
 };
