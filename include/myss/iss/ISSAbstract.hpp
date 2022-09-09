@@ -108,9 +108,9 @@ public:
             );
         } else {
             const char *amark = this->stopreason == StopReason::ConvergedByAtol ? ">" : " ";
-            const char *rmark = this->stopreason == StopReason::ConvergedByRtol ||
-                                this->stopreason == StopReason::DivergedByDtol ? ">" : " ";
-            const char *imark = this->stopreason == StopReason::DivergedByMaxIter ? ">" : " ";
+            const char *rmark = this->stopreason == StopReason::ConvergedByRtol ? ">" :
+                                this->stopreason == StopReason::DivergedByDtol  ? "x" : " ";
+            const char *imark = this->stopreason == StopReason::DivergedByMaxIter ? "x" : " ";
             buffer += strformat("  %s abs %.17g (atol %.17g)\n", amark , (double)stopabs, (double)atol);
             buffer += strformat("  %s rel %.17g (rtol %.17g dtol %.17g)\n", rmark, (double)stoprel, (double)rtol, (double)dtol);
             buffer += strformat("  %s iter %d (maxiter %d)\n", imark, (int)stopiter, (int)maxiter);
