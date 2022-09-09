@@ -13,6 +13,7 @@ class PCPetscHpss : public PCAbstract<MPetsc>
 public:
     using BASE = PCAbstract<MPetsc>;
     using VType = typename BASE::VType;
+    using RealVType = typename BASE::RealVType;
     using AType = typename BASE::AType;
     using index_t = typename BASE::index_t;
     using data_t = typename BASE::data_t;
@@ -124,7 +125,7 @@ public:
         PetscFunctionReturn(0);
     }
 
-    virtual void Apply(const VType &b, VType &x, bool xzero = false) const
+    virtual void Apply(const RealVType &b, RealVType &x, bool xzero = false) const
     {
         PetscErrorCode ierr;
         ierr = PCApply(this->pc, b.vec, x.vec); CHKERRV(ierr);
@@ -171,7 +172,7 @@ public:
         ierr = PCSetUp(this->pc); CHKERRV(ierr);
     }
 
-    void Apply(const VType &b, VType &x, bool xzero = false) const
+    void Apply(const RealVType &b, RealVType &x, bool xzero = false) const
     {
         PetscErrorCode ierr;
         ierr = PCApply(this->pc, *b.vec, *x.vec); CHKERRV(ierr);

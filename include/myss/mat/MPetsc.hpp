@@ -5,11 +5,12 @@
 #include "MAbstract.hpp"
 #include "../vec/VPetsc.hpp"
 
-class MPetsc : public MAbstract<VPetsc>
+class MPetsc : public MAbstract<VPetsc, PetscInt, PetscScalar>
 {
 public:
-    using BASE = MAbstract<VPetsc>;
+    using BASE = MAbstract<VPetsc, PetscInt, PetscScalar>;
     using VType = BASE::VType;
+    using RealVType = BASE::RealVType;
     using index_t = BASE::index_t;
     using data_t = BASE::data_t;
     PetscInt Istart, Iend, Jstart, Jend;

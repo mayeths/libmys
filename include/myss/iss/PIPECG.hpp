@@ -18,6 +18,7 @@ public:
     using data_t = typename BASE::data_t;
     using pcdata_t = typename BASE::data_t;
     using VType = typename BASE::VType;
+    using RealVType = typename BASE::RealVType;
     using AType = matrix_t;
     using BType = typename BASE::BType;
     PIPECG() = delete;
@@ -28,11 +29,11 @@ public:
         return "PIPECG";
     }
 
-    virtual void Apply(const VType &b, VType &x, bool xzero = false) const
+    virtual void Apply(const RealVType &b, RealVType &x, bool xzero = false) const
     {
         const AType &A = this->GetMatrix();
         const BType &B = this->GetPreconditioner();
-        VType r(x), z(x), p(x), n(x), w(x), q(x), u(x), m(x), s(x);
+        RealVType r(x), z(x), p(x), n(x), w(x), q(x), u(x), m(x), s(x);
 
         intermediate_t bnorm = 0, alpha = 1, beta = 1, gammaold = 0;
         pipe_intermediate_t rnorm = 0, delta = 0, gamma = 0;

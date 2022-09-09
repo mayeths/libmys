@@ -20,6 +20,7 @@ public:
     using index_t = typename AType::index_t;
     using data_t = typename AType::data_t;
     using VType = typename AType::VType;
+    using RealVType = typename AType::RealVType;
     // using BType = preconditioner_t;
     using BType = PCAbstract<matrix_t>;
     using ConvergeTestFunction = StopReason(*)(
@@ -58,7 +59,7 @@ public:
         this->defaultB = nullptr;
     }
 
-    virtual void Apply(const VType &input, VType &output, bool xzero = false) const = 0;
+    virtual void Apply(const RealVType &input, RealVType &output, bool xzero = false) const = 0;
     virtual const char *GetName() const = 0;
 
     index_t GetNumIterations() const { return this->iter; }

@@ -2,13 +2,14 @@
 
 #include "PCAbstract.hpp"
 
-template<typename matrix_t>
-class PCNone : public PCAbstract<matrix_t>
+template<typename mt>
+class PCNone : public PCAbstract<mt>
 {
 public:
-    using BASE = PCAbstract<matrix_t>;
+    using AType = mt;
+    using BASE = PCAbstract<mt>;
     using VType = typename BASE::VType;
-    using AType = typename BASE::AType;
+    using RealVType = typename AType::RealVType;
 
     PCNone() : BASE() { }
     ~PCNone() {
@@ -21,7 +22,7 @@ public:
     PCNone& operator=(const PCNone &src)     { PCNone::copy(src, *this); return *this; } /* Copy Assign. */
     PCNone& operator=(PCNone&& src) noexcept { PCNone::swap(src, *this); return *this; } /* Move Assign. */
 
-    virtual void Apply(const VType &b, VType &x, bool xzero = false) const {
+    virtual void Apply(const RealVType &b, RealVType &x, bool xzero = false) const {
         x = b;
     }
     virtual const char *GetName() const {
