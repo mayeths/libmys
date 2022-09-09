@@ -1,6 +1,6 @@
 # LibMYS
 
-Header only library of Mayeths (wow@mayeths.com or huanghp22@mails.tsinghua.edu.cn).
+Mayeths' header only library (wow@mayeths.com or huanghp22@mails.tsinghua.edu.cn).
 
 - **mys**: **M**a**y**eth**s**' basis headers
     - ***.h**: Headers that work under C99
