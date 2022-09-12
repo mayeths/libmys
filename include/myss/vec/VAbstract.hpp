@@ -16,7 +16,7 @@ public:
 
     vector_t& operator+=(const vector_t &x) {
         vector_t &self = static_cast<vector_t&>(*this);
-        vector_t::axpy(self, 1, x);
+        vector_t::AXPY(self, 1, x);
         return self;
     }
     friend vector_t operator+(vector_t x, const vector_t& y) {
@@ -25,7 +25,7 @@ public:
 
     vector_t& operator-=(const vector_t &x) {
         vector_t &self = static_cast<vector_t&>(*this);
-        vector_t::axpy(self, -1, x);
+        vector_t::AXPY(self, -1, x);
         return self;
     }
     friend vector_t operator-(vector_t x, const vector_t& y) {
@@ -34,7 +34,7 @@ public:
 
     vector_t& operator*=(PetscScalar alpha) {
         vector_t &self = static_cast<vector_t&>(*this);
-        vector_t::scale(self, alpha);
+        vector_t::Scale(self, alpha);
         return self;
     }
     friend vector_t operator*(vector_t x, PetscScalar alpha) {
@@ -45,11 +45,10 @@ public:
     }
 
     friend AsyncProxy<data_t> operator,(const vector_t &x, const vector_t& y) {
-        return vector_t::async_dot(x, y);
+        return vector_t::AsyncDot(x, y);
     }
-
     friend data_t dot(const vector_t &x, const vector_t &y) {
-        return vector_t::async_dot(x, y).await();
+        return (x, y).await();
     }
 
 };
@@ -113,7 +112,7 @@ public:
     friend LValue<VType> operator*(data_t alpha, LValue<VType> x) { return x * alpha; }
 
     friend AsyncProxy<typename LValue<VType>::data_t> operator,(const LValue<VType> &x, const LValue<VType>& y) {
-    return LValue<VType>::async_dot(x, y);
+    return LValue<VType>::AsyncDot(x, y);
 }
 
 };

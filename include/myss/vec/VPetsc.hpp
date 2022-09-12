@@ -33,13 +33,39 @@ public:
         ierr = VecCopy(src.vec, dst.vec); CHKERRV(ierr);
     }
     static void swap(VPetsc &src, VPetsc &dst) {
-        if (&src == &dst) return; else dst.~VPetsc();
+        if (&src == &dst) return;
         std::swap(src.vec, dst.vec);
     }
     VPetsc(const VPetsc &src)     { VPetsc::copy(src, *this); } /* Copy Ctor. */
     VPetsc(VPetsc&& src) noexcept { VPetsc::swap(src, *this); } /* Move Ctor. */
     VPetsc& operator=(const VPetsc &src)     { VPetsc::copy(src, *this); return *this; } /* Copy Assign. */
     VPetsc& operator=(VPetsc&& src) noexcept { VPetsc::swap(src, *this); return *this; } /* Move Assign. */
+
+
+    static void AXPY(VPetsc &y, PetscScalar alpha, const VPetsc &x) {
+        VecAXPY(y.vec, alpha, x.vec);
+    }
+
+    static void Scale(VPetsc &y, PetscScalar alpha) {
+        VecScale(y.vec, alpha);
+    }
+
+    static AsyncProxy<PetscScalar> AsyncDot(const VPetsc &x, const VPetsc &y) {
+        VecDotBegin(x.vec, y.vec, NULL);
+        auto context = new std::pair<const VPetsc*, const VPetsc*>(&x, &y);
+        return AsyncProxy<PetscScalar>(0, context, &VPetsc::AwaitDot);
+    }
+
+    static PetscScalar AwaitDot(const AsyncProxy<PetscScalar> *proxy) {
+        auto context = (std::pair<const VPetsc*, const VPetsc*> *)proxy->context();
+        const VPetsc *x = context->first;
+        const VPetsc *y = context->second;
+        delete context;
+
+        PetscScalar result = 0;
+        VecDotEnd(x->vec, y->vec, &result);
+        return result;
+    }
 
 
     void SetValues(const PetscScalar *arr) {
@@ -59,31 +85,6 @@ public:
         PetscReal norm;
         VecNorm(this->vec, NORM_2, &norm);
         return norm;
-    }
-
-    static AsyncProxy<PetscScalar> async_dot(const VPetsc &x, const VPetsc &y) {
-        VecDotBegin(x.vec, y.vec, NULL);
-        auto context = new std::pair<const VPetsc*, const VPetsc*>(&x, &y);
-        return AsyncProxy<PetscScalar>(0, context, &VPetsc::await_dot);
-    }
-
-    static PetscScalar await_dot(const AsyncProxy<PetscScalar> *proxy) {
-        auto context = (std::pair<const VPetsc*, const VPetsc*> *)proxy->context();
-        const VPetsc *x = context->first;
-        const VPetsc *y = context->second;
-        delete context;
-
-        PetscScalar result = 0;
-        VecDotEnd(x->vec, y->vec, &result);
-        return result;
-    }
-
-    static void axpy(VPetsc &y, PetscScalar alpha, const VPetsc &x) {
-        VecAXPY(y.vec, alpha, x.vec);
-    }
-
-    static void scale(VPetsc &y, PetscScalar alpha) {
-        VecScale(y.vec, alpha);
     }
 
 };
