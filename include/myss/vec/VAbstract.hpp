@@ -3,6 +3,9 @@
 #include "../util/TypeTraits.hpp"
 #include "../util/AsyncProxy.hpp"
 
+template<typename vt> class AX;
+template<typename vt> class AXPBY;
+
 template<typename vt, typename it, typename dt>
 class VAbstract
 {
@@ -11,13 +14,32 @@ public:
     using index_t = it;
     using data_t = dt;
     explicit VAbstract() { }
-    explicit VAbstract(const VAbstract&) { } /* Copy */
-    explicit VAbstract(VAbstract&&) { } /* Move */
+    virtual bool iscompact(const VAbstract<vt, it, dt> &other) { return true; }
+
+    // explicit VAbstract(const VAbstract&) { } /* Copy */
+    // explicit VAbstract(VAbstract&&) { } /* Move */
+    VAbstract(const vector_t &src)     { vector_t::copy(src, static_cast<vector_t&>(*this)); } /* Copy Ctor. */
+    VAbstract(vector_t&& src) noexcept { vector_t::swap(src, static_cast<vector_t&>(*this)); } /* Move Ctor. */
+    vector_t& operator=(const AX<vector_t> &src)     { return static_cast<vector_t&>(*this).operator=(src.eval()); } /* Copy Assign. */
+    vector_t& operator=(AX<vector_t>&& src) noexcept { return static_cast<vector_t&>(*this).operator=(src.eval()); } /* Move Assign. */
+    vector_t& operator=(const AXPBY<vector_t> &src)     { return static_cast<vector_t&>(*this).operator=(src.eval()); } /* Copy Assign. */
+    vector_t& operator=(AXPBY<vector_t>&& src) noexcept { return static_cast<vector_t&>(*this).operator=(src.eval()); } /* Move Assign. */
 
     vector_t& operator+=(const vector_t &x) {
         vector_t &self = static_cast<vector_t&>(*this);
         vector_t::AXPY(self, 1, x);
         return self;
+    }
+    vector_t& operator+=(const AX<vector_t> &x) {
+        vector_t &self = static_cast<vector_t&>(*this);
+        vector_t::AXPY(self, 1, x.eval());
+        return self;
+    }
+    friend vector_t operator+(vector_t x, const VAbstract<vt, it, dt>& y) {
+        return x += y;
+    }
+    friend vector_t operator+(VAbstract<vt, it, dt> x, const vector_t& y) {
+        return x += y;
     }
     friend vector_t operator+(vector_t x, const vector_t& y) {
         return x += y;
@@ -28,22 +50,49 @@ public:
         vector_t::AXPY(self, -1, x);
         return self;
     }
+    vector_t& operator-=(const AX<vector_t> &x) {
+        vector_t &self = static_cast<vector_t&>(*this);
+        vector_t::AXPY(self, -1, x.eval());
+        return self;
+    }
+    friend vector_t operator-(vector_t x, const VAbstract<vt, it, dt>& y) {
+        return x -= y;
+    }
+    friend vector_t operator-(VAbstract<vt, it, dt> x, const vector_t& y) {
+        return x -= y;
+    }
     friend vector_t operator-(vector_t x, const vector_t& y) {
         return x -= y;
     }
 
-    vector_t& operator*=(PetscScalar alpha) {
+    vector_t& operator*=(data_t alpha) {
         vector_t &self = static_cast<vector_t&>(*this);
         vector_t::Scale(self, alpha);
         return self;
     }
-    friend vector_t operator*(vector_t x, PetscScalar alpha) {
-        return x *= alpha;
+    friend AX<vector_t> operator*(data_t alpha, const VAbstract<vt, it, dt> &x) {
+        return AX<vector_t>(alpha, x);
     }
-    friend vector_t operator*(PetscScalar alpha, vector_t x) {
-        return x *= alpha;
+    friend AX<vector_t> operator*(const VAbstract<vt, it, dt> &x, data_t alpha) {
+        return AX<vector_t>(alpha, x);
+    }
+    friend AX<vector_t> operator*(const vector_t &x, data_t alpha) {
+        return AX<vector_t>(alpha, x);
+    }
+    friend AX<vector_t> operator*(data_t alpha, vector_t x) {
+        return AX<vector_t>(alpha, x);
+        // return x *= alpha;
     }
 
+    friend AsyncProxy<data_t> operator,(const VAbstract<vt, it, dt> &x, const VAbstract<vt, it, dt>& y) {
+        return vector_t::AsyncDot(x, y);
+    }
+    friend AsyncProxy<data_t> operator,(const VAbstract<vt, it, dt> &x, const vector_t& y) {
+        return vector_t::AsyncDot(x, y);
+    }
+    friend AsyncProxy<data_t> operator,(const vector_t &x, const VAbstract<vt, it, dt>& y) {
+        return vector_t::AsyncDot(x, y);
+    }
     friend AsyncProxy<data_t> operator,(const vector_t &x, const vector_t& y) {
         return vector_t::AsyncDot(x, y);
     }
@@ -54,66 +103,138 @@ public:
 };
 
 
-enum class BlasType: int {
-    NONE   = 0,
-    SCALE  = 10, /* r = alpha q + beta * p (where r = p, alpha = 0.0) | p = beta * p           */
-    AXPY   = 20, /* r = alpha q + beta * p (where r = p, beta = 1.0)  | p = alpha q + p        */
-    BYPX   = 21, /* r = alpha q + beta * p (where r = p, alpha = 1.0) | p = q + beta p         */
-    AXPBY  = 22, /* r = alpha q + beta * p (where r = p)              | p = alpha q + beta * p */
-    WAXPBY = 30, /* r = alpha q + beta * p */
-};
-
-
-template<typename VType>
-class LValue;
-template<typename VType>
-class RValue;
-
-template<typename VType>
-class RValue
+template<typename vt>
+class AX
 {
-    using index_t = typename VType::index_t;
-    using data_t = typename VType::data_t;
-    mutable const VType *q = nullptr;
-    mutable const VType *p = nullptr;
-    // mutable const VType *r = nullptr;
-    mutable BlasType stage = BlasType::NONE;
+    using vector_t = vt;
+    using index_t = typename vector_t::index_t;
+    using data_t = typename vector_t::data_t;
+    const data_t alpha = static_cast<data_t>(1);
+    const vector_t *x = nullptr;
 public:
 
-    RValue(const VType &v) {
-        this->v = &v;
+    AX(const data_t &alpha, const vector_t &x) : alpha(alpha), x(&x) { }
+    vector_t eval() const {
+        vector_t w;
+        vector_t::duplicate(*this->x, w);
+        vector_t::AXPBY(w, this->alpha, *this->x, static_cast<data_t>(0), *this->x);
+        return w;
+    }
+    friend AX<vector_t> operator*(const AX<vector_t> &lhs, const data_t &scale) {
+        return AX<vector_t>(lhs.x, lhs.alpha * scale);
+    }
+    friend AX<vector_t> operator*(const AX<vector_t> &lhs, const AsyncProxy<data_t> &ascale) {
+        data_t scale = ascale.await();
+        return lhs * scale;
+    }
+    friend AX<vector_t> operator*(const data_t &scale, const AX<vector_t> &rhs) {
+        return rhs * scale;
+    }
+    friend AX<vector_t> operator*(const AsyncProxy<data_t> &ascale, const AX<vector_t> &rhs) {
+        return rhs * ascale;
     }
 
-    operator VType() const {
-        return this->v;
+    friend AXPBY<vector_t> operator+(const AX<vector_t> &lhs, const VAbstract<vector_t, index_t, data_t> &rhs) {
+        return AXPBY<vector_t>(lhs.alpha, *lhs.x, static_cast<data_t>(1), rhs);
+    }
+    friend AXPBY<vector_t> operator+(const vector_t &lhs, const AX<vector_t> &rhs) {
+        return AXPBY<vector_t>(static_cast<data_t>(1), lhs, rhs.alpha, *rhs.x);
+    }
+    friend AXPBY<vector_t> operator+(const AX<vector_t> &lhs, const vector_t &rhs) {
+        return AXPBY<vector_t>(lhs.alpha, *lhs.x, static_cast<data_t>(1), rhs);
+    }
+    friend AXPBY<vector_t> operator+(const AX<vector_t> &lhs, const AX<vector_t> &rhs) {
+        return AXPBY<vector_t>(lhs.alpha, *lhs.x, rhs.alpha, *rhs.x);
+    }
+    friend AXPBY<vector_t> operator+(const AX<vector_t> &lhs, const AXPBY<vector_t> &rhs) {
+        return lhs + rhs.eval();
     }
 
-    friend RValue<VType> operator+(const RValue<VType> &q, const RValue<VType>& p) {
-        RValue<VType> result;
-        return q += p;
+    friend AXPBY<vector_t> operator-(const AX<vector_t> &lhs, const VAbstract<vector_t, index_t, data_t> &rhs) {
+        return AXPBY<vector_t>(lhs.alpha, *lhs.x, static_cast<data_t>(-1), rhs);
+    }
+    friend AXPBY<vector_t> operator-(const AX<vector_t> &lhs, const vector_t &rhs) {
+        return AXPBY<vector_t>(lhs.alpha, *lhs.x, static_cast<data_t>(-1), rhs);
+    }
+    friend AXPBY<vector_t> operator-(const vector_t &lhs, const AX<vector_t> &rhs) {
+        return AXPBY<vector_t>(static_cast<data_t>(1), lhs, -rhs.alpha, *rhs.x);
+    }
+    friend AXPBY<vector_t> operator-(const AX<vector_t> &lhs, const AX<vector_t> &rhs) {
+        return AXPBY<vector_t>(lhs.alpha, *lhs.x, rhs.alpha, *rhs.x);
+    }
+    friend AXPBY<vector_t> operator-(const AX<vector_t> &lhs, const AXPBY<vector_t> &rhs) {
+        return lhs - rhs.eval();
     }
 };
 
-template<typename VType>
-class LValue : public VType
+
+template<typename vt>
+class AXPBY
 {
-    using index_t = typename VType::index_t;
-    using data_t = typename VType::data_t;
+    using vector_t = vt;
+    using index_t = typename vector_t::index_t;
+    using data_t = typename vector_t::data_t;
+    const data_t alpha = static_cast<data_t>(1);
+    const data_t beta = static_cast<data_t>(1);
+    const vector_t *x = nullptr;
+    const vector_t *y = nullptr;
 public:
-    LValue() : VType() { };
-    LValue(const VType &src) : VType(src) { } /* Copy Ctor. */
-    LValue(VType&& src) noexcept : VType(src) { } /* Move Ctor. */
-    LValue<VType>& operator=(const VType &src) { VType::operator=(src); return *this; }
-    LValue<VType>& operator=(VType&& src) noexcept { VType::operator=(src); return *this; }
 
-    friend LValue<VType> operator+(LValue<VType> x, const LValue<VType>& y) { return x += y; }
-    friend LValue<VType> operator-(LValue<VType> x, const LValue<VType>& y) { return x -= y; }
-    friend LValue<VType> operator*(LValue<VType> x, data_t alpha) { return x *= alpha; }
-    friend LValue<VType> operator*(data_t alpha, LValue<VType> x) { return x * alpha; }
+    // AXPBY(const data_t &alpha, const vector_t &x, const data_t &beta, const vector_t &y) : alpha(alpha), x(x), beta(beta), y(y) { }
+    // vector_t eval() {
+    //     vector_t w;
+    //     vector_t::duplicate(this->x, w);
+    //     return vector_t::AXPBY(w, this->alpha, this->x, this->beta, this->y);
+    // }
 
-    friend AsyncProxy<typename LValue<VType>::data_t> operator,(const LValue<VType> &x, const LValue<VType>& y) {
-    return LValue<VType>::AsyncDot(x, y);
-}
+    AXPBY(const data_t &alpha, const VAbstract<vector_t, index_t, data_t> &x, const data_t &beta, const VAbstract<vector_t, index_t, data_t> &y) : alpha(alpha), x(static_cast<const vector_t*>(&x)), beta(beta), y(static_cast<const vector_t*>(&y)) { }
+    vector_t eval() const {
+        vector_t w;
+        vector_t::duplicate(*this->x, w);
+        vector_t::AXPBY(w, this->alpha, *this->x, this->beta, *this->y);
+        return w;
+    }
+
+    operator vector_t() const {
+        return this->eval();
+    }
+
+    friend AXPBY<vector_t> operator*(const AXPBY<vector_t> &lhs, const data_t &scale) {
+        return AXPBY<vector_t>(lhs.alpha * scale, lhs.x, lhs.beta * scale, lhs.y);
+    }
+    friend AXPBY<vector_t> operator*(const AXPBY<vector_t> &lhs, const AsyncProxy<data_t> &ascale) {
+        data_t scale = ascale.await();
+        return lhs * scale;
+    }
+    friend AXPBY<vector_t> operator*(const data_t &scale, const AXPBY<vector_t> &rhs) {
+        return rhs * scale;
+    }
+    friend AXPBY<vector_t> operator*(const AsyncProxy<data_t> &ascale, const AXPBY<vector_t> &rhs) {
+        return rhs * ascale;
+    }
+
+    friend AXPBY<vector_t> operator+(const AXPBY<vector_t> &lhs, const vector_t &rhs) {
+        return lhs.eval() + rhs;
+    }
+    friend AXPBY<vector_t> operator+(const AXPBY<vector_t> &lhs, const AX<vector_t> &rhs) {
+        return lhs.eval() + rhs;
+    }
+    friend AXPBY<vector_t> operator+(const AXPBY<vector_t> &lhs, const AXPBY<vector_t> &rhs) {
+        return lhs.eval() + rhs.eval();
+    }
+
+    friend AXPBY<vector_t> operator-(const AXPBY<vector_t> &lhs, const vector_t &rhs) {
+        return lhs.eval() - rhs;
+    }
+    friend AXPBY<vector_t> operator-(const AXPBY<vector_t> &lhs, const AX<vector_t> &rhs) {
+        return lhs.eval() - rhs;
+    }
+    friend AXPBY<vector_t> operator-(const AXPBY<vector_t> &lhs, const AXPBY<vector_t> &rhs) {
+        return lhs.eval() - rhs.eval();
+    }
 
 };
+
+
+
 

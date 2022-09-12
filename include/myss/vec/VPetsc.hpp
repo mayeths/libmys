@@ -19,10 +19,15 @@ public:
         }
         this->vec = nullptr;
     }
+    bool iscompact(const VAbstract<VPetsc, PetscInt, PetscScalar> &other) { return true; }
     static void duplicate(const VPetsc &src, VPetsc &dst) {
         if (&src == &dst) return; else dst.~VPetsc();
         PetscErrorCode ierr;
-        VecDuplicate(src.vec, &dst.vec); CHKERRV(ierr);
+        ierr = VecDuplicate(src.vec, &dst.vec); CHKERRV(ierr);
+    }
+    static void fill(const VPetsc &src, PetscScalar val) {
+        PetscErrorCode ierr;
+        ierr = VecSet(src.vec, val); CHKERRV(ierr);
     }
     static void copy(const VPetsc &src, VPetsc &dst) {
         if (&src == &dst) return;
@@ -37,17 +42,32 @@ public:
         std::swap(src.vec, dst.vec);
     }
     VPetsc(const VPetsc &src)     { VPetsc::copy(src, *this); } /* Copy Ctor. */
+    VPetsc(const VAbstract<VPetsc, PetscInt, PetscScalar> &src) { VPetsc::copy(static_cast<const VPetsc&>(src), *this); }
     VPetsc(VPetsc&& src) noexcept { VPetsc::swap(src, *this); } /* Move Ctor. */
     VPetsc& operator=(const VPetsc &src)     { VPetsc::copy(src, *this); return *this; } /* Copy Assign. */
     VPetsc& operator=(VPetsc&& src) noexcept { VPetsc::swap(src, *this); return *this; } /* Move Assign. */
 
 
+    static void AXPBY(VPetsc &w, PetscScalar alpha, const VPetsc &x, PetscScalar beta, const VPetsc &y) {
+        PetscErrorCode ierr;
+        if (&x == &y) {
+            ierr = VecAXPY(w.vec, alpha, x.vec); CHKERRV(ierr);
+            ierr = VecAXPY(w.vec, beta, y.vec); CHKERRV(ierr);
+        } else if (&w != &x && &x != &y) {
+            ierr = VecAXPBYPCZ(w.vec, alpha, beta, 0, x.vec, y.vec); CHKERRV(ierr);
+        } else {
+            FAILED("%p %p %p", &w, &x, &y);
+        }
+    }
+
     static void AXPY(VPetsc &y, PetscScalar alpha, const VPetsc &x) {
-        VecAXPY(y.vec, alpha, x.vec);
+        PetscErrorCode ierr;
+        ierr = VecAXPY(y.vec, alpha, x.vec); CHKERRV(ierr);
     }
 
     static void Scale(VPetsc &y, PetscScalar alpha) {
-        VecScale(y.vec, alpha);
+        PetscErrorCode ierr;
+        ierr = VecScale(y.vec, alpha); CHKERRV(ierr);
     }
 
     static AsyncProxy<PetscScalar> AsyncDot(const VPetsc &x, const VPetsc &y) {

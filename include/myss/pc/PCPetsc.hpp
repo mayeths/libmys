@@ -62,7 +62,7 @@ public:
 
     virtual void Apply(const RealVType &b, RealVType &x, bool xzero = false) const {
         PetscErrorCode ierr;
-        ierr = PCApply(this->pc, b.vec, x.vec); CHKERRV(ierr);
+        ierr = PCApply(this->pc, static_cast<const RealVType&>(b).vec, static_cast<RealVType &>(x).vec); CHKERRV(ierr);
     }
     virtual const char *GetName() const {
         return "PCPetsc";
