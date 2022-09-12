@@ -60,14 +60,15 @@ public:
         }
     }
 
-    static void AXPY(VPetsc &y, PetscScalar alpha, const VPetsc &x) {
+    static void Set(VPetsc &y, PetscScalar alpha, ValueSetOp op = ValueSetOp::Insert) {
         PetscErrorCode ierr;
-        ierr = VecAXPY(y.vec, alpha, x.vec); CHKERRV(ierr);
-    }
-
-    static void Scale(VPetsc &y, PetscScalar alpha) {
-        PetscErrorCode ierr;
-        ierr = VecScale(y.vec, alpha); CHKERRV(ierr);
+        if (op == ValueSetOp::Insert) {
+            ierr = VecSet(y.vec, alpha); CHKERRV(ierr);
+        } else if (op == ValueSetOp::Shift) {
+            ierr = VecShift(y.vec, alpha); CHKERRV(ierr);
+        } else if (op == ValueSetOp::Scale) {
+            ierr = VecScale(y.vec, alpha); CHKERRV(ierr);
+        }
     }
 
     static AsyncProxy<PetscScalar> AsyncDot(const VPetsc &x, const VPetsc &y) {
