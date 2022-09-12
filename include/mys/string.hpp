@@ -3,6 +3,8 @@
 #include <memory>
 #include <string>
 #include <stdexcept>
+#include <stdarg.h>
+#include <string.h>
 
 /* https://stackoverflow.com/a/26221725 */
 template<typename ... Args>
@@ -17,4 +19,29 @@ std::string strformat(const std::string& format, Args ...args)
     std::string result(buffer, buffer + size - 1); // We don't want the '\0' inside
     delete[] buffer;
     return result;
+}
+
+/* https://stackoverflow.com/a/26221725 */
+char *cstrnformat(char *buffer, int bufsize, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int size_s = vsnprintf(buffer, bufsize, format, args);
+    if (size_s <= 0 || size_s > bufsize)
+        return NULL;
+    va_end(args);
+    return buffer;
+}
+
+char *cstrformat(char *buffer, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    if (buffer == NULL)
+        buffer = cstrnformat(NULL, 0, format, args);
+    else {
+        int bufsize = strlen(buffer);
+        buffer = cstrnformat(buffer, bufsize, format, args);
+    }
+    va_end(args);
+    return buffer;
 }

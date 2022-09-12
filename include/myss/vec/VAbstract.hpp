@@ -14,15 +14,44 @@ public:
     explicit VAbstract(const VAbstract&) { } /* Copy */
     explicit VAbstract(VAbstract&&) { } /* Move */
 
-    vector_t& operator+=(const vector_t &x) { static_cast<vector_t const&>(*this) += x; return *this; }
-    friend vector_t operator+(vector_t x, const vector_t& y) { return x += y; }
+    vector_t& operator+=(const vector_t &x) {
+        vector_t &self = static_cast<vector_t&>(*this);
+        vector_t::axpy(self, 1, x);
+        return self;
+    }
+    friend vector_t operator+(vector_t x, const vector_t& y) {
+        return x += y;
+    }
 
-    vector_t& operator-=(const vector_t &x) { static_cast<vector_t const&>(*this) -= x; return *this; }
-    friend vector_t operator-(vector_t x, const vector_t& y) { return x -= y; }
+    vector_t& operator-=(const vector_t &x) {
+        vector_t &self = static_cast<vector_t&>(*this);
+        vector_t::axpy(self, -1, x);
+        return self;
+    }
+    friend vector_t operator-(vector_t x, const vector_t& y) {
+        return x -= y;
+    }
 
-    vector_t& operator*=(PetscScalar alpha) { static_cast<vector_t const&>(*this) *= alpha; return *this; }
-    friend vector_t operator*(vector_t x, PetscScalar alpha) { return x *= alpha; }
-    friend vector_t operator*(PetscScalar alpha, vector_t x) { return x * alpha; }
+    vector_t& operator*=(PetscScalar alpha) {
+        vector_t &self = static_cast<vector_t&>(*this);
+        vector_t::scale(self, alpha);
+        return self;
+    }
+    friend vector_t operator*(vector_t x, PetscScalar alpha) {
+        return x *= alpha;
+    }
+    friend vector_t operator*(PetscScalar alpha, vector_t x) {
+        return x *= alpha;
+    }
+
+    friend AsyncProxy<data_t> operator,(const vector_t &x, const vector_t& y) {
+        return vector_t::async_dot(x, y);
+    }
+
+    friend data_t dot(const vector_t &x, const vector_t &y) {
+        return vector_t::async_dot(x, y).await();
+    }
+
 };
 
 

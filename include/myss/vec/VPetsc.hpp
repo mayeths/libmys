@@ -78,64 +78,12 @@ public:
         return result;
     }
 
-    void axpy(VPetsc &y, PetscScalar alpha, const VPetsc &x) {
+    static void axpy(VPetsc &y, PetscScalar alpha, const VPetsc &x) {
         VecAXPY(y.vec, alpha, x.vec);
     }
 
-    // operator RType<VPetsc, PetscInt, PetscScalar>() const {
-    //     return RType<VPetsc, PetscInt, PetscScalar>(*this);
-    // }
+    static void scale(VPetsc &y, PetscScalar alpha) {
+        VecScale(y.vec, alpha);
+    }
 
-    VPetsc& operator+=(const VPetsc &x) { VecAXPY(this->vec, 1, x.vec); return *this; }
-    // friend VPetsc operator+(VPetsc x, const VPetsc& y) { return x += y; }
-
-    VPetsc& operator-=(const VPetsc &x) { VecAXPY(this->vec, -1, x.vec); return *this; }
-    // friend VPetsc operator-(VPetsc x, const VPetsc& y) { return x -= y; }
-
-    VPetsc& operator*=(PetscScalar alpha) { VecScale(this->vec, alpha); return *this; }
-    // friend VPetsc operator*(VPetsc x, PetscScalar alpha) { return x *= alpha; }
-    // friend VPetsc operator*(PetscScalar alpha, VPetsc x) { return x * alpha; }
 };
-
-
-template <typename VType>
-AsyncProxy<typename VType::data_t> dot(const VType &x, const VType &y) {
-        auto result = VType::async_dot(x, y);
-        result.await();
-        return result;
-}
-
-template <typename VType>
-AsyncProxy<typename VType::data_t> operator,(const VType &x, const VType& y) {
-    // return trycall_async_dot(x, y, std::integral_constant<bool, has_async_dot<VType>::value>());
-    // return dot(x, y);
-    return VType::async_dot(x, y);
-}
-
-
-// https://en.cppreference.com/w/cpp/meta
-// https://www.fluentcpp.com/2018/05/18/make-sfinae-pretty-2-hidden-beauty-sfinae/
-// https://stackoverflow.com/a/23133787
-// https://stackoverflow.com/a/87846
-// #define SFINAE_HAS_SIGNATURE(funcName, signature)                 \
-//     template <typename U>                                                     \
-//     class has_##funcName                                                          \
-//     {                                                                         \
-//     private:                                                                  \
-//         template<typename T, T> struct SFINAE;                                \
-//         template<typename T> static int check(SFINAE<signature, &T::funcName>*); \
-//         template<typename T> static char check(...);                          \
-//     public:                                                                   \
-//         static const bool value = sizeof(check<U>(0)) == sizeof(int);         \
-//         /*static_assert(value, "Please check you definition of " #funcName " has signature: " #signature); */\
-//     };
-
-// SFINAE_HAS_SIGNATURE(async_dot, AsyncProxy<typename T::data_t> (*)(const U&, const U&));
-// template <typename VType>
-// AsyncProxy<typename VType::data_t> trycall_async_dot(const VType& x, const VType& y, std::true_type) {
-//     return VType::async_dot(x, y);
-// }
-// template <typename VType> /* Comment this can throw error on compile-time instead of run-time */
-// AsyncProxy<typename VType::data_t> trycall_async_dot(const VType&, const VType&, std::false_type)
-// {
-// }
