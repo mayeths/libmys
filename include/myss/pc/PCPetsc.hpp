@@ -1,14 +1,14 @@
 #pragma once
 
 #include <petsc.h>
-#include "PCAbstract.hpp"
+#include "PCBase.hpp"
 #include "../mat/MPetsc.hpp"
 #include "../vec/VPetsc.hpp"
 
-class PCPetsc : public PCAbstract<MPetsc>
+class PCPetsc : public PCBase<MPetsc>
 {
 public:
-    using BASE = PCAbstract<MPetsc>;
+    using BASE = PCBase<MPetsc>;
     using VType = typename BASE::VType;
     using MType = typename BASE::MType;
     using IType = typename BASE::IType;

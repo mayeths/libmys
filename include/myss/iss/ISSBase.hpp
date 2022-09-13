@@ -1,12 +1,11 @@
 #pragma once
 
-#include "../pc/PCAbstract.hpp"
+#include "../pc/PCBase.hpp"
 #include "../pc/PCNone.hpp"
 #include "../util/AsyncProxy.hpp"
-#include "../vec/VAbstract.hpp"
 
 template<typename matrix_t>
-class ISSAbstract
+class ISSBase
 {
 public:
     enum StopReason: int {
@@ -17,7 +16,7 @@ public:
         DivergedByMaxIter,
     };
     using MType = matrix_t;
-    using PType = PCAbstract<MType>;
+    using PType = PCBase<MType>;
     using VType = typename MType::VType;
     using IType = typename MType::IType;
     using DType = typename MType::DType;
@@ -30,7 +29,7 @@ protected:
     mutable IType iter = 0, stopiter = 0;
     mutable DType stopabs = 0, stoprel = 0;
     mutable StopReason stopreason = StopReason::NoStopped;
-    mutable ConvergeTestFunction convergetest = &ISSAbstract::DefaultConvergeTest;
+    mutable ConvergeTestFunction convergetest = &ISSBase::DefaultConvergeTest;
     mutable const MType *A = nullptr;
     mutable const PType *P = nullptr;
     mutable const PType *defaultP = nullptr;
@@ -41,18 +40,18 @@ public:
     IType maxiter = 100;
     DType rtol = 1e-6, atol = 1e-6, dtol = 1e6;
 
-    ISSAbstract() = delete;
-    ISSAbstract(const MType &A) {
+    ISSBase() = delete;
+    ISSBase(const MType &A) {
         this->A = &A;
         this->P = nullptr;
         this->defaultP = new PCNone<typename PType::MType>();
     }
-    ISSAbstract(const MType &A, const PType &P) {
+    ISSBase(const MType &A, const PType &P) {
         this->A = &A;
         this->P = &P;
         this->defaultP = nullptr;
     }
-    ~ISSAbstract() {
+    ~ISSBase() {
         if (this->defaultP) delete this->defaultP;
         this->defaultP = nullptr;
     }

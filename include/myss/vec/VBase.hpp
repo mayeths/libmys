@@ -12,17 +12,17 @@ enum class ValueSetOp : int {
 };
 
 template<typename vector_t, typename index_t, typename data_t>
-class VAbstract
+class VBase
 {
 public:
     using VType = vector_t;
     using IType = index_t;
     using DType = data_t;
-    VAbstract() { }
-    virtual bool iscompact(const VAbstract<VType, IType, DType> &other) { return true; }
+    VBase() { }
+    virtual bool iscompact(const VBase<VType, IType, DType> &other) { return true; }
 
-    VAbstract(const VType &src)     { VType::copy(src, static_cast<VType&>(*this)); }
-    VAbstract(VType&& src) noexcept { VType::swap(src, static_cast<VType&>(*this)); }
+    VBase(const VType &src)     { VType::copy(src, static_cast<VType&>(*this)); }
+    VBase(VType&& src) noexcept { VType::swap(src, static_cast<VType&>(*this)); }
     VType& operator=(const AX<VType> &src)     { return static_cast<VType&>(*this).operator=(src.eval()); }
     VType& operator=(const AXPBY<VType> &src)  { return static_cast<VType&>(*this).operator=(src.eval()); }
     VType& operator=(AX<VType>&& src) noexcept    { return static_cast<VType&>(*this).operator=(src.eval()); }

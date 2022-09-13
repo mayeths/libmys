@@ -2,13 +2,13 @@
 
 #include <map>
 #include <petsc.h>
-#include "MAbstract.hpp"
+#include "MBase.hpp"
 #include "../vec/VPetsc.hpp"
 
-class MPetsc : public MAbstract<VPetsc, PetscInt, PetscScalar>
+class MPetsc : public MBase<VPetsc, PetscInt, PetscScalar>
 {
 public:
-    using BASE = MAbstract<VPetsc, PetscInt, PetscScalar>;
+    using BASE = MBase<VPetsc, PetscInt, PetscScalar>;
     using VType = BASE::VType;
     using IType = BASE::IType;
     using DType = BASE::DType;

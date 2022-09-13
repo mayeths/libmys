@@ -1,12 +1,12 @@
 #pragma once
 
-#include "PCAbstract.hpp"
+#include "PCBase.hpp"
 
 template<typename matrix_t>
-class PCNone : public PCAbstract<matrix_t>
+class PCNone : public PCBase<matrix_t>
 {
 public:
-    using BASE = PCAbstract<matrix_t>;
+    using BASE = PCBase<matrix_t>;
     using MType = typename BASE::MType;
     using VType = typename BASE::VType;
 

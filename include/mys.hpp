@@ -22,23 +22,23 @@
 #include "mys/util.hpp"
 #include "mys/vec.hpp"
 
-#include "myss/vec/VAbstract.hpp"
+#include "myss/vec/VBase.hpp"
 #include "myss/vec/VDense.hpp"
 #ifdef PETSC_DIR
 #include "myss/vec/VPetsc.hpp"
 #endif /*PETSC_DIR*/
 
-#include "myss/mat/MAbstract.hpp"
+#include "myss/mat/MBase.hpp"
 #ifdef PETSC_DIR
 #include "myss/mat/MPetsc.hpp"
 #endif /*PETSC_DIR*/
 
-#include "myss/pc/PCAbstract.hpp"
+#include "myss/pc/PCBase.hpp"
 #include "myss/pc/PCNone.hpp"
 #ifdef PETSC_DIR
 #include "myss/pc/PCPetsc.hpp"
 #endif /*PETSC_DIR*/
 
-#include "myss/iss/ISSAbstract.hpp"
+#include "myss/iss/ISSBase.hpp"
 #include "myss/iss/CG.hpp"
 #include "myss/iss/PIPECG.hpp"

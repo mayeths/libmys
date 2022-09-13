@@ -2,12 +2,12 @@
 
 #include <petsc.h>
 #include <memory>
-#include "VAbstract.hpp"
+#include "VBase.hpp"
 
-class VPetsc : public VAbstract<VPetsc, PetscInt, PetscScalar>
+class VPetsc : public VBase<VPetsc, PetscInt, PetscScalar>
 {
 public:
-    using BASE = VAbstract<VPetsc, PetscInt, PetscScalar>;
+    using BASE = VBase<VPetsc, PetscInt, PetscScalar>;
     using IType = BASE::IType;
     using DType = BASE::DType;
     Vec vec = nullptr;

@@ -1,14 +1,14 @@
 #pragma once
 
-#include "ISSAbstract.hpp"
+#include "ISSBase.hpp"
 
 template<
     typename matrix_t,
     typename intermediate_t = typename matrix_t::DType> /* intermediate DType */
-class CG : public ISSAbstract<matrix_t>
+class CG : public ISSBase<matrix_t>
 {
 public:
-    using BASE = ISSAbstract<matrix_t>;
+    using BASE = ISSBase<matrix_t>;
     using IType = typename BASE::IType;
     using DType = typename BASE::DType;
     using VType = typename BASE::VType;
