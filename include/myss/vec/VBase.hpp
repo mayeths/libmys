@@ -20,7 +20,6 @@ public:
     using IType = index_t;
     using DType = data_t;
     VBase() { }
-    virtual bool iscompact(const VBase<VType, IType, DType> &other) { return true; }
 
     VBase(const VType &src)     { VType::copy(src, static_cast<VType&>(*this)); }
     VBase(VType&& src) noexcept { VType::swap(src, static_cast<VType&>(*this)); }

@@ -5,6 +5,7 @@
 #include "../mat/MPetsc.hpp"
 #include "../vec/VPetsc.hpp"
 
+template<typename dummy_t = MPetsc>
 class PCPetsc : public PCBase<MPetsc>
 {
 public:

@@ -34,14 +34,9 @@ public:
         std::swap(src.vec, dst.vec);
     }
     VPetsc(const VPetsc &src) { VPetsc::copy(src, *this); }
-    VPetsc(const BASE &src)   { VPetsc::copy(static_cast<const VPetsc&>(src), *this); }
     VPetsc(VPetsc&& src) noexcept { VPetsc::swap(src, *this); }
     VPetsc& operator=(const VPetsc &src)     { VPetsc::copy(src, *this); return *this; }
     VPetsc& operator=(VPetsc&& src) noexcept { VPetsc::swap(src, *this); return *this; }
-
-    bool iscompact(const BASE &other) {
-        return true;
-    }
 
     static void AXPBY(VPetsc &w, PetscScalar alpha, const VPetsc &x, PetscScalar beta, const VPetsc &y) {
         PetscErrorCode ierr;
