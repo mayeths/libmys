@@ -21,15 +21,6 @@ public:
         this->vec = nullptr;
     }
 
-    static void duplicate(const VPetsc &src, VPetsc &dst) {
-        if (&src == &dst) return; else dst.~VPetsc();
-        PetscErrorCode ierr;
-        ierr = VecDuplicate(src.vec, &dst.vec); CHKERRV(ierr);
-    }
-    static void fill(const VPetsc &src, PetscScalar val) {
-        PetscErrorCode ierr;
-        ierr = VecSet(src.vec, val); CHKERRV(ierr);
-    }
     static void copy(const VPetsc &src, VPetsc &dst) {
         if (&src == &dst) return;
         PetscErrorCode ierr;
@@ -64,14 +55,34 @@ public:
         }
     }
 
-    static void Set(VPetsc &y, PetscScalar alpha, ValueSetOp op = ValueSetOp::Insert) {
+    static void ElementWiseOp(VPetsc &y, const VPetsc &x, ElementOp op) {
         PetscErrorCode ierr;
-        if (op == ValueSetOp::Insert) {
+        if (op == ElementOp::Replace) {
+            ierr = VecCopy(x.vec, y.vec); CHKERRV(ierr);
+        } else if (op == ElementOp::Shift) {
+            ierr = VecAXPY(y.vec, 1.0, x.vec); CHKERRV(ierr);
+        } else if (op == ElementOp::Scale) {
+            ierr = VecPointwiseMult(y.vec, x.vec, y.vec); CHKERRV(ierr);
+        } else if (op == ElementOp::Reciprocal) {
+            ierr = VecPointwiseDivide(y.vec, x.vec, y.vec); CHKERRV(ierr);
+        } else {
+            FAILED("%d", (int)op);
+        }
+    }
+
+    static void ElementWiseOp(VPetsc &y, PetscScalar alpha, ElementOp op) {
+        PetscErrorCode ierr;
+        if (op == ElementOp::Replace) {
             ierr = VecSet(y.vec, alpha); CHKERRV(ierr);
-        } else if (op == ValueSetOp::Shift) {
+        } else if (op == ElementOp::Shift) {
             ierr = VecShift(y.vec, alpha); CHKERRV(ierr);
-        } else if (op == ValueSetOp::Scale) {
+        } else if (op == ElementOp::Scale) {
             ierr = VecScale(y.vec, alpha); CHKERRV(ierr);
+        } else if (op == ElementOp::Reciprocal) {
+            ierr = VecReciprocal(y.vec); CHKERRV(ierr);
+            ierr = VecScale(y.vec, alpha); CHKERRV(ierr);
+        } else {
+            FAILED("%d", (int)op);
         }
     }
 

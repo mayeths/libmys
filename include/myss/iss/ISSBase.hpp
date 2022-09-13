@@ -125,7 +125,8 @@ public:
         const DType &atol, const DType &rtol, const DType &dtol,
         const IType &iter, const IType &maxiter)
     {
-        PRINTF(0, "Iteration %4d ||r|| %.17e ||r||/||b|| %.17e\n", iter, abs, rel);
+        int pref = trunc(log10(maxiter)) + 1;
+        PRINTF(0, "Iteration %*d ||r|| %.17e ||r||/||b|| %.17e\n", pref, iter, abs, rel);
         if (abs <= atol) return StopReason::ConvergedByAtol;
         else if (rel <= rtol) return StopReason::ConvergedByRtol;
         else if (rel >= dtol && iter != 0) return StopReason::DivergedByDtol;

@@ -5,10 +5,11 @@
 template<typename vector_t> class AX;
 template<typename vector_t> class AXPBY;
 
-enum class ValueSetOp : int {
-    Insert,
-    Shift,
-    Scale,
+enum class ElementOp : int {
+    Replace,    /* y[i] = x[i]        or y[i] = alpha        */
+    Shift,      /* y[i] = x[i] + y[i] or y[i] = alpha + y[i] */
+    Scale,      /* y[i] = x[i] + y[i] or y[i] = alpha * y[i] */
+    Reciprocal, /* y[i] = x[i] + y[i] or y[i] = alpha / y[i] */
 };
 
 template<typename vector_t, typename index_t, typename data_t>
@@ -27,6 +28,7 @@ public:
     VType& operator=(const AXPBY<VType> &src)  { return static_cast<VType&>(*this).operator=(src.eval()); }
     VType& operator=(AX<VType>&& src) noexcept    { return static_cast<VType&>(*this).operator=(src.eval()); }
     VType& operator=(AXPBY<VType>&& src) noexcept { return static_cast<VType&>(*this).operator=(src.eval()); }
+    VType& operator=(DType alpha) noexcept { VType::ElementWiseOp(static_cast<VType&>(*this), alpha, ElementOp::Replace); return static_cast<VType&>(*this); }
 
     VType& operator+=(const VType &x) {
         VType &self = static_cast<VType&>(*this);
@@ -43,8 +45,13 @@ public:
         self = self + x;
         return self;
     }
-    friend VType operator+(VType x, const VType& y) {
+    friend VType operator+(const VType &x, const VType& y) {
         return AXPBY<VType>(static_cast<DType>(1), x, static_cast<DType>(1), y);
+    }
+    friend VType operator+(const VType &x, DType alpha) {
+        VType y = x;
+        VType::ElementWiseOp(y, alpha, ElementOp::Shift);
+        return y;
     }
 
     VType& operator-=(const VType &x) {
@@ -69,8 +76,27 @@ public:
     friend AX<VType> operator*(const VType &x, DType alpha) {
         return AX<VType>(alpha, x);
     }
-    friend AX<VType> operator*(DType alpha, VType x) {
+    friend AX<VType> operator*(DType alpha, const VType &x) {
         return AX<VType>(alpha, x);
+    }
+
+    friend VType operator*(const VType &x, const VType &y) {
+        VType w = x;
+        VType::ElementWiseOp(w, y, ElementOp::Scale);
+        return w;
+    }
+    friend VType operator/(const VType &x, const VType &y) {
+        VType w = x;
+        VType::ElementWiseOp(w, y, ElementOp::Reciprocal);
+        return w;
+    }
+    friend AX<VType> operator/(const VType &x, DType alpha) {
+        return AX<VType>(static_cast<DType>(-1) / alpha, x);
+    }
+    friend VType operator/(DType alpha, const VType &x) {
+        VType y = x;
+        VType::ElementWiseOp(y, alpha, ElementOp::Reciprocal);
+        return y;
     }
 
     friend AsyncProxy<DType> operator,(const VType &x, const VType& y) {
@@ -94,12 +120,17 @@ class AX
 public:
 
     AX(const DType &alpha, const VType &x) : alpha(alpha), x(&x) { }
+
     VType eval() const {
-        VType w;
-        VType::duplicate(*this->x, w);
-        VType::AXPBY(w, this->alpha, *this->x, static_cast<DType>(0), *this->x);
+        VType w = *this->x;
+        VType::ElementWiseOp(w, this->alpha, ElementOp::Scale);
         return w;
     }
+
+    operator VType() const {
+        return this->eval();
+    }
+
     friend AX<VType> operator*(const AX<VType> &lhs, const DType &scale) {
         return AX<VType>(lhs.x, lhs.alpha * scale);
     }
@@ -155,9 +186,9 @@ class AXPBY
 public:
 
     AXPBY(const DType &alpha, const VType &x, const DType &beta, const VType &y) : alpha(alpha), x(&x), beta(beta), y(&y) { }
+
     VType eval() const {
-        VType w;
-        VType::duplicate(*this->x, w);
+        VType w = *this->x;
         VType::AXPBY(w, this->alpha, *this->x, this->beta, *this->y);
         return w;
     }
