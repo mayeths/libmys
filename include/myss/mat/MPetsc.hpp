@@ -106,9 +106,17 @@ public:
     }
 
 
-    void CreateVecs(VPetsc &x, VPetsc &b) {
+    void CreateVecs(VPetsc &x, VPetsc &b) const {
+        this->CreateSol(x);
+        this->CreateRHS(b);
+    }
+    void CreateSol(VPetsc &x) const {
         PetscErrorCode ierr;
-        ierr = MatCreateVecs(this->mat, &x.vec, &b.vec); CHKERRV(ierr);
+        ierr = MatCreateVecs(this->mat, &x.vec, nullptr); CHKERRV(ierr);
+    }
+    void CreateRHS(VPetsc &b) const {
+        PetscErrorCode ierr;
+        ierr = MatCreateVecs(this->mat, nullptr, &b.vec); CHKERRV(ierr);
     }
 
     PetscReal Norm() {
@@ -119,6 +127,12 @@ public:
 
     virtual void Apply(const VPetsc &x, VPetsc &y, bool xzero = false) const {
         MatMult(this->mat, x.vec, y.vec);
+    }
+    virtual VPetsc GetDiagonals() const {
+        VPetsc diag;
+        this->CreateRHS(diag);
+        MatGetDiagonal(this->mat, diag.vec);
+        return diag;
     }
     virtual const char *GetName() const {
         return "MPetsc";

@@ -35,6 +35,7 @@
 
 #include "myss/pc/PCBase.hpp"
 #include "myss/pc/PCNone.hpp"
+#include "myss/pc/PCJacobi.hpp"
 #ifdef PETSC_DIR
 #include "myss/pc/PCPetsc.hpp"
 #endif /*PETSC_DIR*/
