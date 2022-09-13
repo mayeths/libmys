@@ -37,7 +37,6 @@
 #include "myss/pc/PCNone.hpp"
 #ifdef PETSC_DIR
 #include "myss/pc/PCPetsc.hpp"
-#include "myss/pc/PCPetscHpss.hpp"
 #endif /*PETSC_DIR*/
 
 #include "myss/iss/ISSAbstract.hpp"

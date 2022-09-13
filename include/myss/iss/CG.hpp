@@ -13,7 +13,6 @@ public:
     using data_t = typename BASE::data_t;
     using pcdata_t = typename BASE::data_t;
     using VType = typename BASE::VType;
-    using RealVType = typename BASE::RealVType;
     using AType = typename BASE::AType;
     using BType = typename BASE::BType;
     CG() = delete;
@@ -24,11 +23,11 @@ public:
         return "CG";
     }
 
-    virtual void Apply(const RealVType &b, RealVType &x, bool xzero = false) const
+    virtual void Apply(const VType &b, VType &x, bool xzero = false) const
     {
         const AType &A = this->GetMatrix();
         const BType &B = this->GetPreconditioner();
-        RealVType r(x), u(x), p(x), s(x);
+        VType r(x), u(x), p(x), s(x);
 
         intermediate_t bnorm, rnorm, alpha, beta, gamma, gammaold, delta;
         bnorm = (b, b);

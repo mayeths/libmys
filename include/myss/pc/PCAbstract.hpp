@@ -6,7 +6,6 @@ class PCAbstract
 public:
     using AType = mt;
     using VType = typename AType::VType;
-    using RealVType = typename AType::RealVType;
     using index_t = typename AType::index_t;
     using data_t = typename AType::data_t;
     AType *A = nullptr;
@@ -14,11 +13,11 @@ public:
     PCAbstract() : A(nullptr) { }
     PCAbstract(AType &A) { this->A = &A; }
 
-    virtual void Apply(const RealVType &input, RealVType &output, bool xzero = false) const = 0;
+    virtual void Apply(const VType &input, VType &output, bool xzero = false) const = 0;
     virtual const char *GetName() const = 0;
 
-    friend RealVType operator*(const PCAbstract &pc, const RealVType &b) {
-        RealVType x(b);
+    friend VType operator*(const PCAbstract &pc, const VType &b) {
+        VType x(b);
         pc.Apply(b, x);
         return x;
     }
