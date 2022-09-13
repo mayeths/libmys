@@ -9,7 +9,8 @@ class ISSBase
 {
 public:
     enum StopReason: int {
-        NoStopped = 0,
+        NoRunning = 0,
+        Running,
         ConvergedByAtol,
         ConvergedByRtol,
         DivergedByDtol,
@@ -28,7 +29,7 @@ protected:
     /* Intermediate Variables */
     mutable IType iter = 0, stopiter = 0;
     mutable DType stopabs = 0, stoprel = 0;
-    mutable StopReason stopreason = StopReason::NoStopped;
+    mutable StopReason stopreason = StopReason::NoRunning;
     mutable ConvergeTestFunction convergetest = &ISSBase::DefaultConvergeTest;
     mutable const MType *A = nullptr;
     mutable const PType *P = nullptr;
@@ -67,14 +68,16 @@ public:
     void SetPreconditioner(const PType &P) { this->P = &P; }
 
     const char *GetStopReasonName() const {
-        if (this->stopreason == StopReason::ConvergedByAtol) return "ConvergedByAtol";
+        if (this->stopreason == StopReason::NoRunning) return "NoRunning";
+        else if (this->stopreason == StopReason::Running) return "Running";
+        else if (this->stopreason == StopReason::ConvergedByAtol) return "ConvergedByAtol";
         else if (this->stopreason == StopReason::ConvergedByRtol) return "ConvergedByRtol";
         else if (this->stopreason == StopReason::DivergedByDtol) return "DivergedByDtol";
         else if (this->stopreason == StopReason::DivergedByMaxIter) return "DivergedByMaxIter";
-        return "NoStopped";
+        return nullptr;
     }
 
-    StopReason Converged(const DType &rnorm, const DType bnorm) const {
+    bool Converged(const DType &rnorm, const DType bnorm) const {
         DType abs = std::abs(rnorm);
         DType rel = abs / std::abs(bnorm);
         this->stopreason = this->convergetest(
@@ -82,15 +85,16 @@ public:
             this->atol, this->rtol, this->dtol,
             this->iter, this->maxiter
         );
-        if (this->stopreason != StopReason::NoStopped) {
-            this->stopabs = abs;
-            this->stoprel = rel;
-            this->stopiter = this->iter;
-        }
-        return this->stopreason;
+        if (this->stopreason == StopReason::Running)
+            return false;
+
+        this->stopabs = abs;
+        this->stoprel = rel;
+        this->stopiter = this->iter;
+        return true;
     }
 
-    const void View(const std::string &prefix = "") const {
+    void View(const std::string &prefix = "") const {
         std::string buffer = prefix;
         const MType &matrix = this->GetMatrix();
         const PType &precond = this->GetPreconditioner();
@@ -103,7 +107,7 @@ public:
             buffer += strformat("  Preconditioner: %s @%p\n", precond.GetName(), &precond);
 
         buffer += strformat("  Status: %s\n", this->GetStopReasonName());
-        if (this->stopreason == StopReason::NoStopped) {
+        if (this->stopreason == StopReason::NoRunning) {
             buffer += strformat(
                 "    atol %.17g rtol %.17g dtol %.17g maxiter %d\n",
                 (double)atol, (double)rtol, (double)dtol, (int)maxiter
@@ -120,6 +124,14 @@ public:
         PRINTF(0, "%s", buffer.c_str());
     }
 
+    void Reset() const {
+        this->iter = 0;
+        this->stopiter = 0;
+        this->stopabs = 0;
+        this->stoprel = 0;
+        this->stopreason = StopReason::NoRunning;
+    }
+
     static StopReason DefaultConvergeTest(
         const DType &abs, const DType &rel,
         const DType &atol, const DType &rtol, const DType &dtol,
@@ -131,6 +143,6 @@ public:
         else if (rel <= rtol) return StopReason::ConvergedByRtol;
         else if (rel >= dtol && iter != 0) return StopReason::DivergedByDtol;
         else if (iter >= maxiter) return StopReason::DivergedByMaxIter;
-        return StopReason::NoStopped;
+        return StopReason::Running;
     }
 };

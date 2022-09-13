@@ -24,6 +24,7 @@ public:
 
     virtual void Apply(const VType &b, VType &x, bool xzero = false) const
     {
+        this->Reset();
         const MType &A = this->GetMatrix();
         const PType &B = this->GetPreconditioner();
         VType r(x), u(x), p(x), s(x);
