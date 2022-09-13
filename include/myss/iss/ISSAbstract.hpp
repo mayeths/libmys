@@ -16,57 +16,56 @@ public:
         DivergedByDtol,
         DivergedByMaxIter,
     };
-    using AType = matrix_t;
-    using VType = typename AType::VType;
-    using index_t = typename AType::index_t;
-    using data_t = typename AType::data_t;
-    // using BType = preconditioner_t;
-    using BType = PCAbstract<matrix_t>;
+    using MType = matrix_t;
+    using PType = PCAbstract<MType>;
+    using VType = typename MType::VType;
+    using IType = typename MType::IType;
+    using DType = typename MType::DType;
     using ConvergeTestFunction = StopReason(*)(
-        const data_t &abs, const data_t &rel,
-        const data_t &atol, const data_t &rtol, const data_t &dtol,
-        const index_t &iter, const index_t &maxiter);
+        const DType &abs, const DType &rel,
+        const DType &atol, const DType &rtol, const DType &dtol,
+        const IType &iter, const IType &maxiter);
 protected:
     /* Intermediate Variables */
-    mutable index_t iter = 0, stopiter = 0;
-    mutable data_t stopabs = 0, stoprel = 0;
+    mutable IType iter = 0, stopiter = 0;
+    mutable DType stopabs = 0, stoprel = 0;
     mutable StopReason stopreason = StopReason::NoStopped;
     mutable ConvergeTestFunction convergetest = &ISSAbstract::DefaultConvergeTest;
-    mutable const AType *A = nullptr;
-    mutable const BType *B = nullptr;
-    mutable const BType *defaultB = nullptr;
+    mutable const MType *A = nullptr;
+    mutable const PType *P = nullptr;
+    mutable const PType *defaultP = nullptr;
 public:
 
     /* Parameters Variables */
-    index_t verbose = -1;
-    index_t maxiter = 100;
-    data_t rtol = 1e-6, atol = 1e-6, dtol = 1e6;
+    IType verbose = -1;
+    IType maxiter = 100;
+    DType rtol = 1e-6, atol = 1e-6, dtol = 1e6;
 
     ISSAbstract() = delete;
-    ISSAbstract(const AType &A) {
+    ISSAbstract(const MType &A) {
         this->A = &A;
-        this->B = nullptr;
-        this->defaultB = new PCNone<typename BType::AType>();
+        this->P = nullptr;
+        this->defaultP = new PCNone<typename PType::MType>();
     }
-    ISSAbstract(const AType &A, const BType &B) {
+    ISSAbstract(const MType &A, const PType &P) {
         this->A = &A;
-        this->B = &B;
-        this->defaultB = nullptr;
+        this->P = &P;
+        this->defaultP = nullptr;
     }
     ~ISSAbstract() {
-        if (this->defaultB) delete this->defaultB;
-        this->defaultB = nullptr;
+        if (this->defaultP) delete this->defaultP;
+        this->defaultP = nullptr;
     }
 
     virtual void Apply(const VType &input, VType &output, bool xzero = false) const = 0;
     virtual const char *GetName() const = 0;
 
-    index_t GetNumIterations() const { return this->iter; }
+    IType GetNumIterations() const { return this->iter; }
     StopReason GetStopReason() const { return this->stopreason; }
-    const AType &GetMatrix() const { return *this->A; }
-    const BType &GetPreconditioner() const { return this->B == nullptr ? *this->defaultB : *this->B; }
-    void SetMatrix(const AType &A) { this->A = &A; }
-    void SetPreconditioner(const BType &B) { this->B = &B; }
+    const MType &GetMatrix() const { return *this->A; }
+    const PType &GetPreconditioner() const { return this->P == nullptr ? *this->defaultP : *this->P; }
+    void SetMatrix(const MType &A) { this->A = &A; }
+    void SetPreconditioner(const PType &P) { this->P = &P; }
 
     const char *GetStopReasonName() const {
         if (this->stopreason == StopReason::ConvergedByAtol) return "ConvergedByAtol";
@@ -76,9 +75,9 @@ public:
         return "NoStopped";
     }
 
-    StopReason Converged(const data_t &rnorm, const data_t bnorm) const {
-        data_t abs = std::abs(rnorm);
-        data_t rel = abs / std::abs(bnorm);
+    StopReason Converged(const DType &rnorm, const DType bnorm) const {
+        DType abs = std::abs(rnorm);
+        DType rel = abs / std::abs(bnorm);
         this->stopreason = this->convergetest(
             abs, rel,
             this->atol, this->rtol, this->dtol,
@@ -94,12 +93,12 @@ public:
 
     const void View(const std::string &prefix = "") const {
         std::string buffer = prefix;
-        const AType &matrix = this->GetMatrix();
-        const BType &precond = this->GetPreconditioner();
+        const MType &matrix = this->GetMatrix();
+        const PType &precond = this->GetPreconditioner();
 
         buffer += strformat("%s @%p\n", this->GetName(), this);
         buffer += strformat("  Matrix: %s @%p\n", matrix.GetName(), &matrix);
-        if (this->B == nullptr)
+        if (this->P == nullptr)
             buffer += strformat("  Preconditioner: No preconditioning\n");
         else
             buffer += strformat("  Preconditioner: %s @%p\n", precond.GetName(), &precond);
@@ -123,9 +122,9 @@ public:
     }
 
     static StopReason DefaultConvergeTest(
-        const data_t &abs, const data_t &rel,
-        const data_t &atol, const data_t &rtol, const data_t &dtol,
-        const index_t &iter, const index_t &maxiter)
+        const DType &abs, const DType &rel,
+        const DType &atol, const DType &rtol, const DType &dtol,
+        const IType &iter, const IType &maxiter)
     {
         PRINTF(0, "Iteration %4d ||r|| %.17e ||r||/||b|| %.17e\n", iter, abs, rel);
         if (abs <= atol) return StopReason::ConvergedByAtol;

@@ -7,8 +7,9 @@
 class VPetsc : public VAbstract<VPetsc, PetscInt, PetscScalar>
 {
 public:
-    using index_t = VAbstract<VPetsc, PetscInt, PetscScalar>::index_t;
-    using data_t = VAbstract<VPetsc, PetscInt, PetscScalar>::data_t;
+    using BASE = VAbstract<VPetsc, PetscInt, PetscScalar>;
+    using IType = BASE::IType;
+    using DType = BASE::DType;
     Vec vec = nullptr;
 
     VPetsc() { }
@@ -19,7 +20,7 @@ public:
         }
         this->vec = nullptr;
     }
-    bool iscompact(const VAbstract<VPetsc, PetscInt, PetscScalar> &other) { return true; }
+
     static void duplicate(const VPetsc &src, VPetsc &dst) {
         if (&src == &dst) return; else dst.~VPetsc();
         PetscErrorCode ierr;
@@ -41,12 +42,15 @@ public:
         if (&src == &dst) return;
         std::swap(src.vec, dst.vec);
     }
-    VPetsc(const VPetsc &src)     { VPetsc::copy(src, *this); } /* Copy Ctor. */
-    VPetsc(const VAbstract<VPetsc, PetscInt, PetscScalar> &src) { VPetsc::copy(static_cast<const VPetsc&>(src), *this); }
-    VPetsc(VPetsc&& src) noexcept { VPetsc::swap(src, *this); } /* Move Ctor. */
-    VPetsc& operator=(const VPetsc &src)     { VPetsc::copy(src, *this); return *this; } /* Copy Assign. */
-    VPetsc& operator=(VPetsc&& src) noexcept { VPetsc::swap(src, *this); return *this; } /* Move Assign. */
+    VPetsc(const VPetsc &src) { VPetsc::copy(src, *this); }
+    VPetsc(const BASE &src)   { VPetsc::copy(static_cast<const VPetsc&>(src), *this); }
+    VPetsc(VPetsc&& src) noexcept { VPetsc::swap(src, *this); }
+    VPetsc& operator=(const VPetsc &src)     { VPetsc::copy(src, *this); return *this; }
+    VPetsc& operator=(VPetsc&& src) noexcept { VPetsc::swap(src, *this); return *this; }
 
+    bool iscompact(const BASE &other) {
+        return true;
+    }
 
     static void AXPBY(VPetsc &w, PetscScalar alpha, const VPetsc &x, PetscScalar beta, const VPetsc &y) {
         PetscErrorCode ierr;

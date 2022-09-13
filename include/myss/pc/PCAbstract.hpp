@@ -1,17 +1,17 @@
 #pragma once
 
-template<typename mt>
+template<typename matrix_t>
 class PCAbstract
 {
 public:
-    using AType = mt;
-    using VType = typename AType::VType;
-    using index_t = typename AType::index_t;
-    using data_t = typename AType::data_t;
-    AType *A = nullptr;
+    using MType = matrix_t;
+    using VType = typename MType::VType;
+    using IType = typename MType::IType;
+    using DType = typename MType::DType;
+    MType *A = nullptr;
 
     PCAbstract() : A(nullptr) { }
-    PCAbstract(AType &A) { this->A = &A; }
+    PCAbstract(MType &A) { this->A = &A; }
 
     virtual void Apply(const VType &input, VType &output, bool xzero = false) const = 0;
     virtual const char *GetName() const = 0;

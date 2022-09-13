@@ -10,8 +10,8 @@ class MPetsc : public MAbstract<VPetsc, PetscInt, PetscScalar>
 public:
     using BASE = MAbstract<VPetsc, PetscInt, PetscScalar>;
     using VType = BASE::VType;
-    using index_t = BASE::index_t;
-    using data_t = BASE::data_t;
+    using IType = BASE::IType;
+    using DType = BASE::DType;
     PetscInt Istart, Iend, Jstart, Jend;
     PetscInt NROWS, NCOLS, nrows, ncols;
     Mat mat;

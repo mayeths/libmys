@@ -10,9 +10,9 @@ class PCPetsc : public PCAbstract<MPetsc>
 public:
     using BASE = PCAbstract<MPetsc>;
     using VType = typename BASE::VType;
-    using AType = typename BASE::AType;
-    using index_t = typename BASE::index_t;
-    using data_t = typename BASE::data_t;
+    using MType = typename BASE::MType;
+    using IType = typename BASE::IType;
+    using DType = typename BASE::DType;
 
     PC pc = nullptr;
 
@@ -50,7 +50,7 @@ public:
     PCPetsc& operator=(PCPetsc&& src) noexcept { PCPetsc::swap(src, *this); return *this;      } /* Move Assign. */
 
 
-    PCPetsc(AType &A, PCType type = PCSOR) : BASE(A) {
+    PCPetsc(MType &A, PCType type = PCSOR) : BASE(A) {
         PetscErrorCode ierr;
         ierr = PCCreate(MPI_COMM_WORLD, &this->pc); CHKERRV(ierr);
         ierr = PCSetType(this->pc, type); CHKERRV(ierr);

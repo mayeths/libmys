@@ -5,24 +5,26 @@
 template<
     typename matrix_t,
     bool enable_pipeline = true,
-    typename intermediate_t = typename matrix_t::data_t> /* intermediate data_t */
+    typename intermediate_t = typename matrix_t::DType> /* intermediate DType */
 class PIPECG : public ISSAbstract<matrix_t>
 {
-    using AsyncIntermediate = AsyncProxy<intermediate_t>;
-    using SyncIntermediate = SyncProxy<intermediate_t>;
-    using pipe_intermediate_t = typename std::conditional<enable_pipeline, AsyncIntermediate, SyncIntermediate>::type;
-
 public:
     using BASE = ISSAbstract<matrix_t>;
-    using index_t = typename BASE::index_t;
-    using data_t = typename BASE::data_t;
-    using pcdata_t = typename BASE::data_t;
+    using IType = typename BASE::IType;
+    using DType = typename BASE::DType;
     using VType = typename BASE::VType;
-    using AType = matrix_t;
-    using BType = typename BASE::BType;
+    using MType = typename BASE::MType;
+    using PType = typename BASE::PType;
+    using IntermediateType = intermediate_t;
+    using PipeIntermediateType = typename std::conditional<
+        enable_pipeline,
+        AsyncProxy<IntermediateType>,
+        SyncProxy<IntermediateType>
+    >::type;
+
     PIPECG() = delete;
-    PIPECG(const AType &A) : BASE(A) { }
-    PIPECG(const AType &A, const BType &B) : BASE(A, B) { }
+    PIPECG(const MType &A) : BASE(A) { }
+    PIPECG(const MType &A, const PType &B) : BASE(A, B) { }
 
     virtual const char *GetName() const {
         return "PIPECG";
@@ -30,12 +32,12 @@ public:
 
     virtual void Apply(const VType &b, VType &x, bool xzero = false) const
     {
-        const AType &A = this->GetMatrix();
-        const BType &B = this->GetPreconditioner();
+        const MType &A = this->GetMatrix();
+        const PType &B = this->GetPreconditioner();
         VType r(x), z(x), p(x), n(x), w(x), q(x), u(x), m(x), s(x);
 
-        intermediate_t bnorm = 0, alpha = 1, beta = 1, gammaold = 0;
-        pipe_intermediate_t rnorm = 0, delta = 0, gamma = 0;
+        IntermediateType bnorm = 0, alpha = 1, beta = 1, gammaold = 0;
+        PipeIntermediateType rnorm = 0, delta = 0, gamma = 0;
         bnorm = (b, b);
         r = b - A * x;
         u = B * r;
