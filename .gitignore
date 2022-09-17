@@ -1,3 +1,5 @@
 .vscode/
+include/private/
+include/mys-private.h
 ugly/
 thirdparty/
