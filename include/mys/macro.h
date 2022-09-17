@@ -16,6 +16,9 @@
 #elif defined(__NVCC__)
 #define COMPILER_NAME "NVCC"
 #define COMPILER_NVCC
+#elif defined(__SWCC__)
+#define COMPILER_NAME "SWCC"
+#define COMPILER_SWCC
 #else
 #define COMPILER_NAME "Unknown"
 #define COMPILER_UNKNOWN
@@ -52,9 +55,9 @@
 #elif defined(__arm__) || defined(_M_ARM)
 #define ARCH_NAME "Arm32"
 #define ARCH_ARM32
-#elif defined(__ia64__) || defined(_M_IA64)
-#define ARCH_NAME "IA64"
-#define ARCH_IA64
+#elif defined(__SWCC__)
+#define ARCH_NAME "Sunway"
+#define ARCH_SUNWAY
 #else
 #define ARCH_NAME "Unknown"
 #define ARCH_UNKNOWN
