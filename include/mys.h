@@ -11,5 +11,7 @@
 
 #include "./mys/debug.h"
 #include "./mys/headers.h"
+#include "./mys/hrtimer.h"
+#include "./mys/macro.h"
 #include "./mys/matrixmarket.h"
 #include "./mys/partition.h"
