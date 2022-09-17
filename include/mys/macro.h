@@ -2,6 +2,8 @@
 #ifndef MYS_MACRO_H_
 #define MYS_MACRO_H_
 
+/* https://github.com/abseil/abseil.github.io/blob/master/docs/cpp/platforms/macros.md */
+
 /* Compiler Detection */
 #if defined(__GNUC__)
 #define COMPILER_NAME "GCC"
@@ -10,6 +12,9 @@
 #define COMPILER_NAME "Clang"
 #define COMPILER_CLANG
 #define COMPILER_GCC
+#elif defined(__INTEL_COMPILER)
+#define COMPILER_NAME "ICC"
+#define COMPILER_ICC
 #elif defined(_MSC_VER)
 #define COMPILER_NAME "MSVC"
 #define COMPILER_MSVC

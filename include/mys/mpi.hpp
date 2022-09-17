@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <complex>
 #include <mpi.h>
+#include "macro.h"
 
 template <typename T>
 static inline MPI_Datatype MPI_TYPE() noexcept {
@@ -35,7 +36,7 @@ static inline MPI_Datatype MPI_TYPE() noexcept {
   if (is_same<T, std::complex<float>>::value) return MPI_C_COMPLEX;
   if (is_same<T, std::complex<double>>::value) return MPI_C_DOUBLE_COMPLEX;
   if (is_same<T, std::complex<long double>>::value) return MPI_C_LONG_DOUBLE_COMPLEX;
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(ARCH_X64)
   if (is_same<T, __float128>::value) {
     static MPI_Datatype float128_type = MPI_DATATYPE_NULL;
     if (float128_type == MPI_DATATYPE_NULL) {
