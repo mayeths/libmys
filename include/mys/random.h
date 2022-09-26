@@ -47,7 +47,8 @@ static inline uint64_t __legacy_rand64()
 {
     if (__legacy_x == __UINT64_INVALID)
         __legacy_seed(__seeder());
-    return (uint64_t)rand();
+    double perc = (double)rand() / (double)RAND_MAX;
+    return perc * (double)__UINT64_MAX;
 }
 
 
@@ -152,7 +153,6 @@ static inline int64_t randi64(int64_t minimum, int64_t maximum)
     uint64_t _min = (uint64_t)minimum;
     uint64_t _max = (uint64_t)maximum;
     uint64_t result = randu64(_min, _max);
-    printf("> %lld\n", (int)result);
     return *(int64_t *)((void *)&result);
 }
 
@@ -183,31 +183,45 @@ static inline float randf32(float minimum, float maximum)
 
 /* Tester:
 Kunpeng920:
-    xoroshiro128ss: 1000000000 double in 7.76 sec (0.97 ns/Byte 1.03 GB/s)
-    splitmix: 1000000000 double in 8.31 sec (1.04 ns/Byte 0.96 GB/s)
-    legacy: 1000000000 double in 25.93 sec (3.24 ns/Byte 0.31 GB/s)
+    xoroshiro128ss: 1000000000 double in 7.42 sec (0.93 ns/Byte 1.08 GB/s)
+    splitmix: 1000000000 double in 7.42 sec (0.93 ns/Byte 1.08 GB/s)
+    legacy: 1000000000 double in 24.04 sec (3.01 ns/Byte 0.33 GB/s)
 
 
 // #define MYS_SPLITMIX_RANDOM
 // #define MYS_LEGACY_RANDOM
 #include <mys.h>
+
+#define minimum 0
+#define maximum 100
+#define ssize ((maximum)-(minimum)+1)
+
 int main(int argc , char **argv) {
     uint64_t n = 1000000000;
     if (argc > 1) {
         n = atoll(argv[1]);
     }
+    uint64_t box[ssize] = {0};
     printf("%s\n", randname());
     double *buffer = (double *)malloc(n * sizeof(double));
     memset(buffer, 0, n * sizeof(double));
     double t1 = hrtime();
     for (uint64_t i = 0; i < n; i++) {
-        buffer[i] = randf64(0, 1e9);
+        buffer[i] = randf64(minimum, maximum);
     }
     double t2 = hrtime();
     double tdiff = t2 - t1;
     double ns = (tdiff * 1e9)/(double)(n * sizeof(double));
     double throughput = 1 / ns;
     printf("%lld double in %.2f sec (%.2f ns/Byte %.2f GB/s)\n", n, tdiff, ns, throughput);
+
+    for (uint64_t i = 0; i < n; i++) {
+        box[(int)buffer[i] - minimum] += 1;
+    }
+
+    for (int i = 0; i < ssize; i++) {
+        printf("[%03d,%03d) %.3f %d\n", i-minimum, i+1-minimum, ((double)box[i]/n) * 100, box[i]);
+    }
 
     free(buffer);
 }
