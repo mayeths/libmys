@@ -49,7 +49,7 @@ static inline double hrtime() {
  */
 #include <windows.h>
 static inline const char *hrname() {
-    return "High-resolution timer by <windows.h> (1us~10us)"
+    return "High-resolution timer by <windows.h> (1us~10us)";
 }
 static inline double hrfreq() {
     LARGE_INTEGER f;
