@@ -13,14 +13,14 @@ static inline uint64_t __seeder()
     uint32_t lo, hi;
     __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
     uint64_t t = lo;
-    return (t << 32) | (t & 0x10100101); /* 0101 so never INVALID(1111) again */
+    return (t << 32) | (t & 0xAAAA5555); /* A(1010)5(0101) won't INVALID(1111_1111) again */
 }
 #elif defined(ARCH_AARCH64)
 static inline uint64_t __seeder()
 {
     uint64_t t;
     __asm__ __volatile__("mrs %0, CNTVCT_EL0" : "=r"(t));
-    return (t << 32) | (t & 0x10100101);
+    return (t << 32) | (t & 0xAAAA5555);
 }
 #elif defined(MYS_FAKE_RANDOM)
 static inline uint64_t __seeder()
@@ -31,7 +31,7 @@ static inline uint64_t __seeder()
 static inline uint64_t __seeder()
 {
     uint64_t t = (uint64_t)time(NULL);
-    return (t << 32) | (t & 0x10100101);
+    return (t << 32) | (t & 0xAAAA5555);
 }
 #endif
 
