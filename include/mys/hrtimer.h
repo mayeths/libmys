@@ -25,9 +25,9 @@ static inline double hrtime() {
  * It often takes 4 ns and doesn't involve any system call [https://stackoverflow.com/a/42190077]
  * Difference between CLOCK_REALTIME and CLOCK_MONOTONIC [https://stackoverflow.com/a/3527632]
  */
-#include <time.h>
+#include <sys/time.h>
 static inline const char *hrname() {
-    return "High-resolution timer by <time.h> (1us~10us)"
+    return "High-resolution timer by <time.h> (1us~10us)";
 }
 static inline double hrfreq() {
     return 1;
