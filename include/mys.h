@@ -14,4 +14,7 @@
 #include "./mys/hrtimer.h"
 #include "./mys/macro.h"
 #include "./mys/matrixmarket.h"
+#include "./mys/os.h"
 #include "./mys/partition.h"
+#include "./mys/random.h"
+#include "./mys/statistic.h"
