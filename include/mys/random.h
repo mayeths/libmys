@@ -182,11 +182,20 @@ static inline float randf32(float minimum, float maximum)
 #undef __UINT64_MAX
 
 /* Tester:
-Kunpeng920:
-    xoroshiro128ss: 1000000000 double in 7.42 sec (0.93 ns/Byte 1.08 GB/s)
-    splitmix: 1000000000 double in 7.42 sec (0.93 ns/Byte 1.08 GB/s)
-    legacy: 1000000000 double in 24.04 sec (3.01 ns/Byte 0.33 GB/s)
+- mpicc -O3 -g -lm -I../include xoshiro256.c && ./a.out 1000000000 > xoshiro256.log
 
+- Intel Xeon Gold 6132 (icc 19.0.5.281)
+    - xoroshiro128ss: 1000000000 double in 4.33 sec (0.54 ns/Byte 1.85 GB/s)
+    - splitmix:       1000000000 double in 5.78 sec (0.72 ns/Byte 1.38 GB/s)
+    - legacy:         1000000000 double in 15.24 sec (1.91 ns/Byte 0.52 GB/s)
+- Huawei Kunpeng920 (gcc 9.3.1):
+    - xoroshiro128ss: 1000000000 double in 7.42 sec (0.93 ns/Byte 1.08 GB/s)
+    - splitmix:       1000000000 double in 7.42 sec (0.93 ns/Byte 1.08 GB/s)
+    - legacy:         1000000000 double in 24.04 sec (3.01 ns/Byte 0.33 GB/s)
+- Apple M1 (Apple clang version 14.0.0):
+    - xoroshiro128ss: 1000000000 double in 6.11 sec (0.76 ns/Byte 1.31 GB/s)
+    - splitmix:       1000000000 double in 3.11 sec (0.39 ns/Byte 2.57 GB/s)
+    - legacy:         1000000000 double in 8.74 sec (1.09 ns/Byte 0.92 GB/s)
 
 // #define MYS_SPLITMIX_RANDOM
 // #define MYS_LEGACY_RANDOM
