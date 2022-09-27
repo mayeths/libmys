@@ -22,6 +22,11 @@
 #include "mys/util.hpp"
 #include "mys/vec.hpp"
 
+/*************************/
+// myss
+/*************************/
+#ifndef MYS_NO_MYSS
+
 #include "myss/vec/VBase.hpp"
 #include "myss/vec/VDense.hpp"
 #ifdef PETSC_DIR
@@ -43,3 +48,22 @@
 #include "myss/iss/ISSBase.hpp"
 #include "myss/iss/CG.hpp"
 #include "myss/iss/PIPECG.hpp"
+
+#endif /*MYS_NO_MYSS*/
+
+
+
+/*************************/
+// library
+/*************************/
+#ifdef MYS_USE_LIBRARY
+
+#ifndef MYS_NO_LIBFMT
+#include "mys-thirdparty/fmt/core.h"
+// #include "mys-thirdparty/fmt/chrono.h" /* std::literals::chrono_literals requires C++14 */
+#include "mys-thirdparty/fmt/ranges.h"
+#include "mys-thirdparty/fmt/os.h"
+#include "mys-thirdparty/fmt/color.h"
+#endif /*MYS_NO_LIBFMT*/
+
+#endif /*MYS_HEADER_ONLY*/
