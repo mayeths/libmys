@@ -75,3 +75,210 @@ static inline char* execshell(const char* command) {
     }
     return result;
 }
+
+
+/* Thanks to http://www.jukie.net/bart/blog/popenRWE */
+/* https://github.com/sni/mod_gearman/blob/master/common/popenRWE.c */
+/* https://github.com/marssaxman/ozette/blob/833b659757/src/console/popenRWE.cpp */
+
+/* gcc pipe.c && valgrind --leak-check=full --track-fds=yes ./a.out
+int main() {
+    int pipeIOE[3];
+    char *argv = "echo 123";
+    prun_t result = prun_create(argv);
+    printf("status:%d\n", result.status);
+    printf("stdout:\n%s", result.out);
+    printf("stderr:\n%s", result.err);
+    prun_destroy(&result);
+    fclose(stdin);
+    fclose(stdout);
+    fclose(stderr);
+}
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <string.h>
+
+static int popenRWE(int *ipipe, int *opipe, int *epipe, const char *command) {
+    int in[2];
+    int out[2];
+    int err[2];
+    int pid;
+    int rc;
+
+    rc = pipe(in);
+    if (rc<0)
+        goto error_in;
+    rc = pipe(out);
+    if (rc<0)
+        goto error_out;
+    rc = pipe(err);
+    if (rc<0)
+        goto error_err;
+
+    pid = fork();
+    if (pid > 0) { /* parent */
+        close(in[0]);
+        close(out[1]);
+        close(err[1]);
+        *ipipe = in[1];
+        *opipe = out[0];
+        *epipe = err[0];
+        return pid;
+    } else if (pid == 0) { /* child */
+        close(in[1]);
+        close(out[0]);
+        close(err[0]);
+        close(0);
+        if(!dup(in[0])) {
+            ;
+        }
+        close(1);
+        if(!dup(out[1])) {
+            ;
+        }
+        close(2);
+        if(!dup(err[1])) {
+            ;
+        }
+        execl( "/bin/sh", "sh", "-c", command, NULL );
+        _exit(1);
+    } else
+        goto error_fork;
+
+    return pid;
+
+error_fork:
+    close(err[0]);
+    close(err[1]);
+error_err:
+    close(out[0]);
+    close(out[1]);
+error_out:
+    close(in[0]);
+    close(in[1]);
+error_in:
+    return -1;
+}
+
+static int pcloseRWE(int pid, int ipipe, int opipe, int epipe)
+{
+    int rc, status;
+    close(ipipe);
+    close(opipe);
+    close(epipe);
+    rc = waitpid(pid, &status, 0);
+    (void)rc; // not used
+    return status;
+}
+
+#define BUFFER_SIZE 128
+
+// static int readfd(char **target, FILE* input) {
+//     char buffer[BUFFER_SIZE] = "";
+//     int bytes, size, total;
+//     strcpy(buffer,"");
+//     size  = BUFFER_SIZE;
+//     total = size;
+//     while(fgets(buffer,sizeof(buffer)-1, input)){
+//         bytes = strlen(buffer);
+//         if(total < bytes + size) {
+//             *target = realloc(*target, total+BUFFER_SIZE);
+//             total += BUFFER_SIZE;
+//         }
+//         size += bytes;
+//         strncat(*target, buffer, bytes);
+//     }
+//     return(size);
+// }
+
+static int readfd(char **target, FILE* input) {
+    char buffer[BUFFER_SIZE];
+    strcpy(buffer, "");
+    int capacity = BUFFER_SIZE;
+    int size = 0;
+    while (fgets(buffer,sizeof(buffer)-1, input)) {
+        int append = strlen(buffer);
+        if (capacity < size + append) {
+            *target = (char *)realloc(*target, capacity + BUFFER_SIZE);
+            capacity += BUFFER_SIZE;
+        }
+        strncat(*target, buffer, capacity - size);
+        size += append;
+        // printf("read %d, size %d, cap %d\n", append, size, capacity);
+    }
+    return(size);
+}
+
+
+/* extract check result */
+static char *extract_check_result(FILE *fp) {
+    char *output;
+    char *escaped;
+    output = (char *)malloc(sizeof(char*)*BUFFER_SIZE);
+    output[0] = '\0';
+    readfd(&output, fp);
+    return output;
+}
+
+typedef struct popen_t {
+    int pid;
+    int ifd;
+    int ofd;
+    int efd;
+} popen_t;
+
+typedef struct prun_t {
+    int status;
+    const char *out;
+    const char *err;
+} prun_t;
+
+static const char *__empty_string = "";
+static popen_t popen_create(const char *argv)
+{
+    popen_t result;
+    result.ifd = -1;
+    result.ofd = -1;
+    result.efd = -1;
+    result.pid = popenRWE(&result.ifd, &result.ofd, &result.efd, argv);
+    return result;
+}
+
+static prun_t prun_create(const char *argv)
+{
+    prun_t result;
+    result.status = -1;
+    result.out = __empty_string;
+    result.err = __empty_string;
+
+    popen_t pf = popen_create(argv);
+
+    FILE *outfp = fdopen(pf.ofd,"r");
+    if (outfp) {
+        result.out = extract_check_result(outfp);
+        fclose(outfp);
+    }
+    FILE *errfp = fdopen(pf.efd,"r");
+    if (errfp) {
+        result.err = extract_check_result(errfp);
+        fclose(errfp);
+    }
+    result.status = pcloseRWE(pf.pid, pf.ifd, pf.ofd, pf.efd);
+    return result;
+}
+
+static void prun_destroy(prun_t *s)
+{
+    if (s->out != NULL && s->out != __empty_string)
+        free((char *)s->out);
+    if (s->err != NULL && s->err != __empty_string)
+        free((char *)s->err);
+    s->out = NULL;
+    s->err = NULL;
+    s->status = -1;
+}
