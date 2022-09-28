@@ -10,6 +10,7 @@
 #define MYS_VERSION 220829L
 
 #include "./mys/debug.h"
+#include "./mys/env.h"
 #include "./mys/headers.h"
 #include "./mys/hrtimer.h"
 #include "./mys/macro.h"
