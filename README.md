@@ -1,6 +1,6 @@
 # LibMYS
 
-Mayeths' header only library (wow@mayeths.com or huanghp22@mails.tsinghua.edu.cn).
+Mayeths' library (wow@mayeths.com).
 
 - **mys**: **M**a**y**eth**s**' basis headers
     - ***.h**: Headers that work under C99
@@ -11,6 +11,12 @@ Mayeths' header only library (wow@mayeths.com or huanghp22@mails.tsinghua.edu.cn
     - **pc**: **P**re**c**onditioner
     - **mat**: **Mat**rix structures
     - **vec**: **Vec**tor structures
+
+```bash
+mkdir libmys
+cd libmys
+rsync --exclude="ugly/" --exclude="lib/" -avz hostname:~/project/libmys/ .
+```
 
 ### Usage of myss
 
