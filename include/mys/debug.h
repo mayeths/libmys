@@ -39,10 +39,13 @@ static inline void BARRIER()
 #warning DEBUG was predefined, skipped definition from libmys
 #else
 // FIXME: The VA_ARGS after if() will cause collective OP. hang
-// use snprintf() before if() to trigger function calls in VA_ARGS
+// Use snprintf() before if() to trigger function calls in VA_ARGS
+// Or use static inline vaargs function(force to initalize argument)
+// + macro(get __FILE__, __LINE__)
 #define DEBUG(who, fmt, ...) do {                          \
     int nranks = NRANKS(), myrank = MYRANK();              \
     int nprefix = trunc(log10(nranks)) + 1;                \
+    nprefix = nprefix > 3 ? nprefix : 3;                   \
     _Pragma("omp critical (mys)")                          \
     if ((myrank) == (who)) {                               \
         fprintf(stdout, "[DEBUG::%0*d %s:%03u] " fmt "\n", \
@@ -87,6 +90,7 @@ static inline void BARRIER()
     if (!(exp)) {                                           \
         int nranks = NRANKS(), myrank = MYRANK();           \
         int nprefix = trunc(log10(nranks)) + 1;             \
+        nprefix = nprefix > 3 ? nprefix : 3;                \
         fprintf(stdout, "[ASSERT::%0*d %s:%03u] " fmt "\n", \
             nprefix, myrank,                                \
             __FILE__, __LINE__, ##__VA_ARGS__);             \

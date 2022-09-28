@@ -3,9 +3,30 @@
 
 #include <type_traits>
 #include <complex>
-#include <mpi.h>
+
+#if !defined(MPI_VERSION)
+#if !defined(MYS_NO_MPI)
+#error Require <mpi.h> or macro MYS_NO_MPI
+#else
+
+/* TODO: Void mpi functions here if not presented.
+   Other files rely on MPI should include this file first. */
+
+#endif
+#endif
+
 #include "macro.h"
 
+/**
+ * @brief Return corresponding MPI_Datatype of given type
+ * 
+ * @details
+ * This function is replaced by constant MPI_Datatype with -O3 optimization.
+ * 
+ * @tparam T type
+ * @return MPI_Datatype of T
+ * 
+ */
 template <typename T>
 static inline MPI_Datatype MPI_TYPE() noexcept {
   using std::is_same;
