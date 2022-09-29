@@ -13,6 +13,12 @@ Mayeths' library (wow@mayeths.com).
     - **vec**: **Vec**tor structures
 
 ```bash
+# download
+FILE=$(mktemp)
+wget "https://github.com/mayeths/libmys/archive/refs/heads/main.zip" -O $FILE
+unzip $FILE && mv libmys-main libmys && /bin/rm -f $FILE
+
+# rsync
 mkdir libmys
 cd libmys
 rsync --exclude="ugly/" --exclude="lib/" -avz hostname:~/project/libmys/ .
