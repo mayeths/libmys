@@ -1,5 +1,4 @@
 .vscode/
 include/mys-private/
-include/mys-thirdparty/
 lib/
 ugly/
