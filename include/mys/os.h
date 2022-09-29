@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "macro.h"
+#include "config.h"
 
 #if defined(POSIX_COMPLIANCE)
 #include <unistd.h>

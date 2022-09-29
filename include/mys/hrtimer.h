@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "macro.h"
+#include "config.h"
 
 #if defined(ARCH_AARCH64)
 static inline const char *hrname() {

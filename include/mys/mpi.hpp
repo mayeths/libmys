@@ -15,7 +15,7 @@
 #endif
 #endif
 
-#include "macro.h"
+#include "config.h"
 
 /**
  * @brief Return corresponding MPI_Datatype of given type

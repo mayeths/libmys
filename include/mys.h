@@ -9,11 +9,11 @@
 
 #define MYS_VERSION 220829L
 
+#include "./mys/config.h"
 #include "./mys/debug.h"
 #include "./mys/env.h"
 #include "./mys/headers.h"
 #include "./mys/hrtimer.h"
-#include "./mys/macro.h"
 #include "./mys/matrixmarket.h"
 #include "./mys/os.h"
 #include "./mys/partition.h"

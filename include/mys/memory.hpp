@@ -7,7 +7,7 @@
 #include <sys/resource.h>
 #include <string.h>
 
-#include "macro.h"
+#include "config.h"
 
 /* Memory Barrier */
 /* https://support.huaweicloud.com/codeprtr-kunpenggrf/kunpengtaishanporting_12_0048.html */

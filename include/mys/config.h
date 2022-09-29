@@ -1,6 +1,6 @@
 #pragma once
-#ifndef MYS_MACRO_H_
-#define MYS_MACRO_H_
+#ifndef MYS_CONFIG_H_
+#define MYS_CONFIG_H_
 
 /* https://github.com/abseil/abseil.github.io/blob/master/docs/cpp/platforms/macros.md */
 
@@ -90,4 +90,4 @@
 #define REP500(inst) do { REP100(inst); REP100(inst); REP100(inst); REP100(inst); REP100(inst); } while (0)
 #define REP1000(inst) do { REP500(inst); REP500(inst); } while (0)
 
-#endif /*MYS_MACRO_H_*/
+#endif /*MYS_CONFIG_H_*/
