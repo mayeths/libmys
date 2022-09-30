@@ -1,64 +1,23 @@
 #pragma once
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <mpi.h>
+#include <math.h>
 
-#define ENSURE_MPI_INIT() do {               \
-    int i;                                   \
-    MPI_Initialized(&i);                     \
-    if (!i) {                                \
-        MPI_Init_thread(NULL,NULL,           \
-        MPI_THREAD_SINGLE,&i);               \
-        fprintf(stdout,                      \
-            ">>>>>--- Nevel let libmys init" \
-            " MPI you dumbass ---<<<<<\n");  \
-        fflush(stdout);                      \
-    }                                        \
-}while(0)
-static inline int MYRANK()
-{
-    ENSURE_MPI_INIT();
-    int myrank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-    return myrank;
-}
-static inline int NRANKS()
-{
-    ENSURE_MPI_INIT();
-    int nranks = 0;
-    MPI_Comm_size(MPI_COMM_WORLD, &nranks);
-    return nranks;
-}
-static inline void BARRIER()
-{
-    ENSURE_MPI_INIT();
-    MPI_Barrier(MPI_COMM_WORLD);
-}
+// #define MYS_LEGACY_DEBUG
+// #ifdef MYS_LEGACY_DEBUG
+// #include "debug-legacy.h"
+// #endif /*MYS_LEGACY_DEBUG*/
 
-#ifdef DEBUG
-#warning DEBUG was predefined, skipped definition from libmys
-#else
-// FIXME: The VA_ARGS after if() will cause collective OP. hang
-// Use snprintf() before if() to trigger function calls in VA_ARGS
-// Or use static inline vaargs function(force to initalize argument)
-// + macro(get __FILE__, __LINE__)
-#define DEBUG(who, fmt, ...) do {                          \
-    int nranks = NRANKS(), myrank = MYRANK();              \
-    int nprefix = trunc(log10(nranks)) + 1;                \
-    nprefix = nprefix > 3 ? nprefix : 3;                   \
-    _Pragma("omp critical (mys)")                          \
-    if ((myrank) == (who)) {                               \
-        fprintf(stdout, "[DEBUG::%0*d %s:%03u] " fmt "\n", \
-            nprefix, myrank,                               \
-            __FILE__, __LINE__, ##__VA_ARGS__ );           \
-        fflush(stdout);                                    \
-    }                                                      \
-} while (0)
-#endif /* DEBUG */
 
-#ifdef DEBUG_ORDERED
-#warning DEBUG_ORDERED was predefined, skipped definition from libmys
-#else
+#define MYRANK() __mys_myrank()
+#define NRANKS() __mys_nranks()
+#define BARRIER() __mys_barrier()
+#define PRINTF(who, fmt, ...) __mys_printf(who, fmt, ##__VA_ARGS__)
+
+
+#define DEBUG(who, fmt, ...) __mys_debug(who, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define DEBUG_ORDERED(fmt, ...) do {   \
     int nranks = NRANKS();             \
     for (int i = 0; i < nranks; i++) { \
@@ -66,40 +25,9 @@ static inline void BARRIER()
         BARRIER();                     \
     }                                  \
 } while (0)
-#endif /* DEBUG_ORDERED */
-
-#ifdef PRINTF
-#warning PRINTF was predefined, skipped definition from libmys
-#else
-#define PRINTF(who, fmt, ...) do {           \
-    int myrank = MYRANK();                   \
-    _Pragma("omp critical (mys)")            \
-    if ((myrank) == (who)) {                 \
-        fprintf(stdout, fmt, ##__VA_ARGS__); \
-        fflush(stdout);                      \
-    }                                        \
-} while (0)
-#endif /* PRINTF */
 
 
-#ifdef ASSERT
-#warning ASSERT was predefined, skipped definition from libmys
-#else
-#define ASSERT(exp, fmt, ...) do {                          \
-    _Pragma("omp critical (mys)")                           \
-    if (!(exp)) {                                           \
-        int nranks = NRANKS(), myrank = MYRANK();           \
-        int nprefix = trunc(log10(nranks)) + 1;             \
-        nprefix = nprefix > 3 ? nprefix : 3;                \
-        fprintf(stdout, "[ASSERT::%0*d %s:%03u] " fmt "\n", \
-            nprefix, myrank,                                \
-            __FILE__, __LINE__, ##__VA_ARGS__);             \
-        fflush(stdout);                                     \
-        exit(1);                                            \
-    }                                                       \
-} while (0)
-#endif /* ASSERT */
-
+#define ASSERT(exp, fmt, ...) __mys_assert(exp, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #ifndef __ASSERT_SUGAR__
 #define __ASSERT_SUGAR__
 #define __ASSERTX_ZERO_OP__(exp, expect, actual, fmt, ...) do { \
@@ -157,60 +85,150 @@ static inline void BARRIER()
 #endif /* __ASSERT_SUGAR__ */
 
 
-#ifdef FAILED
-#warning FAILED was predefined, skipped definition from libmys
-#else
-#define FAILED(fmt, ...) do {                               \
-    int myrank = MYRANK();                                  \
-    _Pragma("omp critical (mys)")                           \
-    fprintf(stdout, "[FAILED %s:%03u rank=%03d] " fmt "\n", \
-        __FILE__, __LINE__, myrank, ##__VA_ARGS__           \
-    );                                                      \
-    fflush(stdout);                                         \
-    exit(1);                                                \
-} while (0)
-#endif /* FAILED */
-
-
-#ifdef THROW_NOT_IMPL
-#warning THROW_NOT_IMPL was predefined, skipped definition from libmys
-#else
+#define FAILED(fmt, ...) __mys_failed(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define THROW_NOT_IMPL() FAILED("Not implemented.")
-#endif /* THROW_NOT_IMPL */
+#define WAIT_FLAG(flagfile) __mys_wait_flag(__FILE__, __LINE__, flagfile)
 
 
-#ifdef WAIT_FLAG
-#warning WAIT_FLAG was predefined, skipped definition from libmys
-#else
+/*********************************************/
+/* Implement */
+/*********************************************/
+
+
+static inline void __mys_ensure_mpi_init()
+{
+    int inited;
+    MPI_Initialized(&inited);
+    if (inited) return;
+    MPI_Init_thread(NULL, NULL, MPI_THREAD_SINGLE, &inited);
+    fprintf(stdout, ">>>>> ===================================== <<<<<\n");
+    fprintf(stdout, ">>>>> Nevel let libmys init MPI you dumbass <<<<<\n");
+    fprintf(stdout, ">>>>> ===================================== <<<<<\n");
+    fflush(stdout);
+}
+
+static inline int __mys_myrank()
+{
+    __mys_ensure_mpi_init();
+    int myrank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    return myrank;
+}
+static inline int __mys_nranks()
+{
+    __mys_ensure_mpi_init();
+    int nranks = 0;
+    MPI_Comm_size(MPI_COMM_WORLD, &nranks);
+    return nranks;
+}
+static inline void __mys_barrier()
+{
+    __mys_ensure_mpi_init();
+    MPI_Barrier(MPI_COMM_WORLD);
+}
+
+__attribute__((format(printf, 2, 3)))
+static inline void __mys_printf(int who, const char *fmt, ...)
+{
+    int myrank = __mys_myrank();
+    #pragma omp critical (mys)
+    if ((myrank) == (who)) {
+        va_list args;
+        va_start(args, fmt);
+        vfprintf(stdout, fmt, args);
+        va_end(args);
+        fflush(stdout);
+    }
+}
+
+__attribute__((format(printf, 4, 5)))
+static inline void __mys_debug(int who, const char *file, int line, const char *fmt, ...)
+{
+    int myrank = __mys_myrank();
+    #pragma omp critical (mys)
+    if ((myrank) == (who)) {
+        int nranks = __mys_nranks();
+        int nprefix = trunc(log10(nranks)) + 1;
+        nprefix = nprefix > 3 ? nprefix : 3;
+        fprintf(stdout, "[DEBUG::%0*d %s:%03d] ", nprefix, myrank, file, line);
+        va_list args;
+        va_start(args, fmt);
+        vfprintf(stdout, fmt, args);
+        va_end(args);
+        fprintf(stdout, "\n");
+        fflush(stdout);
+    }
+}
+
+__attribute__((format(printf, 4, 5)))
+static inline void __mys_assert(int exp, const char *file, int line, const char *fmt, ...)
+{
+    #pragma omp critical (mys)
+    if (!(exp)) {
+        int myrank = __mys_myrank();
+        int nranks = __mys_nranks();
+        int nprefix = trunc(log10(nranks)) + 1;
+        nprefix = nprefix > 3 ? nprefix : 3;
+        fprintf(stdout, "[ASSERT::%0*d %s:%03d] ", nprefix, myrank, file, line);
+        va_list args;
+        va_start(args, fmt);
+        vfprintf(stdout, fmt, args);
+        va_end(args);
+        fprintf(stdout, "\n");
+        fflush(stdout);
+    }
+}
+
+__attribute__((format(printf, 3, 4)))
+static inline void __mys_failed(const char *file, int line, const char *fmt, ...)
+{
+    #pragma omp critical (mys)
+    {
+        int myrank = __mys_myrank();
+        int nranks = __mys_nranks();
+        int nprefix = trunc(log10(nranks)) + 1;
+        nprefix = nprefix > 3 ? nprefix : 3;
+        fprintf(stdout, "[FAILED::%0*d %s:%03d] ", nprefix, myrank, file, line);
+        va_list args;
+        va_start(args, fmt);
+        vfprintf(stdout, fmt, args);
+        va_end(args);
+        fprintf(stdout, "\n");
+        fflush(stdout);
+    }
+}
+
 #include <unistd.h>
 #include <sys/stat.h>
-#define WAIT_FLAG(file) do {                      \
-    int myrank = MYRANK();                        \
-    _Pragma("omp critical (mys)")                 \
-    if (myrank == 0) {                            \
-        fprintf(stdout, "[WAIT %s:%03u] "         \
-            "Use \"touch %s\" to continue... ",   \
-            __FILE__, __LINE__, file);            \
-        fflush(stdout);                           \
-    }                                             \
-    struct stat fstat;                            \
-    time_t mod_time;                              \
-    if (stat(file, &fstat) == 0) {                \
-        mod_time = fstat.st_mtime;                \
-    } else {                                      \
-        mod_time = 0;                             \
-    }                                             \
-    while (true) {                                \
-        if (stat(file, &fstat) == 0) {            \
-            if (mod_time < fstat.st_mtime) break; \
-        }                                         \
-        sleep(1);                                 \
-    }                                             \
-    MPI_Barrier(MPI_COMM_WORLD);                  \
-    _Pragma("omp critical (mys)")                 \
-    if (myrank == 0) {                            \
-        fprintf(stdout, "OK\n");                  \
-        fflush(stdout);                           \
-    }                                             \
-} while (0)
-#endif /*  WAIT_FLAG */
+static inline void __mys_wait_flag(const char *file, int line, const char *flagfile) {
+    int myrank = __mys_myrank();
+    #pragma omp critical (mys)
+    {
+        int nranks = __mys_nranks();
+        int nprefix = trunc(log10(nranks)) + 1;
+        nprefix = nprefix > 3 ? nprefix : 3;
+        if (myrank == 0) {
+            fprintf(stdout, "[WAIT::%0*d %s:%03d] ", nprefix, 0, file, line);
+            fflush(stdout);
+        }
+    }
+    struct stat fstat;
+    time_t mod_time;
+    if (stat(flagfile, &fstat) == 0) {
+        mod_time = fstat.st_mtime;
+    } else {
+        mod_time = 0;
+    }
+    while (1) {
+        if (stat(flagfile, &fstat) == 0) {
+            if (mod_time < fstat.st_mtime) break;
+        }
+        sleep(1);
+    }
+    __mys_barrier();
+    #pragma omp critical (mys)
+    if (myrank == 0) {
+        fprintf(stdout, "OK\n");
+        fflush(stdout);
+    }
+}
