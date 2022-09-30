@@ -382,3 +382,28 @@ static DATA_T CalcResidual(INDEX_T nrow, INDEX_T *Ap, INDEX_T *Aj, DATA_T *Av, D
     }
     return sqrt(norm2);
 }
+
+void readtxt(const char *fname, int *narrs_, double **Va_) {
+    FILE *f = fopen(fname, "r");
+    std::vector<double> tmparr(0);
+
+    if (f == NULL) {
+        printf("Could not open %s\n", fname);
+        exit(1);
+    }
+
+
+    char *buffer = 0;
+    size_t buflen = 0;
+    while (!feof(f)) {
+        double tmp;
+        fscanf(f, "%lf\n", &tmp);
+        tmparr.push_back(tmp);
+    }
+    (*Va_) = (double *)malloc(tmparr.size() * sizeof(double));
+    std::copy(tmparr.begin(), tmparr.end(), (*Va_));
+    (*narrs_) = tmparr.size();
+
+    if (f !=stdin) fclose(f);
+}
+
