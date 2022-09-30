@@ -27,9 +27,9 @@ char *cstrnformat(char *buffer, int bufsize, const char *format, ...)
     va_list args;
     va_start(args, format);
     int size_s = vsnprintf(buffer, bufsize, format, args);
+    va_end(args);
     if (size_s <= 0 || size_s > bufsize)
         return NULL;
-    va_end(args);
     return buffer;
 }
 
