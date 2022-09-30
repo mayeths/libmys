@@ -41,7 +41,7 @@ static inline int64_t envi64(const char *name, int64_t default_val)
 
     if (stop == str || stop != NULL)
         return default_val; /* contains with non-number */
-    if ((num == LONG_LONG_MAX || num == LONG_LONG_MIN) && error == ERANGE)
+    if ((num == LLONG_MAX || num == LLONG_MIN) && error == ERANGE)
         return default_val; /* number out of range for LONG */
     return num;
 }
