@@ -18,13 +18,13 @@
 #include "mys.h"
 
 #include "mys/headers.hpp"
+#include "mys/linalg.hpp"
 #include "mys/mat.hpp"
 #include "mys/memory.hpp"
 #include "mys/mpi.hpp"
 #include "mys/sor.hpp"
 #include "mys/string.hpp"
-#include "mys/util.hpp"
-#include "mys/vec.hpp"
+#include "mys/type.hpp"
 
 /*************************/
 // myss
