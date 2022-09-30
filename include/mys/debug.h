@@ -5,12 +5,6 @@
 #include <mpi.h>
 #include <math.h>
 
-// #define MYS_LEGACY_DEBUG
-// #ifdef MYS_LEGACY_DEBUG
-// #include "debug-legacy.h"
-// #endif /*MYS_LEGACY_DEBUG*/
-
-
 #define MYRANK() __mys_myrank()
 #define NRANKS() __mys_nranks()
 #define BARRIER() __mys_barrier()
@@ -85,6 +79,10 @@
 #endif /* __ASSERT_SUGAR__ */
 
 
+#define CALL(fncall) do {        \
+    int __call_result = fncall;  \
+    ASSERT_EQ(__call_result, 0); \
+} while (0)
 #define FAILED(fmt, ...) __mys_failed(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define THROW_NOT_IMPL() FAILED("Not implemented.")
 #define WAIT_FLAG(flagfile) __mys_wait_flag(__FILE__, __LINE__, flagfile)
