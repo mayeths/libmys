@@ -196,6 +196,7 @@ static inline void __mys_failed(const char *file, int line, const char *fmt, ...
         fprintf(stdout, "\n");
         fflush(stdout);
     }
+    exit(1);
 }
 
 #include <unistd.h>
@@ -208,7 +209,7 @@ static inline void __mys_wait_flag(const char *file, int line, const char *flagf
         int nprefix = trunc(log10(nranks)) + 1;
         nprefix = nprefix > 3 ? nprefix : 3;
         if (myrank == 0) {
-            fprintf(stdout, "[WAIT::%0*d %s:%03d] ", nprefix, 0, file, line);
+            fprintf(stdout, "[WAIT::%0*d %s:%03d] Use \"touch %s\" to continue... ", nprefix, 0, file, line, flagfile);
             fflush(stdout);
         }
     }
