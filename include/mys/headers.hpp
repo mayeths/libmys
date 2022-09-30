@@ -9,10 +9,6 @@
  */
 #pragma once
 
-#if __cplusplus < 201103L
-#error Require at least c++11 to parse *.hpp in libmys
-#endif
-
 /* C headers */
 #include "headers.h"
 

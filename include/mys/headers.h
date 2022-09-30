@@ -9,10 +9,6 @@
  */
 #pragma once
 
-#if __STDC_VERSION__ < 199901L && __cplusplus < 201103L
-#error Require at least c99 to parse *.h in libmys
-#endif
-
 /* C headers */
 #include <stdint.h>
 #include <stdio.h>
