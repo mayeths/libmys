@@ -1,5 +1,11 @@
 #pragma once
 
+/*
+  No pseudo-random generator function is perfect, but some are useful.
+  DO NOT use these code for cryptographic purposes.
+  Seed is modified to be fast and easy to feed.
+*/
+
 #include <time.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -8,7 +14,7 @@
 #define __UINT64_INVALID __UINT64_MAX
 
 #if defined(ARCH_X64)
-static inline uint64_t __seeder()
+static inline uint64_t __seed()
 {
     uint32_t lo, hi;
     __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
@@ -16,19 +22,19 @@ static inline uint64_t __seeder()
     return (t << 32) | (t & 0xAAAA5555); /* A(1010)5(0101) won't INVALID(1111_1111) again */
 }
 #elif defined(ARCH_AARCH64)
-static inline uint64_t __seeder()
+static inline uint64_t __seed()
 {
     uint64_t t;
     __asm__ __volatile__("mrs %0, CNTVCT_EL0" : "=r"(t));
     return (t << 32) | (t & 0xAAAA5555);
 }
 #elif defined(MYS_FAKE_RANDOM)
-static inline uint64_t __seeder()
+static inline uint64_t __seed()
 {
     return (uint64_t)1;
 }
 #else
-static inline uint64_t __seeder()
+static inline uint64_t __seed()
 {
     uint64_t t = (uint64_t)time(NULL);
     return (t << 32) | (t & 0xAAAA5555);
@@ -38,15 +44,15 @@ static inline uint64_t __seeder()
 
 /* legacy random */
 static uint64_t __legacy_x = __UINT64_INVALID;
-static inline void __legacy_seed(uint64_t seed)
+static inline void __legacy_init(uint64_t seed)
 {
     __legacy_x = seed;
     srand((unsigned int)__legacy_x);
 }
-static inline uint64_t __legacy_rand64()
+static inline uint64_t __legacy_rand()
 {
     if (__legacy_x == __UINT64_INVALID)
-        __legacy_seed(__seeder());
+        __legacy_init(__seed());
     double perc = (double)rand() / (double)RAND_MAX;
     return perc * (double)__UINT64_MAX;
 }
@@ -61,14 +67,14 @@ static inline uint64_t __legacy_rand64()
  * for some reason you absolutely want 64 bits of state.
  */
 static uint64_t __splitmix64_x = 0; /* The state can be seeded with any value. */
-static inline void __splitmix_seed(uint64_t seed)
+static inline void __splitmix_init(uint64_t seed)
 {
     __splitmix64_x = seed;
 }
-static inline uint64_t __splitmix_rand64()
+static inline uint64_t __splitmix_rand()
 {
     if (__splitmix64_x == __UINT64_INVALID)
-        __splitmix_seed(__seeder());
+        __splitmix_init(__seed());
     uint64_t z = (__splitmix64_x += 0x9e3779b97f4a7c15);
     z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
     z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
@@ -89,7 +95,7 @@ static inline uint64_t __splitmix_rand64()
  * output to fill __xoroshiro128_x.
  */
 static uint64_t __xoroshiro128_x[2] = {__UINT64_INVALID, __UINT64_INVALID};
-static inline void __xoroshiro128ss_seed(uint64_t seed)
+static inline void __xoroshiro128ss_init(uint64_t seed)
 {
     __xoroshiro128_x[0] = seed;
     __xoroshiro128_x[1] = __UINT64_MAX - seed;
@@ -98,10 +104,10 @@ static inline uint64_t __rotl(const uint64_t x, int k)
 {
     return (x << k) | (x >> (64 - k));
 }
-static inline uint64_t __xoroshiro128ss_rand64()
+static inline uint64_t __xoroshiro128ss_rand()
 {
     if (__xoroshiro128_x[0] == __UINT64_INVALID)
-        __xoroshiro128ss_seed(__seeder()); /* Suggest to use __splitmix_rand64() */
+        __xoroshiro128ss_init(__seed()); /* Suggest to use __splitmix_rand() */
     const uint64_t s0 = __xoroshiro128_x[0];
     uint64_t s1 = __xoroshiro128_x[1];
     const uint64_t result = __rotl(s0 * 5, 7) * 9;
@@ -112,7 +118,7 @@ static inline uint64_t __xoroshiro128ss_rand64()
 }
 
 
-const char *randname()
+static inline const char *randname()
 {
 #if defined(MYS_LEGACY_RANDOM)
     return "legacy random generator";
@@ -133,11 +139,11 @@ const char *randname()
 static inline uint64_t randu64(uint64_t minimum, uint64_t maximum)
 {
 #if defined(MYS_LEGACY_RANDOM)
-    uint64_t rand = __legacy_rand64();
+    uint64_t rand = __legacy_rand();
 #elif defined(MYS_SPLITMIX_RANDOM)
-    uint64_t rand = __splitmix_rand64();
+    uint64_t rand = __splitmix_rand();
 #else
-    uint64_t rand = __xoroshiro128ss_rand64();
+    uint64_t rand = __xoroshiro128ss_rand();
 #endif
     if (maximum <= minimum)
         return minimum;
