@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_, int **Ia_, int **Ja_, double **Va_);
+static inline void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_, int **Ia_, int **Ja_, double **Va_);
 
 /*==================================================================================*/
 /*================================== (1/2) mmio.h ==================================*/
@@ -141,7 +141,7 @@ static int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *
 
 
 
-void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_, int **Ia_, int **Ja_, double **Va_) {
+static inline void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_, int **Ia_, int **Ja_, double **Va_) {
     int ret_code;
     MM_typecode matcode;
     FILE *f = fopen(fname, "r");

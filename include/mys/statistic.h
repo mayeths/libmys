@@ -3,7 +3,7 @@
 #include "headers.h"
 #include "os.h"
 
-double arthimetic_mean(double *xarr, int n) {
+static inline double arthimetic_mean(double *xarr, int n) {
     double sum = 0;
     for (int i = 0; i < n; i++) {
         sum += xarr[i];
@@ -11,7 +11,7 @@ double arthimetic_mean(double *xarr, int n) {
     return (1 / (double)n) * sum;
 }
 
-double harmonic_mean(double *xarr, int n) {
+static inline double harmonic_mean(double *xarr, int n) {
     double sum = 0;
     for (int i = 0; i < n; i++) {
         sum += 1 / xarr[i];
@@ -19,7 +19,7 @@ double harmonic_mean(double *xarr, int n) {
     return ((double)n) / sum;
 }
 
-double geometric_mean(double *xarr, int n) {
+static inline double geometric_mean(double *xarr, int n) {
     double product = 1;
     for (int i = 0; i < n; i++) {
         product *= xarr[i];
@@ -27,7 +27,7 @@ double geometric_mean(double *xarr, int n) {
     return pow(product, 1 / (double)n);
 }
 
-double standard_deviation(double *xarr, int n) {
+static inline double standard_deviation(double *xarr, int n) {
     double xbar = arthimetic_mean(xarr, n);
     double denom = 0;
     double nom = n - 1;
@@ -43,7 +43,7 @@ typedef struct CI_t {
   double high;
 } CI_t;
 
-CI_t CI(double *xarr, int n, double confidence) {
+static inline CI_t CI(double *xarr, int n, double confidence) {
     double xbar = arthimetic_mean(xarr, n);
     double s = standard_deviation(xarr, n);
     char tmp[4096] = {0};
