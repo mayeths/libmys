@@ -2,7 +2,7 @@
 
 if [[ $# -ne 2 ]]; then
     echo "[USAGE] bash $0 host path"
-    echo "        bash $0 kphuanghp ~/project/libmys/"
+    echo "        bash $0 kphuanghp '~/project/libmys/'"
     exit 1
 fi
 
