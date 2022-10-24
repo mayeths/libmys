@@ -1,15 +1,23 @@
 #pragma once
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <mpi.h>
 #include <math.h>
+
+#ifdef _OPENMP
+#define MYS_OMP_CRITICAL _Pragma("omp critical (mys)")
+#else
+#define MYS_OMP_CRITICAL
+#endif
 
 #define MYRANK() __mys_myrank()
 #define NRANKS() __mys_nranks()
 #define BARRIER() __mys_barrier()
 #define PRINTF(who, fmt, ...) __mys_printf(who, fmt, ##__VA_ARGS__)
 
+#define PREVENT_ELIMIMATED(a) do { static volatile uint64_t __sink = (uint64_t)a; } while (0)
 
 #define DEBUG(who, fmt, ...) __mys_debug(who, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define DEBUG_ORDERED(fmt, ...) do {   \
@@ -129,7 +137,7 @@ __attribute__((format(printf, 2, 3)))
 static inline void __mys_printf(int who, const char *fmt, ...)
 {
     int myrank = __mys_myrank();
-    #pragma omp critical (mys)
+    MYS_OMP_CRITICAL
     if ((myrank) == (who)) {
         va_list args;
         va_start(args, fmt);
@@ -143,7 +151,7 @@ __attribute__((format(printf, 4, 5)))
 static inline void __mys_debug(int who, const char *file, int line, const char *fmt, ...)
 {
     int myrank = __mys_myrank();
-    #pragma omp critical (mys)
+    MYS_OMP_CRITICAL
     if ((myrank) == (who)) {
         int nranks = __mys_nranks();
         int nprefix = trunc(log10(nranks)) + 1;
@@ -161,7 +169,7 @@ static inline void __mys_debug(int who, const char *file, int line, const char *
 __attribute__((format(printf, 4, 5)))
 static inline void __mys_assert(int exp, const char *file, int line, const char *fmt, ...)
 {
-    #pragma omp critical (mys)
+    MYS_OMP_CRITICAL
     if (!(exp)) {
         int myrank = __mys_myrank();
         int nranks = __mys_nranks();
@@ -180,7 +188,7 @@ static inline void __mys_assert(int exp, const char *file, int line, const char 
 __attribute__((format(printf, 3, 4)))
 static inline void __mys_failed(const char *file, int line, const char *fmt, ...)
 {
-    #pragma omp critical (mys)
+    MYS_OMP_CRITICAL
     {
         int myrank = __mys_myrank();
         int nranks = __mys_nranks();
@@ -201,7 +209,7 @@ static inline void __mys_failed(const char *file, int line, const char *fmt, ...
 #include <sys/stat.h>
 static inline void __mys_wait_flag(const char *file, int line, const char *flagfile) {
     int myrank = __mys_myrank();
-    #pragma omp critical (mys)
+    MYS_OMP_CRITICAL
     {
         int nranks = __mys_nranks();
         int nprefix = trunc(log10(nranks)) + 1;
@@ -225,7 +233,7 @@ static inline void __mys_wait_flag(const char *file, int line, const char *flagf
         sleep(1);
     }
     __mys_barrier();
-    #pragma omp critical (mys)
+    MYS_OMP_CRITICAL
     if (myrank == 0) {
         fprintf(stdout, "OK\n");
         fflush(stdout);
