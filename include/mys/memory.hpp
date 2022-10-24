@@ -48,51 +48,51 @@ static void cachebrush(std::size_t nbytes = 10 * 1024 * 1024)
 /* Custom Allocator */
 /* Work in progress */
 /* https://howardhinnant.github.io/allocator_boilerplate.html */
-template <class T>
-class allocator
-{
-private:
-    std::map<void *, std::size_t> p2b;
-    std::atomic<std::size_t> msize {0};
-    std::atomic<std::size_t> mpeak {0};
-public:
-    using value_type = T;
+// template <class T>
+// class allocator
+// {
+// private:
+//     std::map<void *, std::size_t> p2b;
+//     std::atomic<std::size_t> msize {0};
+//     std::atomic<std::size_t> mpeak {0};
+// public:
+//     using value_type = T;
 
-    allocator() noexcept {}
-    template <class U> allocator(allocator<U> const&) noexcept {}
+//     allocator() noexcept {}
+//     template <class U> allocator(allocator<U> const&) noexcept {}
 
-    value_type* allocate(std::size_t n) {
-        std::size_t nbytes = n * sizeof(value_type);
-        value_type *ptr = static_cast<value_type *>(::operator new(nbytes));
-        /* If allocation success, add to size and return */
-        this->msize += nbytes;
-        std::size_t atom_peak = this->mpeak.load();
-        while (atom_peak < this->msize.load() && !this->mpeak.compare_exchange_weak(atom_peak, this->msize.load(), std::memory_order_relaxed)) {}
-        return ptr;
-    }
+//     value_type* allocate(std::size_t n) {
+//         std::size_t nbytes = n * sizeof(value_type);
+//         value_type *ptr = static_cast<value_type *>(::operator new(nbytes));
+//         /* If allocation success, add to size and return */
+//         this->msize += nbytes;
+//         std::size_t atom_peak = this->mpeak.load();
+//         while (atom_peak < this->msize.load() && !this->mpeak.compare_exchange_weak(atom_peak, this->msize.load(), std::memory_order_relaxed)) {}
+//         return ptr;
+//     }
 
-    void deallocate(value_type* p, std::size_t n) noexcept {
-        std::size_t nbytes = n * sizeof(value_type);
-        ::operator delete(p);
-        /* If deallocation success, sub from size and return */
-        this->msize -= nbytes;
-    }
+//     void deallocate(value_type* p, std::size_t n) noexcept {
+//         std::size_t nbytes = n * sizeof(value_type);
+//         ::operator delete(p);
+//         /* If deallocation success, sub from size and return */
+//         this->msize -= nbytes;
+//     }
 
-    std::size_t size() { return this->msize.load(); }
-    std::size_t peak() { return this->mpeak.load(); }
-};
-template <class T, class U>
-bool
-operator==(allocator<T> const&, allocator<U> const&) noexcept /* Allocator of different type T & U is not equal */
-{
-    return false;
-}
-template <class T, class U>
-bool
-operator!=(allocator<T> const& x, allocator<U> const& y) noexcept
-{
-    return !(x == y);
-}
+//     std::size_t size() { return this->msize.load(); }
+//     std::size_t peak() { return this->mpeak.load(); }
+// };
+// template <class T, class U>
+// bool
+// operator==(allocator<T> const&, allocator<U> const&) noexcept /* Allocator of different type T & U is not equal */
+// {
+//     return false;
+// }
+// template <class T, class U>
+// bool
+// operator!=(allocator<T> const& x, allocator<U> const& y) noexcept
+// {
+//     return !(x == y);
+// }
 
 
 /* Memory usage */
@@ -141,9 +141,9 @@ static inline std::string readable_size(std::size_t bytes, std::size_t precision
     return std::string(buf);
 }
 static inline std::size_t memusage() { return proc_self_status("VmRSS:") * 1024; }
-static inline std::string memusage_str() { return readable_size(memusage() * 1024); }
+static inline std::string memusage_str() { return readable_size(memusage()); }
 static inline std::size_t mempeak() { return proc_self_status("VmHWM:") * 1024; }
-static inline std::string mempeak_str() { return readable_size(mempeak() * 1024); }
+static inline std::string mempeak_str() { return readable_size(mempeak()); }
 
 
 

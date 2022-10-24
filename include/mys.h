@@ -13,6 +13,10 @@
 #error Require at least c99 to parse *.h in libmys
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "./mys/config.h"
 #include "./mys/debug.h"
 #include "./mys/env.h"
@@ -23,3 +27,8 @@
 #include "./mys/partition.h"
 #include "./mys/random.h"
 #include "./mys/statistic.h"
+#include "./mys/thread.h"
+
+#ifdef __cplusplus
+}
+#endif

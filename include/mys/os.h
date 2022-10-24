@@ -282,3 +282,104 @@ static void prun_destroy(prun_t *s)
     s->err = NULL;
     s->status = -1;
 }
+
+
+
+/* https://stackoverflow.com/a/675193 */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <libgen.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+typedef struct stat Stat;
+
+static int do_mkdir(const char *path, mode_t mode)
+{
+    Stat st;
+    int  status = 0;
+    if (stat(path, &st) != 0) {
+        /* Directory does not exist. EEXIST for race condition */
+        if (mkdir(path, mode) != 0 && errno != EEXIST)
+            status = -1;
+    } else if (!S_ISDIR(st.st_mode)) {
+        errno = ENOTDIR;
+        status = -1;
+    }
+    return status;
+}
+
+/**
+** ensuredir - ensure all directories in path exist
+** Algorithm takes the pessimistic view and works top-down to ensure
+** each directory in path exists, rather than optimistically creating
+** the last element and working backwards.
+** ensuredir("/a/b/c/d/", 0777)
+*/
+static int ensuredir(const char *path, mode_t mode)
+{
+    char *p = strdup(path);
+    char *pp = p;
+    char *sp = NULL;
+    int status = 0;
+    while (status == 0 && (sp = strchr(pp, '/')) != 0) {
+        if (sp != pp) {
+            *sp = '\0';
+            status = do_mkdir(p, mode);
+            *sp = '/';
+        }
+        pp = sp + 1;
+    }
+    if (status == 0)
+        status = do_mkdir(path, mode);
+    free(p);
+    return status;
+}
+
+static int ensureparent(const char *path, mode_t mode)
+{
+    char *dirc = strdup(path);
+    char *dname = dirname(dirc);
+    int status = ensuredir(dirc, mode);
+    free(dirc);
+    return status;
+}
+
+/* gcc -g ensuredir.c && valgrind --leak-check=full ./a.out 444/123.txt
+
+int main(int argc, char **argv)
+{
+    int             i;
+
+    for (i = 1; i < argc; i++)
+    {
+        for (int j = 0; j < 20; j++)
+        {
+            if (fork() == 0)
+            {
+                int rc = ensureparent(argv[i], 0777);
+                if (rc != 0)
+                    fprintf(stderr, "%d: failed to create (%d: %s): %s\n",
+                            (int)getpid(), errno, strerror(errno), argv[i]);
+                exit(rc == 0 ? 0 : -1);
+            }
+        }
+        int status;
+        int fail = 0;
+        while (wait(&status) != -1)
+        {
+            if (WEXITSTATUS(status) != 0)
+                fail = 1;
+        }
+        if (fail == 0)
+            printf("created: %s\n", argv[i]);
+    }
+    return(0);
+}
+
+*/
