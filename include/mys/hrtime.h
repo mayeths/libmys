@@ -1,6 +1,7 @@
 #pragma once
-
+/* Please check https://github.com/nclack/tictoc for platform-timer (Windows/Linux/MacOS) */
 #include <stdint.h>
+#include <stdlib.h>
 #include "config.h"
 
 #if defined(ARCH_AARCH64)
