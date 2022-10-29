@@ -102,6 +102,11 @@ int main() {
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <fcntl.h>
+
+static inline int is_valid_fd(int fd) {
+    return fcntl(fd, F_GETFL) != -1 || errno != EBADF;
+}
 
 static int popenRWE(int *ipipe, int *opipe, int *epipe, const char *command) {
     int in[2];
@@ -122,26 +127,26 @@ static int popenRWE(int *ipipe, int *opipe, int *epipe, const char *command) {
 
     pid = fork();
     if (pid > 0) { /* parent */
-        close(in[0]);
-        close(out[1]);
-        close(err[1]);
+        if (is_valid_fd(in[0])) close(in[0]);
+        if (is_valid_fd(out[1])) close(out[1]);
+        if (is_valid_fd(err[1])) close(err[1]);
         *ipipe = in[1];
         *opipe = out[0];
         *epipe = err[0];
         return pid;
     } else if (pid == 0) { /* child */
-        close(in[1]);
-        close(out[0]);
-        close(err[0]);
-        close(0);
+        if (is_valid_fd(in[1])) close(in[1]);
+        if (is_valid_fd(out[0])) close(out[0]);
+        if (is_valid_fd(err[0])) close(err[0]);
+        if (is_valid_fd(0)) close(0);
         if(!dup(in[0])) {
             ;
         }
-        close(1);
+        if (is_valid_fd(1)) close(1);
         if(!dup(out[1])) {
             ;
         }
-        close(2);
+        if (is_valid_fd(2)) close(2);
         if(!dup(err[1])) {
             ;
         }
@@ -153,14 +158,14 @@ static int popenRWE(int *ipipe, int *opipe, int *epipe, const char *command) {
     return pid;
 
 error_fork:
-    close(err[0]);
-    close(err[1]);
+    if (is_valid_fd(err[0])) close(err[0]);
+    if (is_valid_fd(err[1])) close(err[1]);
 error_err:
-    close(out[0]);
-    close(out[1]);
+    if (is_valid_fd(out[0])) close(out[0]);
+    if (is_valid_fd(out[1])) close(out[1]);
 error_out:
-    close(in[0]);
-    close(in[1]);
+    if (is_valid_fd(in[0])) close(in[0]);
+    if (is_valid_fd(in[1])) close(in[1]);
 error_in:
     return -1;
 }
@@ -168,9 +173,9 @@ error_in:
 static int pcloseRWE(int pid, int ipipe, int opipe, int epipe)
 {
     int rc, status;
-    close(ipipe);
-    close(opipe);
-    close(epipe);
+    if (is_valid_fd(ipipe)) close(ipipe);
+    if (is_valid_fd(opipe)) close(opipe);
+    if (is_valid_fd(epipe)) close(epipe);
     rc = waitpid(pid, &status, 0);
     (void)rc; // not used
     return status;
