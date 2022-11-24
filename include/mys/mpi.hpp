@@ -3,6 +3,7 @@
 
 #include <type_traits>
 #include <complex>
+#include <map>
 
 #if !defined(MPI_VERSION)
 #if !defined(MYS_NO_MPI)
@@ -21,7 +22,7 @@
  * @brief Return corresponding MPI_Datatype of given type
  * 
  * @details
- * This function is replaced by constant MPI_Datatype with -O3 optimization.
+ * This function will be replaced by constant MPI_Datatype in -O3 optimization.
  * 
  * @tparam T type
  * @return MPI_Datatype of T
@@ -69,3 +70,46 @@ static inline MPI_Datatype MPI_TYPE() noexcept {
 #endif
 }
 
+static const std::map<MPI_Datatype, size_t> __mpi_size_mapper {
+  {MPI_CHAR, sizeof(char)},
+  {MPI_SIGNED_CHAR, sizeof(signed char)},
+  {MPI_UNSIGNED_CHAR, sizeof(unsigned char)},
+  {MPI_WCHAR, sizeof(wchar_t)},
+  {MPI_SHORT, sizeof(signed short)},
+  {MPI_UNSIGNED_SHORT, sizeof(unsigned short)},
+  {MPI_INT, sizeof(signed int)},
+  {MPI_UNSIGNED, sizeof(unsigned int)},
+  {MPI_LONG, sizeof(signed long int)},
+  {MPI_UNSIGNED_LONG, sizeof(unsigned long int)},
+  {MPI_LONG_LONG, sizeof(signed long long int)},
+  {MPI_UNSIGNED_LONG_LONG, sizeof(unsigned long long int)},
+  {MPI_FLOAT, sizeof(float)},
+  {MPI_DOUBLE, sizeof(double)},
+  {MPI_LONG_DOUBLE, sizeof(long double)},
+  {MPI_INT8_T, sizeof(std::int8_t)},
+  {MPI_INT16_T, sizeof(std::int16_t)},
+  {MPI_INT32_T, sizeof(std::int32_t)},
+  {MPI_INT64_T, sizeof(std::int64_t)},
+  {MPI_UINT8_T, sizeof(std::uint8_t)},
+  {MPI_UINT16_T, sizeof(std::uint16_t)},
+  {MPI_UINT32_T, sizeof(std::uint32_t)},
+  {MPI_UINT64_T, sizeof(std::uint64_t)},
+  {MPI_C_BOOL, sizeof(bool)},
+  {MPI_C_COMPLEX, sizeof(std::complex<float)},
+  {MPI_C_DOUBLE_COMPLEX, sizeof(std::complex<double)},
+  {MPI_C_LONG_DOUBLE_COMPLEX, sizeof(std::complex<long double)},
+};
+
+/**
+ * @brief Return corresponding size of MPI_Datatype
+ * 
+ * @details
+ * This function will be replaced by constant size_t in -O3 optimization.
+ * 
+ * @param D MPI_Datatype
+ * @return size of D
+ * 
+ */
+static inline size_t MPI_SIZE(MPI_Datatype D) noexcept {
+  return __mpi_size_mapper[D];
+}
