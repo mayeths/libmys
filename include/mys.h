@@ -18,21 +18,29 @@
 extern "C" {
 #endif
 
+/* Primary library */
+
 #include "./mys/config.h"
 #include "./mys/debug.h"
 #include "./mys/env.h"
 #include "./mys/headers.h"
 #include "./mys/hrtime.h"
-#include "./mys/matrixmarket.h"
 #include "./mys/os.h"
 #include "./mys/partition.h"
 #include "./mys/random.h"
 #include "./mys/statistic.h"
 #include "./mys/thread.h"
 
+/* Third party library */
+
 #include "./cJSON/cJSON.h"
 #ifdef MYS_IMPL_CJSON
 #include "./cJSON/cJSON.impl.h"
+#endif
+
+#include "./matrixmarket/mmio.h"
+#ifdef MYS_IMPL_MATRIXMARKET
+#include "./matrixmarket/mmio.impl.h"
 #endif
 
 #ifdef __cplusplus
