@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include "config.h"
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 #if defined(ARCH_AARCH64)
 static inline const char *hrname() {
     return "High-resolution timer by AArch64 assembly (10ns)";
@@ -16,6 +19,18 @@ static inline double hrtime() {
     uint64_t t;
     __asm__ __volatile__("mrs %0, CNTVCT_EL0" : "=r"(t));
     return ((double)t) / hrfreq();
+}
+
+#elif defined(ARCH_X64) && defined(TSC_FREQ) && TSC_FREQ > 1
+static inline uint64_t tsc_tick();
+static inline const char *hrname() {
+    return "High-resolution timer by X64 assembly (TSC_FREQ=" STR(TSC_FREQ) ")";
+}
+static inline double hrfreq() {
+    return (double)TSC_FREQ;
+}
+static inline double hrtime() {
+    return (double)tsc_tick() / (double)hrfreq();
 }
 
 #elif defined(POSIX_COMPLIANCE)
@@ -64,4 +79,27 @@ static inline double hrtime() {
     return ((double)t.QuadPart) / hrfreq();
 }
 
+#endif
+
+/******* AUX *******/
+
+#if defined(ARCH_X64)
+static inline uint64_t tsc_tick()
+{
+    uint32_t lo, hi;
+    __asm__ __volatile__("mfence":::"memory");
+    __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
+    return (uint64_t)hi << 32 | lo;
+}
+#if defined(POSIX_COMPLIANCE)
+#include <stdlib.h>
+#include <sys/time.h>
+static inline uint64_t test_tsc_freq()
+{
+    uint64_t raw1 = tsc_tick();
+    sleep(1);
+    uint64_t raw2 = tsc_tick();
+    return raw2 - raw1;
+}
+#endif
 #endif
