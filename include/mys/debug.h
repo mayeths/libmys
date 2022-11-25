@@ -17,7 +17,7 @@
 #define BARRIER() __mys_barrier()
 #define PRINTF(who, fmt, ...) __mys_printf(who, fmt, ##__VA_ARGS__)
 
-#define PREVENT_ELIMIMATED(a) do { static volatile uint64_t __sink = (uint64_t)a; } while (0)
+#define PREVENT_ELIMIMATED(a) do { static volatile uint64_t __sink = 0; __sink = (uint64_t)a; } while (0)
 
 #define DEBUG(who, fmt, ...) __mys_debug(who, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define DEBUG_ORDERED(fmt, ...) do {   \
