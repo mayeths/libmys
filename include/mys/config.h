@@ -42,6 +42,7 @@
 #elif defined(__ANDROID__)
 #define OS_NAME "Android"
 #define OS_ANDROID
+#define OS_LINUX
 #else
 #define OS_NAME "Unknown"
 #define OS_UNKNOWN
@@ -70,6 +71,15 @@
 #else
 #define ARCH_NAME "Unknown"
 #define ARCH_UNKNOWN
+#endif
+
+/* See cJSON */
+#if defined(COMPILER_GCC) || defined(COMPILER_CLANG) || defined(COMPILER_ICC) || defined(COMPILER_NVCC) || defined(COMPILER_SWCC)
+#define MYS_API __attribute__((unused)) /*__attribute__((visibility("default")))*/
+#elif defined(COMPILER_MSVC)
+#define MYS_API /*__declspec(dllexport)*/
+#else
+#define MYS_API /* Emit nothing */
 #endif
 
 #define REP2(inst) do { inst; inst; } while (0)
