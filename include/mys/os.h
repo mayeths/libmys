@@ -103,17 +103,18 @@ int main() {
 #include <sys/wait.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 
 static inline int is_valid_fd(int fd) {
     return fcntl(fd, F_GETFL) != -1 || errno != EBADF;
 }
 
 static int popenRWE(int *ipipe, int *opipe, int *epipe, const char *command) {
-    int in[2];
-    int out[2];
-    int err[2];
-    int pid;
-    int rc;
+    int in[2] = {-1, -1};
+    int out[2] = {-1, -1};
+    int err[2] = {-1, -1};
+    int pid = -1;
+    int rc = 0;
 
     rc = pipe(in);
     if (rc<0)
@@ -286,6 +287,48 @@ static void prun_destroy(prun_t *s)
     s->out = NULL;
     s->err = NULL;
     s->status = -1;
+}
+
+/* Remember to free return value. */
+static inline char *bfilename(const char *path)
+{
+    const char *s = strrchr(path, '/');
+    return s ? strdup(s + 1) : strdup(path);
+}
+
+static inline const char *procname()
+{
+    static char name[1024] = {'\0'};
+    if (name[0] != '\0')
+        return name;
+
+    int pid = (int)getpid();
+    char exe[1024];
+    snprintf(exe, sizeof(exe), "/proc/%d/exe", pid);
+
+    char path[1024];
+    int n = readlink(exe, path, sizeof(path));
+    if (n > 0 && n < sizeof(path) - 1) {
+        path[n] = '\0';
+        char *bname = bfilename(path);
+        size_t size = strnlen(bname, sizeof(name));
+        strncpy(name, bname, size);
+        free(bname);
+    } else {
+        snprintf(name, sizeof(name), "<error_exe.pid=%d>", pid);
+    }
+
+    // prun_t run = prun_create(path);
+    // if (run.status == 0 && strlen(run.out) >= 1) {
+    //     char *bname = bfilename(run.out);
+    //     size_t size = strnlen(bname, sizeof(name));
+    //     strncpy(name, bname, size);
+    //     free(bname);
+    // } else {
+    //     snprintf(name, sizeof(name), "<error_exe.pid=%d>", pid);
+    // }
+    // prun_destroy(&run);
+    return name;
 }
 
 
