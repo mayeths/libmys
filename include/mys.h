@@ -31,7 +31,7 @@ extern "C" {
 #include "./mys/statistic.h"
 #include "./mys/thread.h"
 
-/* Third party library */
+/* Secondary library */
 
 #include "./cJSON/cJSON.h"
 #ifdef MYS_IMPL_CJSON
