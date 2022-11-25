@@ -102,13 +102,19 @@ int main() {
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <fcntl.h>
+#include <errno.h>
+
+static inline int is_valid_fd(int fd) {
+    return fcntl(fd, F_GETFL) != -1 || errno != EBADF;
+}
 
 static int popenRWE(int *ipipe, int *opipe, int *epipe, const char *command) {
-    int in[2];
-    int out[2];
-    int err[2];
-    int pid;
-    int rc;
+    int in[2] = {-1, -1};
+    int out[2] = {-1, -1};
+    int err[2] = {-1, -1};
+    int pid = -1;
+    int rc = 0;
 
     rc = pipe(in);
     if (rc<0)
@@ -122,26 +128,26 @@ static int popenRWE(int *ipipe, int *opipe, int *epipe, const char *command) {
 
     pid = fork();
     if (pid > 0) { /* parent */
-        close(in[0]);
-        close(out[1]);
-        close(err[1]);
+        if (is_valid_fd(in[0])) close(in[0]);
+        if (is_valid_fd(out[1])) close(out[1]);
+        if (is_valid_fd(err[1])) close(err[1]);
         *ipipe = in[1];
         *opipe = out[0];
         *epipe = err[0];
         return pid;
     } else if (pid == 0) { /* child */
-        close(in[1]);
-        close(out[0]);
-        close(err[0]);
-        close(0);
+        if (is_valid_fd(in[1])) close(in[1]);
+        if (is_valid_fd(out[0])) close(out[0]);
+        if (is_valid_fd(err[0])) close(err[0]);
+        if (is_valid_fd(0)) close(0);
         if(!dup(in[0])) {
             ;
         }
-        close(1);
+        if (is_valid_fd(1)) close(1);
         if(!dup(out[1])) {
             ;
         }
-        close(2);
+        if (is_valid_fd(2)) close(2);
         if(!dup(err[1])) {
             ;
         }
@@ -153,14 +159,14 @@ static int popenRWE(int *ipipe, int *opipe, int *epipe, const char *command) {
     return pid;
 
 error_fork:
-    close(err[0]);
-    close(err[1]);
+    if (is_valid_fd(err[0])) close(err[0]);
+    if (is_valid_fd(err[1])) close(err[1]);
 error_err:
-    close(out[0]);
-    close(out[1]);
+    if (is_valid_fd(out[0])) close(out[0]);
+    if (is_valid_fd(out[1])) close(out[1]);
 error_out:
-    close(in[0]);
-    close(in[1]);
+    if (is_valid_fd(in[0])) close(in[0]);
+    if (is_valid_fd(in[1])) close(in[1]);
 error_in:
     return -1;
 }
@@ -168,9 +174,9 @@ error_in:
 static int pcloseRWE(int pid, int ipipe, int opipe, int epipe)
 {
     int rc, status;
-    close(ipipe);
-    close(opipe);
-    close(epipe);
+    if (is_valid_fd(ipipe)) close(ipipe);
+    if (is_valid_fd(opipe)) close(opipe);
+    if (is_valid_fd(epipe)) close(epipe);
     rc = waitpid(pid, &status, 0);
     (void)rc; // not used
     return status;
@@ -281,6 +287,48 @@ static void prun_destroy(prun_t *s)
     s->out = NULL;
     s->err = NULL;
     s->status = -1;
+}
+
+/* Remember to free return value. */
+static inline char *bfilename(const char *path)
+{
+    const char *s = strrchr(path, '/');
+    return s ? strdup(s + 1) : strdup(path);
+}
+
+static inline const char *procname()
+{
+    static char name[1024] = {'\0'};
+    if (name[0] != '\0')
+        return name;
+
+    int pid = (int)getpid();
+    char exe[1024];
+    snprintf(exe, sizeof(exe), "/proc/%d/exe", pid);
+
+    char path[1024];
+    int n = readlink(exe, path, sizeof(path));
+    if (n > 0 && n < sizeof(path) - 1) {
+        path[n] = '\0';
+        char *bname = bfilename(path);
+        size_t size = strnlen(bname, sizeof(name));
+        strncpy(name, bname, size);
+        free(bname);
+    } else {
+        snprintf(name, sizeof(name), "<error_exe.pid=%d>", pid);
+    }
+
+    // prun_t run = prun_create(path);
+    // if (run.status == 0 && strlen(run.out) >= 1) {
+    //     char *bname = bfilename(run.out);
+    //     size_t size = strnlen(bname, sizeof(name));
+    //     strncpy(name, bname, size);
+    //     free(bname);
+    // } else {
+    //     snprintf(name, sizeof(name), "<error_exe.pid=%d>", pid);
+    // }
+    // prun_destroy(&run);
+    return name;
 }
 
 
