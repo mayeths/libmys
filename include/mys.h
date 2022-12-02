@@ -40,17 +40,20 @@ extern "C" {
 #endif
 
 #include "./cJSON/cJSON.h"
-#ifdef MYS_IMPL_CJSON
+#if defined(MYS_IMPL_CJSON) && !defined(MYS_IMPL_CJSON__)
+#define MYS_IMPL_CJSON__
 #include "./cJSON/cJSON.impl.h"
 #endif
 
 #include "./matrixmarket/mmio.h"
-#ifdef MYS_IMPL_MATRIXMARKET
+#if defined(MYS_IMPL_MATRIXMARKET) && !defined(MYS_IMPL_MATRIXMARKET__)
+#define MYS_IMPL_MATRIXMARKET__
 #include "./matrixmarket/mmio.impl.h"
 #endif
 
 #include "./stb/stb_image.h"
-#ifdef MYS_IMPL_STB
+#if defined(MYS_IMPL_STB) && !defined(MYS_IMPL_STB__)
+#define MYS_IMPL_STB__
 #include "./stb/stb_image.impl.h"
 #endif
 
