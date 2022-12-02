@@ -43,6 +43,11 @@ extern "C" {
 #include "./matrixmarket/mmio.impl.h"
 #endif
 
+#include "./stb/stb_image.h"
+#ifdef MYS_IMPL_STB
+#include "./stb/stb_image.impl.h"
+#endif
+
 #ifdef __cplusplus
 }
 #endif
