@@ -9,7 +9,6 @@
 #ifndef __MYS_H__
 #define __MYS_H__
 
-#define MYS_VERSION 220829L
 #if __STDC_VERSION__ < 199901L && __cplusplus < 201103L
 #error Require at least c99 to parse *.h in libmys
 #endif
