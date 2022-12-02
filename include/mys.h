@@ -5,6 +5,7 @@
  * @brief Include all libmys C headers into one header (Require C99)
  * 
  */
+// TODO: FIXME: Remove __MYS_H__ and __MYS_HPP__ due to introduce MYS_IMPL
 #ifndef __MYS_H__
 #define __MYS_H__
 
@@ -32,6 +33,12 @@ extern "C" {
 #include "./mys/thread.h"
 
 /* Secondary library */
+
+#ifdef MYS_IMPL_ALL
+#define MYS_IMPL_CJSON
+#define MYS_IMPL_MATRIXMARKET
+#define MYS_IMPL_STB
+#endif
 
 #include "./cJSON/cJSON.h"
 #ifdef MYS_IMPL_CJSON
