@@ -9,30 +9,23 @@
  *   - *.hpp extend *.h to provide more user-friendly interfaces
  *   - *.hpp use C++ class to declare useful aux structure (like CSR and vector)
  */
-#ifndef __MYS_HPP__
-#define __MYS_HPP__
 
 #if __cplusplus < 201103L
 #error Require at least c++11 to parse *.hpp in libmys
 #endif
 
-/* Primary library */
+/* Primary Library (mys) */
 
 #include "mys.h"
 #include "mys/headers.hpp"
 #include "mys/linalg.hpp"
-#include "mys/mat.hpp"
 #include "mys/memory.hpp"
 #include "mys/mpi.hpp"
-#include "mys/sor.hpp"
 #include "mys/string.hpp"
 #include "mys/type.hpp"
 
-/* Secondary library */
+/* Sparse Solver Library (myss) */
 
-/*************************/
-// myss
-/*************************/
 #ifndef MYS_NO_MYSS
 #include "myss/vec/VBase.hpp"
 #include "myss/vec/VDense.hpp"
@@ -56,6 +49,3 @@
 #include "myss/iss/CG.hpp"
 #include "myss/iss/PIPECG.hpp"
 #endif /*MYS_NO_MYSS*/
-
-
-#endif /*__MYS_HPP__*/

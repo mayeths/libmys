@@ -5,20 +5,16 @@
  * @brief Include all libmys C headers into one header (Require C99)
  * 
  */
-// TODO: FIXME: Remove __MYS_H__ and __MYS_HPP__ due to introduce MYS_IMPL
-#ifndef __MYS_H__
-#define __MYS_H__
 
 #if __STDC_VERSION__ < 199901L && __cplusplus < 201103L
 #error Require at least c99 to parse *.h in libmys
 #endif
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Primary library */
+/* Primary Library (mys) */
 
 #include "./mys/config.h"
 #include "./mys/debug.h"
@@ -31,7 +27,7 @@ extern "C" {
 #include "./mys/statistic.h"
 #include "./mys/thread.h"
 
-/* Secondary library */
+/* Third-Party Library (mys3) */
 
 #ifdef MYS_IMPL_ALL
 #define MYS_IMPL_CJSON
@@ -39,27 +35,24 @@ extern "C" {
 #define MYS_IMPL_STB
 #endif
 
-#include "./cJSON/cJSON.h"
-#if defined(MYS_IMPL_CJSON) && !defined(MYS_IMPL_CJSON__)
-#define MYS_IMPL_CJSON__
-#include "./cJSON/cJSON.impl.h"
+#include "./mys3/cJSON/cJSON.h"
+#if defined(MYS_IMPL_CJSON) && !defined(MYS_IMPL_CJSON_YES)
+#define MYS_IMPL_CJSON_YES
+#include "./mys3/cJSON/cJSON.impl.h"
 #endif
 
-#include "./matrixmarket/mmio.h"
-#if defined(MYS_IMPL_MATRIXMARKET) && !defined(MYS_IMPL_MATRIXMARKET__)
-#define MYS_IMPL_MATRIXMARKET__
-#include "./matrixmarket/mmio.impl.h"
+#include "./mys3/matrixmarket/mmio.h"
+#if defined(MYS_IMPL_MATRIXMARKET) && !defined(MYS_IMPL_MATRIXMARKET_YES)
+#define MYS_IMPL_MATRIXMARKET_YES
+#include "./mys3/matrixmarket/mmio.impl.h"
 #endif
 
-#include "./stb/stb_image.h"
-#if defined(MYS_IMPL_STB) && !defined(MYS_IMPL_STB__)
-#define MYS_IMPL_STB__
-#include "./stb/stb_image.impl.h"
+#include "./mys3/stb/stb_image.h"
+#if defined(MYS_IMPL_STB) && !defined(MYS_IMPL_STB_YES)
+#define MYS_IMPL_STB_YES
+#include "./mys3/stb/stb_image.impl.h"
 #endif
 
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif /*__MYS_H__*/

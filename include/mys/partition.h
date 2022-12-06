@@ -1,7 +1,4 @@
 #pragma once
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 static inline int partition1DSimple(
     const int start, const int end,
@@ -30,8 +27,3 @@ static inline int partition1DLoadBalanced(
 ) {
     return 1;
 }
-
-
-#ifdef __cplusplus
-} /*extern "C"*/
-#endif
