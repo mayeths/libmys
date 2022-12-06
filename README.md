@@ -2,27 +2,13 @@
 
 Mayeths' library (wow@mayeths.com).
 
-- **mys**: **M**a**y**eth**s**' basis headers
+- **mys**: **M**a**y**eth**s**' Basic Header Library
     - ***.h**: Headers that work under C99
     - ***.hpp**: Headers that work under C++11
-- **myss**: **M**a**y**eth**s**' **S**olver
-    - **iss**: **I**terative **S**parse **S**olver
-    - **dss**: **D**irect **S**parse **S**olver (Nothing currently)
-    - **pc**: **P**re**c**onditioner
-    - **mat**: **Mat**rix structures
-    - **vec**: **Vec**tor structures
-
-```bash
-# download
-FILE=$(mktemp)
-wget "https://github.com/mayeths/libmys/archive/refs/heads/main.zip" -O $FILE
-unzip $FILE && mv libmys-main libmys && /bin/rm -f $FILE
-
-# rsync
-mkdir libmys
-cd libmys
-rsync --exclude="ugly/" --exclude="lib/" -avz hostname:~/project/libmys/ .
-```
+- **mys3**: Mayeths' **3**rd-Party Library
+- **mysg**: Mayeths' **G**raphics Library
+- **mysp**: Mayeths' **P**erformance Analysis Library
+- **myss**: Mayeths' **S**parse Solver Library
 
 ### Usage of myss
 
