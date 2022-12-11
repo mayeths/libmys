@@ -2,3 +2,4 @@
 include/mys-private/
 lib/
 ugly/
+build
