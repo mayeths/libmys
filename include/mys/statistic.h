@@ -43,6 +43,7 @@ typedef struct CI_t {
   double high;
 } CI_t;
 
+#if 0
 static inline CI_t CI(double *xarr, int n, double confidence) {
     double xbar = arthimetic_mean(xarr, n);
     double s = standard_deviation(xarr, n);
@@ -65,7 +66,7 @@ static inline CI_t CI(double *xarr, int n, double confidence) {
         "    main()\n"
         ;
 
-    sprintf(tmp, "python3 -c '%s' %f %d", code, confidence, n - 1);
+    sprintf(tmp, "export LD_LIBRARY_PATH=/software/local/lib64:$LD_LIBRARY_PATH;/software/python/virtualenv/py3.6/bin/python3 -c '%s' %f %d", code, confidence, n - 1);
     char *out = execshell(tmp);
     double t = atof(out);
     free(out);
@@ -74,3 +75,4 @@ static inline CI_t CI(double *xarr, int n, double confidence) {
     result.high = xbar + t * s / sqrt((double)n);
     return result;
 }
+#endif
