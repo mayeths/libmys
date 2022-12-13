@@ -1,6 +1,10 @@
 #pragma once
 
 #include <limits>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <typeinfo>
 #include "mys/debug.h"
 
 enum class MatrixType: int {
@@ -392,9 +396,6 @@ void readtxt(const char *fname, int *narrs_, double **Va_) {
         exit(1);
     }
 
-
-    char *buffer = 0;
-    size_t buflen = 0;
     while (!feof(f)) {
         double tmp;
         fscanf(f, "%lf\n", &tmp);
