@@ -17,7 +17,6 @@
 /* Primary Library (mys) */
 
 #include "mys.h"
-#include "mys/headers.hpp"
 #include "mys/linalg.hpp"
 #include "mys/memory.hpp"
 #include "mys/mpi.hpp"
