@@ -2,6 +2,47 @@
 
 #include "mmio.h"
 
+static inline void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_, int **Ia_, int **Ja_, double **Va_) {
+    int ret_code;
+    MM_typecode matcode;
+    FILE *f = fopen(fname, "r");
+
+    if (f == NULL) {
+        printf("Could not open %s\n", fname);
+        exit(1);
+    }
+    if (mm_read_banner(f, &matcode) != 0) {
+        printf("Could not process Matrix Market banner.\n");
+        exit(1);
+    }
+
+    if (mm_is_complex(matcode) && mm_is_matrix(matcode) && mm_is_sparse(matcode)) {
+        printf("Sorry, this application does not support ");
+        printf("Market Market type: [%s]\n", mm_typecode_to_str(matcode));
+        exit(1);
+    }
+
+    if ((ret_code = mm_read_mtx_crd_size(f, nrows_, ncols_, nnz_)) !=0)
+        exit(1);
+
+    (*Ia_) = (int *) malloc((*nnz_) * sizeof(int));
+    (*Ja_) = (int *) malloc((*nnz_) * sizeof(int));
+    (*Va_) = (double *) malloc((*nnz_) * sizeof(double));
+
+    double t1 = MPI_Wtime();
+    for (int i=0; i<(*nnz_); i++) {
+        if (i % ((*nnz_) / 100) == 0) {
+            double t11 = MPI_Wtime();
+            // DEBUG(0, "progress: %d/%d, time %f", i, (*nnz_), t11 - t1);
+        }
+        fscanf(f, "%d %d %lg\n", &(*Ia_)[i], &(*Ja_)[i], &(*Va_)[i]);
+        (*Ia_)[i]--;
+        (*Ja_)[i]--;
+    }
+
+    if (f !=stdin) fclose(f);
+}
+
 /*==================================================================================*/
 /*================================== (2/2) mmio.c ==================================*/
 /*==================================================================================*/

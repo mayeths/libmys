@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <mpi.h>
 #include <math.h>
+#include "config.h"
 
 #ifdef _OPENMP
 #define MYS_OMP_CRITICAL _Pragma("omp critical (mys)")
@@ -207,6 +208,7 @@ static inline void __mys_failed(const char *file, int line, const char *fmt, ...
 
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 static inline void __mys_wait_flag(const char *file, int line, const char *flagfile) {
     int myrank = __mys_myrank();
     MYS_OMP_CRITICAL
