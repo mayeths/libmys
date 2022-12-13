@@ -224,7 +224,6 @@ static int readfd(char **target, FILE* input) {
 /* extract check result */
 static char *extract_check_result(FILE *fp) {
     char *output;
-    char *escaped;
     output = (char *)malloc(sizeof(char*)*BUFFER_SIZE);
     output[0] = '\0';
     readfd(&output, fp);
@@ -255,7 +254,7 @@ static popen_t popen_create(const char *argv)
     return result;
 }
 
-static prun_t prun_create(const char *argv)
+MYS_API static prun_t prun_create(const char *argv)
 {
     prun_t result;
     result.status = -1;
@@ -278,7 +277,7 @@ static prun_t prun_create(const char *argv)
     return result;
 }
 
-static void prun_destroy(prun_t *s)
+MYS_API static void prun_destroy(prun_t *s)
 {
     if (s->out != NULL && s->out != __empty_string)
         free((char *)s->out);
@@ -389,10 +388,11 @@ static int ensuredir(const char *path, mode_t mode)
     return status;
 }
 
-static int ensureparent(const char *path, mode_t mode)
+MYS_API static int ensureparent(const char *path, mode_t mode)
 {
     char *dirc = strdup(path);
-    char *dname = dirname(dirc);
+    // char *dname = dirname(dirc);
+    // FIXME: why dname is not used?
     int status = ensuredir(dirc, mode);
     free(dirc);
     return status;

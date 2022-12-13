@@ -87,15 +87,9 @@
 #define ASSERT_FLOAT_BETWEEN_II(low, exp, high) __ASSERTX_TWO_OP__(low,<=,exp,<=,high,"%f","")
 #endif /* __ASSERT_SUGAR__ */
 
-
-#define CALL(fncall) do {        \
-    int __call_result = fncall;  \
-    ASSERT_EQ(__call_result, 0); \
-} while (0)
 #define FAILED(fmt, ...) __mys_failed(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define THROW_NOT_IMPL() FAILED("Not implemented.")
 #define WAIT_FLAG(flagfile) __mys_wait_flag(__FILE__, __LINE__, flagfile)
-
 
 /*********************************************/
 /* Implement */
