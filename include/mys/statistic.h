@@ -1,6 +1,8 @@
 #pragma once
 
-#include "headers.h"
+#include "math.h"
+#include "stdio.h"
+#include "stdlib.h"
 #include "os.h"
 
 static inline double arthimetic_mean(double *xarr, int n) {
