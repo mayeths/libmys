@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "config.h"
+#include "macro.h"
 
 /* Memory Barrier */
 /* https://support.huaweicloud.com/codeprtr-kunpenggrf/kunpengtaishanporting_12_0048.html */
@@ -30,7 +31,7 @@
 
 
 /* Cache clean */
-static void cachebrush(std::size_t nbytes = 10 * 1024 * 1024)
+MYS_API static void cachebrush(std::size_t nbytes = 10 * 1024 * 1024)
 {
     char * volatile arr = (char * volatile)malloc(nbytes * sizeof(char));
     memset(arr, 0, nbytes);
@@ -138,7 +139,7 @@ static inline std::string readable_size(std::size_t bytes, std::size_t precision
         i++;
     }
     char buf[1024];
-    sprintf(buf, "%.*f %s", precision, size, units[i]); /*%.*f*/
+    sprintf(buf, "%.*f %s", (int)precision, size, units[i]); /*%.*f*/
     return std::string(buf);
 }
 static inline std::size_t memusage() { return proc_self_status("VmRSS:") * 1024; }

@@ -306,8 +306,8 @@ static inline const char *procname()
     snprintf(exe, sizeof(exe), "/proc/%d/exe", pid);
 
     char path[1024];
-    int n = readlink(exe, path, sizeof(path));
-    if (n > 0 && n < sizeof(path) - 1) {
+    ssize_t n = readlink(exe, path, sizeof(path));
+    if (n > 0 && (size_t)n < (sizeof(path) - 1)) {
         path[n] = '\0';
         char *bname = bfilename(path);
         size_t size = strnlen(bname, sizeof(name));

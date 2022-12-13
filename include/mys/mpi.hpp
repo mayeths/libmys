@@ -17,6 +17,7 @@
 #endif
 
 #include "config.h"
+#include "macro.h"
 
 /**
  * @brief Return corresponding MPI_Datatype of given type
@@ -162,7 +163,7 @@ static MPI_Datatype MPI_TYPE() noexcept {
 //     static size_t user_count = 0;
 //     try {
 //         return mpi_typename.at(dtype);
-//     } catch (std::out_of_range) {
+//     } catch (std::out_of_range const &) {
 //         char name[128];
 //         snprintf(name, sizeof(name), "TYPE_%llu", user_count);
 //         user_count += 1;
@@ -171,7 +172,7 @@ static MPI_Datatype MPI_TYPE() noexcept {
 //     }
 // }
 
-static std::string MPI_COMMNAME(MPI_Comm comm) noexcept {
+MYS_API static std::string MPI_COMMNAME(MPI_Comm comm) noexcept {
     static std::map<MPI_Comm, std::string> mpi_commname {
         {MPI_COMM_NULL, "MPI_COMM_NULL"},
         {MPI_COMM_SELF, "MPI_COMM_SELF"},
@@ -180,16 +181,16 @@ static std::string MPI_COMMNAME(MPI_Comm comm) noexcept {
     static size_t user_count = 0;
     try {
         return mpi_commname.at(comm);
-    } catch (std::out_of_range) {
+    } catch (std::out_of_range const &) {
         char name[128];
-        snprintf(name, sizeof(name), "COMM_%llu", user_count);
+        snprintf(name, sizeof(name), "COMM_%llu", (unsigned long long)user_count);
         user_count += 1;
         mpi_commname[comm] = std::string(name);
         return std::string(name);
     }
 }
 
-static std::string MPI_OPNAME(MPI_Op op) noexcept {
+MYS_API static std::string MPI_OPNAME(MPI_Op op) noexcept {
     static std::map<MPI_Op, std::string> mpi_opname {
         {MPI_OP_NULL, "MPI_OP_NULL"},
         {MPI_MAX, "MPI_MAX"},
@@ -209,25 +210,25 @@ static std::string MPI_OPNAME(MPI_Op op) noexcept {
     static size_t user_count = 0;
     try {
         return mpi_opname.at(op);
-    } catch (std::out_of_range) {
+    } catch (std::out_of_range const &) {
         char name[128];
-        snprintf(name, sizeof(name), "OP_%llu", user_count);
+        snprintf(name, sizeof(name), "OP_%llu", (unsigned long long)user_count);
         user_count += 1;
         mpi_opname[op] = std::string(name);
         return std::string(name);
     }
 }
 
-static std::string MPI_REQUESTNAME(MPI_Request request) noexcept {
+MYS_API static std::string MPI_REQUESTNAME(MPI_Request request) noexcept {
     static std::map<MPI_Request, std::string> mpi_requestname {
         {MPI_REQUEST_NULL, "MPI_REQUEST_NULL"},
     };
     static size_t user_count = 0;
     try {
         return mpi_requestname.at(request);
-    } catch (std::out_of_range) {
+    } catch (std::out_of_range const &) {
         char name[128];
-        snprintf(name, sizeof(name), "REQUEST_%llu", user_count);
+        snprintf(name, sizeof(name), "REQUEST_%llu", (unsigned long long)user_count);
         user_count += 1;
         mpi_requestname[request] = std::string(name);
         return std::string(name);
@@ -598,7 +599,7 @@ static std::string MPI_REQUESTNAME(MPI_Request request) noexcept {
 #define ID_MPI_Finalize	362
 #define ID_COUNT	(ID_MPI_Finalize)+1
 
-static const char *MPI_NAME(int id)
+MYS_API static const char *MPI_NAME(int id)
 {
     static const char* names[] = {
         "<undefined_placeholder>",
