@@ -20,6 +20,7 @@
 #include "mys/linalg.hpp"
 #include "mys/memory.hpp"
 #include "mys/mpi.hpp"
+#include "mys/raii.hpp"
 #include "mys/string.hpp"
 #include "mys/type.hpp"
 
