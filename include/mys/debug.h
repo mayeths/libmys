@@ -91,6 +91,20 @@
 #define THROW_NOT_IMPL() FAILED("Not implemented.")
 #define WAIT_FLAG(flagfile) __mys_wait_flag(__FILE__, __LINE__, flagfile)
 
+/* Validate return value */
+#define CHKRET(fncall)       \
+do {                         \
+    int val = (int)(fncall); \
+    ASSERT_EQ(val, 0);       \
+} while (0)
+
+/* Validate pointer */
+#define CHKPTR(fncall)             \
+do {                               \
+    size_t val = (size_t)(fncall); \
+    ASSERT_NE(val, 0);             \
+} while (0)
+
 /*********************************************/
 /* Implement */
 /*********************************************/
