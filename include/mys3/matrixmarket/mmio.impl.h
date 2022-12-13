@@ -2,7 +2,7 @@
 
 #include "mmio.h"
 
-static inline void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_, int **Ia_, int **Ja_, double **Va_) {
+void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_, int **Ia_, int **Ja_, double **Va_) {
     int ret_code;
     MM_typecode matcode;
     FILE *f = fopen(fname, "r");
@@ -54,7 +54,7 @@ static inline void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_
 *
 */
 
-static int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
+int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
                 double **val_, int **I_, int **J_)
 {
     FILE *f;
@@ -123,7 +123,7 @@ static int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *
     return 0;
 }
 
-static int mm_is_valid(MM_typecode matcode)
+int mm_is_valid(MM_typecode matcode)
 {
     if (!mm_is_matrix(matcode)) return 0;
     if (mm_is_dense(matcode) && mm_is_pattern(matcode)) return 0;
@@ -133,7 +133,7 @@ static int mm_is_valid(MM_typecode matcode)
     return 1;
 }
 
-static int mm_read_banner(FILE *f, MM_typecode *matcode)
+int mm_read_banner(FILE *f, MM_typecode *matcode)
 {
     char line[MM_MAX_LINE_LENGTH];
     char banner[MM_MAX_TOKEN_LENGTH];
@@ -218,7 +218,7 @@ static int mm_read_banner(FILE *f, MM_typecode *matcode)
     return 0;
 }
 
-static int mm_write_mtx_crd_size(FILE *f, int M, int N, int nz)
+int mm_write_mtx_crd_size(FILE *f, int M, int N, int nz)
 {
     if (fprintf(f, "%d %d %d\n", M, N, nz) != 3)
         return MM_COULD_NOT_WRITE_FILE;
@@ -226,7 +226,7 @@ static int mm_write_mtx_crd_size(FILE *f, int M, int N, int nz)
         return 0;
 }
 
-static int mm_read_mtx_crd_size(FILE *f, int *M, int *N, int *nz )
+int mm_read_mtx_crd_size(FILE *f, int *M, int *N, int *nz )
 {
     char line[MM_MAX_LINE_LENGTH];
     int num_items_read;
@@ -257,7 +257,7 @@ static int mm_read_mtx_crd_size(FILE *f, int *M, int *N, int *nz )
 }
 
 
-static int mm_read_mtx_array_size(FILE *f, int *M, int *N)
+int mm_read_mtx_array_size(FILE *f, int *M, int *N)
 {
     char line[MM_MAX_LINE_LENGTH];
     int num_items_read;
@@ -286,7 +286,7 @@ static int mm_read_mtx_array_size(FILE *f, int *M, int *N)
     return 0;
 }
 
-static int mm_write_mtx_array_size(FILE *f, int M, int N)
+int mm_write_mtx_array_size(FILE *f, int M, int N)
 {
     if (fprintf(f, "%d %d\n", M, N) != 2)
         return MM_COULD_NOT_WRITE_FILE;
@@ -302,7 +302,7 @@ static int mm_write_mtx_array_size(FILE *f, int M, int N)
 /* use when I[], J[], and val[]J, and val[] are already allocated */
 /******************************************************************/
 
-static int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],
+int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],
         double val[], MM_typecode matcode)
 {
     int i;
@@ -335,7 +335,7 @@ static int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],
         
 }
 
-static int mm_read_mtx_crd_entry(FILE *f, int *I, int *J,
+int mm_read_mtx_crd_entry(FILE *f, int *I, int *J,
         double *real, double *imag, MM_typecode matcode)
 {
     if (mm_is_complex(matcode))
@@ -370,7 +370,7 @@ static int mm_read_mtx_crd_entry(FILE *f, int *I, int *J,
                             (nz pairs of real/imaginary values)
 ************************************************************************/
 
-static int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **J, 
+int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **J, 
         double **val, MM_typecode *matcode)
 {
     int ret_code;
@@ -423,7 +423,7 @@ static int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **
     return 0;
 }
 
-static int mm_write_banner(FILE *f, MM_typecode matcode)
+int mm_write_banner(FILE *f, MM_typecode matcode)
 {
     char *str = mm_typecode_to_str(matcode);
     int ret_code;
@@ -436,7 +436,7 @@ static int mm_write_banner(FILE *f, MM_typecode matcode)
         return 0;
 }
 
-static int mm_write_mtx_crd(char fname[], int M, int N, int nz, int I[], int J[],
+int mm_write_mtx_crd(char fname[], int M, int N, int nz, int I[], int J[],
         double val[], MM_typecode matcode)
 {
     FILE *f;
@@ -485,14 +485,14 @@ static int mm_write_mtx_crd(char fname[], int M, int N, int nz, int I[], int J[]
 *  not part of ANSI C, so it is included here.  Used by mm_typecode_to_str().
 *
 */
-static char *mm_strdup(const char *s)
+char *mm_strdup(const char *s)
 {
 	int len = strlen(s);
 	char *s2 = (char *) malloc((len+1)*sizeof(char));
 	return strcpy(s2, s);
 }
 
-static char  *mm_typecode_to_str(MM_typecode matcode)
+char  *mm_typecode_to_str(MM_typecode matcode)
 {
     char buffer[MM_MAX_LINE_LENGTH];
     const char *types[4];

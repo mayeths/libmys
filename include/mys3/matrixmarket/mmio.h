@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-static inline void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_, int **Ia_, int **Ja_, double **Va_);
+void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_, int **Ia_, int **Ja_, double **Va_);
 
 /*==================================================================================*/
 /*================================== (1/2) mmio.h ==================================*/
@@ -26,15 +26,15 @@ static inline void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_
 
 typedef char MM_typecode[4];
 
-static char *mm_typecode_to_str(MM_typecode matcode);
+char *mm_typecode_to_str(MM_typecode matcode);
 
-static int mm_read_banner(FILE *f, MM_typecode *matcode);
-static int mm_read_mtx_crd_size(FILE *f, int *M, int *N, int *nz);
-static int mm_read_mtx_array_size(FILE *f, int *M, int *N);
+int mm_read_banner(FILE *f, MM_typecode *matcode);
+int mm_read_mtx_crd_size(FILE *f, int *M, int *N, int *nz);
+int mm_read_mtx_array_size(FILE *f, int *M, int *N);
 
-static int mm_write_banner(FILE *f, MM_typecode matcode);
-static int mm_write_mtx_crd_size(FILE *f, int M, int N, int nz);
-static int mm_write_mtx_array_size(FILE *f, int M, int N);
+int mm_write_banner(FILE *f, MM_typecode matcode);
+int mm_write_mtx_crd_size(FILE *f, int M, int N, int nz);
+int mm_write_mtx_array_size(FILE *f, int M, int N);
 
 
 /********************* MM_typecode query fucntions ***************************/
@@ -56,7 +56,7 @@ static int mm_write_mtx_array_size(FILE *f, int M, int N);
 #define mm_is_skew(typecode)	((typecode)[3]=='K')
 #define mm_is_hermitian(typecode)((typecode)[3]=='H')
 
-static int mm_is_valid(MM_typecode matcode);		/* too complex for a macro */
+int mm_is_valid(MM_typecode matcode);		/* too complex for a macro */
 
 
 /********************* MM_typecode modify fucntions ***************************/
@@ -129,12 +129,7 @@ static int mm_is_valid(MM_typecode matcode);		/* too complex for a macro */
 
 /*  high level routines */
 
-static int mm_write_mtx_crd(char fname[], int M, int N, int nz, int I[], int J[],
-		 double val[], MM_typecode matcode);
-static int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],
-		double val[], MM_typecode matcode);
-static int mm_read_mtx_crd_entry(FILE *f, int *I, int *J, double *real, double *img,
-			MM_typecode matcode);
-
-static int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
-                double **val_, int **I_, int **J_);
+int mm_write_mtx_crd(char fname[], int M, int N, int nz, int I[], int J[], double val[], MM_typecode matcode);
+int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[], double val[], MM_typecode matcode);
+int mm_read_mtx_crd_entry(FILE *f, int *I, int *J, double *real, double *img, MM_typecode matcode);
+int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_, double **val_, int **I_, int **J_);
