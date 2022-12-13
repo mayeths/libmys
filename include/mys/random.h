@@ -13,7 +13,14 @@
 #define __UINT64_MAX 0xFFFFFFFFFFFFFFFFULL
 #define __UINT64_INVALID __UINT64_MAX
 
-#if defined(ARCH_X64)
+#if defined(MYS_FAKE_RANDOM)
+static inline uint64_t __seed()
+{
+    /* https://primes.utm.edu/lists/small/10000.txt */
+    uint64_t prime1 = 100003, prime2 = 10007, prime3 = 1009, prime4 = 101;
+    return (prime1 << 48) | (prime2 << 32) | (prime3 << 16) | prime4;
+}
+#elif defined(ARCH_X64)
 static inline uint64_t __seed()
 {
     uint32_t lo, hi;
@@ -27,11 +34,6 @@ static inline uint64_t __seed()
     uint64_t t;
     __asm__ __volatile__("mrs %0, CNTVCT_EL0" : "=r"(t));
     return (t << 32) | (t & 0xAAAA5555);
-}
-#elif defined(MYS_FAKE_RANDOM)
-static inline uint64_t __seed()
-{
-    return (uint64_t)1;
 }
 #else
 static inline uint64_t __seed()
