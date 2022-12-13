@@ -16,9 +16,7 @@
 #if defined(MYS_FAKE_RANDOM)
 static inline uint64_t __seed()
 {
-    /* https://primes.utm.edu/lists/small/10000.txt */
-    uint64_t prime1 = 100003, prime2 = 10007, prime3 = 1009, prime4 = 101;
-    return (prime1 << 48) | (prime2 << 32) | (prime3 << 16) | prime4;
+    return (uint64_t)0x5A5A5555AAAA55AA;
 }
 #elif defined(ARCH_X64)
 static inline uint64_t __seed()
