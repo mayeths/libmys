@@ -1,7 +1,7 @@
 #pragma once
 
+#include <limits>
 #include "mys/debug.h"
-#include "mys/headers.hpp"
 
 enum class MatrixType: int {
     CSR = 0,

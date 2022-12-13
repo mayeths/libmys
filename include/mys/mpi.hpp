@@ -3,6 +3,7 @@
 
 #include <type_traits>
 #include <complex>
+#include <map>
 
 #if !defined(MPI_VERSION)
 #if !defined(MYS_NO_MPI)
@@ -74,95 +75,101 @@ static MPI_Datatype MPI_TYPE() noexcept {
 #include <map>
 #include <string>
 
-static std::string MPI_TYPENAME(MPI_Datatype dtype) noexcept {
-    static std::map<MPI_Datatype, std::string> mpi_typename {
-        // https://rookiehpc.github.io/mpi/docs/mpi_datatype/index.html
-        // C
-        {MPI_SIGNED_CHAR, "MPI_SIGNED_CHAR"},
-        {MPI_UNSIGNED_CHAR, "MPI_UNSIGNED_CHAR"},
-        {MPI_SHORT, "MPI_SHORT"},
-        {MPI_UNSIGNED_SHORT, "MPI_UNSIGNED_SHORT"},
-        {MPI_INT, "MPI_INT"},
-        {MPI_UNSIGNED, "MPI_UNSIGNED"},
-        {MPI_LONG, "MPI_LONG"},
-        {MPI_UNSIGNED_LONG, "MPI_UNSIGNED_LONG"},
-        {MPI_LONG_LONG_INT, "MPI_LONG_LONG_INT"},
-        {MPI_LONG_LONG, "MPI_LONG_LONG"},
-        {MPI_UNSIGNED_LONG_LONG, "MPI_UNSIGNED_LONG_LONG"},
-        {MPI_CHAR, "MPI_CHAR"},
-        {MPI_WCHAR, "MPI_WCHAR"},
-        {MPI_FLOAT, "MPI_FLOAT"},
-        {MPI_DOUBLE, "MPI_DOUBLE"},
-        {MPI_LONG_DOUBLE, "MPI_LONG_DOUBLE"},
-        {MPI_INT8_T, "MPI_INT8_T"},
-        {MPI_UINT8_T, "MPI_UINT8_T"},
-        {MPI_INT16_T, "MPI_INT16_T"},
-        {MPI_UINT16_T, "MPI_UINT16_T"},
-        {MPI_INT32_T, "MPI_INT32_T"},
-        {MPI_UINT32_T, "MPI_UINT32_T"},
-        {MPI_INT64_T, "MPI_INT64_T"},
-        {MPI_UINT64_T, "MPI_UINT64_T"},
-        {MPI_C_BOOL, "MPI_C_BOOL"},
-        {MPI_C_COMPLEX, "MPI_C_COMPLEX"},
-        {MPI_C_FLOAT_COMPLEX, "MPI_C_FLOAT_COMPLEX"},
-        {MPI_C_DOUBLE_COMPLEX, "MPI_C_DOUBLE_COMPLEX"},
-        {MPI_C_LONG_DOUBLE_COMPLEX, "MPI_C_LONG_DOUBLE_COMPLEX"},
-        {MPI_AINT, "MPI_AINT"},
-        {MPI_COUNT, "MPI_COUNT"},
-        {MPI_OFFSET, "MPI_OFFSET"},
-        {MPI_BYTE, "MPI_BYTE"},
-        {MPI_PACKED, "MPI_PACKED"},
-        {MPI_MINLOC, "MPI_MINLOC"},
-        {MPI_MAXLOC, "MPI_MAXLOC"},
-        {MPI_SHORT_INT, "MPI_SHORT_INT"},
-        {MPI_LONG_INT, "MPI_LONG_INT"},
-        {MPI_FLOAT_INT, "MPI_FLOAT_INT"},
-        {MPI_DOUBLE_INT, "MPI_DOUBLE_INT"},
-        {MPI_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT"},
-        {MPI_2INT, "MPI_2INT"},
-        // Fortran
-        {MPI_INTEGER, "MPI_INTEGER"},
-        {MPI_REAL, "MPI_REAL"},
-        {MPI_DOUBLE_PRECISION, "MPI_DOUBLE_PRECISION"},
-        {MPI_COMPLEX, "MPI_COMPLEX"},
-        {MPI_LOGICAL, "MPI_LOGICAL"},
-        {MPI_CHARACTER, "MPI_CHARACTER"},
-        // {MPI_ADDRESS_KIND, "MPI_ADDRESS_KIND"},
-        // {MPI_COUNT_KIND, "MPI_COUNT_KIND"},
-        // {MPI_OFFSET_KIND, "MPI_OFFSET_KIND"},
-        {MPI_AINT, "MPI_AINT"},
-        {MPI_BYTE, "MPI_BYTE"},
-        {MPI_PACKED, "MPI_PACKED"},
-        {MPI_INTEGER1, "MPI_INTEGER1"},
-        {MPI_INTEGER2, "MPI_INTEGER2"},
-        {MPI_INTEGER4, "MPI_INTEGER4"},
-        {MPI_INTEGER8, "MPI_INTEGER8"},
-        {MPI_INTEGER16, "MPI_INTEGER16"},
-        // {MPI_REAL2, "MPI_REAL2"},
-        {MPI_REAL4, "MPI_REAL4"},
-        {MPI_REAL8, "MPI_REAL8"},
-        {MPI_REAL16, "MPI_REAL16"},
-        // {MPI_COMPLEX4, "MPI_COMPLEX4"},
-        {MPI_COMPLEX8, "MPI_COMPLEX8"},
-        {MPI_COMPLEX16, "MPI_COMPLEX16"},
-        {MPI_COMPLEX32, "MPI_COMPLEX32"},
-        {MPI_MINLOC, "MPI_MINLOC"},
-        {MPI_MAXLOC, "MPI_MAXLOC"},
-        {MPI_2REAL, "MPI_2REAL"},
-        {MPI_2DOUBLE_PRECISION, "MPI_2DOUBLE_PRECISION"},
-        {MPI_2INTEGER, "MPI_2INTEGER"},
-    };
-    static size_t user_count = 0;
-    try {
-        return mpi_typename.at(dtype);
-    } catch (std::out_of_range) {
-        char name[128];
-        snprintf(name, sizeof(name), "TYPE_%llu", user_count);
-        user_count += 1;
-        mpi_typename[dtype] = std::string(name);
-        return std::string(name);
-    }
-}
+// static std::string MPI_TYPENAME(MPI_Datatype dtype) noexcept {
+//     static std::map<MPI_Datatype, std::string> mpi_typename {
+//         // https://rookiehpc.github.io/mpi/docs/mpi_datatype/index.html
+//         // C
+//         {MPI_SIGNED_CHAR, "MPI_SIGNED_CHAR"},
+//         {MPI_UNSIGNED_CHAR, "MPI_UNSIGNED_CHAR"},
+//         {MPI_SHORT, "MPI_SHORT"},
+//         {MPI_UNSIGNED_SHORT, "MPI_UNSIGNED_SHORT"},
+//         {MPI_INT, "MPI_INT"},
+//         {MPI_UNSIGNED, "MPI_UNSIGNED"},
+//         {MPI_LONG, "MPI_LONG"},
+//         {MPI_UNSIGNED_LONG, "MPI_UNSIGNED_LONG"},
+//         {MPI_LONG_LONG_INT, "MPI_LONG_LONG_INT"},
+//         {MPI_LONG_LONG, "MPI_LONG_LONG"},
+//         {MPI_UNSIGNED_LONG_LONG, "MPI_UNSIGNED_LONG_LONG"},
+//         {MPI_CHAR, "MPI_CHAR"},
+//         {MPI_WCHAR, "MPI_WCHAR"},
+//         {MPI_FLOAT, "MPI_FLOAT"},
+//         {MPI_DOUBLE, "MPI_DOUBLE"},
+//         {MPI_LONG_DOUBLE, "MPI_LONG_DOUBLE"},
+//         {MPI_INT8_T, "MPI_INT8_T"},
+//         {MPI_UINT8_T, "MPI_UINT8_T"},
+//         {MPI_INT16_T, "MPI_INT16_T"},
+//         {MPI_UINT16_T, "MPI_UINT16_T"},
+//         {MPI_INT32_T, "MPI_INT32_T"},
+//         {MPI_UINT32_T, "MPI_UINT32_T"},
+//         {MPI_INT64_T, "MPI_INT64_T"},
+//         {MPI_UINT64_T, "MPI_UINT64_T"},
+//         {MPI_C_BOOL, "MPI_C_BOOL"},
+//         {MPI_C_COMPLEX, "MPI_C_COMPLEX"},
+//         {MPI_C_FLOAT_COMPLEX, "MPI_C_FLOAT_COMPLEX"},
+//         {MPI_C_DOUBLE_COMPLEX, "MPI_C_DOUBLE_COMPLEX"},
+//         {MPI_C_LONG_DOUBLE_COMPLEX, "MPI_C_LONG_DOUBLE_COMPLEX"},
+//         {MPI_AINT, "MPI_AINT"},
+//         {MPI_COUNT, "MPI_COUNT"},
+//         {MPI_OFFSET, "MPI_OFFSET"},
+//         {MPI_BYTE, "MPI_BYTE"},
+//         {MPI_PACKED, "MPI_PACKED"},
+//         {MPI_MINLOC, "MPI_MINLOC"},
+//         {MPI_MAXLOC, "MPI_MAXLOC"},
+//         {MPI_SHORT_INT, "MPI_SHORT_INT"},
+//         {MPI_LONG_INT, "MPI_LONG_INT"},
+//         {MPI_FLOAT_INT, "MPI_FLOAT_INT"},
+//         {MPI_DOUBLE_INT, "MPI_DOUBLE_INT"},
+//         {MPI_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT"},
+//         {MPI_2INT, "MPI_2INT"},
+//         // Fortran
+//         {MPI_INTEGER, "MPI_INTEGER"},
+//         {MPI_REAL, "MPI_REAL"},
+//         {MPI_DOUBLE_PRECISION, "MPI_DOUBLE_PRECISION"},
+//         {MPI_COMPLEX, "MPI_COMPLEX"},
+//         {MPI_LOGICAL, "MPI_LOGICAL"},
+//         {MPI_CHARACTER, "MPI_CHARACTER"},
+//         // {MPI_ADDRESS_KIND, "MPI_ADDRESS_KIND"},
+//         // {MPI_COUNT_KIND, "MPI_COUNT_KIND"},
+//         // {MPI_OFFSET_KIND, "MPI_OFFSET_KIND"},
+//         {MPI_AINT, "MPI_AINT"},
+//         {MPI_BYTE, "MPI_BYTE"},
+//         {MPI_PACKED, "MPI_PACKED"},
+//         {MPI_INTEGER1, "MPI_INTEGER1"},
+//         {MPI_INTEGER2, "MPI_INTEGER2"},
+//         {MPI_INTEGER4, "MPI_INTEGER4"},
+//         {MPI_INTEGER8, "MPI_INTEGER8"},
+// #ifdef MPI_INTEGER16
+//         {MPI_INTEGER16, "MPI_INTEGER16"},
+// #endif
+// #ifdef MPI_REAL2
+//         {MPI_REAL2, "MPI_REAL2"},
+// #endif
+//         {MPI_REAL4, "MPI_REAL4"},
+//         {MPI_REAL8, "MPI_REAL8"},
+//         {MPI_REAL16, "MPI_REAL16"},
+// #ifdef MPI_COMPLEX4
+//         {MPI_COMPLEX4, "MPI_COMPLEX4"},
+// #endif
+//         {MPI_COMPLEX8, "MPI_COMPLEX8"},
+//         {MPI_COMPLEX16, "MPI_COMPLEX16"},
+//         {MPI_COMPLEX32, "MPI_COMPLEX32"},
+//         {MPI_MINLOC, "MPI_MINLOC"},
+//         {MPI_MAXLOC, "MPI_MAXLOC"},
+//         {MPI_2REAL, "MPI_2REAL"},
+//         {MPI_2DOUBLE_PRECISION, "MPI_2DOUBLE_PRECISION"},
+//         {MPI_2INTEGER, "MPI_2INTEGER"},
+//     };
+//     static size_t user_count = 0;
+//     try {
+//         return mpi_typename.at(dtype);
+//     } catch (std::out_of_range) {
+//         char name[128];
+//         snprintf(name, sizeof(name), "TYPE_%llu", user_count);
+//         user_count += 1;
+//         mpi_typename[dtype] = std::string(name);
+//         return std::string(name);
+//     }
+// }
 
 static std::string MPI_COMMNAME(MPI_Comm comm) noexcept {
     static std::map<MPI_Comm, std::string> mpi_commname {

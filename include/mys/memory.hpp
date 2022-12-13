@@ -3,6 +3,7 @@
 #include <atomic>
 #include <memory>
 #include <map>
+#include <string>
 #include <stdlib.h>
 #include <sys/resource.h>
 #include <string.h>
