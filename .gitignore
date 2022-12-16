@@ -3,3 +3,4 @@ include/mys-private/
 lib/
 ugly/
 build
+.DS_Store
