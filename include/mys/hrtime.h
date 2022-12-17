@@ -110,20 +110,14 @@ static inline double hrtime() {
 
 /******* AUX *******/
 
-#if defined(ARCH_X64) && defined(POSIX_COMPLIANCE)
+#if defined(POSIX_COMPLIANCE)
 #include <stdlib.h>
 #include <unistd.h>
-static inline uint64_t tsctick() {
-    uint32_t lo, hi;
-    __asm__ __volatile__("mfence":::"memory");
-    __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
-    return (uint64_t)hi << 32 | (uint64_t)lo;
-}
-static inline uint64_t test_tsc_freq()
+static inline uint64_t test_freq()
 {
-    uint64_t raw1 = tsctick();
+    uint64_t raw1 = hrtick();
     sleep(1);
-    uint64_t raw2 = tsctick();
+    uint64_t raw2 = hrtick();
     return raw2 - raw1;
 }
 #endif
