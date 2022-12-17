@@ -50,22 +50,32 @@ static inline double hrtime() {
  * Difference between CLOCK_REALTIME and CLOCK_MONOTONIC [https://stackoverflow.com/a/3527632]
  */
 #include <stdlib.h>
+#include <time.h>
 #include <sys/time.h>
 static inline const char *hrname() {
-    return "High-resolution timer by <time.h> (1us~10us)";
+#if defined(CLOCK_MONOTONIC)
+    return "High-resolution timer by clock_gettime() of <time.h> (1us~10us)";
+#else
+    return "High-resolution timer by gettimeofday() of <sys/time.h> (1us~10us)";
+#endif
 }
 static inline uint64_t hrtick() {
+#if defined(CLOCK_MONOTONIC)
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return (uint64_t)t.tv_sec * (uint64_t)1000000000 + (uint64_t)t.tv_nsec;
+#else
     struct timeval t;
     gettimeofday(&t, NULL);
-    return (uint64_t)t.tv_sec * 1000 * 1000 + (uint64_t)t.tv_usec;
-    /* It seems like these functions have the same resolution */
-    // struct timespec t;
-    // clock_gettime(CLOCK_REALTIME, &t);
-    // return (uint64_t)t.tv_sec * 1000 * 1000 * 1000 + (uint64_t)t.tv_nsec;
+    return (uint64_t)t.tv_sec * (uint64_t)1000000 + (uint64_t)t.tv_usec;
+#endif
 }
 static inline double hrfreq() {
-    return 1000 * 1000;
-    // return 1000 * 1000 * 1000;
+#if defined(CLOCK_MONOTONIC)
+    return 1000000000;
+#else
+    return 1000000;
+#endif
 }
 static inline double hrtime() {
     return (double)hrtick() / (double)hrfreq();
