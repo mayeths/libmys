@@ -9,3 +9,13 @@ Mayeths' library (wow@mayeths.com).
 - **mysg**: Mayeths' **G**raphics Library
 - **mysp**: Mayeths' **P**erformance Analysis Library
 - **myss**: Mayeths' **S**parse Solver Library
+
+
+Should we force MYS_IMPL ?
+```c
+// in main.c
+#define MYS_IMPL
+#include <mys.h>
+// in other files
+#include <mys.h>
+```
