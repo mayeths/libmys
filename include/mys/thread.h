@@ -64,7 +64,6 @@ static inline void mys_mutex_unlock(mys_mutex_t *lock)
 #define mys_thread_local thread_local
 #else
 /* https://stackoverflow.com/a/18298965 */
-#ifndef mys_thread_local
 #if defined(COMPILER_GCC) || defined(COMPILER_CLANG) || defined(COMPILER_ICC)
 #define mys_thread_local __thread
 #elif defined(COMPILER_MSVC)
@@ -73,7 +72,6 @@ static inline void mys_mutex_unlock(mys_mutex_t *lock)
 #define mys_thread_local _Thread_local
 #else
 #error "Cannot define mys_thread_local"
-#endif
 #endif
 
 #endif

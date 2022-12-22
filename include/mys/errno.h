@@ -2,5 +2,5 @@
 
 #include "thread.h"
 
-static thread_local int mys_errno = 0;
+static mys_thread_local int mys_errno = 0;
 
