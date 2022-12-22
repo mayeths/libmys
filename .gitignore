@@ -1,5 +1,6 @@
 .vscode/
-include/mys-private/
+include/mys0/*
+!include/mys0/README.md
 lib/
 ugly/
 build
