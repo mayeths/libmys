@@ -1,0 +1,291 @@
+#!/usr/bin/env python3
+VERSION="221215 4.0"
+
+import os
+import sys
+import re
+import argparse
+import subprocess
+import textwrap
+import signal
+import tempfile
+import pathlib
+
+MODULE_ROOTN="~/module"
+MODULE_ROOT=os.path.expanduser(MODULE_ROOTN)
+MODULE_CONFIG=f"{MODULE_ROOT}/CONFIG"
+DEPENDENCE_FOLDER="DEPENDENCE"
+mapper = {
+    "bin": "PATH",
+    "bin64": "PATH",
+    "lib": "LD_LIBRARY_PATH",
+    "lib64": "LD_LIBRARY_PATH",
+    "include": None,
+    "sbin": "PATH",
+    "share/man": "MANPATH",
+}
+checkinglist = [("configure.log", "config.log")]
+categories = ["libs", "langs", "tools", "science"]
+
+###
+
+class fmt:
+    PURPLE = '\033[95m'
+    CYAN = '\033[96m'
+    DARKCYAN = '\033[36m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BG_GRAY = '\033[100m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
+    def bold(text):
+        return fmt.BOLD + text + fmt.END
+    def green(text):
+        return fmt.GREEN + text + fmt.END
+    def cyan(text):
+        return fmt.CYAN + text + fmt.END
+    def darkcyan(text):
+        return fmt.DARKCYAN + text + fmt.END
+    def blue(text):
+        return fmt.BLUE + text + fmt.END
+    def yellow(text):
+        return fmt.YELLOW + text + fmt.END
+    def red(text):
+        return fmt.RED + text + fmt.END
+    def bggray(text):
+        return fmt.BG_GRAY + text + fmt.END
+
+###
+
+class Register:
+
+    def main():
+        global MODULE_ROOT, MODULE_ROOTN, MODULE_CONFIG, mapper, checkinglist, categories
+        signal.signal(signal.SIGINT, Register.signal_handler)
+
+        parser = argparse.ArgumentParser(prog='register', description='Register folder to module control system\n', add_help=False)
+        parser.add_argument('folder', type=str)
+        parser.add_argument('-d', dest='dependence', action='store_true', default=False, help=f"Set as dependence to ${{MODROOT}}/{DEPENDENCE_FOLDER}")
+        parser.add_argument('-m', dest='modroot', default="", type=str, help=f"Rebase the root of module to ({MODULE_ROOT})")
+        parser.add_argument('-c', dest='cfgroot', default="", type=str, help=f"Rebase the root of config to ({MODULE_CONFIG})")
+        parser.add_argument('-v', action='version', version='%(prog)s {version}'.format(version=VERSION), help="Show version number and exit")
+        parser.add_argument('-h', '--help', action='help', help=f"Show this help message and exit")
+
+        args = parser.parse_args()
+        src = args.folder
+        if args.modroot:
+            MODULE_ROOT = os.path.abspath(args.modroot)
+            MODULE_ROOTN = None if os.path.isabs(args.modroot) else args.modroot
+        if args.cfgroot:
+            MODULE_CONFIG = os.path.abspath(args.cfgroot)
+        if args.dependence:
+            modroot = f"{MODULE_ROOT}/{DEPENDENCE_FOLDER}"
+            MODULE_ROOT = os.path.abspath(modroot)
+            MODULE_ROOTN = None if os.path.isabs(modroot) else modroot
+        name = None
+        version = None
+        variant = None
+
+        islmod, lmodver = Register.checklmod()
+
+        abssrc = os.path.abspath(src)
+
+        if not os.path.exists(abssrc):
+            Register.perror(f"{abssrc} is not exists")
+        if not os.path.isdir(abssrc):
+            Register.perror(f"{abssrc} is not a directory")
+
+        os.system('clear')
+
+        print(fmt.bold(f"------------"))
+        if os.path.isabs(src):
+            print(fmt.bold("Registering") + f" {abssrc}")
+        else:
+            print(fmt.bold("Registering") + f" {abssrc} ({src})")
+        if islmod:
+            print(fmt.bold("Module is Lmod") + f" (version {lmodver})")
+        else:
+            print(fmt.bold("Module is not Lmod") + " (assuming Tcl module)")
+        if MODULE_ROOTN:
+            print(fmt.bold("Module root is ") + f"{MODULE_ROOT} ({MODULE_ROOTN})")
+        else:
+            print(fmt.bold("Module root is ") + MODULE_ROOT)
+        print(fmt.bold("Config root is ") + MODULE_CONFIG)
+
+        prepends = []
+        prepend_result = []
+        prepend_ok = 0
+        for folder, val in mapper.items():
+            if os.path.isdir(f"{abssrc}/{folder}"):
+                prepend_ok += 1
+                prepend_result.append(fmt.green(f"{folder}"))
+                if val:
+                    if islmod:
+                        prepends.append(f'prepend_path("{val}" prefix.."/{folder}")')
+                    else:
+                        prepends.append(f"prepend-path {val} $prefix/{folder}")
+            else:
+                prepend_result.append(fmt.red(f"{folder}"))
+        prepend_result = " ".join(prepend_result)
+        print(fmt.bold(f"Recognized {prepend_ok} folder ") + prepend_result)
+
+        check_success = []
+        check_failed = []
+        for checks in checkinglist:
+            if not isinstance(checks, list) and not isinstance(checks, tuple):
+                checks = (checks)
+            for check in checks:
+                if os.path.exists(f"{abssrc}/{check}"):
+                    check_success.append(f"{check}")
+                    break
+            else:
+                check_failed.append(" or ".join(checks))
+        check_success = " ".join(check_success)
+        check_failed = ", ".join(check_failed)
+        if len(check_failed) > 0:
+            print(fmt.yellow(fmt.bold(f"You may forgot to add ")) + fmt.yellow(check_failed))
+        else:
+            print(fmt.bold(f"Checked existence ") + fmt.green(check_success))
+
+        # category/family or family/implement
+        # conflict family
+        # libs/gptl or mpi/openmpi
+        if not name:
+            while not name:
+                ctext = ",".join([c for c in categories])
+                tmp = input(fmt.bold(f"> Enter family/name (general family {ctext}): ")).strip().split("/")
+                if len(tmp) < 2:
+                    continue
+                family, name = tmp
+                if family in categories:
+                    family_is_category = True
+                else:
+                    family_is_category = False
+        else:
+            name = name.strip()
+            print(fmt.bold("name") + f" {fmt.green(name)}")
+
+        if not version:
+            while not version:
+                version = input(fmt.bold("> Enter version: ")).strip()
+        else:
+            version = version.strip()
+            print(fmt.bold("Version") + f" {fmt.green(version)}")
+
+        if not variant:
+            variant = input(fmt.bold("> Enter variant: ")).strip()
+        else:
+            variant = variant.strip()
+            print(fmt.bold("Variant") + f" {fmt.green(variant)}")
+
+        if len(variant) > 0:
+            implstr = f"{version}-{variant}"
+        else:
+            implstr = f"{version}"
+
+        modpath = f"{MODULE_ROOT}/{family}/{name}/{implstr}"
+        modfile = f"{MODULE_CONFIG}/{family}/{name}/{implstr}"
+
+        if islmod:
+            text = [f"--Module (Lua script for Lmod)"]
+            text.append(f"--Mayeths' register ({VERSION})")
+        else:
+            text = [f"#%Module"]
+            text.append(f"##Mayeths' register ({VERSION})")
+
+        if islmod:
+            text.append(f'local version = "{version}"')
+        else:
+            text.append(f"set version {version}")
+        if len(variant) > 0:
+            if islmod:
+                text.append(f'local variant = "{variant}"')
+                text.append(f'local id = "{family}/{name}/"..version.."/"..variant')
+            else:
+                text.append(f"set variant {variant}")
+                id = f"{family}/{name}/$version-$variant"
+        else:
+            if islmod:
+                text.append(f'local id = "{family}/{name}/"..version')
+            else:
+                id = f"{family}/{name}/$version"
+        if islmod:
+            text.append(f'local prefix = "{MODULE_ROOT}/"..id')
+        else:
+            text.append(f"set prefix {MODULE_ROOT}/{id}")
+        text.append(f"")
+        envid = name if family_is_category else family
+        if islmod:
+            text.append(f'family("{envid}")')
+        elif family_is_category:
+            text.append(f"conflict {family}/{name}")
+        else:
+            text.append(f"conflict {family}")
+        if islmod:
+            text.append(f'setenv("{envid.upper()}_", prefix)')
+            text.append(f'setenv("{envid.upper()}_DIR", prefix)')
+        else:
+            text.append(f"setenv {envid.upper()}_    $prefix")
+            text.append(f"setenv {envid.upper()}_DIR    $prefix")
+        if islmod:
+            text.append(f'setenv("{envid.upper()}_MOD", id)')
+        else:
+            text.append(f"setenv {envid.upper()}_MOD {id}")
+        text.append(f"")
+        text += prepends
+        text = "\n".join(text)
+        text = textwrap.dedent(text).strip()
+
+        # print(fmt.bold(f"------------ Target module path      {modpath}"))
+        # print(fmt.bold(f"------------ Saving following config {modfile}"))
+        print(fmt.bold(f"------------ Generated following content"))
+        print(fmt.cyan(text))
+        if os.path.isdir(modpath):
+            print(fmt.bold(fmt.yellow(f"------------ Target directory already exists")))
+            print(fmt.bold(f"------------ Press enter to confirm > "), end="")
+        else:
+            print(fmt.bold(f"------------ Press enter to confirm > "), end="")
+        input("")
+
+        pathlib.Path(modpath).parent.mkdir(parents=True, exist_ok=True)
+        result = subprocess.check_output(f"cp -r {abssrc} {modpath}",
+            shell=True, executable="/bin/bash",
+            encoding="utf-8"
+        )
+        print(fmt.bold(fmt.green(f"Copied module")))
+        tmpfile = ""
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp:
+            tmpfile = tmp.name
+            tmp.write(text + "\n")
+        pathlib.Path(modfile).parent.mkdir(parents=True, exist_ok=True)
+        result = subprocess.check_output(f"cp {tmpfile} {modfile}",
+            shell=True, executable="/bin/bash",
+            encoding="utf-8"
+        )
+        print(fmt.bold(fmt.green(f"Saved modulefile")))
+
+    def checklmod():
+        result = subprocess.run("module --version",
+            shell=True, executable="/bin/bash",
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8"
+        )
+        islmod = "Lua" in result.stderr
+        lmodver = ""
+        if islmod:
+            lmodver = re.search(r'Version\s*([\d.]+)', result.stderr).group(1)
+        return islmod, lmodver
+
+    def perror(text):
+        print(text, file=sys.stderr)
+        sys.exit(1)
+
+    def signal_handler(sig, frame):
+        print('')
+        sys.exit(1)
+
+if __name__ == '__main__':
+    Register.main()
+
