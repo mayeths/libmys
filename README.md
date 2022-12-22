@@ -8,7 +8,7 @@ Useful and interesting files.
 
 ### `bin`
 
-Executables (commonly writtern in Shell Script and Python).
+Executables (commonly written in Shell Script and Python).
 
 ### `external`
 
