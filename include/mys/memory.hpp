@@ -4,48 +4,9 @@
 #include <memory>
 #include <map>
 #include <string>
-#include <stdlib.h>
 #include <sys/resource.h>
-#include <string.h>
 
-#include "config.h"
-#include "macro.h"
-
-/* Memory Barrier */
-/* https://support.huaweicloud.com/codeprtr-kunpenggrf/kunpengtaishanporting_12_0048.html */
-#ifndef barrier
-#if defined(ARCH_X64)
-#define barrier() __asm__ __volatile__("": : :"memory")
-#define smp_mb() __asm__ __volatile__("lock; addl $0,-132(%%rsp)" ::: "memory", "cc")
-#define smp_rmb() barrier()
-#define smp_wmb() barrier()
-#elif defined(ARCH_AARCH64)
-#define barrier() __asm__ __volatile__("dmb" ::: "memory")
-#define smp_mb()  __asm__ __volatile__("dmb ish" ::: "memory")
-#define smp_rmb() __asm__ __volatile__("dmb ishld" ::: "memory")
-#define smp_wmb() __asm__ __volatile__("dmb ishst" ::: "memory")
-#else
-#error No supprted CPU model
-#endif
-#endif
-
-
-/* Cache clean */
-MYS_API static void cachebrush(std::size_t nbytes = 10 * 1024 * 1024)
-{
-    char * volatile arr = (char * volatile)malloc(nbytes * sizeof(char));
-    memset(arr, 0, nbytes);
-    for (std::size_t i = 0; i < nbytes; i++) {
-        arr[i] = i;
-    }
-    // std::vector<char> arr(nbytes);
-    // std::fill(arr.begin(), arr.end(), 0);
-    // memset()
-    // for (std::size_t i = 0; i < arr.size(); i++) {
-    //     arr[i] = i;
-    // }
-}
-
+#include "memory.h"
 
 /* Custom Allocator */
 /* Work in progress */
