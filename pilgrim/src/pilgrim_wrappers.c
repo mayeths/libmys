@@ -143,18 +143,18 @@ extern void MPI_BUFFER_DETACH(void* buffer_addr, int* size, MPI_Fint *ierr){ imp
 extern void mpi_buffer_detach(void* buffer_addr, int* size, MPI_Fint *ierr){ imp_MPI_Buffer_detach(buffer_addr, size);}
 extern void mpi_buffer_detach_(void* buffer_addr, int* size, MPI_Fint *ierr){ imp_MPI_Buffer_detach(buffer_addr, size);}
 extern void mpi_buffer_detach__(void* buffer_addr, int* size, MPI_Fint *ierr){ imp_MPI_Buffer_detach(buffer_addr, size);}
-MPI_Aint imp_MPI_Aint_add(MPI_Aint base, MPI_Aint disp)
-{
-	PILGRIM_TRACING_1(MPI_Aint, MPI_Aint_add, (base, disp));
-	void **args = assemble_args_list(2, &base, &disp);
-	int sizes[] = { sizeof(MPI_Aint), sizeof(MPI_Aint) };
-	PILGRIM_TRACING_2(2, sizes, args, -1);
-}
-MPI_Aint MPI_Aint_add(MPI_Aint base, MPI_Aint disp) { return imp_MPI_Aint_add(base, disp); }
-extern void MPI_AINT_ADD(MPI_Aint base, MPI_Aint disp, MPI_Fint *ierr){ imp_MPI_Aint_add(base, disp);}
-extern void mpi_aint_add(MPI_Aint base, MPI_Aint disp, MPI_Fint *ierr){ imp_MPI_Aint_add(base, disp);}
-extern void mpi_aint_add_(MPI_Aint base, MPI_Aint disp, MPI_Fint *ierr){ imp_MPI_Aint_add(base, disp);}
-extern void mpi_aint_add__(MPI_Aint base, MPI_Aint disp, MPI_Fint *ierr){ imp_MPI_Aint_add(base, disp);}
+// MPI_Aint imp_MPI_Aint_add(MPI_Aint base, MPI_Aint disp)
+// {
+// 	PILGRIM_TRACING_1(MPI_Aint, MPI_Aint_add, (base, disp));
+// 	void **args = assemble_args_list(2, &base, &disp);
+// 	int sizes[] = { sizeof(MPI_Aint), sizeof(MPI_Aint) };
+// 	PILGRIM_TRACING_2(2, sizes, args, -1);
+// }
+// MPI_Aint MPI_Aint_add(MPI_Aint base, MPI_Aint disp) { return imp_MPI_Aint_add(base, disp); }
+// extern void MPI_AINT_ADD(MPI_Aint base, MPI_Aint disp, MPI_Fint *ierr){ imp_MPI_Aint_add(base, disp);}
+// extern void mpi_aint_add(MPI_Aint base, MPI_Aint disp, MPI_Fint *ierr){ imp_MPI_Aint_add(base, disp);}
+// extern void mpi_aint_add_(MPI_Aint base, MPI_Aint disp, MPI_Fint *ierr){ imp_MPI_Aint_add(base, disp);}
+// extern void mpi_aint_add__(MPI_Aint base, MPI_Aint disp, MPI_Fint *ierr){ imp_MPI_Aint_add(base, disp);}
 int imp_MPI_Win_flush_local_all(MPI_Win win)
 {
 	PILGRIM_TRACING_1(int, MPI_Win_flush_local_all, (win));
@@ -6017,18 +6017,18 @@ extern void MPI_COMM_SET_ERRHANDLER(MPI_Fint* comm, MPI_Fint* errhandler, MPI_Fi
 extern void mpi_comm_set_errhandler(MPI_Fint* comm, MPI_Fint* errhandler, MPI_Fint *ierr){ imp_MPI_Comm_set_errhandler(PMPI_Comm_f2c(*comm), PMPI_Errhandler_f2c(*errhandler));}
 extern void mpi_comm_set_errhandler_(MPI_Fint* comm, MPI_Fint* errhandler, MPI_Fint *ierr){ imp_MPI_Comm_set_errhandler(PMPI_Comm_f2c(*comm), PMPI_Errhandler_f2c(*errhandler));}
 extern void mpi_comm_set_errhandler__(MPI_Fint* comm, MPI_Fint* errhandler, MPI_Fint *ierr){ imp_MPI_Comm_set_errhandler(PMPI_Comm_f2c(*comm), PMPI_Errhandler_f2c(*errhandler));}
-MPI_Aint imp_MPI_Aint_diff(MPI_Aint addr1, MPI_Aint addr2)
-{
-	PILGRIM_TRACING_1(MPI_Aint, MPI_Aint_diff, (addr1, addr2));
-	void **args = assemble_args_list(2, &addr1, &addr2);
-	int sizes[] = { sizeof(MPI_Aint), sizeof(MPI_Aint) };
-	PILGRIM_TRACING_2(2, sizes, args, -1);
-}
-MPI_Aint MPI_Aint_diff(MPI_Aint addr1, MPI_Aint addr2) { return imp_MPI_Aint_diff(addr1, addr2); }
-extern void MPI_AINT_DIFF(MPI_Aint addr1, MPI_Aint addr2, MPI_Fint *ierr){ imp_MPI_Aint_diff(addr1, addr2);}
-extern void mpi_aint_diff(MPI_Aint addr1, MPI_Aint addr2, MPI_Fint *ierr){ imp_MPI_Aint_diff(addr1, addr2);}
-extern void mpi_aint_diff_(MPI_Aint addr1, MPI_Aint addr2, MPI_Fint *ierr){ imp_MPI_Aint_diff(addr1, addr2);}
-extern void mpi_aint_diff__(MPI_Aint addr1, MPI_Aint addr2, MPI_Fint *ierr){ imp_MPI_Aint_diff(addr1, addr2);}
+// MPI_Aint imp_MPI_Aint_diff(MPI_Aint addr1, MPI_Aint addr2)
+// {
+// 	PILGRIM_TRACING_1(MPI_Aint, MPI_Aint_diff, (addr1, addr2));
+// 	void **args = assemble_args_list(2, &addr1, &addr2);
+// 	int sizes[] = { sizeof(MPI_Aint), sizeof(MPI_Aint) };
+// 	PILGRIM_TRACING_2(2, sizes, args, -1);
+// }
+// MPI_Aint MPI_Aint_diff(MPI_Aint addr1, MPI_Aint addr2) { return imp_MPI_Aint_diff(addr1, addr2); }
+// extern void MPI_AINT_DIFF(MPI_Aint addr1, MPI_Aint addr2, MPI_Fint *ierr){ imp_MPI_Aint_diff(addr1, addr2);}
+// extern void mpi_aint_diff(MPI_Aint addr1, MPI_Aint addr2, MPI_Fint *ierr){ imp_MPI_Aint_diff(addr1, addr2);}
+// extern void mpi_aint_diff_(MPI_Aint addr1, MPI_Aint addr2, MPI_Fint *ierr){ imp_MPI_Aint_diff(addr1, addr2);}
+// extern void mpi_aint_diff__(MPI_Aint addr1, MPI_Aint addr2, MPI_Fint *ierr){ imp_MPI_Aint_diff(addr1, addr2);}
 int imp_MPI_File_write_ordered_begin(MPI_File fh, const void *buf, int count, MPI_Datatype datatype)
 {
 	PILGRIM_TRACING_1(int, MPI_File_write_ordered_begin, (fh, buf, count, datatype));

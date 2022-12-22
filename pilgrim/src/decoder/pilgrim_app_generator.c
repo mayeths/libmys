@@ -15,6 +15,8 @@
 
 #define max(a,b) (((a)>(b))?(a):(b))
 
+int g_inside_mpi;
+
 static int grammar_splitter = 10000000;
 
 static int tmp_arr_idx = 0;

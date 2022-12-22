@@ -23,6 +23,8 @@
 #include <cuda_runtime.h>
 #endif
 
+int g_inside_mpi;
+
 AvlTree cpu_addr_tree;
 AvlTree gpu_addr_tree;
 

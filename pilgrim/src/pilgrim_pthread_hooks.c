@@ -11,6 +11,20 @@
 #include "uthash.h"
 
 
+PILGRIM_REAL_DEFN(pthread_create, int, (pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void*), void *arg));
+PILGRIM_REAL_DEFN(pthread_exit, void, (void *value_ptr));
+PILGRIM_REAL_DEFN(pthread_join, int, (pthread_t thread, void *value_ptr));
+PILGRIM_REAL_DEFN(pthread_detach, int, (pthread_t thread));
+
+PILGRIM_REAL_DEFN(pthread_mutex_init, int, (pthread_mutex_t *, const pthread_mutexattr_t *));
+PILGRIM_REAL_DEFN(pthread_rwlock_init, int, (pthread_rwlock_t *, const pthread_rwlockattr_t *));
+PILGRIM_REAL_DEFN(pthread_cond_init, int, (pthread_cond_t *, const pthread_condattr_t *));
+PILGRIM_REAL_DEFN(pthread_cond_wait, int, (pthread_cond_t *cond, pthread_mutex_t *mutex));
+PILGRIM_REAL_DEFN(pthread_cond_timedwait, int, (pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime));
+PILGRIM_REAL_DEFN(pthread_mutex_lock, int, (pthread_mutex_t *mutex));
+PILGRIM_REAL_DEFN(pthread_mutex_unlock, int, (pthread_mutex_t *mutex));
+PILGRIM_REAL_DEFN(pthread_mutex_trylock, int, (pthread_mutex_t *mutex));
+
 typedef struct thread_tid_entry {
     pthread_t thread;   // pthread_t as key
     int       tid;      // symbolic tid as value

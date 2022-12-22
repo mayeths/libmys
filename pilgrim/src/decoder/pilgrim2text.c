@@ -10,6 +10,8 @@
 #include "pilgrim.h"
 #include "pilgrim_reader.h"
 
+int g_inside_mpi;
+
 int main(int argc, char** argv) {
 
     char* directory = argv[1];

@@ -14,9 +14,9 @@
 
 
 // Global variables
-int g_mpi_rank;
-int g_mpi_size;
-double g_program_start_time;
+extern int g_mpi_rank;
+extern int g_mpi_size;
+extern double g_program_start_time;
 
 
 // Store a list of lossless duration or interval

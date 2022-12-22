@@ -22,6 +22,10 @@
 #include "uthash.h"
 #include "mpi.h"
 
+int g_mpi_rank;
+int g_mpi_size;
+double g_program_start_time;
+
 pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 

@@ -8,7 +8,7 @@ function run_one_program()  {
         args=$3
 
         echo "Program: $prog, Procs: $proc, Args: $args"
-        mpirun -n $proc -env LD_PRELOAD=$libpilgrim $prog $args
+        LD_PRELOAD=$libpilgrim mpirun -n $proc $prog $args
         #mpirun -n $proc $prog $args
     fi
 }

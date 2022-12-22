@@ -16,7 +16,8 @@
  * Declare the function signatures for real functions
  * i.e. The real function point to fwrite would be defined as __real_fwrite
  */
-#define PILGRIM_REAL_DECL(name, ret, args) ret (*__real_##name) args;
+#define PILGRIM_REAL_DECL(name, ret, args) extern ret (*__real_##name) args;
+#define PILGRIM_REAL_DEFN(name, ret, args) ret (*__real_##name) args;
 
 /* Point __real_func to the real funciton using dlsym() */
 #define MAP_OR_FAIL(func)                                                   \

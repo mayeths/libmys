@@ -15,7 +15,7 @@ typedef struct MemPtrAttr_t {
 } MemPtrAttr;
 
 
-int g_inside_mpi;
+extern int g_inside_mpi;
 
 
 void install_mem_hooks();
