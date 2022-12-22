@@ -1,0 +1,1480 @@
+{
+    "url": "https://www.ibm.com/docs/en/i/7.3?topic=extensions-standard-c-library-functions-table-by-name",
+    "extract-code": [
+        "names = Array.from(document.querySelectorAll(\"td[headers='d115929e56 ']\"))",
+        "files = Array.from(document.querySelectorAll(\"td[headers='d115929e59 ']\"))",
+        "signatures = Array.from(document.querySelectorAll(\"td[headers='d115929e62 ']\"))",
+        "result = names.map((n, i) => [n.textContent, files[i].textContent.trim(), signatures[i].textContent.trim()])",
+        "result = result.map(r => r.map(s => s.replace(/[\r\n]/g, \" \")))",
+        "result = result.map(r => r.map(s => s.replace(/\\s\\s+/g, \" \")))",
+        "result = result.map(r => r.map(s => s.replace('arg-list', '...')))"
+    ],
+    "alternative-way": "clang-check -ast-dump --extra-arg='-fno-color-diagnostics' a.c  # a.c include <stdio.h> etc.",
+    "data": [
+        [
+            "abort",
+            "stdlib.h",
+            "void abort(void);"
+        ],
+        [
+            "abs",
+            "stdlib.h",
+            "int abs(int n);"
+        ],
+        [
+            "acos",
+            "math.h",
+            "double acos(double x);"
+        ],
+        [
+            "asctime",
+            "time.h",
+            "char *asctime(const struct tm *time);"
+        ],
+        [
+            "asctime_r",
+            "time.h",
+            "char *asctime_r (const struct tm *tm, char *buf);"
+        ],
+        [
+            "asin",
+            "math.h",
+            "double asin(double x);"
+        ],
+        [
+            "assert",
+            "assert.h",
+            "void assert(int expression);"
+        ],
+        [
+            "atan",
+            "math.h",
+            "double atan(double x);"
+        ],
+        [
+            "atan2",
+            "math.h",
+            "double atan2(double y, double x);"
+        ],
+        [
+            "atexit",
+            "stdlib.h",
+            "int atexit(void (*func)(void));"
+        ],
+        [
+            "atof",
+            "stdlib.h",
+            "double atof(const char *string);"
+        ],
+        [
+            "atoi",
+            "stdlib.h",
+            "int atoi(const char *string);"
+        ],
+        [
+            "atol",
+            "stdlib.h",
+            "long int atol(const char *string);"
+        ],
+        [
+            "bsearch",
+            "stdlib.h",
+            "void *bsearch(const void *key, const void *base, size_t num, size_t size, int (*compare) (const void *element1, const void *element2));"
+        ],
+        [
+            "btowc",
+            "stdio.h wchar.h",
+            "wint_t btowc(int c);"
+        ],
+        [
+            "calloc",
+            "stdlib.h",
+            "void *calloc(size_t num, size_t size);"
+        ],
+        [
+            "catclose6",
+            "nl_types.h",
+            "int catclose (nl_catd catd);"
+        ],
+        [
+            "catgets6",
+            "nl_types.h",
+            "char *catgets(nl_catd catd, int set_id, int msg_id, const char *s);"
+        ],
+        [
+            "catopen6",
+            "nl_types.h",
+            "nl_catd catopen (const char *name, int oflag);"
+        ],
+        [
+            "ceil",
+            "math.h",
+            "double ceil(double x);"
+        ],
+        [
+            "clearerr",
+            "stdio.h",
+            "void clearerr(FILE *stream);"
+        ],
+        [
+            "clock",
+            "time.h",
+            "clock_t clock(void);"
+        ],
+        [
+            "cos",
+            "math.h",
+            "double cos(double x);"
+        ],
+        [
+            "cosh",
+            "math.h",
+            "double cosh(double x);"
+        ],
+        [
+            "ctime",
+            "time.h",
+            "char *ctime(const time_t *time);"
+        ],
+        [
+            "ctime64",
+            "time.h",
+            "char *ctime64(const time64_t *time);"
+        ],
+        [
+            "ctime_r",
+            "time.h",
+            "char *ctime_r(const time_t *time, char *buf);"
+        ],
+        [
+            "ctime64_r",
+            "time.h",
+            "char *ctime64_r(const time64_t *time, char *buf);"
+        ],
+        [
+            "difftime",
+            "time.h",
+            "double difftime(time_t time2, time_t time1);"
+        ],
+        [
+            "difftime64",
+            "time.h",
+            "double difftime64(time64_t time2, time64_t time1);"
+        ],
+        [
+            "div",
+            "stdlib.h",
+            "div_t div(int numerator, int denominator);"
+        ],
+        [
+            "erf",
+            "math.h",
+            "double erf(double x);"
+        ],
+        [
+            "erfc",
+            "math.h",
+            "double erfc(double x);"
+        ],
+        [
+            "exit",
+            "stdlib.h",
+            "void exit(int status);"
+        ],
+        [
+            "exp",
+            "math.h",
+            "double exp(double x);"
+        ],
+        [
+            "fabs",
+            "math.h",
+            "double fabs(double x);"
+        ],
+        [
+            "fclose",
+            "stdio.h",
+            "int fclose(FILE *stream);"
+        ],
+        [
+            "fdopen5",
+            "stdio.h",
+            "FILE *fdopen(int handle, const char *type);"
+        ],
+        [
+            "feof",
+            "stdio.h",
+            "int feof(FILE *stream);"
+        ],
+        [
+            "ferror",
+            "stdio.h",
+            "int ferror(FILE *stream);"
+        ],
+        [
+            "fflush1",
+            "stdio.h",
+            "int fflush(FILE *stream);"
+        ],
+        [
+            "fgetc1",
+            "stdio.h",
+            "int fgetc(FILE *stream);"
+        ],
+        [
+            "fgetpos1",
+            "stdio.h",
+            "int fgetpos(FILE *stream, fpos_t *pos);"
+        ],
+        [
+            "fgets1",
+            "stdio.h",
+            "char *fgets(char *string, int n, FILE *stream);"
+        ],
+        [
+            "fgetwc6",
+            "stdio.h wchar.h",
+            "wint_t fgetwc(FILE *stream);"
+        ],
+        [
+            "fgetws6",
+            "stdio.h wchar.h",
+            "wchar_t *fgetws(wchar_t *wcs, int n, FILE *stream);"
+        ],
+        [
+            "fileno5",
+            "stdio.h",
+            "int fileno(FILE *stream);"
+        ],
+        [
+            "floor",
+            "math.h",
+            "double floor(double x);"
+        ],
+        [
+            "fmod",
+            "math.h",
+            "double fmod(double x, double y);"
+        ],
+        [
+            "fopen",
+            "stdio.h",
+            "FILE *fopen(const char *filename, const char *mode);"
+        ],
+        [
+            "fprintf",
+            "stdio.h",
+            "int fprintf(FILE *stream, const char *format-string, ...);"
+        ],
+        [
+            "fputc1",
+            "stdio.h",
+            "int fputc(int c, FILE *stream);"
+        ],
+        [
+            "fputs1",
+            "stdio.h",
+            "int fputs(const char *string, FILE *stream);"
+        ],
+        [
+            "fputwc6",
+            "stdio.h wchar.h",
+            "wint_t fputwc(wchar_t wc, FILE *stream);"
+        ],
+        [
+            "fputws6",
+            "stdio.h wchar.h",
+            "int fputws(const wchar_t *wcs, FILE *stream);"
+        ],
+        [
+            "fread",
+            "stdio.h",
+            "size_t fread(void *buffer, size_t size, size_t count, FILE *stream);"
+        ],
+        [
+            "free",
+            "stdlib.h",
+            "void free(void *ptr);"
+        ],
+        [
+            "freopen",
+            "stdio.h",
+            "FILE *freopen(const char *filename, const char *mode, FILE *stream);"
+        ],
+        [
+            "frexp",
+            "math.h",
+            "double frexp(double x, int *expptr);"
+        ],
+        [
+            "fscanf",
+            "stdio.h",
+            "int fscanf(FILE *stream, const char *format-string, ...);"
+        ],
+        [
+            "fseek1",
+            "stdio.h",
+            "int fseek(FILE *stream, long int offset, int origin);"
+        ],
+        [
+            "fsetpos1",
+            "stdio.h",
+            "int fsetpos(FILE *stream, const fpos_t *pos);"
+        ],
+        [
+            "ftell1",
+            "stdio.h",
+            "long int ftell(FILE *stream);"
+        ],
+        [
+            "fwide6",
+            "stdio.h wchar.h",
+            "int fwide(FILE *stream, int mode);"
+        ],
+        [
+            "fwprintf6",
+            "stdio.h wchar.h",
+            "int fwprintf(FILE *stream, const wchar_t *format, ...);"
+        ],
+        [
+            "fwrite",
+            "stdio.h",
+            "size_t fwrite(const void *buffer, size_t size,size_t count, FILE *stream);"
+        ],
+        [
+            "fwscanf6",
+            "stdio.h wchar.h",
+            "int fwscanf(FILE *stream, const wchar_t *format, ...)"
+        ],
+        [
+            "gamma",
+            "math.h",
+            "double gamma(double x);"
+        ],
+        [
+            "getc1",
+            "stdio.h",
+            "int getc(FILE *stream);"
+        ],
+        [
+            "getchar1",
+            "stdio.h",
+            "int getchar(void);"
+        ],
+        [
+            "getenv",
+            "stdlib.h",
+            "char *getenv(const char *varname);"
+        ],
+        [
+            "gets",
+            "stdio.h",
+            "char *gets(char *buffer);"
+        ],
+        [
+            "getwc6",
+            "stdio.h wchar.h",
+            "wint_t getwc(FILE *stream);"
+        ],
+        [
+            "getwchar6",
+            "wchar.h",
+            "wint_t getwchar(void);"
+        ],
+        [
+            "gmtime",
+            "time.h",
+            "struct tm *gmtime(const time_t *time);"
+        ],
+        [
+            "gmtime64",
+            "time.h",
+            "struct tm *gmtime64(const time64_t *time);"
+        ],
+        [
+            "gmtime_r",
+            "time.h",
+            "struct tm *gmtime_r (const time_t *time, struct tm *result);"
+        ],
+        [
+            "gmtime64_r",
+            "time.h",
+            "struct tm *gmtime64_r (const time64_t *time, struct tm *result);"
+        ],
+        [
+            "hypot",
+            "math.h",
+            "double hypot(double side1, double side2);"
+        ],
+        [
+            "isalnum",
+            "ctype.h",
+            "int isalnum(int c);"
+        ],
+        [
+            "isalpha",
+            "ctype.h",
+            "int isalpha(int c);"
+        ],
+        [
+            "isascii4",
+            "ctype.h",
+            "int isascii(int c);"
+        ],
+        [
+            "isblank",
+            "ctype.h",
+            "int isblank(int c);"
+        ],
+        [
+            "iscntrl",
+            "ctype.h",
+            "int iscntrl(int c);"
+        ],
+        [
+            "isdigit",
+            "ctype.h",
+            "int isdigit(int c);"
+        ],
+        [
+            "isgraph",
+            "ctype.h",
+            "int isgraph(int c);"
+        ],
+        [
+            "islower",
+            "ctype.h",
+            "int islower(int c);"
+        ],
+        [
+            "isprint",
+            "ctype.h",
+            "int isprint(int c);"
+        ],
+        [
+            "ispunct",
+            "ctype.h",
+            "int ispunct(int c);"
+        ],
+        [
+            "isspace",
+            "ctype.h",
+            "int isspace(int c);"
+        ],
+        [
+            "isupper",
+            "ctype.h",
+            "int isupper(int c);"
+        ],
+        [
+            "iswalnum4",
+            "wctype.h",
+            "int iswalnum (wint_t wc);"
+        ],
+        [
+            "iswalpha4",
+            "wctype.h",
+            "int iswalpha (wint_t wc);"
+        ],
+        [
+            "iswblank4",
+            "wctype.h",
+            "int iswblank (wint_t wc);"
+        ],
+        [
+            "iswcntrl4",
+            "wctype.h",
+            "int iswcntrl (wint_t wc);"
+        ],
+        [
+            "iswctype4",
+            "wctype.h",
+            "int iswctype(wint_t wc, wctype_t wc_prop);"
+        ],
+        [
+            "iswdigit4",
+            "wctype.h",
+            "int iswdigit (wint_t wc);"
+        ],
+        [
+            "iswgraph4",
+            "wctype.h",
+            "int iswgraph (wint_t wc);"
+        ],
+        [
+            "iswlower4",
+            "wctype.h",
+            "int iswlower (wint_t wc);"
+        ],
+        [
+            "iswprint4",
+            "wctype.h",
+            "int iswprint (wint_t wc);"
+        ],
+        [
+            "iswpunct4",
+            "wctype.h",
+            "int iswpunct (wint_t wc);"
+        ],
+        [
+            "iswspace4",
+            "wctype.h",
+            "int iswspace (wint_t wc);"
+        ],
+        [
+            "iswupper4",
+            "wctype.h",
+            "int iswupper (wint_t wc);"
+        ],
+        [
+            "iswxdigit4",
+            "wctype.h",
+            "int iswxdigit (wint_t wc);"
+        ],
+        [
+            "isxdigit4",
+            "wctype.h",
+            "int isxdigit(int c);"
+        ],
+        [
+            "j0",
+            "math.h",
+            "double j0(double x);"
+        ],
+        [
+            "j1",
+            "math.h",
+            "double j1(double x);"
+        ],
+        [
+            "jn",
+            "math.h",
+            "double jn(int n, double x);"
+        ],
+        [
+            "labs",
+            "stdlib.h",
+            "long int labs(long int n);"
+        ],
+        [
+            "ldexp",
+            "math.h",
+            "double ldexp(double x, int exp);"
+        ],
+        [
+            "ldiv",
+            "stdlib.h",
+            "ldiv_t ldiv(long int numerator, long int denominator);"
+        ],
+        [
+            "localeconv",
+            "locale.h",
+            "struct lconv *localeconv(void);"
+        ],
+        [
+            "localtime",
+            "time.h",
+            "struct tm *localtime(const time_t *timeval);"
+        ],
+        [
+            "localtime64",
+            "time.h",
+            "struct tm *localtime64(const time64_t *timeval);"
+        ],
+        [
+            "localtime_r",
+            "time.h",
+            "struct tm *localtime_r (const time_t *timeval, struct tm *result);"
+        ],
+        [
+            "localtime64_r",
+            "time.h",
+            "struct tm *localtime64_r (const time64_t *timeval, struct tm *result);"
+        ],
+        [
+            "log",
+            "math.h",
+            "double log(double x);"
+        ],
+        [
+            "log10",
+            "math.h",
+            "double log10(double x);"
+        ],
+        [
+            "longjmp",
+            "setjmp.h",
+            "void longjmp(jmp_buf env, int value);"
+        ],
+        [
+            "malloc",
+            "stdlib.h",
+            "void *malloc(size_t size);"
+        ],
+        [
+            "mblen",
+            "stdlib.h",
+            "int mblen(const char *string, size_t n);"
+        ],
+        [
+            "mbrlen4",
+            "wchar.h",
+            "int mbrlen (const char *s, size_t n, mbstate_t *ps);"
+        ],
+        [
+            "mbrtowc4",
+            "wchar.h",
+            "int mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps);"
+        ],
+        [
+            "mbsinit4",
+            "wchar.h",
+            "int mbsinit (const mbstate_t *ps);"
+        ],
+        [
+            "mbsrtowcs4",
+            "wchar.h",
+            "size_t mbsrtowc (wchar_t *dst, const char **src, size_t len, mbstate_t *ps);"
+        ],
+        [
+            "mbstowcs",
+            "stdlib.h",
+            "size_t mbstowcs(wchar_t *pwc, const char *string, size_t n);"
+        ],
+        [
+            "mbtowc",
+            "stdlib.h",
+            "int mbtowc(wchar_t *pwc, const char *string, size_t n);"
+        ],
+        [
+            "memchr",
+            "string.h",
+            "void *memchr(const void *buf, int c, size_t count);"
+        ],
+        [
+            "memcmp",
+            "string.h",
+            "int memcmp(const void *buf1, const void *buf2, size_t count);"
+        ],
+        [
+            "memcpy",
+            "string.h",
+            "void *memcpy(void *dest, const void *src, size_t count);"
+        ],
+        [
+            "memmove",
+            "string.h",
+            "void *memmove(void *dest, const void *src, size_t count);"
+        ],
+        [
+            "memset",
+            "string.h",
+            "void *memset(void *dest, int c, size_t count);"
+        ],
+        [
+            "mktime",
+            "time.h",
+            "time_t mktime(struct tm *time);"
+        ],
+        [
+            "mktime64",
+            "time.h",
+            "time64_t mktime64(struct tm *time);"
+        ],
+        [
+            "modf",
+            "math.h",
+            "double modf(double x, double *intptr);"
+        ],
+        [
+            "nextafter",
+            "math.h",
+            "double nextafter(double x, double y);"
+        ],
+        [
+            "nextafterl",
+            "math.h",
+            "long double nextafterl(long double x, long double y);"
+        ],
+        [
+            "nexttoward",
+            "math.h",
+            "double nexttoward(double x, long double y);"
+        ],
+        [
+            "nexttowardl",
+            "math.h",
+            "long double nexttowardl(long double x, long double y);"
+        ],
+        [
+            "nl_langinfo4",
+            "langinfo.h",
+            "char *nl_langinfo(nl_item item);"
+        ],
+        [
+            "perror",
+            "stdio.h",
+            "void perror(const char *string);"
+        ],
+        [
+            "pow",
+            "math.h",
+            "double pow(double x, double y);"
+        ],
+        [
+            "printf",
+            "stdio.h",
+            "int printf(const char *format-string, ...);"
+        ],
+        [
+            "putc1",
+            "stdio.h",
+            "int putc(int c, FILE *stream);"
+        ],
+        [
+            "putchar1",
+            "stdio.h",
+            "int putchar(int c);"
+        ],
+        [
+            "putenv",
+            "stdlib.h",
+            "int *putenv(const char *varname);"
+        ],
+        [
+            "puts",
+            "stdio.h",
+            "int puts(const char *string);"
+        ],
+        [
+            "putwc6",
+            "stdio.h wchar.h",
+            "wint_t putwchar(wchar_t wc, FILE *stream);"
+        ],
+        [
+            "putwchar6",
+            "wchar.h",
+            "wint_t putwchar(wchar_t wc);"
+        ],
+        [
+            "qsort",
+            "stdlib.h",
+            "void qsort(void *base, size_t num, size_t width, int(*compare)(const void *element1, const void *element2));"
+        ],
+        [
+            "quantexpd32",
+            "math.h",
+            "_Decimal32 quantized32(_Decimal32 x, _Decimal32 y);"
+        ],
+        [
+            "quantexpd64",
+            "math.h",
+            "_Decimal64 quantized64(_Decimal64 x, _Decimal64 y);"
+        ],
+        [
+            "quantexpd128",
+            "math.h",
+            "_Decimal128 quantized128(_Decimal128 x, _Decimal128 y);"
+        ],
+        [
+            "quantized32",
+            "math.h",
+            "int quantexpd32(_Decimal32 x);"
+        ],
+        [
+            "quantized64",
+            "math.h",
+            "int quantexpd64(_Decimal64 x);"
+        ],
+        [
+            "quantized128",
+            "math.h",
+            "int quantexpd128(_Decimal128 x);"
+        ],
+        [
+            "samequantumd32",
+            "math.h",
+            "__bool__ samequantumd32(_Decimal32 x, _Decimal32 y);"
+        ],
+        [
+            "samequantumd64",
+            "math.h",
+            "__bool__ samequantumd64(_Decimal64 x, _Decimal64 y);"
+        ],
+        [
+            "samequantumd128",
+            "math.h",
+            "__bool__ samequantumd128(_Decimal128 x, _Decimal128 y);"
+        ],
+        [
+            "raise",
+            "signal.h",
+            "int raise(int sig);"
+        ],
+        [
+            "rand",
+            "stdlib.h",
+            "int rand(void);"
+        ],
+        [
+            "rand_r",
+            "stdlib.h",
+            "int rand_r(void);"
+        ],
+        [
+            "realloc",
+            "stdlib.h",
+            "void *realloc(void *ptr, size_t size);"
+        ],
+        [
+            "regcomp",
+            "regex.h",
+            "int regcomp(regex_t *preg, const char *pattern, int cflags);"
+        ],
+        [
+            "regerror",
+            "regex.h",
+            "size_t regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size);"
+        ],
+        [
+            "regexec",
+            "regex.h",
+            "int regexec(const regex_t *preg, const char *string, size_t nmatch, regmatch_t *pmatch, int eflags);"
+        ],
+        [
+            "regfree",
+            "regex.h",
+            "void regfree(regex_t *preg);"
+        ],
+        [
+            "remove",
+            "stdio.h",
+            "int remove(const char *filename);"
+        ],
+        [
+            "rename",
+            "stdio.h",
+            "int rename(const char *oldname, const char *newname);"
+        ],
+        [
+            "rewind1",
+            "stdio.h",
+            "void rewind(FILE *stream);"
+        ],
+        [
+            "scanf",
+            "stdio.h",
+            "int scanf(const char *format-string, ...);"
+        ],
+        [
+            "setbuf",
+            "stdio.h",
+            "void setbuf(FILE *stream, char *buffer);"
+        ],
+        [
+            "setjmp",
+            "setjmp.h",
+            "int setjmp(jmp_buf env);"
+        ],
+        [
+            "setlocale",
+            "locale.h",
+            "char *setlocale(int category, const char *locale);"
+        ],
+        [
+            "setvbuf",
+            "stdio.h",
+            "int setvbuf(FILE *stream, char *buf, int type, size_t size);"
+        ],
+        [
+            "signal",
+            "signal.h",
+            "void(*signal (int sig, void(*func)(int))) (int);"
+        ],
+        [
+            "sin",
+            "math.h",
+            "double sin(double x);"
+        ],
+        [
+            "sinh",
+            "math.h",
+            "double sinh(double x);"
+        ],
+        [
+            "snprintf",
+            "stdio.h",
+            "int snprintf(char *outbuf, size_t n, const char*, ...)"
+        ],
+        [
+            "sprintf",
+            "stdio.h",
+            "int sprintf(char *buffer, const char *format-string, ...);"
+        ],
+        [
+            "sqrt",
+            "math.h",
+            "double sqrt(double x);"
+        ],
+        [
+            "srand",
+            "stdlib.h",
+            "void srand(unsigned int seed);"
+        ],
+        [
+            "sscanf",
+            "stdio.h",
+            "int sscanf(const char *buffer, const char *format, ...);"
+        ],
+        [
+            "strcasecmp",
+            "strings.h",
+            "int srtcasecmp(const char *string1, const char *string2);"
+        ],
+        [
+            "strcat",
+            "string.h",
+            "char *strcat(char *string1, const char *string2);"
+        ],
+        [
+            "strchr",
+            "string.h",
+            "char *strchr(const char *string, int c);"
+        ],
+        [
+            "strcmp",
+            "string.h",
+            "int strcmp(const char *string1, const char *string2);"
+        ],
+        [
+            "strcoll",
+            "string.h",
+            "int strcoll(const char *string1, const char *string2);"
+        ],
+        [
+            "strcpy",
+            "string.h",
+            "char *strcpy(char *string1, const char *string2);"
+        ],
+        [
+            "strcspn",
+            "string.h",
+            "size_t strcspn(const char *string1, const char *string2);"
+        ],
+        [
+            "strerror",
+            "string.h",
+            "char *strerror(int errnum);"
+        ],
+        [
+            "strfmon4",
+            "wchar.h",
+            "int strfmon (char *s, size_t maxsize, const char *format, ...);"
+        ],
+        [
+            "strftime",
+            "time.h",
+            "size_t strftime (char *dest, size_t maxsize, const char *format, const struct tm *timeptr);"
+        ],
+        [
+            "strlen",
+            "string.h",
+            "size_t strlen(const char *string);"
+        ],
+        [
+            "strncasecmp",
+            "strings.h",
+            "int strncasecmp(const char *string1, const char *string2, size_t count);"
+        ],
+        [
+            "strncat",
+            "string.h",
+            "char *strncat(char *string1, const char *string2, size_t count);"
+        ],
+        [
+            "strncmp",
+            "string.h",
+            "int strncmp(const char *string1, const char *string2, size_t count);"
+        ],
+        [
+            "strncpy",
+            "string.h",
+            "char *strncpy(char *string1, const char *string2, size_t count);"
+        ],
+        [
+            "strpbrk",
+            "string.h",
+            "char *strpbrk(const char *string1, const char *string2);"
+        ],
+        [
+            "strptime4",
+            "time.h",
+            "char *strptime (const char *buf, const char *format, struct tm *tm);"
+        ],
+        [
+            "strrchr",
+            "string.h",
+            "char *strrchr(const char *string, int c);"
+        ],
+        [
+            "strspn",
+            "string.h",
+            "size_t strspn(const char *string1, const char *string2);"
+        ],
+        [
+            "strstr",
+            "string.h",
+            "char *strstr(const char *string1, const char *string2);"
+        ],
+        [
+            "strtod",
+            "stdlib.h",
+            "double strtod(const char *nptr, char **endptr);"
+        ],
+        [
+            "strtod32",
+            "stdlib.h",
+            "_Decimal32 strtod32(const char *nptr, char **endptr);"
+        ],
+        [
+            "strtod64",
+            "stdlib.h",
+            "_Decimal64 strtod64(const char *nptr, char **endptr);"
+        ],
+        [
+            "strtod128",
+            "stdlib.h",
+            "_Decimal128 strtod128(const char *nptr, char **endptr);"
+        ],
+        [
+            "strtof",
+            "stdlib.h",
+            "float strtof(const char *nptr, char **endptr);"
+        ],
+        [
+            "strtok",
+            "string.h",
+            "char *strtok(char *string1, const char *string2);"
+        ],
+        [
+            "strtok_r",
+            "string.h",
+            "char *strtok_r(char *string, const char *seps, char **lasts);"
+        ],
+        [
+            "strtol",
+            "stdlib.h",
+            "long int strtol(const char *nptr, char **endptr, int base);"
+        ],
+        [
+            "strtold",
+            "stdlib.h",
+            "long double strtold(const char *nptr, char **endptr);"
+        ],
+        [
+            "strtoul",
+            "stdlib.h",
+            "unsigned long int strtoul(const char *string1, char **string2, int base);"
+        ],
+        [
+            "strxfrm",
+            "string.h",
+            "size_t strxfrm(char *string1, const char *string2, size_t count);"
+        ],
+        [
+            "swprintf",
+            "wchar.h",
+            "int swprintf(wchar_t *wcsbuffer, size_t n, const wchar_t *format, ...);"
+        ],
+        [
+            "swscanf",
+            "wchar.h",
+            "int swscanf (const wchar_t *buffer, const wchar_t *format, ...)"
+        ],
+        [
+            "system",
+            "stdlib.h",
+            "int system(const char *string);"
+        ],
+        [
+            "tan",
+            "math.h",
+            "double tan(double x);"
+        ],
+        [
+            "tanh",
+            "math.h",
+            "double tanh(double x);"
+        ],
+        [
+            "time",
+            "time.h",
+            "time_t time(time_t *timeptr);"
+        ],
+        [
+            "time64",
+            "time.h",
+            "time64_t time64(time64_t *timeptr);"
+        ],
+        [
+            "tmpfile",
+            "stdio.h",
+            "FILE *tmpfile(void);"
+        ],
+        [
+            "tmpnam",
+            "stdio.h",
+            "char *tmpnam(char *string);"
+        ],
+        [
+            "toascii",
+            "ctype.h",
+            "int toascii(int c);"
+        ],
+        [
+            "tolower",
+            "ctype.h",
+            "int tolower(int c);"
+        ],
+        [
+            "toupper",
+            "ctype.h",
+            "int toupper(int c);"
+        ],
+        [
+            "towctrans",
+            "wctype.h",
+            "wint_t towctrans(wint_t wc, wctrans_t desc);"
+        ],
+        [
+            "towlower4",
+            "wctype.h",
+            "wint_t towlower (wint_t wc);"
+        ],
+        [
+            "towupper4",
+            "wctype.h",
+            "wint_t towupper (wint_t wc);"
+        ],
+        [
+            "ungetc1",
+            "stdio.h",
+            "int ungetc(int c, FILE *stream);"
+        ],
+        [
+            "ungetwc6",
+            "stdio.h wchar.h",
+            "wint_t ungetwc(wint_t wc, FILE *stream);"
+        ],
+        [
+            "va_arg",
+            "stdarg.h",
+            "var_type va_arg(va_list arg_ptr, var_type);"
+        ],
+        [
+            "va_copy",
+            "stdarg.h",
+            "void va_copy(va_list dest, va_list src);"
+        ],
+        [
+            "va_end",
+            "stdarg.h",
+            "void va_end(va_list arg_ptr);"
+        ],
+        [
+            "va_start",
+            "stdarg.h",
+            "void va_start(va_list arg_ptr, variable_name);"
+        ],
+        [
+            "vfprintf",
+            "stdio.h stdarg.h",
+            "int vfprintf(FILE *stream, const char *format, va_list arg_ptr);"
+        ],
+        [
+            "vfscanf",
+            "stdio.h stdarg.h",
+            "int vfscanf(FILE *stream, const char *format, va_list arg_ptr);"
+        ],
+        [
+            "vfwprintf6",
+            "stdarg.h stdio.h wchar.h",
+            "int vfwprintf(FILE *stream, const wchar_t *format, va_list arg);"
+        ],
+        [
+            "vfwscanf",
+            "stdio.h stdarg.h",
+            "int vfwscanf(FILE *stream, const wchar_t *format, va_list arg_ptr);"
+        ],
+        [
+            "vprintf",
+            "stdio.h stdarg.h",
+            "int vprintf(const char *format, va_list arg_ptr);"
+        ],
+        [
+            "vscanf",
+            "stdio.h stdarg.h",
+            "int vscanf(const char *format, va_list arg_ptr);"
+        ],
+        [
+            "vsprintf",
+            "stdio.h stdarg.h",
+            "int vsprintf(char *target-string, const char *format, va_list arg_ptr);"
+        ],
+        [
+            "vsnprintf",
+            "stdio.h",
+            "int vsnprintf(char *outbuf, size_t n, const char*, va_list);"
+        ],
+        [
+            "vsscanf",
+            "stdio.h stdarg.h",
+            "int vsscanf(const char*buffer, const char *format, va_list arg_ptr);"
+        ],
+        [
+            "vswprintf",
+            "stdarg.h wchar.h",
+            "int vswprintf(wchar_t *wcsbuffer, size_t n, const wchar_t *format, va_list arg);"
+        ],
+        [
+            "vswscanf",
+            "stdio.h wchar.h",
+            "int vswscanf(const wchar_t *buffer, const wchar_t *format, va_list arg_ptr);"
+        ],
+        [
+            "vwprintf6",
+            "stdarg.h wchar.h",
+            "int vwprintf(const wchar_t *format, va_list arg);"
+        ],
+        [
+            "vwscanf",
+            "stdio.h wchar.h",
+            "int vwscanf(const wchar_t *format, va_list arg_ptr);"
+        ],
+        [
+            "wcrtomb4",
+            "wchar.h",
+            "int wcrtomb (char *s, wchar_t wchar, mbstate_t *pss);"
+        ],
+        [
+            "wcscat",
+            "wchar.h",
+            "wchar_t *wcscat(wchar_t *string1, const wchar_t *string2);"
+        ],
+        [
+            "wcschr",
+            "wchar.h",
+            "wchar_t *wcschr(const wchar_t *string, wchar_t character);"
+        ],
+        [
+            "wcscmp",
+            "wchar.h",
+            "int wcscmp(const wchar_t *string1, const wchar_t *string2);"
+        ],
+        [
+            "wcscoll4",
+            "wchar.h",
+            "int wcscoll (const wchar_t *wcs1, const wchar_t *wcs2);"
+        ],
+        [
+            "wcscpy",
+            "wchar.h",
+            "wchar_t *wcscpy(wchar_t *string1, const wchar_t *string2);"
+        ],
+        [
+            "wcscspn",
+            "wchar.h",
+            "size_t wcscspn(const wchar_t *string1, const wchar_t *string2);"
+        ],
+        [
+            "wcsftime",
+            "wchar.h",
+            "size_t wcsftime(wchar_t *wdest, size_t maxsize, const wchar_t *format, const struct tm *timeptr);"
+        ],
+        [
+            "wcslen",
+            "wchar.h",
+            "size_t wcslen(const wchar_t *string);"
+        ],
+        [
+            "wcslocaleconv",
+            "locale.h",
+            "struct wcslconv *wcslocaleconv(void);"
+        ],
+        [
+            "wcsncat",
+            "wchar.h",
+            "wchar_t *wcsncat(wchar_t *string1, const wchar_t *string2, size_t count);"
+        ],
+        [
+            "wcsncmp",
+            "wchar.h",
+            "int wcsncmp(const wchar_t *string1, const wchar_t *string2, size_t count);"
+        ],
+        [
+            "wcsncpy",
+            "wchar.h",
+            "wchar_t *wcsncpy(wchar_t *string1, const wchar_t *string2, size_t count);"
+        ],
+        [
+            "wcspbrk",
+            "wchar.h",
+            "wchar_t *wcspbrk(const wchar_t *string1, const wchar_t *string2);"
+        ],
+        [
+            "wcsptime",
+            "wchar.h",
+            "wchar_t *wcsptime ( const wchar_t *buf, const wchar_t *format, struct tm *tm );"
+        ],
+        [
+            "wcsrchr",
+            "wchar.h",
+            "wchar_t *wcsrchr(const wchar_t *string, wchar_t character);"
+        ],
+        [
+            "wcsrtombs4",
+            "wchar.h",
+            "size_t wcsrtombs (char *dst, const wchar_t **src, size_t len, mbstate_t *ps);"
+        ],
+        [
+            "wcsspn",
+            "wchar.h",
+            "size_t wcsspn(const wchar_t *string1, const wchar_t *string2);"
+        ],
+        [
+            "wcsstr",
+            "wchar.h",
+            "wchar_t *wcsstr(const wchar_t *wcs1, const wchar_t *wcs2);"
+        ],
+        [
+            "wcstod",
+            "wchar.h",
+            "double wcstod(const wchar_t *nptr, wchar_t **endptr);"
+        ],
+        [
+            "wcstod32",
+            "wchar.h",
+            "_Decimal32 wcstod32(const wchar_t *nptr, wchar_t **endptr);"
+        ],
+        [
+            "wcstod64",
+            "wchar.h",
+            "_Decimal64 wcstod64(const wchar_t *nptr, wchar_t **endptr);"
+        ],
+        [
+            "wcstod128",
+            "wchar.h",
+            "_Decimal128 wcstod128(const wchar_t *nptr, wchar_t **endptr);"
+        ],
+        [
+            "wcstof",
+            "wchar.h",
+            "float wcstof(const wchar_t *nptr, wchar_t **endptr);"
+        ],
+        [
+            "wcstok",
+            "wchar.h",
+            "wchar_t *wcstok(wchar_t *wcs1, const wchar_t *wcs2, wchar_t **ptr)"
+        ],
+        [
+            "wcstol",
+            "wchar.h",
+            "long int wcstol(const wchar_t *nptr, wchar_t **endptr, int base);"
+        ],
+        [
+            "wcstold",
+            "wchar.h",
+            "long double wcstold(const wchar_t *nptr, wchar_t **endptr);"
+        ],
+        [
+            "wcstombs",
+            "stdlib.h",
+            "size_t wcstombs(char *dest, const wchar_t *string, size_t count);"
+        ],
+        [
+            "wcstoul",
+            "wchar.h",
+            "unsigned long int wcstoul(const wchar_t *nptr, wchar_t **endptr, int base);"
+        ],
+        [
+            "wcsxfrm4",
+            "wchar.h",
+            "size_t wcsxfrm (wchar_t *wcs1, const wchar_t *wcs2, size_t n);"
+        ],
+        [
+            "wctob",
+            "stdarg.h wchar.h",
+            "int wctob(wint_t wc);"
+        ],
+        [
+            "wctomb",
+            "stdlib.h",
+            "int wctomb(char *string, wchar_t character);"
+        ],
+        [
+            "wctrans",
+            "wctype.h",
+            "wctrans_t wctrans(const char *property);"
+        ],
+        [
+            "wctype4",
+            "wchar.h",
+            "wctype_t wctype (const char *property);"
+        ],
+        [
+            "wcwidth",
+            "wchar.h",
+            "int wcswidth(const wchar_t *pwcs, size_t n);"
+        ],
+        [
+            "wmemchr",
+            "wchar.h",
+            "wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t n);"
+        ],
+        [
+            "wmemcmp",
+            "wchar.h",
+            "int wmemcmp(const wchar_t *s1, const wchar_t *s2, size_t n);"
+        ],
+        [
+            "wmemcpy",
+            "wchar.h",
+            "wchar_t *wmemcpy(wchar_t *s1, const wchar_t *s2, size_t n);"
+        ],
+        [
+            "wmemmove",
+            "wchar.h",
+            "wchar_t *wmemmove(wchar_t *s1, const wchar_t *s2, size_t n);"
+        ],
+        [
+            "wmemset",
+            "wchar.h",
+            "wchar_t *wmemset(wchar_t *s, wchar_t c, size_t n);"
+        ],
+        [
+            "wprintf6",
+            "wchar.h",
+            "int wprintf(const wchar_t *format, ...);"
+        ],
+        [
+            "wscanf6",
+            "wchar.h",
+            "int wscanf(const wchar_t *format, ...);"
+        ],
+        [
+            "y0",
+            "math.h",
+            "double y0(double x);"
+        ],
+        [
+            "y1",
+            "math.h",
+            "double y1(double x);"
+        ],
+        [
+            "yn",
+            "math.h",
+            "double yn(int n, double x);"
+        ]
+    ]
+}
