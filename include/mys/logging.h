@@ -3,6 +3,7 @@
 #define __LOGGING_H__
 
 // TODO: TLOG, DLOG, ILOG, WLOG, ELOG, FLOG
+// If we want to use lock here, we must force #define MYS_IMPL in main.c for mys_mutex
 
 /** https://github.com/rxi/log.c
  * Copyright (c) 2020 rxi
