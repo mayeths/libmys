@@ -8,8 +8,8 @@ template<typename vector_t> class AXPBY;
 enum class ElementOp : int {
     Replace,    /* y[i] = x[i]        or y[i] = alpha        */
     Shift,      /* y[i] = x[i] + y[i] or y[i] = alpha + y[i] */
-    Scale,      /* y[i] = x[i] + y[i] or y[i] = alpha * y[i] */
-    Reciprocal, /* y[i] = x[i] + y[i] or y[i] = alpha / y[i] */
+    Scale,      /* y[i] = x[i] * y[i] or y[i] = alpha * y[i] */
+    Reciprocal, /* y[i] = x[i] / y[i] or y[i] = alpha / y[i] */
 };
 
 template<typename vector_t, typename index_t, typename data_t>
