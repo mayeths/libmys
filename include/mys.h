@@ -37,27 +37,33 @@ extern "C" {
 
 /* Third-Party Library (mys3) */
 
-#ifdef MYS_IMPL_ALL
+#ifdef MYS_IMPL
+#if defined(MYS_ENABLE_CJSON)
 #define MYS_IMPL_CJSON
+#endif
+#if defined(MYS_ENABLE_MATRIXMARKET)
 #define MYS_IMPL_MATRIXMARKET
+#endif
+#if defined(MYS_ENABLE_STB)
 #define MYS_IMPL_STB
+#endif
 #endif
 
 #include "./mys3/cJSON/cJSON.h"
-#if defined(MYS_IMPL_CJSON) && !defined(MYS_IMPL_CJSON_YES)
-#define MYS_IMPL_CJSON_YES
+#if defined(MYS_IMPL_CJSON) && !defined(__MYS_IMPL_CJSON__)
+#define __MYS3_IMPL_CJSON__
 #include "./mys3/cJSON/cJSON.impl.h"
 #endif
 
 #include "./mys3/matrixmarket/mmio.h"
-#if defined(MYS_IMPL_MATRIXMARKET) && !defined(MYS_IMPL_MATRIXMARKET_YES)
-#define MYS_IMPL_MATRIXMARKET_YES
+#if defined(MYS_IMPL_MATRIXMARKET) && !defined(__MYS_IMPL_MATRIXMARKET__)
+#define __MYS_IMPL_MATRIXMARKET__
 #include "./mys3/matrixmarket/mmio.impl.h"
 #endif
 
 #include "./mys3/stb/stb_image.h"
-#if defined(MYS_IMPL_STB) && !defined(MYS_IMPL_STB_YES)
-#define MYS_IMPL_STB_YES
+#if defined(MYS_IMPL_STB) && !defined(__MYS_IMPL_STB__)
+#define __MYS_IMPL_STB__
 #include "./mys3/stb/stb_image.impl.h"
 #endif
 
