@@ -23,6 +23,7 @@ extern "C" {
 
 /* Primary Library (mys) */
 
+#include "./mys/mpi.h"
 #include "./mys/config.h"
 #include "./mys/debug.h"
 #include "./mys/env.h"

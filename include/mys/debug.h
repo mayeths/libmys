@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <mpi.h>
 #include <math.h>
 #include "config.h"
+#include "mpi.h"
 
 #ifdef _OPENMP
 #define MYS_OMP_CRITICAL _Pragma("omp critical (mys)")

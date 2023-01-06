@@ -5,19 +5,9 @@
 #include <complex>
 #include <map>
 
-#if !defined(MPI_VERSION)
-#if !defined(MYS_NO_MPI)
-#error Require <mpi.h> or macro MYS_NO_MPI
-#else
-
-/* TODO: Void mpi functions here if not presented.
-   Other files rely on MPI should include this file first. */
-
-#endif
-#endif
-
 #include "config.h"
 #include "macro.h"
+#include "mpi.h"
 
 /**
  * @brief Return corresponding MPI_Datatype of given type
