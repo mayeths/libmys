@@ -49,9 +49,3 @@
 #include "myss/iss/CG.hpp"
 #include "myss/iss/PIPECG.hpp"
 #endif /*MYS_NO_MYSS*/
-
-/* Third-Party Library (mys3) */
-
-#ifdef MYS_ENABLE_GLM
-#include "./mys3/glm/glm.hpp"
-#endif
