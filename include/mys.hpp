@@ -25,29 +25,3 @@
 #include "mys/raii.hpp"
 #include "mys/string.hpp"
 #include "mys/type.hpp"
-
-/* Sparse Solver Library (myss) */
-
-#ifndef MYS_NO_MYSS
-#include "myss/vec/VBase.hpp"
-#include "myss/vec/VDense.hpp"
-#ifdef PETSC_DIR
-#include "myss/vec/VPetsc.hpp"
-#endif /*PETSC_DIR*/
-
-#include "myss/mat/MBase.hpp"
-#ifdef PETSC_DIR
-#include "myss/mat/MPetsc.hpp"
-#endif /*PETSC_DIR*/
-
-#include "myss/pc/PCBase.hpp"
-#include "myss/pc/PCNone.hpp"
-#include "myss/pc/PCJacobi.hpp"
-#ifdef PETSC_DIR
-#include "myss/pc/PCPetsc.hpp"
-#endif /*PETSC_DIR*/
-
-#include "myss/iss/ISSBase.hpp"
-#include "myss/iss/CG.hpp"
-#include "myss/iss/PIPECG.hpp"
-#endif /*MYS_NO_MYSS*/
