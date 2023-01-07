@@ -5,3 +5,6 @@ lib/
 ugly/
 build
 .DS_Store
+*.out
+*.o
+*.log
