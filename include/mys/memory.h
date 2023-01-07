@@ -37,5 +37,6 @@ MYS_API static void cachebrush(size_t nbytes) /* = 10 * 1024 * 1024 */
     }
     volatile char result;
     result = arr[nbytes - 1];
+    result = (char)(uint64_t)(&arr[(uint64_t)result]);
     free(arr);
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 #if defined(MYS_NO_MPI)
 
 /*********************************************/
@@ -154,22 +156,22 @@ static const MYSPI_Comm MYSPI_COMM_SELF = ~(MYSPI_Comm)0;
 
 static int __SPI_initialized = 0;
 
-static int MYSPI_Initialized(int *inited) {
+MYS_API static int MYSPI_Initialized(int *inited) {
     *inited = __SPI_initialized;
     return MYSPI_SUCCESS;
 }
 
-static int MYSPI_Init_thread(int *argc, char ***argv, int required, int *provided) {
+MYS_API static int MYSPI_Init_thread(int *argc, char ***argv, int required, int *provided) {
     __SPI_initialized = 1;
     return MYSPI_SUCCESS;
 }
 
-static int MYSPI_Init(int *argc, char ***argv) {
+MYS_API static int MYSPI_Init(int *argc, char ***argv) {
     int dummy = 0;
     return MYSPI_Init_thread(argc, argv, MYSPI_THREAD_SINGLE, &dummy);
 }
 
-static int MYSPI_Comm_rank(MYSPI_Comm comm, int *myrank) {
+MYS_API static int MYSPI_Comm_rank(MYSPI_Comm comm, int *myrank) {
     if (comm == MYSPI_COMM_WORLD || comm == MYSPI_COMM_SELF) {
         *myrank = 0;
         return MYSPI_SUCCESS;
@@ -177,7 +179,7 @@ static int MYSPI_Comm_rank(MYSPI_Comm comm, int *myrank) {
     return MYSPI_ERR_COMM;
 }
 
-static int MYSPI_Comm_size(MYSPI_Comm comm, int *nranks) {
+MYS_API static int MYSPI_Comm_size(MYSPI_Comm comm, int *nranks) {
     if (comm == MYSPI_COMM_WORLD || comm == MYSPI_COMM_SELF) {
         *nranks = 1;
         return MYSPI_SUCCESS;
@@ -185,18 +187,18 @@ static int MYSPI_Comm_size(MYSPI_Comm comm, int *nranks) {
     return MYSPI_ERR_COMM;
 }
 
-static int MYSPI_Barrier(MYSPI_Comm comm) {
+MYS_API static int MYSPI_Barrier(MYSPI_Comm comm) {
     if (comm == MYSPI_COMM_WORLD || comm == MYSPI_COMM_SELF) {
         return MYSPI_SUCCESS;
     }
     return MYSPI_ERR_COMM;
 }
 
-static int MYSPI_Type_contiguous(int count, MYSPI_Datatype oldtype, MYSPI_Datatype *newtype) {
+MYS_API static int MYSPI_Type_contiguous(int count, MYSPI_Datatype oldtype, MYSPI_Datatype *newtype) {
     return MYSPI_SUCCESS;
 }
 
-static int MYSPI_Type_commit(MYSPI_Datatype *datatype) {
+MYS_API static int MYSPI_Type_commit(MYSPI_Datatype *datatype) {
     return MYSPI_SUCCESS;
 }
 

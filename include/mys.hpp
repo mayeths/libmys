@@ -19,7 +19,9 @@
 #include "mys.h"
 #include "mys/linalg.hpp"
 #include "mys/memory.hpp"
+#ifndef MYS_NO_MPI
 #include "mys/mpi.hpp"
+#endif
 #include "mys/raii.hpp"
 #include "mys/string.hpp"
 #include "mys/type.hpp"

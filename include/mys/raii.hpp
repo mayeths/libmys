@@ -9,6 +9,7 @@
 // 全小写名字，这么短的单词驼峰太奇怪了
 
 #include <string>
+#include <stdexcept>
 
 struct guard_t
 {

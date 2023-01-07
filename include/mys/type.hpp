@@ -1,5 +1,7 @@
 #pragma once
 
+#include <complex>
+
 enum class TypeNameType: int {
     C, /* unsigned long long int (typename in C) */
     Rust, /* u64 (typename in Rust) */
