@@ -203,7 +203,7 @@ class Register:
         if len(variant) > 0:
             if islmod:
                 text.append(f'local variant = "{variant}"')
-                text.append(f'local id = "{family}/{name}/"..version.."/"..variant')
+                text.append(f'local id = "{family}/{name}/"..version.."-"..variant')
             else:
                 text.append(f"set variant {variant}")
                 id = f"{family}/{name}/$version-$variant"
