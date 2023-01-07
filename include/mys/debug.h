@@ -5,7 +5,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include "config.h"
-#include "mpi.h"
+#include "myspi.h"
 
 #ifdef _OPENMP
 #define MYS_OMP_CRITICAL _Pragma("omp critical (mys)")
@@ -110,12 +110,12 @@ do {                               \
 /*********************************************/
 
 
-static inline void __mys_ensure_mpi_init()
+static inline void __mys_ensure_myspi_init()
 {
     int inited;
-    MPI_Initialized(&inited);
+    MYSPI_Initialized(&inited);
     if (inited) return;
-    MPI_Init_thread(NULL, NULL, MPI_THREAD_SINGLE, &inited);
+    MYSPI_Init_thread(NULL, NULL, MYSPI_THREAD_SINGLE, &inited);
     fprintf(stdout, ">>>>> ===================================== <<<<<\n");
     fprintf(stdout, ">>>>> Nevel let libmys init MPI you dumbass <<<<<\n");
     fprintf(stdout, ">>>>> ===================================== <<<<<\n");
@@ -124,22 +124,22 @@ static inline void __mys_ensure_mpi_init()
 
 static inline int __mys_myrank()
 {
-    __mys_ensure_mpi_init();
+    __mys_ensure_myspi_init();
     int myrank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    MYSPI_Comm_rank(MYSPI_COMM_WORLD, &myrank);
     return myrank;
 }
 static inline int __mys_nranks()
 {
-    __mys_ensure_mpi_init();
+    __mys_ensure_myspi_init();
     int nranks = 0;
-    MPI_Comm_size(MPI_COMM_WORLD, &nranks);
+    MYSPI_Comm_size(MYSPI_COMM_WORLD, &nranks);
     return nranks;
 }
 static inline void __mys_barrier()
 {
-    __mys_ensure_mpi_init();
-    MPI_Barrier(MPI_COMM_WORLD);
+    __mys_ensure_myspi_init();
+    MYSPI_Barrier(MYSPI_COMM_WORLD);
 }
 
 __attribute__((format(printf, 2, 3)))
