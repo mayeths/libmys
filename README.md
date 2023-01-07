@@ -36,3 +36,12 @@ Should we force MYS_IMPL ?
 // in other files
 #include <mys.h>
 ```
+
+Yes, absolutely. Now we use this pattern to design MYS_IMPL:
+- Use `extern` in normal headers of libmys
+- Write definition in `mys/impl.h`
+There are many benifit for this:
+- We can just `#ifndef MYS_IMPL` to avoid parsing long definition in preprocessing phase. It's only unfold when necessary.
+- Normal headers can directly use `#pragma once`
+- Code in normal headers is pretty simple because we avoid many `#ifndef MYS_IMPL` and `#else`.
+- Copying files are more easier. Just copy normal files with `mys/impl.h` and `mys/impl.hpp`.
