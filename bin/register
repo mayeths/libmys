@@ -124,7 +124,7 @@ class Register:
                 prepend_result.append(fmt.green(f"{folder}"))
                 if val:
                     if islmod:
-                        prepends.append(f'prepend_path("{val}" prefix.."/{folder}")')
+                        prepends.append(f'prepend_path("{val}", prefix.."/{folder}")')
                     else:
                         prepends.append(f"prepend-path {val} $prefix/{folder}")
             else:
