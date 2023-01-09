@@ -15,8 +15,8 @@
  * @param overwrite The environment variable shall be updated if the overwrite is non-zero.
  * @return int - 0 when environment variable is presented after the function called. Otherwise -1 and errno is set.
  */
-int setenv(const char *envname, const char *envval, int overwrite);
-int unsetenv(const char *envname);
+// int setenv(const char *envname, const char *envval, int overwrite);
+// int unsetenv(const char *envname);
 
 /* Safe string to numeric https://stackoverflow.com/a/18544436 */
 

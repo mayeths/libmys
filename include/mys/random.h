@@ -23,7 +23,7 @@ static inline uint64_t __seed()
 {
     uint32_t lo, hi;
     __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
-    uint64_t t = lo;
+    uint64_t t = ((uint64_t)hi << 32) | (uint64_t)lo;
     return (t << 32) | (t & 0xAAAA5555); /* A(1010)5(0101) won't INVALID(1111_1111) again */
 }
 #elif defined(ARCH_AARCH64)

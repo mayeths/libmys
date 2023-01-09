@@ -173,12 +173,12 @@ error_in:
 
 static int pcloseRWE(int pid, int ipipe, int opipe, int epipe)
 {
-    int rc, status;
     if (is_valid_fd(ipipe)) close(ipipe);
     if (is_valid_fd(opipe)) close(opipe);
     if (is_valid_fd(epipe)) close(epipe);
+    volatile int rc = 0;
+    int status;
     rc = waitpid(pid, &status, 0);
-    (void)rc; // not used
     return status;
 }
 

@@ -30,7 +30,7 @@
 /* Cache clean */
 MYS_API static void cachebrush(size_t nbytes) /* = 10 * 1024 * 1024 */
 {
-    char * volatile arr = (char * volatile)malloc(nbytes * sizeof(char));
+    char * volatile arr = (char *)malloc(nbytes * sizeof(char));
     memset(arr, 0, nbytes);
     for (size_t i = 1; i < nbytes; i++) {
         arr[i] = i | (arr[i - 1]);
