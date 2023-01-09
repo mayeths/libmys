@@ -204,10 +204,10 @@ static void dataclean(const index_t nrows, index_t *Ap, index_t * Aj, data_t *Av
     std::copy(Av, Av + nnz, newAv.begin());
     index_t count = 0;
     for (index_t i = 0; i < nrows; i++) {
-        const index_t I = base + i;
+        // const index_t I = base + i;
         const index_t rowstart = Ap[i];
         const index_t rowend = Ap[i + 1];
-        index_t rownnz = 0;
+        // index_t rownnz = 0;
         for (index_t jj = rowstart; jj < rowend; jj++) {
             const index_t J = Aj[jj];
             const data_t v = Av[jj];
@@ -387,7 +387,7 @@ static DATA_T CalcResidual(INDEX_T nrow, INDEX_T *Ap, INDEX_T *Aj, DATA_T *Av, D
     return sqrt(norm2);
 }
 
-void readtxt(const char *fname, int *narrs_, double **Va_) {
+static void readtxt(const char *fname, int *narrs_, double **Va_) {
     FILE *f = fopen(fname, "r");
     std::vector<double> tmparr(0);
 

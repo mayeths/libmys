@@ -22,7 +22,7 @@ std::string strformat(const std::string& format, Args ...args)
 }
 
 /* https://stackoverflow.com/a/26221725 */
-char *cstrnformat(char *buffer, int bufsize, const char *format, ...)
+static inline char *cstrnformat(char *buffer, int bufsize, const char *format, ...)
 {
     va_list args;
     va_start(args, format);
@@ -33,7 +33,7 @@ char *cstrnformat(char *buffer, int bufsize, const char *format, ...)
     return buffer;
 }
 
-char *cstrformat(char *buffer, const char *format, ...) {
+static inline char *cstrformat(char *buffer, const char *format, ...) {
     va_list args;
     va_start(args, format);
     if (buffer == NULL)
