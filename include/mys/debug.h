@@ -109,9 +109,11 @@ do {                               \
 /* Implement */
 /*********************************************/
 
-
 static inline void __mys_ensure_myspi_init()
 {
+#ifdef MYS_NO_MPI
+    return;
+#else
     int inited;
     MYSPI_Initialized(&inited);
     if (inited) return;
@@ -120,6 +122,7 @@ static inline void __mys_ensure_myspi_init()
     fprintf(stdout, ">>>>> Nevel let libmys init MPI you dumbass <<<<<\n");
     fprintf(stdout, ">>>>> ===================================== <<<<<\n");
     fflush(stdout);
+#endif
 }
 
 static inline int __mys_myrank()
