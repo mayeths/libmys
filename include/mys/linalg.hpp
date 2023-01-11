@@ -109,7 +109,7 @@ static int reorder(
 
         typedef std::pair<index_t, data_t> tuple_t;
 
-        ASSERT(rownnz > 0, "Expect rownnz %d > 0 base %d i %d rowstart %d rowstop %d", rownnz, base, i, rowstart, rowstop);
+        // ASSERT(rownnz > 0, "Expect rownnz %d > 0 base %d i %d rowstart %d rowstop %d", rownnz, base, i, rowstart, rowstop);
         std::vector<tuple_t> row(rownnz);
         for (index_t m = 0; m < rownnz; m++) {
             index_t jj = rowstart + m;
@@ -129,7 +129,7 @@ static int reorder(
                     break;
                 }
             }
-            it_start = row.begin() + 1;
+            if (row.begin() != row.end()) it_start = row.begin() + 1;
         }
         std::sort(it_start, it_stop, [](tuple_t const &t1, tuple_t const &t2) {
             return std::get<0>(t1) < std::get<0>(t2);
