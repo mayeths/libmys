@@ -194,6 +194,7 @@ static inline void __mys_assert(int exp, const char *file, int line, const char 
         va_end(args);
         fprintf(stdout, "\n");
         fflush(stdout);
+        exit(1);
     }
 }
 
