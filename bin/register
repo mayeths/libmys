@@ -187,7 +187,10 @@ class Register:
             implstr = f"{version}"
 
         modpath = f"{MODULE_ROOT}/{family}/{name}/{implstr}"
-        modfile = f"{MODULE_CONFIG}/{family}/{name}/{implstr}"
+        if islmod:
+            modfile = f"{MODULE_CONFIG}/{family}/{name}/{implstr}.lua"
+        else:
+            modfile = f"{MODULE_CONFIG}/{family}/{name}/{implstr}"
 
         if islmod:
             text = [f"--Module (Lua script for Lmod)"]
