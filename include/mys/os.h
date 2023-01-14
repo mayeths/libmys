@@ -176,9 +176,8 @@ static int pcloseRWE(int pid, int ipipe, int opipe, int epipe)
     if (is_valid_fd(ipipe)) close(ipipe);
     if (is_valid_fd(opipe)) close(opipe);
     if (is_valid_fd(epipe)) close(epipe);
-    volatile int rc = 0;
     int status;
-    rc = waitpid(pid, &status, 0);
+    waitpid(pid, &status, 0);
     return status;
 }
 
