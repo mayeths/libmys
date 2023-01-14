@@ -43,7 +43,7 @@ typedef struct {
     void *udata;
 } mys_log_event_t;
 
-typedef void (*mys_log_handler_fn)(const mys_log_event_t *event);
+typedef void (*mys_log_handler_fn)(mys_log_event_t *event);
 
 MYS_API static int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_udata);
 MYS_API static void mys_log_remove_handler(int handler_id);
@@ -170,7 +170,7 @@ MYS_API static const char* mys_log_level_string(mys_log_level_t level)
     return level_strings[(int)level];
 }
 
-MYS_API static void __mys_stdout_handler(const mys_log_event_t *event) {
+MYS_API static void __mys_stdout_handler(mys_log_event_t *event) {
     const char *lstr = mys_log_level_string(event->level);
     const char level_shortname = lstr[0];
 
