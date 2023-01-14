@@ -5,6 +5,7 @@
 #include <map>
 #include <algorithm>
 #include <typeinfo>
+#include <cmath>
 #include "config.h"
 
 enum class MatrixType: int {
@@ -180,6 +181,8 @@ static index_t findzeros(const index_t nrows, index_t *Ap, index_t * Aj, data_t 
                 }
             }
         }
+        if (missingdiag)
+            nmissingdiags += 1;
     }
     if (strategy == FindZerosStrategy::DiagZeros)
         return nmissingdiags + nexpdiagzeros;
