@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./logging.h"
+#include "./log.h"
 
 /* Runtime Assertion */
 

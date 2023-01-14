@@ -25,10 +25,10 @@ extern "C" {
 
 #include "./mys/assert.h"
 #include "./mys/config.h"
-// #include "./mys/debug.h"
+// #include "./mys/debug-legacy.h"
 #include "./mys/env.h"
 #include "./mys/hrtime.h"
-#include "./mys/logging.h"
+#include "./mys/log.h"
 #include "./mys/macro.h"
 #include "./mys/myspi.h"
 #include "./mys/misc.h"

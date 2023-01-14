@@ -3,7 +3,7 @@
 
 #include "thread.h"
 #include "errno.h"
-#include "logging.h"
+#include "log.h"
 
 /*********************************************/
 // C definition
