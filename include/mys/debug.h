@@ -7,18 +7,13 @@
 #include "config.h"
 #include "myspi.h"
 
-#ifdef _OPENMP
+#if defined(_OPENMP) && !defined(MYS_OMP_CRITICAL)
 #define MYS_OMP_CRITICAL _Pragma("omp critical (mys)")
 #else
 #define MYS_OMP_CRITICAL
 #endif
 
-#define MYRANK() __mys_myrank()
-#define NRANKS() __mys_nranks()
-#define BARRIER() __mys_barrier()
 #define PRINTF(who, fmt, ...) __mys_printf(who, fmt, ##__VA_ARGS__)
-
-#define PREVENT_ELIMIMATED(a) do { static volatile uint64_t __sink = 0; __sink = (uint64_t)a; } while (0)
 
 #define DEBUG(who, fmt, ...) __mys_debug(who, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define DEBUG_ORDERED(fmt, ...) do {   \
@@ -108,42 +103,6 @@ do {                               \
 /*********************************************/
 /* Implement */
 /*********************************************/
-
-static inline void __mys_ensure_myspi_init()
-{
-#ifdef MYS_NO_MPI
-    return;
-#else
-    int inited;
-    MYSPI_Initialized(&inited);
-    if (inited) return;
-    MYSPI_Init_thread(NULL, NULL, MYSPI_THREAD_SINGLE, &inited);
-    fprintf(stdout, ">>>>> ===================================== <<<<<\n");
-    fprintf(stdout, ">>>>> Nevel let libmys init MPI you dumbass <<<<<\n");
-    fprintf(stdout, ">>>>> ===================================== <<<<<\n");
-    fflush(stdout);
-#endif
-}
-
-static inline int __mys_myrank()
-{
-    __mys_ensure_myspi_init();
-    int myrank = 0;
-    MYSPI_Comm_rank(MYSPI_COMM_WORLD, &myrank);
-    return myrank;
-}
-static inline int __mys_nranks()
-{
-    __mys_ensure_myspi_init();
-    int nranks = 0;
-    MYSPI_Comm_size(MYSPI_COMM_WORLD, &nranks);
-    return nranks;
-}
-static inline void __mys_barrier()
-{
-    __mys_ensure_myspi_init();
-    MYSPI_Barrier(MYSPI_COMM_WORLD);
-}
 
 __attribute__((format(printf, 2, 3)))
 static inline void __mys_printf(int who, const char *fmt, ...)

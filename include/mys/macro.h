@@ -1,5 +1,7 @@
 #pragma once
 
+#define PREVENT_ELIMIMATED(a) do { static volatile uint64_t __sink = 0; __sink = (uint64_t)a; } while (0)
+
 #define RMIDX(row, col, nrow, ncol) ((row) * (ncol) + (col)) /* row major index */
 #define CMIDX(row, col, nrow, ncol) ((row) + (nrow) * (col)) /* col major index */
 #define IDX2(x, y, nx, ny) ((x) + (y) * (nx))
