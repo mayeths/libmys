@@ -13,9 +13,10 @@ mys_log_G_t mys_log_G = {
     .level = MYS_LOG_TRACE,
     .last_level = MYS_LOG_TRACE,
     .lock = MYS_MUTEX_INITIALIZER,
-    .id_generator = 10001, /* DO NOT start from 0 */
     .handlers = {
-        { .fn = __mys_stdout_handler, .udata = NULL, .id = 10000 },
+#ifndef MYS_LOG_DISABLE_STDOUT_HANDLER
+        { .fn = __mys_stdio_handler, .udata = stdout, .id = 10000 },
+#endif
         { .fn = NULL, .udata = NULL, .id = 0 /* Uninitalized ID is 0 */ },
     },
 };
