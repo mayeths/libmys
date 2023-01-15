@@ -68,3 +68,17 @@
 #define ASSERT_FLOAT_BETWEEN_IE(low, exp, high) __ASSERTX_TWO_OP__(low,<=,exp,< ,high,"%E","")
 #define ASSERT_FLOAT_BETWEEN_II(low, exp, high) __ASSERTX_TWO_OP__(low,<=,exp,<=,high,"%E","")
 #endif /* __ASSERT_SUGAR__ */
+
+/* Validate return value */
+#define CHKRET(fncall)       \
+do {                         \
+    int val = (int)(fncall); \
+    ASSERT_EQ(val, 0);       \
+} while (0)
+
+/* Validate pointer */
+#define CHKPTR(fncall)             \
+do {                               \
+    size_t val = (size_t)(fncall); \
+    ASSERT_NE(val, 0);             \
+} while (0)
