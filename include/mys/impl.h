@@ -15,7 +15,7 @@ mys_log_G_t mys_log_G = {
     .lock = MYS_MUTEX_INITIALIZER,
     .handlers = {
 #ifndef MYS_LOG_DISABLE_STDOUT_HANDLER
-        { .fn = __mys_stdio_handler, .udata = stdout, .id = 10000 },
+        { .fn = __mys_stdio_handler, .udata = NULL, .id = 10000 },
 #endif
         { .fn = NULL, .udata = NULL, .id = 0 /* Uninitalized ID is 0 */ },
     },

@@ -170,9 +170,9 @@ MYS_API static const char* mys_log_level_string(int level)
 }
 
 MYS_API static void __mys_stdio_handler(mys_log_event_t *event) {
-    FILE *file = (FILE *)event->udata;
     const char *lstr = mys_log_level_string(event->level);
     const char level_shortname = lstr[0];
+    FILE *file = event->udata != NULL ? (FILE *)event->udata : stdout;
 
     char base_label[256];
 
