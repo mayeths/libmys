@@ -37,6 +37,9 @@ extern "C" {
 #include "./mys/random.h"
 #include "./mys/statistic.h"
 #include "./mys/thread.h"
+#ifdef CUDA_ARCH
+#include "./mys/cuda.cuh"
+#endif
 
 /* Third-Party Library (mys3) */
 

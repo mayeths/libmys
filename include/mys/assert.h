@@ -1,6 +1,9 @@
 #pragma once
 
-#include "./log.h"
+#include <stdint.h>
+
+#include "config.h"
+#include "log.h"
 
 /* Runtime Assertion */
 
@@ -70,15 +73,17 @@
 #endif /* __ASSERT_SUGAR__ */
 
 /* Validate return value */
-#define CHKRET(fncall)       \
-do {                         \
-    int val = (int)(fncall); \
-    ASSERT_EQ(val, 0);       \
+#define CHKRET(fncall) do {              \
+    int val = (int)(fncall);             \
+    ASSERT(val == 0,                     \
+        "Expect (%s) return %d but %d.", \
+        #fncall, 0, val);                \
 } while (0)
 
 /* Validate pointer */
-#define CHKPTR(fncall)             \
-do {                               \
-    size_t val = (size_t)(fncall); \
-    ASSERT_NE(val, 0);             \
+#define CHKPTR(fncall) do {               \
+    size_t val = (size_t)(fncall);        \
+    ASSERT(val != 0,                      \
+        "Expect (%s) no returning NULL.", \
+        #fncall);                         \
 } while (0)

@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <time.h>
 #include <math.h>
 #include <unistd.h>
