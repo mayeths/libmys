@@ -70,12 +70,3 @@
 #define ARCH_NAME "Unknown"
 #define ARCH_UNKNOWN
 #endif
-
-/* See cJSON */
-#if defined(COMPILER_GCC) || defined(COMPILER_CLANG) || defined(COMPILER_ICC) || defined(COMPILER_NVCC) || defined(COMPILER_SWCC)
-#define MYS_API __attribute__((unused)) /*__attribute__((visibility("default")))*/
-#elif defined(COMPILER_MSVC)
-#define MYS_API /*__declspec(dllexport)*/
-#else
-#define MYS_API /* Emit nothing */
-#endif

@@ -1,6 +1,18 @@
 #pragma once
 
-#define PREVENT_ELIMIMATED(a) do { static volatile uint64_t __sink = 0; __sink = (uint64_t)a; } while (0)
+/* MYS_API for libmys. See CJSON_PUBLIC of cJSON */
+#if defined(COMPILER_GCC) || defined(COMPILER_CLANG) || defined(COMPILER_ICC) || defined(COMPILER_NVCC) || defined(COMPILER_SWCC)
+#define MYS_API __attribute__((unused)) /*__attribute__((visibility("default")))*/
+#elif defined(COMPILER_MSVC)
+#define MYS_API /*__declspec(dllexport)*/
+#else
+#define MYS_API /* Emit nothing */
+#endif
+
+#define PREVENT_ELIMIMATED(a) do {     \
+    static volatile uint64_t sink = 0; \
+    sink = (uint64_t)a;                \
+} while (0)
 
 #define RMIDX(row, col, nrow, ncol) ((row) * (ncol) + (col)) /* row major index */
 #define CMIDX(row, col, nrow, ncol) ((row) + (nrow) * (col)) /* col major index */

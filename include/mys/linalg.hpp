@@ -7,6 +7,7 @@
 #include <typeinfo>
 #include <cmath>
 #include "config.h"
+#include "macro.h"
 
 enum class MatrixType: int {
     CSR = 0,

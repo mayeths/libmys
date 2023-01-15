@@ -12,8 +12,8 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "thread.h"
 #include "macro.h"
+#include "thread.h"
 #include "myspi.h"
 
 

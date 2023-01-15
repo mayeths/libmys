@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "config.h"
+#include "macro.h"
 
 #if defined(POSIX_COMPLIANCE)
 #include <unistd.h>
