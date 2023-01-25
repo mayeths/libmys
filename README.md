@@ -45,3 +45,9 @@ There are many benifit for this:
 - Normal headers can directly use `#pragma once`
 - Code in normal headers is pretty simple because we avoid many `#ifndef MYS_IMPL` and `#else`.
 - Copying files are more easier. Just copy normal files with `mys/impl.h` and `mys/impl.hpp`.
+
+### Use rsync to clone project
+```bash
+git clone https://github.com/mayeths/libmys.git
+rsync --filter=':- .gitignore' -avz ./libmys remote:~
+```
