@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cuda.h>
+
 #include "assert.h"
 
 #define CHKCUDA(fncall) do {                  \
