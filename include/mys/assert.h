@@ -11,7 +11,7 @@
     if (!(exp)) {                      \
         int myrank = mys_myrank();     \
         mys_log(myrank, MYS_LOG_FATAL, \
-          __MYS_LOG_FNAME__, __LINE__, \
+          MYS_LOG_FNAME, __LINE__,     \
           (fmt), ##__VA_ARGS__);       \
         exit(1);                       \
     }                                  \

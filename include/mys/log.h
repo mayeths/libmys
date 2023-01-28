@@ -20,17 +20,10 @@
 ////// API
 
 #ifdef MYS_LOG_LONG_FILENAME
-#define __MYS_LOG_FNAME__ __FILE__
+#define MYS_LOG_FNAME __FILE__
 #else
-#define __MYS_LOG_FNAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
+#define MYS_LOG_FNAME (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
 #endif
-
-#define TLOG(who, fmt, ...) mys_log(who, MYS_LOG_TRACE, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
-#define DLOG(who, fmt, ...) mys_log(who, MYS_LOG_DEBUG, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
-#define ILOG(who, fmt, ...) mys_log(who, MYS_LOG_INFO,  __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
-#define WLOG(who, fmt, ...) mys_log(who, MYS_LOG_WARN,  __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
-#define ELOG(who, fmt, ...) mys_log(who, MYS_LOG_ERROR, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
-#define FLOG(who, fmt, ...) mys_log(who, MYS_LOG_FATAL, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
 
 enum {
     MYS_LOG_TRACE, MYS_LOG_DEBUG, MYS_LOG_INFO, MYS_LOG_WARN, MYS_LOG_ERROR, MYS_LOG_FATAL, MYS_LOG_LEVEL_COUNT
@@ -46,6 +39,13 @@ typedef struct {
 } mys_log_event_t;
 
 typedef void (*mys_log_handler_fn)(mys_log_event_t *event);
+
+#define TLOG(who, fmt, ...) mys_log(who, MYS_LOG_TRACE, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define DLOG(who, fmt, ...) mys_log(who, MYS_LOG_DEBUG, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define ILOG(who, fmt, ...) mys_log(who, MYS_LOG_INFO,  MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define WLOG(who, fmt, ...) mys_log(who, MYS_LOG_WARN,  MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define ELOG(who, fmt, ...) mys_log(who, MYS_LOG_ERROR, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define FLOG(who, fmt, ...) mys_log(who, MYS_LOG_FATAL, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 
 MYS_API static int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_udata);
 MYS_API static void mys_log_remove_handler(int handler_id);
