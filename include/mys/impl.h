@@ -20,13 +20,13 @@ mys_log_G_t mys_log_G = {
     .lock = MYS_MUTEX_INITIALIZER,
     .handlers = {
 #ifndef MYS_LOG_DISABLE_STDOUT_HANDLER
-        { .fn = __mys_stdio_handler, .udata = NULL, .id = 10000 },
+        { .fn = mys_log_stdio_handler, .udata = NULL, .id = 10000 },
 #endif
         { .fn = NULL, .udata = NULL, .id = 0 /* Uninitalized ID is 0 */ },
     },
 };
 
-MYS_API void __mys_ensure_myspi_init()
+MYS_API void mys_ensure_myspi_init()
 {
 #if defined(MYS_NO_MPI)
     return;
@@ -42,36 +42,36 @@ MYS_API void __mys_ensure_myspi_init()
 #endif
 }
 
-MYS_API int __mys_myrank()
+MYS_API int mys_myrank()
 {
 #if defined(MYS_NO_MPI)
     return 0;
 #else
-    __mys_ensure_myspi_init();
+    mys_ensure_myspi_init();
     int myrank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     return myrank;
 #endif
 }
 
-MYS_API int __mys_nranks()
+MYS_API int mys_nranks()
 {
 #if defined(MYS_NO_MPI)
     return 1;
 #else
-    __mys_ensure_myspi_init();
+    mys_ensure_myspi_init();
     int nranks = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &nranks);
     return nranks;
 #endif
 }
 
-MYS_API void __mys_barrier()
+MYS_API void mys_barrier()
 {
 #if defined(MYS_NO_MPI)
     return;
 #else
-    __mys_ensure_myspi_init();
+    mys_ensure_myspi_init();
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }

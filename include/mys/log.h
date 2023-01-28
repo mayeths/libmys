@@ -25,12 +25,12 @@
 #define __MYS_LOG_FNAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
 #endif
 
-#define TLOG(who, fmt, ...) __mys_log(who, MYS_LOG_TRACE, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
-#define DLOG(who, fmt, ...) __mys_log(who, MYS_LOG_DEBUG, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
-#define ILOG(who, fmt, ...) __mys_log(who, MYS_LOG_INFO,  __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
-#define WLOG(who, fmt, ...) __mys_log(who, MYS_LOG_WARN,  __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
-#define ELOG(who, fmt, ...) __mys_log(who, MYS_LOG_ERROR, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
-#define FLOG(who, fmt, ...) __mys_log(who, MYS_LOG_FATAL, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
+#define TLOG(who, fmt, ...) mys_log(who, MYS_LOG_TRACE, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
+#define DLOG(who, fmt, ...) mys_log(who, MYS_LOG_DEBUG, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
+#define ILOG(who, fmt, ...) mys_log(who, MYS_LOG_INFO,  __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
+#define WLOG(who, fmt, ...) mys_log(who, MYS_LOG_WARN,  __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
+#define ELOG(who, fmt, ...) mys_log(who, MYS_LOG_ERROR, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
+#define FLOG(who, fmt, ...) mys_log(who, MYS_LOG_FATAL, __MYS_LOG_FNAME__, __LINE__, fmt, ##__VA_ARGS__)
 
 enum {
     MYS_LOG_TRACE, MYS_LOG_DEBUG, MYS_LOG_INFO, MYS_LOG_WARN, MYS_LOG_ERROR, MYS_LOG_FATAL, MYS_LOG_LEVEL_COUNT
@@ -84,10 +84,10 @@ typedef struct {
 extern mys_log_G_t mys_log_G;
 
 __attribute__((format(printf, 5, 6)))
-MYS_API static void __mys_log(int who, int level, const char *file, int line, const char *fmt, ...)
+MYS_API static void mys_log(int who, int level, const char *file, int line, const char *fmt, ...)
 {
     mys_mutex_lock(&mys_log_G.lock);
-    int myrank = __mys_myrank();
+    int myrank = mys_myrank();
     if (who == myrank && (int)level >= (int)mys_log_G.level) {
         for (int i = 0; i < 128; i++) {
             if (mys_log_G.handlers[i].fn == NULL)
@@ -170,7 +170,7 @@ MYS_API static const char* mys_log_level_string(int level)
     return level_strings[(int)level];
 }
 
-MYS_API static void __mys_stdio_handler(mys_log_event_t *event) {
+MYS_API static void mys_log_stdio_handler(mys_log_event_t *event) {
     const char *lstr = mys_log_level_string(event->level);
     const char level_shortname = lstr[0];
     FILE *file = event->udata != NULL ? (FILE *)event->udata : stdout;
@@ -180,8 +180,8 @@ MYS_API static void __mys_stdio_handler(mys_log_event_t *event) {
     char *label = base_label;
     int label_size = sizeof(base_label);
 
-    int myrank = __mys_myrank();
-    int nranks = __mys_nranks();
+    int myrank = mys_myrank();
+    int nranks = mys_nranks();
     int rank_digits = trunc(log10(nranks)) + 1;
     int line_digits = trunc(log10(event->line)) + 1;
     rank_digits = rank_digits > 3 ? rank_digits : 3;

@@ -7,14 +7,14 @@
 
 /* Runtime Assertion */
 
-#define ASSERT(exp, fmt, ...) do {       \
-    if (!(exp)) {                        \
-        int myrank = __mys_myrank();     \
-        __mys_log(myrank, MYS_LOG_FATAL, \
-          __MYS_LOG_FNAME__, __LINE__,   \
-          (fmt), ##__VA_ARGS__);         \
-        exit(1);                         \
-    }                                    \
+#define ASSERT(exp, fmt, ...) do {     \
+    if (!(exp)) {                      \
+        int myrank = mys_myrank();     \
+        mys_log(myrank, MYS_LOG_FATAL, \
+          __MYS_LOG_FNAME__, __LINE__, \
+          (fmt), ##__VA_ARGS__);       \
+        exit(1);                       \
+    }                                  \
 } while(0)
 #ifndef __ASSERT_SUGAR__
 #define __ASSERT_SUGAR__

@@ -13,10 +13,10 @@
 #define WAIT_FLAG(flagfile) __mys_wait_flag(__FILE__, __LINE__, flagfile)
 
 static inline void __mys_wait_flag(const char *file, int line, const char *flagfile) {
-    int myrank = __mys_myrank();
+    int myrank = mys_myrank();
     // MYS_OMP_CRITICAL
     {
-        int nranks = __mys_nranks();
+        int nranks = mys_nranks();
         int nprefix = trunc(log10(nranks)) + 1;
         nprefix = nprefix > 3 ? nprefix : 3;
         if (myrank == 0) {
@@ -37,7 +37,7 @@ static inline void __mys_wait_flag(const char *file, int line, const char *flagf
         }
         sleep(1);
     }
-    __mys_barrier();
+    mys_barrier();
     // MYS_OMP_CRITICAL
     if (myrank == 0) {
         fprintf(stdout, "OK\n");
