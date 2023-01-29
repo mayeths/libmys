@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * @file Main file contains most user-accessible GPTL functions.
  * @Author Jim Rosinski
@@ -107,7 +109,7 @@ static int get_max_namelen (Timer *);
 static int is_descendant (const Timer *, const Timer *);
 static int is_onlist (const Timer *, const Timer *);
 static char *methodstr (GPTLMethod);
-static void print_callstack (int, const char *);
+// static void print_callstack (int, const char *);
 
 // These are the (possibly) supported underlying wallclock timers
 #ifdef HAVE_NANOTIME
@@ -1657,7 +1659,6 @@ static int get_longest_omp_namelen (void)
 static void print_titles (int t, FILE *fp, Outputfmt *outputfmt)
 {
   int n;
-  int ret;
   int nblankchars;
   static const char *thisfunc = "print_titles";
 
@@ -1680,7 +1681,7 @@ static void print_titles (int t, FILE *fp, Outputfmt *outputfmt)
 
     // Start at GPTL_ROOT because that is the parent of all timers => guarantee traverse
     // full tree. -1 is initial call tree depth
-    ret = get_outputfmt (timers[t], -1, indent_chars, outputfmt);  // -1 is initial call tree depth
+    get_outputfmt (timers[t], -1, indent_chars, outputfmt);  // -1 is initial call tree depth
 #ifdef DEBUG
     printf ("%s t=%d got outputfmt=%d %d %d\n",
 	    thisfunc, t, outputfmt->max_depth, outputfmt->max_namelen, outputfmt->max_chars2pr);
@@ -1863,7 +1864,6 @@ static int newchild (Timer *parent, Timer *child)
 static int get_outputfmt (const Timer *ptr, const int depth, const int indent, 
 			  Outputfmt *outputfmt)
 {
-  int ret;
   int namelen  = strlen (ptr->name);
   int chars2pr = namelen + indent*depth;
   int n;
@@ -1874,7 +1874,7 @@ static int get_outputfmt (const Timer *ptr, const int depth, const int indent,
   }
 
   for (n = 0; n < ptr->nchildren; ++n) {
-    ret = get_outputfmt (ptr->children[n], depth+1, indent, outputfmt);
+    get_outputfmt (ptr->children[n], depth+1, indent, outputfmt);
     fill_output (depth, namelen, chars2pr, outputfmt);
   }
   return 0;
@@ -2893,7 +2893,6 @@ void __cyg_profile_func_enter (void *this_fn, void *call_site)
 static void extract_name (char *str, char **symnam, void *this_fn, const int t)
 {
   int nchars;
-  char *savetoken;
   char *saveptr[GPTLnthreads];
   char *token;
 
@@ -2902,6 +2901,7 @@ static void extract_name (char *str, char **symnam, void *this_fn, const int t)
   for (int n = 0; n < 3; ++n)
     token = strtok_r (NULL, " ", &saveptr[t]);
 #else
+  char *savetoken;
   token = strtok_r (str, "(", &saveptr[t]);
   savetoken = token;
   if ( ! (token = strtok_r (NULL, "+", &saveptr[t])))
@@ -3216,15 +3216,15 @@ static void printself_andchildren (const Timer *ptr, FILE *fp, int t, int depth,
     printself_andchildren (ptr->children[n], fp, t, depth+1, self_ohd, parent_ohd, outputfmt);
 }
 
-static void print_callstack (int t, const char *caller)
-{
-  int idx;
+// static void print_callstack (int t, const char *caller)
+// {
+//   int idx;
 
-  printf ("Current callstack from %s:\n", caller);
-  for (idx = stackidx[t].val; idx > 0; --idx) {
-    printf ("%s\n", callstack[t][idx]->name);
-  }
-}
+//   printf ("Current callstack from %s:\n", caller);
+//   for (idx = stackidx[t].val; idx > 0; --idx) {
+//     printf ("%s\n", callstack[t][idx]->name);
+//   }
+// }
 
 // GPTLget_timersaddr: Return address of timers. NOT a public entry point
 Timer **GPTLget_timersaddr () {return timers;}
@@ -3269,3 +3269,10 @@ Timer *GPTLgetentry (const char *name)
 #include "./thread_none.c"
 #endif
 #endif
+
+#include "./util.c"
+#include "./memusage.c"
+#include "./getoverhead.c"
+// #include "./pr_summary.c"
+#include "./hashstats.c"
+#include "./memstats.c"
