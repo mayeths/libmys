@@ -2,6 +2,7 @@
 /* Please check https://github.com/nclack/tictoc for platform-timer (Windows/Linux/MacOS) */
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "config.h"
 
 #define STR_HELPER(x) #x
@@ -26,6 +27,43 @@ static inline double hrtime() {
 }
 
 #elif defined(ARCH_X64) && defined(TSC_FREQ) && TSC_FREQ > 1
+
+// Copied from GPTL library
+static double get_clockfreq()
+{
+    double freq = -1.;
+    FILE *fd = NULL;
+    char buf[4096];
+
+    // First look for max_freq, but that isn't guaranteed to exist
+    if ((fd = fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r"))) {
+        if(fgets(buf, sizeof(buf), fd)) {
+            freq = 1000 * (double)atof(buf); // from KHz
+        }
+        fclose(fd);
+        return freq;
+    }
+
+    // Next try /proc/cpuinfo. That has the disadvantage that it may give wrong info
+    // for processors that have either idle or turbo mode
+    if ((fd = fopen ("/proc/cpuinfo", "r"))) {
+        while (fgets(buf, sizeof(buf), fd)) {
+            if (strncmp(buf, "cpu MHz", 7) == 0) {
+                int index = 7;
+                while (buf[index] != '\0' && !isdigit(buf[index]))
+                    index += 1;
+                if (isdigit(buf[index])) {
+                    freq = (double)atof(&buf[index]);
+                    break;
+                }
+            }
+        }
+        fclose(fd);
+    }
+
+    return freq;
+}
+
 static inline const char *hrname() {
     return "High-resolution timer by X64 assembly (TSC_FREQ=" STR(TSC_FREQ) ")";
 }
