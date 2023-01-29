@@ -5,14 +5,18 @@
 #include <mpi.h>
 #endif
 
+/*********************************************/
+// C definition
+/*********************************************/
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "thread.h"
 #include "errno.h"
 #include "myspi.h"
 #include "log.h"
 
-/*********************************************/
-// C definition
-/*********************************************/
 mys_thread_local int mys_errno = 0;
 mys_log_G_t mys_log_G = {
     .level = MYS_LOG_TRACE,
@@ -76,4 +80,7 @@ MYS_API void mys_barrier()
 #endif
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__MYS_IMPL_H__*/

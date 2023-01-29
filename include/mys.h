@@ -10,10 +10,6 @@
 #error Require at least c99 to parse *.h in libmys
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE
 #endif
@@ -21,8 +17,11 @@ extern "C" {
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-/* Primary Library (mys) */
 
+/* Primary Library (mys) */
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "./mys/assert.h"
 #include "./mys/config.h"
 // #include "./mys/debug-legacy.h"
@@ -40,12 +39,17 @@ extern "C" {
 #ifdef CUDA_ARCH
 #include "./mys/cuda.cuh"
 #endif
+#ifdef __cplusplus
+}
+#endif
+
 
 /* Third-Party Library (mys3) */
 
 #include "./mys3/cJSON/cJSON.h"
 #include "./mys3/matrixmarket/mmio.h"
 #include "./mys3/stb/stb_image.h"
+
 
 /* Implementation */
 
@@ -61,8 +65,4 @@ extern "C" {
 #if defined(MYS_ENABLE_STB)
 #include "./mys3/stb/stb_image.impl.h"
 #endif
-#endif
-
-#ifdef __cplusplus
-}
 #endif
