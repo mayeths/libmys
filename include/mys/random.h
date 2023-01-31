@@ -41,9 +41,10 @@ static inline uint64_t __seed()
 }
 #endif
 
+#include "thread.h"
 
 /* legacy random */
-static uint64_t __legacy_x = __UINT64_INVALID;
+extern mys_thread_local uint64_t __legacy_x;
 static inline void __legacy_init(uint64_t seed)
 {
     __legacy_x = seed;
@@ -66,7 +67,7 @@ static inline uint64_t __legacy_rand()
  * It is a very fast generator passing BigCrush, and it can be useful if
  * for some reason you absolutely want 64 bits of state.
  */
-static uint64_t __splitmix64_x = 0; /* The state can be seeded with any value. */
+extern mys_thread_local uint64_t __splitmix64_x; /* The state can be seeded with any value. */
 static inline void __splitmix_init(uint64_t seed)
 {
     __splitmix64_x = seed;
@@ -94,7 +95,7 @@ static inline uint64_t __splitmix_rand()
  * a 64-bit seed, we suggest to seed a splitmix64 generator and use its
  * output to fill __xoroshiro128_x.
  */
-static uint64_t __xoroshiro128_x[2] = {__UINT64_INVALID, __UINT64_INVALID};
+extern mys_thread_local uint64_t __xoroshiro128_x[2];
 static inline void __xoroshiro128ss_init(uint64_t seed)
 {
     __xoroshiro128_x[0] = seed;
@@ -184,8 +185,6 @@ static inline float randf32(float minimum, float maximum)
     return (float)randf64(minimum, maximum);
 }
 
-#undef __UINT64_INVALID
-#undef __UINT64_MAX
 
 /* Tester:
 - mpicc -O3 -g -lm -I../include xoshiro256.c && ./a.out 1000000000 > xoshiro256.log

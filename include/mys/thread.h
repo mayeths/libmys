@@ -4,6 +4,26 @@
 #include "memory.h"
 
 /**********************************/
+// mys_thread_local
+/**********************************/
+/* https://stackoverflow.com/a/18298965 */
+#if defined(COMPILER_GCC)
+#define mys_thread_local __thread
+#elif defined(COMPILER_CLANG)
+#define mys_thread_local __thread
+#elif defined(COMPILER_ICC)
+#define mys_thread_local __thread
+#elif defined(COMPILER_MSVC)
+#define mys_thread_local __declspec(thread)
+#elif __STDC_VERSION__ >= 201112 && !defined(__STDC_NO_THREADS__)
+#define mys_thread_local _Thread_local
+#elif defined(__cplusplus)
+#define mys_thread_local thread_local
+#else
+#error "Cannot define mys_thread_local"
+#endif
+
+/**********************************/
 // mys_mutex_t
 /**********************************/
 
@@ -20,19 +40,19 @@ typedef struct mys_mutex_t {
 static inline void mys_mutex_init(mys_mutex_t *lock)
 {
     __MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_UNINITIALIZE, __MYS_MUTEX_IDLE);
-    smp_mb();
+    mys_memory_smp_mb();
 }
 static inline void mys_mutex_lock(mys_mutex_t *lock)
 {
     while(__MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_IDLE, __MYS_MUTEX_BUSY) != __MYS_MUTEX_IDLE)
         continue;
-    smp_mb();
+    mys_memory_smp_mb();
 }
 static inline void mys_mutex_unlock(mys_mutex_t *lock)
 {
     while(__MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_BUSY, __MYS_MUTEX_IDLE) != __MYS_MUTEX_BUSY)
         continue;
-    smp_mb();
+    mys_memory_smp_mb();
 }
 /* gcc -O3 -g -fopenmp a.c && ./a.out 4999
     int size = 1024 * 1024;
@@ -54,24 +74,3 @@ static inline void mys_mutex_unlock(mys_mutex_t *lock)
         if (num >= 95) printf("%d see flag is 1 and num is %d\n", tid, num);
     }
 */
-
-
-/**********************************/
-// mys_thread_local
-/**********************************/
-
-#ifdef __cplusplus
-#define mys_thread_local thread_local
-#else
-/* https://stackoverflow.com/a/18298965 */
-#if defined(COMPILER_GCC) || defined(COMPILER_CLANG) || defined(COMPILER_ICC)
-#define mys_thread_local __thread
-#elif defined(COMPILER_MSVC)
-#define mys_thread_local __declspec(thread)
-#elif __STDC_VERSION__ >= 201112 && !defined(__STDC_NO_THREADS__)
-#define mys_thread_local _Thread_local
-#else
-#error "Cannot define mys_thread_local"
-#endif
-
-#endif

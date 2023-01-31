@@ -16,8 +16,12 @@ extern "C" {
 #include "errno.h"
 #include "myspi.h"
 #include "log.h"
+#include "random.h"
 
 mys_thread_local int mys_errno = 0;
+mys_thread_local uint64_t __legacy_x = __UINT64_INVALID;
+mys_thread_local uint64_t __splitmix64_x = __UINT64_INVALID;
+mys_thread_local uint64_t __xoroshiro128_x[2] = {__UINT64_INVALID, __UINT64_INVALID};
 mys_log_G_t mys_log_G = {
     .level = MYS_LOG_TRACE,
     .last_level = MYS_LOG_TRACE,

@@ -6,26 +6,25 @@
 
 #include "config.h"
 #include "macro.h"
-#include "random.h"
+// We can't import any header include "thread.h" here to prevent compiler complaining
 
-/* Memory Barrier */
+/**********************************/
+// Memory Barrier
+/**********************************/
 /* https://support.huaweicloud.com/codeprtr-kunpenggrf/kunpengtaishanporting_12_0048.html */
-#ifndef barrier
 #if defined(ARCH_X64)
-#define barrier() __asm__ __volatile__("": : :"memory")
-#define smp_mb() __asm__ __volatile__("lock; addl $0,-132(%%rsp)" ::: "memory", "cc")
-#define smp_rmb() barrier()
-#define smp_wmb() barrier()
+#define mys_memory_barrier() __asm__ __volatile__("": : :"memory")
+#define mys_memory_smp_mb() __asm__ __volatile__("lock; addl $0,-132(%%rsp)" ::: "memory", "cc")
+#define mys_memory_smp_rmb() mys_memory_barrier()
+#define mys_memory_smp_wmb() mys_memory_barrier()
 #elif defined(ARCH_AARCH64)
-#define barrier() __asm__ __volatile__("dmb" ::: "memory")
-#define smp_mb()  __asm__ __volatile__("dmb ish" ::: "memory")
-#define smp_rmb() __asm__ __volatile__("dmb ishld" ::: "memory")
-#define smp_wmb() __asm__ __volatile__("dmb ishst" ::: "memory")
+#define mys_memory_barrier() __asm__ __volatile__("dmb" ::: "memory")
+#define mys_memory_smp_mb()  __asm__ __volatile__("dmb ish" ::: "memory")
+#define mys_memory_smp_rmb() __asm__ __volatile__("dmb ishld" ::: "memory")
+#define mys_memory_smp_wmb() __asm__ __volatile__("dmb ishst" ::: "memory")
 #else
 #error No supprted CPU model
 #endif
-#endif
-
 
 /* Cache clean */
 MYS_API static void cachebrush(size_t nbytes) /* = 10 * 1024 * 1024 */
