@@ -1,13 +1,17 @@
 /**
  * @file mys.h
  * @author mayeths (wow@mayeths.com)
- * @version 1.0
  * @brief Include all libmys C headers into one header (Require C99)
  * 
  */
 
 #if __STDC_VERSION__ < 199901L && __cplusplus < 201103L
 #error Require at least c99 to parse *.h in libmys
+#endif
+
+/* Indicate we have include libmys */
+#ifndef MYS_VERSION
+#define MYS_VERSION 230201L
 #endif
 
 #ifndef _XOPEN_SOURCE

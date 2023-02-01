@@ -1,7 +1,6 @@
 /**
  * @file mys.hpp
  * @author mayeths (wow@mayeths.com)
- * @version 1.0
  * @brief Include all libmys C/C++ headers into one header (Require C++11)
  * 
  * Extend the C headers by functionalities of C++
