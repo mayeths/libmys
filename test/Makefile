@@ -1,7 +1,7 @@
 CC = gcc
 CXX = g++
 MPICC = mpicc
-MPICXX = mpic++
+MPICXX = mpicxx # mpicxx is defined in both Intel/Open MPI
 
 MYS_DIR ?= ..
 
