@@ -17,6 +17,10 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#if !defined(MYS_NO_MPI)
+#include <mpi.h>
+#endif
+
 
 /* Primary Library (mys) */
 #ifdef __cplusplus

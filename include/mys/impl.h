@@ -1,17 +1,19 @@
+/**
+ * @file impl.h
+ * @author mayeths (wow@mayeths.com)
+ * @brief Implement non-static variables and fucntions
+ * 
+ * The biggest benifit of using standalone "impl.h"
+ * instead of #ifdef MYS_IMPL in all other headers are,
+ * we can use `#pragma once` in these other headers,
+ * and the MYS_IMPL macro is still processed correctly
+ */
 #ifndef __MYS_IMPL_H__
 #define __MYS_IMPL_H__
-
-#if !defined(MYS_NO_MPI)
-#include <mpi.h>
-#endif
 
 /*********************************************/
 // C definition
 /*********************************************/
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "thread.h"
 #include "errno.h"
 #include "myspi.h"
@@ -33,6 +35,9 @@ mys_log_G_t mys_log_G = {
         { .fn = NULL, .udata = NULL, .id = 0 /* Uninitalized ID is 0 */ },
     },
 };
+#ifdef MYS_NEED_WTIME_START_TICK
+double mys_wtime_start = (double)-1;
+#endif
 
 MYS_API void mys_ensure_myspi_init()
 {
@@ -84,7 +89,4 @@ MYS_API void mys_barrier()
 #endif
 }
 
-#ifdef __cplusplus
-}
-#endif
 #endif /*__MYS_IMPL_H__*/

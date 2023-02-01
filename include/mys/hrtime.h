@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "config.h"
+#include "macro.h"
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -27,43 +28,9 @@ static inline double hrtime() {
 }
 
 #elif defined(ARCH_X64) && defined(TSC_FREQ) && TSC_FREQ > 1
-
-// Copied from GPTL library
-static double get_clockfreq()
-{
-    double freq = -1.;
-    FILE *fd = NULL;
-    char buf[4096];
-
-    // First look for max_freq, but that isn't guaranteed to exist
-    if ((fd = fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r"))) {
-        if(fgets(buf, sizeof(buf), fd)) {
-            freq = 1000 * (double)atof(buf); // from KHz
-        }
-        fclose(fd);
-        return freq;
-    }
-
-    // Next try /proc/cpuinfo. That has the disadvantage that it may give wrong info
-    // for processors that have either idle or turbo mode
-    if ((fd = fopen ("/proc/cpuinfo", "r"))) {
-        while (fgets(buf, sizeof(buf), fd)) {
-            if (strncmp(buf, "cpu MHz", 7) == 0) {
-                int index = 7;
-                while (buf[index] != '\0' && !isdigit(buf[index]))
-                    index += 1;
-                if (isdigit(buf[index])) {
-                    freq = (double)atof(&buf[index]);
-                    break;
-                }
-            }
-        }
-        fclose(fd);
-    }
-
-    return freq;
-}
-
+// I don't think there is a good way to detect TSC_FREQ without user input.
+// /proc/cpuinfo is not reliable under turbo-boost enabled CPU.
+// See the get_clockfreq() and warning about GPTLnanotime in GPTLpr_file() of GPTL.
 static inline const char *hrname() {
     return "High-resolution timer by X64 assembly (TSC_FREQ=" STR(TSC_FREQ) ")";
 }
@@ -139,6 +106,46 @@ static inline uint64_t hrfreq() {
     if (!QueryPerformanceFrequency(&f))
         return 0;
     return (uint64_t)f.QuadPart;
+}
+static inline double hrtime() {
+    return (double)hrtick() / (double)hrfreq();
+}
+
+#elif !defined(MYS_NO_MPI)
+#include <mpi.h>
+#define MYS_NEED_WTIME_START_TICK
+extern double mys_wtime_start;
+static inline const char *hrname() {
+    return "High-resolution timer by <mpi.h> (1us~10us)";
+}
+static inline uint64_t hrtick() {
+    if (mys_wtime_start < 0)
+        mys_wtime_start = MPI_Wtime();
+    double current = MPI_Wtime() - mys_wtime_start;
+    return (uint64_t)(current * 1e9); // in nano second
+}
+static inline uint64_t hrfreq() {
+    return (uint64_t)1000000000;
+}
+static inline double hrtime() {
+    return (double)hrtick() / (double)hrfreq();
+}
+
+#elif defined(_OPENMP)
+#include <omp.h>
+#define MYS_NEED_WTIME_START_TICK
+extern double mys_wtime_start;
+static inline const char *hrname() {
+    return "High-resolution timer by <omp.h> (1us~10us)";
+}
+static inline uint64_t hrtick() {
+    if (mys_wtime_start < 0)
+        mys_wtime_start = omp_get_wtime();
+    double current = omp_get_wtime() - mys_wtime_start;
+    return (uint64_t)(current * 1e9); // in nano second
+}
+static inline uint64_t hrfreq() {
+    return (uint64_t)1000000000;
 }
 static inline double hrtime() {
     return (double)hrtick() / (double)hrfreq();
