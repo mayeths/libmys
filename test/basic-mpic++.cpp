@@ -1,5 +1,6 @@
-#include <mpi.h>
-
+// Dont include mpi.h before mys.hpp because
+// struct timespec in GCC 5.2 require _POSIX_C_SOURCE
+// which is just defined in mys.h
 #define MYS_IMPL
 #include "mys.hpp"
 
