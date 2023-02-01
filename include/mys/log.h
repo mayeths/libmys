@@ -46,6 +46,20 @@ typedef void (*mys_log_handler_fn)(mys_log_event_t *event);
 #define WLOG(who, fmt, ...) mys_log(who, MYS_LOG_WARN,  MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define ELOG(who, fmt, ...) mys_log(who, MYS_LOG_ERROR, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define FLOG(who, fmt, ...) mys_log(who, MYS_LOG_FATAL, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define __LOG_ORDERED(LOG, fmt, ...) do { \
+    int nranks = mys_nranks();            \
+    for (int i = 0; i < nranks; i++) {    \
+        LOG(i, fmt, ##__VA_ARGS__);       \
+        mys_barrier();                    \
+    }                                     \
+} while (0)
+#define TLOG_ORDERED(fmt, ...) __LOG_ORDERED(TLOG, fmt, ##__VA_ARGS__)
+#define DLOG_ORDERED(fmt, ...) __LOG_ORDERED(DLOG, fmt, ##__VA_ARGS__)
+#define ILOG_ORDERED(fmt, ...) __LOG_ORDERED(ILOG, fmt, ##__VA_ARGS__)
+#define WLOG_ORDERED(fmt, ...) __LOG_ORDERED(WLOG, fmt, ##__VA_ARGS__)
+#define ELOG_ORDERED(fmt, ...) __LOG_ORDERED(ELOG, fmt, ##__VA_ARGS__)
+#define FLOG_ORDERED(fmt, ...) __LOG_ORDERED(FLOG, fmt, ##__VA_ARGS__)
+
 
 MYS_API static int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_udata);
 MYS_API static void mys_log_remove_handler(int handler_id);
@@ -56,13 +70,7 @@ MYS_API static int mys_log_get_level();
 ////// MYS_LOG_VERSION 1 Compatibility
 
 #define DEBUG(who, fmt, ...) DLOG(who, fmt, ##__VA_ARGS__)
-#define DEBUG_ORDERED(fmt, ...) do {   \
-    int nranks = NRANKS();             \
-    for (int i = 0; i < nranks; i++) { \
-        DEBUG(i, fmt, ##__VA_ARGS__);  \
-        BARRIER();                     \
-    }                                  \
-} while (0)
+#define DEBUG_ORDERED(fmt, ...) DLOG_ORDERED(fmt, ##__VA_ARGS__)
 #define FAILED(fmt, ...) FLOG(MYRANK(), fmt, ##__VA_ARGS__)
 #define THROW_NOT_IMPL() FAILED("Not implemented.")
 #define WAIT_FLAG(flagfile) __mys_wait_flag(__FILE__, __LINE__, flagfile)
