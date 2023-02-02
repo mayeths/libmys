@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+VERSION="230201"
+
+import os
+import sys
+import re
+import argparse
+import subprocess
+import textwrap
+import signal
+import tempfile
+import pathlib
+import shutil
+from typing import Union
+
+
+class RankInfo:
+    rank: int
+    node_format: Union[str, None]
+    node_index: Union[int, None]
+    core_list: Union[list[int], None]
+
+    def __init__(self, rank, node_format=None, node_index=None, core_list=None):
+        self.rank = rank
+        self.node_format = node_format
+        self.node_index = node_index
+        self.core_list = core_list
+
+    def __str__(self):
+        if not self.node_format or not self.node_index:
+            raise ValueError(f"rank {self.rank} is not assigned to any node")
+        node_name = self.node_format.format(self.node_index)
+        if not self.core_list:
+            raise ValueError(f"rank {self.rank} is not assigned to any core range on {node_name}")
+        self.core_list.sort()
+        if len(self.core_list) == 1:
+            slot_str = f"{self.core_list[0]}"
+        elif RankInfo._is_sorted_index_continuous(self.core_list):
+            slot_str = f"{self.core_list[0]}-{self.core_list[-1]}"
+        else:
+            slot_str = f",".join(self.core_list)
+        return f"rank {self.rank}={node_name} slot={slot_str}"
+
+    @staticmethod
+    def _is_sorted_index_continuous(arr: list[int]):
+        for i in range(1, len(arr)):
+            if arr[i] - arr[i - 1] > 1:
+                return False
+        return True
+
+
+class HardwareInfo:
+    name_format: str
+    sockets_per_node: int
+    numas_per_node: int
+    numas_per_socket: int
+    cores_per_node: int
+    cores_per_socket: int
+    cores_per_numa: int
+    hwthreads_per_core: int
+    hwthreads_per_numa: int
+    hwthreads_per_socket: int
+    hwthreads_per_node: int
+
+
+    def __init__(self, name_format: str, sockets_per_node: int, numas_per_socket: int, cores_per_numa: int, hwthreads_per_core: int):
+        self.name_format = name_format
+
+        self.sockets_per_node = sockets_per_node
+
+        self.numas_per_socket = numas_per_socket
+        self.numas_per_node = self.numas_per_socket * self.sockets_per_node
+
+        self.cores_per_numa = cores_per_numa
+        self.cores_per_socket = self.cores_per_numa * self.numas_per_socket
+        self.cores_per_node = self.cores_per_numa * self.numas_per_node
+
+        self.hwthreads_per_core = hwthreads_per_core
+        self.hwthreads_per_numa = self.hwthreads_per_core * self.cores_per_numa
+        self.hwthreads_per_socket = self.hwthreads_per_core * self.cores_per_socket
+        self.hwthreads_per_node = self.hwthreads_per_core * self.cores_per_node
+
+
+# Fingerprint is only correct for contiguous slot mapping
+def fingerprint(hwinfo: HardwareInfo, rankinfos: list[RankInfo], target_node_index: int, symbols=["+", "@", "."]):
+    rankinfos = [info for info in rankinfos if info.node_index == target_node_index]
+    core_ranks = [-1] * hwinfo.cores_per_node
+    for i in range(len(rankinfos)):
+        info = rankinfos[i]
+        for used in info.core_list:
+            core_ranks[used] = i
+    void_symbol = symbols[-1]
+    symbols = symbols[:-1]
+    symbol_index = 0
+    last_rank = 0
+    finger = ""
+    for i in range(len(core_ranks)):
+        core_rank = core_ranks[i]
+        if core_rank == -1:
+            finger += void_symbol
+        elif core_rank != last_rank:
+            symbol_index = (symbol_index + 1) % len(symbols)
+            finger += symbols[symbol_index]
+            last_rank = core_rank
+        else:
+            finger += symbols[symbol_index]
+        if i % hwinfo.cores_per_numa == hwinfo.cores_per_numa - 1 and i != hwinfo.cores_per_node - 1:
+            finger += "\n"
+    print(finger, file=sys.stderr)
+
+
+def main():
+    terminal_width = shutil.get_terminal_size((80, 20))[0]
+    parser = argparse.ArgumentParser(
+        prog='rankfile-generator',
+        description=f'Genrate rankfile to target file (version {VERSION})\n',
+        add_help=False,
+        usage='%(prog)s <num_node> <rank_per_node> <thread_per_rank> [OPTIONS]',
+        formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=terminal_width)
+    )
+    parser.add_argument('num_node', type=int, help=f"Number of node to use")
+    parser.add_argument('rank_per_node', type=int, help=f"Number of rank per node")
+    parser.add_argument('thread_per_rank', type=int, default=1, help=f"Number of thread per rank")
+    # metavar='' for removing dest variable from help text
+    hwinfoArgs = parser.add_argument_group('Hardware information arguments')
+    hwinfoArgs.add_argument('--name-format', dest='name_format', default="cn{:03d}", type=str, help=f"Node name format", metavar='')
+    hwinfoArgs.add_argument('--sockets-per-node', dest='sockets_per_node', default=2, type=int, help=f"Sockets per node", metavar='')
+    hwinfoArgs.add_argument('--numas-per-socket', dest='numas_per_socket', default=2, type=int, help=f"NUMAs per socket", metavar='')
+    hwinfoArgs.add_argument('--cores-per-numa', dest='cores_per_numa', default=32, type=int, help=f"Cores per numa", metavar='')
+    # hwinfoArgs.add_argument('--hwthreads-per-core', dest='hwthreads_per_core', default=1, type=int, help=f"HWThreads per core", metavar='')
+    generatorArgs = parser.add_argument_group('generator arguments')
+    generatorArgs.add_argument('-o', dest='outfile', default="<stdout>", type=str, help=f"Write output to file", metavar='')
+    generatorArgs.set_defaults(left_most_cores=False)
+    generatorArgs.add_argument('--left-most-cores', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores in NUMA", metavar='')
+    generatorArgs.add_argument('--first-node-index', dest='first_node_index', default=101, type=int, help="Inclusive node start index", metavar='')
+    generatorArgs.add_argument('--last-node-index', dest='last_node_index', type=int, help="Inclusive node end index", metavar='')
+    parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
+    parser.add_argument('-h', '--help', action='help', help=f"Show this help message and exit")
+
+    args = parser.parse_args()
+    num_node = args.num_node
+    rank_per_node = args.rank_per_node
+    thread_per_rank = args.thread_per_rank
+    hwinfo = HardwareInfo(args.name_format, args.sockets_per_node, args.numas_per_socket, args.cores_per_numa, 1)
+    outfile = args.outfile
+    left_most_cores = args.left_most_cores
+    first_node_index = args.first_node_index
+    last_node_index = args.last_node_index
+
+    # NOTE: Currently, slot is core TODO: support --slot=hwthread or --slot=core
+    ranks_per_numa = rank_per_node // hwinfo.numas_per_node
+    slots_per_numa = ranks_per_numa * thread_per_rank
+    slots_per_socket = slots_per_numa * hwinfo.numas_per_socket
+    slots_per_node = slots_per_numa * hwinfo.numas_per_node
+    assert rank_per_node % hwinfo.numas_per_node == 0, f"Requested rank per node ({rank_per_node}) cannot be split to numa ({hwinfo.numas_per_node}) equally"
+    assert slots_per_numa <= hwinfo.cores_per_numa, f"Requested {slots_per_numa} slots per numa but only {hwinfo.cores_per_numa} cores per numa"
+
+    nranks = rank_per_node * num_node
+    rankinfos = [RankInfo(rank) for rank in range(nranks)]
+    if last_node_index is None:
+        last_node_index = first_node_index + num_node - 1
+    else:
+        first_node_index = last_node_index - num_node + 1
+
+    for rank in range(nranks):
+        rankinfo = rankinfos[rank]
+        global_slot_start = rank * thread_per_rank
+        numa_index = (global_slot_start // slots_per_numa) % hwinfo.numas_per_node # which numa in node
+        slot_start_index = numa_index * hwinfo.cores_per_numa + (rank % ranks_per_numa) * thread_per_rank
+        slot_stop_index = slot_start_index + thread_per_rank - 1
+        if not left_most_cores:
+            offset = hwinfo.cores_per_numa - slots_per_numa
+            slot_start_index = offset + slot_start_index
+            slot_stop_index = offset + slot_stop_index
+        rankinfo.core_list = [i for i in range(slot_start_index, slot_stop_index+1)]
+        rankinfo.node_format = hwinfo.name_format
+        rankinfo.node_index = first_node_index + (global_slot_start // slots_per_node) # which node
+
+    print(f"{parser.prog}: {parser.description}", file=sys.stderr)
+    print(f"=== Node Information", file=sys.stderr)
+    print(f"name prefix: {hwinfo.name_format}", file=sys.stderr)
+    print(f"sockets per node: {hwinfo.sockets_per_node}", file=sys.stderr)
+    print(f"numas per node: {hwinfo.numas_per_node}", file=sys.stderr)
+    print(f"cores per node: {hwinfo.cores_per_node}", file=sys.stderr)
+    # print(f"threads per node: {cores_per_node} (TODO: hypre-threading)", file=sys.stderr)
+    print(f"", file=sys.stderr)
+    print(f"=== Generate Information", file=sys.stderr)
+    print(f"Number of node: {num_node}", file=sys.stderr)
+    print(f"Number of rank (per node): {rank_per_node}", file=sys.stderr)
+    print(f"Number of thread (per rank): {thread_per_rank}", file=sys.stderr)
+    print(f"Output to {outfile}", file=sys.stderr)
+    print(f"", file=sys.stderr)
+
+    content = "\n".join([str(info) for info in rankinfos])
+    if outfile == "<stdout>":
+        print(f"=== Content generated:", file=sys.stderr)
+        print(content, file=sys.stderr)
+    else:
+        with open(outfile, "w") as f:
+            f.write(content)
+    print(f"=== Fingerprint", file=sys.stderr)
+    fingerprint(hwinfo, rankinfos, first_node_index)
+
+if __name__ == '__main__':
+    main()
