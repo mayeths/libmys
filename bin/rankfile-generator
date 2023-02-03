@@ -11,6 +11,7 @@ import signal
 import tempfile
 import pathlib
 import shutil
+import math
 from typing import Union
 
 
@@ -27,9 +28,7 @@ class RankInfo:
         self.core_list = core_list
 
     def __str__(self):
-        if not self.node_format or not self.node_index:
-            raise ValueError(f"rank {self.rank} is not assigned to any node")
-        node_name = self.node_format.format(self.node_index)
+        node_name = self.get_node_name()
         if not self.core_list:
             raise ValueError(f"rank {self.rank} is not assigned to any core range on {node_name}")
         self.core_list.sort()
@@ -40,6 +39,11 @@ class RankInfo:
         else:
             slot_str = f",".join(self.core_list)
         return f"rank {self.rank}={node_name} slot={slot_str}"
+
+    def get_node_name(self):
+        if not self.node_format or not self.node_index:
+            raise ValueError(f"rank {self.rank} is not assigned to any node")
+        return self.node_format.format(self.node_index)
 
     @staticmethod
     def _is_sorted_index_continuous(arr: list[int]):
@@ -93,7 +97,8 @@ def fingerprint(hwinfo: HardwareInfo, rankinfos: list[RankInfo], target_node_ind
     symbols = symbols[:-1]
     symbol_index = 0
     last_rank = 0
-    finger = ""
+    digit = int(math.log10(hwinfo.cores_per_node)) + 1
+    finger = "{number:{digit}d} |".format(digit=digit, number=0)
     for i in range(len(core_ranks)):
         core_rank = core_ranks[i]
         if core_rank == -1:
@@ -104,8 +109,10 @@ def fingerprint(hwinfo: HardwareInfo, rankinfos: list[RankInfo], target_node_ind
             last_rank = core_rank
         else:
             finger += symbols[symbol_index]
-        if i % hwinfo.cores_per_numa == hwinfo.cores_per_numa - 1 and i != hwinfo.cores_per_node - 1:
-            finger += "\n"
+        if i == hwinfo.cores_per_node - 1:
+            finger += "| {number:{digit}d}".format(digit=digit, number=hwinfo.cores_per_node)
+        elif i % hwinfo.cores_per_numa == hwinfo.cores_per_numa - 1:
+            finger += "| {n1:{digit}d}\n{n2:{digit}d} |".format(digit=digit, n1=i, n2=i+1)
     print(finger, file=sys.stderr)
 
 
@@ -131,9 +138,11 @@ def main():
     generatorArgs = parser.add_argument_group('generator arguments')
     generatorArgs.add_argument('-o', dest='outfile', default="<stdout>", type=str, help=f"Write output to file", metavar='')
     generatorArgs.set_defaults(left_most_cores=False)
+    generatorArgs.set_defaults(no_fingerprint=False)
     generatorArgs.add_argument('--left-most-cores', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores in NUMA", metavar='')
     generatorArgs.add_argument('--first-node-index', dest='first_node_index', default=101, type=int, help="Inclusive node start index", metavar='')
     generatorArgs.add_argument('--last-node-index', dest='last_node_index', type=int, help="Inclusive node end index", metavar='')
+    generatorArgs.add_argument('--no-fingerprint', dest='no_fingerprint', action='store_const', const=True, help="Do not display fingerprint after generation", metavar='')
     parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
     parser.add_argument('-h', '--help', action='help', help=f"Show this help message and exit")
 
@@ -146,6 +155,7 @@ def main():
     left_most_cores = args.left_most_cores
     first_node_index = args.first_node_index
     last_node_index = args.last_node_index
+    no_fingerprint = args.no_fingerprint
 
     # NOTE: Currently, slot is core TODO: support --slot=hwthread or --slot=core
     ranks_per_numa = rank_per_node // hwinfo.numas_per_node
@@ -198,8 +208,9 @@ def main():
     else:
         with open(outfile, "w") as f:
             f.write(content)
-    print(f"=== Fingerprint", file=sys.stderr)
-    fingerprint(hwinfo, rankinfos, first_node_index)
+    if not no_fingerprint:
+        print(f"=== Fingerprint of {rankinfos[0].get_node_name()}", file=sys.stderr)
+        fingerprint(hwinfo, rankinfos, first_node_index)
 
 if __name__ == '__main__':
     main()
