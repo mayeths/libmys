@@ -117,8 +117,8 @@ def fingerprint(hwinfo: HardwareInfo, rankinfos: list[RankInfo], target_node_ind
 def main():
     terminal_width = shutil.get_terminal_size((80, 20))[0]
     parser = argparse.ArgumentParser(
-        prog='rankfile-generator',
-        description=f'Genrate rankfile to target file (version {VERSION})\n',
+        prog='rankgen',
+        description=f'Genrate correct rankfile or command line arguments by specified distribution (version {VERSION})\n',
         add_help=False,
         usage='%(prog)s <num_node> <num_rank> <thread_per_rank> [OPTIONS]',
         formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=terminal_width)
@@ -140,7 +140,6 @@ def main():
     generatorArgs.add_argument('--left-most-cores', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores in NUMA", metavar='')
     generatorArgs.add_argument('--first-node-index', dest='first_node_index', default=101, type=int, help="Inclusive node start index", metavar='')
     generatorArgs.add_argument('--last-node-index', dest='last_node_index', type=int, help="Inclusive node end index", metavar='')
-    generatorArgs.add_argument('--no-fingerprint', dest='no_fingerprint', action='store_const', const=True, help="Do not display fingerprint after generation", metavar='')
     parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
     parser.add_argument('-h', '--help', action='help', help=f"Show this help message and exit")
 
