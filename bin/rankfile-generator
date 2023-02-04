@@ -86,15 +86,13 @@ class HardwareInfo:
 
 
 # Fingerprint is only correct for contiguous slot mapping
-def fingerprint(hwinfo: HardwareInfo, rankinfos: list[RankInfo], target_node_index: int, symbols=["+", "@", "."]):
+def fingerprint(hwinfo: HardwareInfo, rankinfos: list[RankInfo], target_node_index: int, symbols=["+", "-"], void_symbol="."):
     rankinfos = [info for info in rankinfos if info.node_index == target_node_index]
     core_ranks = [-1] * hwinfo.cores_per_node
     for i in range(len(rankinfos)):
         info = rankinfos[i]
         for used in info.core_list:
             core_ranks[used] = i
-    void_symbol = symbols[-1]
-    symbols = symbols[:-1]
     symbol_index = 0
     last_rank = 0
     digit = int(math.log10(hwinfo.cores_per_node)) + 1
@@ -122,12 +120,12 @@ def main():
         prog='rankfile-generator',
         description=f'Genrate rankfile to target file (version {VERSION})\n',
         add_help=False,
-        usage='%(prog)s <num_node> <rank_per_node> <thread_per_rank> [OPTIONS]',
+        usage='%(prog)s <num_node> <num_rank> <thread_per_rank> [OPTIONS]',
         formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=terminal_width)
     )
     parser.add_argument('num_node', type=int, help=f"Number of node to use")
-    parser.add_argument('rank_per_node', type=int, help=f"Number of rank per node")
-    parser.add_argument('thread_per_rank', type=int, default=1, help=f"Number of thread per rank")
+    parser.add_argument('num_rank', type=int, help=f"Number of ranks")
+    parser.add_argument('thread_per_rank', type=int, default=1, help=f"Number of threads per rank")
     # metavar='' for removing dest variable from help text
     hwinfoArgs = parser.add_argument_group('Hardware information arguments')
     hwinfoArgs.add_argument('--name-format', dest='name_format', default="cn{:03d}", type=str, help=f"Node name format", metavar='')
@@ -148,7 +146,7 @@ def main():
 
     args = parser.parse_args()
     num_node = args.num_node
-    rank_per_node = args.rank_per_node
+    num_rank = args.num_rank
     thread_per_rank = args.thread_per_rank
     hwinfo = HardwareInfo(args.name_format, args.sockets_per_node, args.numas_per_socket, args.cores_per_numa, 1)
     outfile = args.outfile
@@ -158,6 +156,7 @@ def main():
     no_fingerprint = args.no_fingerprint
 
     # NOTE: Currently, slot is core TODO: support --slot=hwthread or --slot=core
+    rank_per_node = num_rank // num_node
     ranks_per_numa = rank_per_node // hwinfo.numas_per_node
     slots_per_numa = ranks_per_numa * thread_per_rank
     slots_per_socket = slots_per_numa * hwinfo.numas_per_socket
