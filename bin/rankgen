@@ -11,10 +11,10 @@ import tempfile
 from typing import Union
 
 QUIET = False
-def eprint(text, end='\n'):
+def eprint(text, end='\n', force=False):
     global QUIET
-    if not QUIET:
-        print(text, end='\n', file=sys.stderr)
+    if force or not QUIET:
+        print(text, end=end, file=sys.stderr)
 
 class Slot:
     node_index: int
@@ -79,7 +79,8 @@ class Rank:
             raise ValueError(f"rank {self.id} is not assigned to any node {self.node_index}")
         node_name = self.node_format.format(self.node_index)
         if self.node_index < 0:
-            eprint(f"[WARN] rank {self.id} is assigned to negative node index {self.node_index}, causing node name {node_name}")
+            eprint(f'[ERROR] rank {self.id} is assigned to negative node index {self.node_index}, causing node name "{node_name}"', force=True)
+            exit(1)
         return node_name
 
     @staticmethod
