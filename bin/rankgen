@@ -5,8 +5,15 @@ import sys
 import argparse
 import shutil
 import math
+import pathlib
+import tempfile
 from typing import Union
 
+QUIET = False
+def eprint(text, end='\n'):
+    global QUIET
+    if not QUIET:
+        print(text, end='\n', file=sys.stderr)
 
 class RankInfo:
     rank: int
@@ -34,9 +41,12 @@ class RankInfo:
         return f"rank {self.rank}={node_name} slot={slot_str}"
 
     def get_node_name(self):
-        if not self.node_format or not self.node_index:
-            raise ValueError(f"rank {self.rank} is not assigned to any node")
-        return self.node_format.format(self.node_index)
+        if self.node_format is None or self.node_index is None:
+            raise ValueError(f"rank {self.rank} is not assigned to any node {self.node_index}")
+        node_name = self.node_format.format(self.node_index)
+        if self.node_index < 0:
+            eprint(f"[WARN] rank {self.rank} is assigned to negative node index {self.node_index}, causing node name {node_name}")
+        return node_name
 
     @staticmethod
     def _is_sorted_index_continuous(arr: list[int]):
@@ -107,10 +117,11 @@ def print_fingerprint(hwinfo: HardwareInfo, rankinfos: list[RankInfo], target_no
             finger += "] {number:{digit}d}".format(digit=digit, number=hwinfo.cores_per_node)
         elif i % hwinfo.cores_per_numa == hwinfo.cores_per_numa - 1:
             finger += "] {n1:{digit}d}\n{node_name} {n2:{digit}d} [".format(node_name=node_name, digit=digit, n1=i, n2=i+1)
-    print(finger, file=sys.stderr)
+    eprint(finger)
 
 
 def main():
+    global QUIET
     terminal_width = shutil.get_terminal_size((80, 20))[0]
     parser = argparse.ArgumentParser(
         prog='rankgen',
@@ -124,19 +135,21 @@ def main():
     parser.add_argument('thread_per_rank', type=int, default=1, help=f"Number of threads per rank")
     # metavar='' for removing dest variable from help text
     hwinfoArgs = parser.add_argument_group('Hardware information arguments')
-    hwinfoArgs.add_argument('--name-format', dest='name_format', default="cn{:03d}", type=str, help=f"Node name format", metavar='')
+    hwinfoArgs.add_argument('--name-format', dest='name_format', default="cn{:03d}", type=str, help=f"Node name format in python formatting syntax", metavar='')
     hwinfoArgs.add_argument('--sockets-per-node', dest='sockets_per_node', default=2, type=int, help=f"Sockets per node", metavar='')
     hwinfoArgs.add_argument('--numas-per-socket', dest='numas_per_socket', default=2, type=int, help=f"NUMAs per socket", metavar='')
     hwinfoArgs.add_argument('--cores-per-numa', dest='cores_per_numa', default=32, type=int, help=f"Cores per numa", metavar='')
     # hwinfoArgs.add_argument('--hwthreads-per-core', dest='hwthreads_per_core', default=1, type=int, help=f"HWThreads per core", metavar='')
     generatorArgs = parser.add_argument_group('generator arguments')
     generatorArgs.add_argument('-o', dest='outfile', default="<stdout>", type=str, help=f"Write output to file", metavar='')
+    generatorArgs.add_argument('-t', '--temp', dest='use_tempfile', action='store_const', const=True, default=False, help="Write output to temp file and print filename", metavar='')
     generatorArgs.set_defaults(left_most_cores=False)
     generatorArgs.set_defaults(no_fingerprint=False)
     generatorArgs.add_argument('--left-most-cores', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores in NUMA", metavar='')
     generatorArgs.add_argument('--first-node-index', dest='first_node_index', default=101, type=int, help="Inclusive node start index", metavar='')
     generatorArgs.add_argument('--last-node-index', dest='last_node_index', type=int, help="Inclusive node end index", metavar='')
     generatorArgs.add_argument('--fingerprint', dest='fingerprint', default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
+    parser.add_argument('-q', '--quiet', dest='quiet', action='store_const', const=True, default=False, help="Don't print information", metavar='')
     parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
     parser.add_argument('-h', '--help', action='help', help=f"Show this help message and exit")
 
@@ -146,10 +159,12 @@ def main():
     thread_per_rank = args.thread_per_rank
     hwinfo = HardwareInfo(args.name_format, args.sockets_per_node, args.numas_per_socket, args.cores_per_numa, 1)
     outfile = args.outfile
+    use_tempfile = args.use_tempfile
     left_most_cores = args.left_most_cores
     first_node_index = args.first_node_index
     last_node_index = args.last_node_index
     fingerprint = args.fingerprint
+    QUIET = args.quiet
 
     # NOTE: Currently, slot is core TODO: support --slot=hwthread or --slot=core
     rank_per_node = num_rank // num_node
@@ -158,7 +173,7 @@ def main():
     slots_per_socket = slots_per_numa * hwinfo.numas_per_socket
     slots_per_node = slots_per_numa * hwinfo.numas_per_node
     assert rank_per_node % hwinfo.numas_per_node == 0, f"Requested rank per node ({rank_per_node}) cannot be split to numa ({hwinfo.numas_per_node}) equally"
-    assert slots_per_numa <= hwinfo.cores_per_numa, f"Requested {slots_per_numa} slots per numa but only {hwinfo.cores_per_numa} cores per numa"
+    assert slots_per_numa <= hwinfo.cores_per_numa, f"{num_node} nodes, {num_rank} procs and {thread_per_rank} threads need {slots_per_numa} slots per numa but only {hwinfo.cores_per_numa} cores per numa"
 
     nranks = rank_per_node * num_node
     rankinfos = [RankInfo(rank) for rank in range(nranks)]
@@ -181,34 +196,38 @@ def main():
         rankinfo.node_format = hwinfo.name_format
         rankinfo.node_index = first_node_index + (global_slot_start // slots_per_node) # which node
 
-    print(f"{parser.prog}: {parser.description}", file=sys.stderr)
-    print(f"=== Node Information", file=sys.stderr)
-    print(f"name prefix: {hwinfo.name_format}", file=sys.stderr)
-    print(f"sockets per node: {hwinfo.sockets_per_node}", file=sys.stderr)
-    print(f"numas per node: {hwinfo.numas_per_node}", file=sys.stderr)
-    print(f"cores per node: {hwinfo.cores_per_node}", file=sys.stderr)
-    # print(f"threads per node: {cores_per_node} (TODO: hypre-threading)", file=sys.stderr)
-    print(f"", file=sys.stderr)
-    print(f"=== Generate Information", file=sys.stderr)
-    print(f"Number of node: {num_node}", file=sys.stderr)
-    print(f"Number of rank (per node): {rank_per_node}", file=sys.stderr)
-    print(f"Number of thread (per rank): {thread_per_rank}", file=sys.stderr)
-    print(f"Output to {outfile}", file=sys.stderr)
-    print(f"", file=sys.stderr)
+    eprint(f"{parser.prog}: {parser.description}")
+    eprint(f"=== Node Information")
+    eprint(f"name prefix: {hwinfo.name_format}")
+    eprint(f"sockets per node: {hwinfo.sockets_per_node}")
+    eprint(f"numas per node: {hwinfo.numas_per_node}")
+    eprint(f"cores per node: {hwinfo.cores_per_node}")
+    eprint(f"")
+    eprint(f"=== Generate Information")
+    eprint(f"Number of node: {num_node}")
+    eprint(f"Number of rank (per node): {rank_per_node}")
+    eprint(f"Number of thread (per rank): {thread_per_rank}")
+    eprint(f"Output to {outfile}")
+    eprint(f"")
 
     content = "\n".join([str(info) for info in rankinfos])
-    if outfile == "<stdout>":
-        print(f"=== Content generated:", file=sys.stderr)
+    if use_tempfile:
+        with tempfile.NamedTemporaryFile(mode="w", delete=True) as tmp:
+            tmp.write(content)
+            print(tmp.name)
+    elif outfile == "<stdout>":
+        eprint(f"=== Content generated:")
         print(content)
-        print(f"", file=sys.stderr)
+        eprint(f"")
     else:
+        pathlib.Path(outfile).parent.mkdir(parents=True, exist_ok=True)
         with open(outfile, "w") as f:
             f.write(content)
     if fingerprint == "first":
-        print(f"=== Fingerprint of first node", file=sys.stderr)
+        eprint(f"=== Fingerprint of first node")
         print_fingerprint(hwinfo, rankinfos, first_node_index)
     elif fingerprint == "all":
-        print(f"=== Fingerprint of all {num_node} nodes", file=sys.stderr)
+        eprint(f"=== Fingerprint of all {num_node} nodes")
         for i in range(first_node_index, last_node_index+1):
             print_fingerprint(hwinfo, rankinfos, i)
 
