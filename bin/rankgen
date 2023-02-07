@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-VERSION="230201"
+VERSION="230207"
 
 import sys
 import argparse
+import textwrap
 import shutil
 import math
 import pathlib
@@ -15,37 +16,70 @@ def eprint(text, end='\n'):
     if not QUIET:
         print(text, end='\n', file=sys.stderr)
 
-class RankInfo:
-    rank: int
+class Slot:
+    node_index: int
+    socket_index: int
+    numa_index: int
+    core_index: int
+    hwthread_index: int
+
+    def __init__(self, node_index: int, socket_index: int, numa_index: int, core_index: int, hwthread_index: int):
+        self.node_index = node_index
+        self.socket_index = socket_index
+        self.numa_index = numa_index
+        self.core_index = core_index
+        self.hwthread_index = hwthread_index
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            return False
+        other: Slot = other
+        if self.node_index != other.node_index:
+            return False
+        elif self.socket_index != other.socket_index:
+            return False
+        elif self.numa_index != other.numa_index:
+            return False
+        elif self.core_index != other.core_index:
+            return False
+        elif self.hwthread_index != other.hwthread_index:
+            return False
+        return True
+
+    def __hash__(self) -> int:
+        return hash((self.hwthread_index, self.core_index, self.numa_index, self.socket_index, self.node_index))
+
+class Rank:
+    id: int
     node_format: Union[str, None]
     node_index: Union[int, None]
-    core_list: Union[list[int], None]
+    slots: Union[list[int], None]
 
-    def __init__(self, rank, node_format=None, node_index=None, core_list=None):
-        self.rank = rank
+    def __init__(self, id, node_format=None, node_index=None, slots=None):
+        self.id = id
         self.node_format = node_format
         self.node_index = node_index
-        self.core_list = core_list
+        self.slots = slots
 
     def __str__(self):
         node_name = self.get_node_name()
-        if not self.core_list:
-            raise ValueError(f"rank {self.rank} is not assigned to any core range on {node_name}")
-        self.core_list.sort()
-        if len(self.core_list) == 1:
-            slot_str = f"{self.core_list[0]}"
-        elif RankInfo._is_sorted_index_continuous(self.core_list):
-            slot_str = f"{self.core_list[0]}-{self.core_list[-1]}"
+        if not self.slots:
+            raise ValueError(f"rank {self.id} is not assigned to any core range on {node_name}")
+        self.slots.sort()
+        if len(self.slots) == 1:
+            slot_str = f"{self.slots[0]}"
+        elif Rank._is_sorted_index_continuous(self.slots):
+            slot_str = f"{self.slots[0]}-{self.slots[-1]}"
         else:
-            slot_str = f",".join(self.core_list)
-        return f"rank {self.rank}={node_name} slot={slot_str}"
+            slot_str = f",".join(self.slots)
+        return f"rank {self.id}={node_name} slot={slot_str}"
 
     def get_node_name(self):
         if self.node_format is None or self.node_index is None:
-            raise ValueError(f"rank {self.rank} is not assigned to any node {self.node_index}")
+            raise ValueError(f"rank {self.id} is not assigned to any node {self.node_index}")
         node_name = self.node_format.format(self.node_index)
         if self.node_index < 0:
-            eprint(f"[WARN] rank {self.rank} is assigned to negative node index {self.node_index}, causing node name {node_name}")
+            eprint(f"[WARN] rank {self.id} is assigned to negative node index {self.node_index}, causing node name {node_name}")
         return node_name
 
     @staticmethod
@@ -89,18 +123,18 @@ class HardwareInfo:
 
 
 # Fingerprint is only correct for contiguous slot mapping
-def print_fingerprint(hwinfo: HardwareInfo, rankinfos: list[RankInfo], target_node_index: int, symbols=["+", "-"], void_symbol="."):
-    rankinfos = [info for info in rankinfos if info.node_index == target_node_index]
-    if not rankinfos:
+def print_fingerprint(hwinfo: HardwareInfo, ranks: list[Rank], target_node_index: int, symbols=["+", "-"], void_symbol="."):
+    ranks = [rank for rank in ranks if rank.node_index == target_node_index]
+    if not ranks:
         return
     core_ranks = [-1] * hwinfo.cores_per_node
-    for i in range(len(rankinfos)):
-        info = rankinfos[i]
-        for used in info.core_list:
+    for i in range(len(ranks)):
+        rank = ranks[i]
+        for used in rank.slots:
             core_ranks[used] = i
     symbol_index = 0
     last_rank = 0
-    node_name = rankinfos[0].get_node_name()
+    node_name = ranks[0].get_node_name()
     digit = int(math.log10(hwinfo.cores_per_node)) + 1
     finger = "{node_name} {number:{digit}d} [".format(node_name=node_name, digit=digit, number=0)
     for i in range(len(core_ranks)):
@@ -125,7 +159,8 @@ def main():
     terminal_width = shutil.get_terminal_size((80, 20))[0]
     parser = argparse.ArgumentParser(
         prog='rankgen',
-        description=f'Genrate correct rankfile or command line arguments by specified distribution (version {VERSION})\n',
+        description=f'Genrate rankfile or command line arguments by specified distribution (version {VERSION})\n',
+        epilog='Example: %(prog)s --fingerprint=all --name-format="bn{:03d}" --last-node-index=108 2 24 10',
         add_help=False,
         usage='%(prog)s <num_node> <num_rank> <thread_per_rank> [OPTIONS]',
         formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=terminal_width)
@@ -176,25 +211,25 @@ def main():
     assert slots_per_numa <= hwinfo.cores_per_numa, f"{num_node} nodes, {num_rank} procs and {thread_per_rank} threads need {slots_per_numa} slots per numa but only {hwinfo.cores_per_numa} cores per numa"
 
     nranks = rank_per_node * num_node
-    rankinfos = [RankInfo(rank) for rank in range(nranks)]
+    ranks = [Rank(i) for i in range(nranks)]
     if last_node_index is None:
         last_node_index = first_node_index + num_node - 1
     else:
         first_node_index = last_node_index - num_node + 1
 
-    for rank in range(nranks):
-        rankinfo = rankinfos[rank]
-        global_slot_start = rank * thread_per_rank
+    for i in range(nranks):
+        rank = ranks[i]
+        global_slot_start = i * thread_per_rank
         numa_index = (global_slot_start // slots_per_numa) % hwinfo.numas_per_node # which numa in node
-        slot_start_index = numa_index * hwinfo.cores_per_numa + (rank % ranks_per_numa) * thread_per_rank
+        slot_start_index = numa_index * hwinfo.cores_per_numa + (i % ranks_per_numa) * thread_per_rank
         slot_stop_index = slot_start_index + thread_per_rank - 1
         if not left_most_cores:
             offset = hwinfo.cores_per_numa - slots_per_numa
             slot_start_index = offset + slot_start_index
             slot_stop_index = offset + slot_stop_index
-        rankinfo.core_list = [i for i in range(slot_start_index, slot_stop_index+1)]
-        rankinfo.node_format = hwinfo.name_format
-        rankinfo.node_index = first_node_index + (global_slot_start // slots_per_node) # which node
+        rank.slots = [i for i in range(slot_start_index, slot_stop_index+1)]
+        rank.node_format = hwinfo.name_format
+        rank.node_index = first_node_index + (global_slot_start // slots_per_node) # which node
 
     eprint(f"{parser.prog}: {parser.description}")
     eprint(f"=== Node Information")
@@ -203,20 +238,20 @@ def main():
     eprint(f"numas per node: {hwinfo.numas_per_node}")
     eprint(f"cores per node: {hwinfo.cores_per_node}")
     eprint(f"")
-    eprint(f"=== Generate Information")
+    eprint(f"=== Generator Information")
     eprint(f"Number of node: {num_node}")
     eprint(f"Number of rank (per node): {rank_per_node}")
     eprint(f"Number of thread (per rank): {thread_per_rank}")
     eprint(f"Output to {outfile}")
     eprint(f"")
 
-    content = "\n".join([str(info) for info in rankinfos])
+    content = "\n".join([str(rank) for rank in ranks])
     if use_tempfile:
         with tempfile.NamedTemporaryFile(mode="w", delete=True) as tmp:
             tmp.write(content)
             print(tmp.name)
     elif outfile == "<stdout>":
-        eprint(f"=== Content generated:")
+        eprint(f"=== Content generated to <stdout>:")
         print(content)
         eprint(f"")
     else:
@@ -225,11 +260,11 @@ def main():
             f.write(content)
     if fingerprint == "first":
         eprint(f"=== Fingerprint of first node")
-        print_fingerprint(hwinfo, rankinfos, first_node_index)
+        print_fingerprint(hwinfo, ranks, first_node_index)
     elif fingerprint == "all":
         eprint(f"=== Fingerprint of all {num_node} nodes")
         for i in range(first_node_index, last_node_index+1):
-            print_fingerprint(hwinfo, rankinfos, i)
+            print_fingerprint(hwinfo, ranks, i)
 
 if __name__ == '__main__':
     main()
