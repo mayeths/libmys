@@ -22,6 +22,66 @@
 
 mys_thread_local int mys_errno = 0;
 
+
+mys_myspi_G_t mys_myspi_G = {
+    .inited = false,
+    .lock = MYS_MUTEX_INITIALIZER,
+    .myrank = -1,
+    .nranks = -1,
+};
+
+#ifdef MYS_NEED_WTIME_START_TICK
+double mys_wtime_start = (double)-1;
+#endif
+
+MYS_API void mys_myspi_init()
+{
+    if (mys_myspi_G.inited == true)
+        return;
+    mys_mutex_lock(&mys_myspi_G.lock);
+#if defined(MYS_NO_MPI)
+    mys_myspi_G.myrank = 0;
+    mys_myspi_G.nranks = 1;
+#else
+    int inited;
+    MPI_Initialized(&inited);
+    if (!inited) {
+        MPI_Init_thread(NULL, NULL, MPI_THREAD_SINGLE, &inited);
+        fprintf(stdout, ">>>>> ===================================== <<<<<\n");
+        fprintf(stdout, ">>>>> Nevel let libmys init MPI you dumbass <<<<<\n");
+        fprintf(stdout, ">>>>> ===================================== <<<<<\n");
+        fflush(stdout);
+    }
+    MPI_Comm_size(MPI_COMM_WORLD, &mys_myspi_G.nranks);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mys_myspi_G.myrank);
+#endif
+    mys_myspi_G.inited = true;
+    mys_mutex_unlock(&mys_myspi_G.lock);
+}
+
+MYS_API int mys_myrank()
+{
+    mys_myspi_init();
+    return mys_myspi_G.myrank;
+}
+
+MYS_API int mys_nranks()
+{
+    mys_myspi_init();
+    return mys_myspi_G.nranks;
+}
+
+MYS_API void mys_barrier()
+{
+    mys_myspi_init();
+#if defined(MYS_NO_MPI)
+    return;
+#else
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+}
+
+
 mys_thread_local _mys_rand_G_t _mys_rand_G = {
     .inited = false,
     .splitmix64_x = 0,
@@ -182,74 +242,165 @@ MYS_API const char *mys_randname()
 }
 
 
-mys_log_G_t mys_log_G = {
+static void _mys_log_stdio_handler(mys_log_event_t *event);
+
+_mys_log_G_t _mys_log_G = {
+    .inited = false,
+    .lock = MYS_MUTEX_INITIALIZER,
     .level = MYS_LOG_TRACE,
     .last_level = MYS_LOG_TRACE,
-    .lock = MYS_MUTEX_INITIALIZER,
     .handlers = {
 #ifndef MYS_LOG_DISABLE_STDOUT_HANDLER
-        { .fn = mys_log_stdio_handler, .udata = NULL, .id = 10000 },
+        { .fn = _mys_log_stdio_handler, .udata = NULL, .id = 10000 },
 #endif
         { .fn = NULL, .udata = NULL, .id = 0 /* Uninitalized ID is 0 */ },
     },
 };
 
-mys_myspi_G_t mys_myspi_G = {
-    .inited = false,
-    .lock = MYS_MUTEX_INITIALIZER,
-    .myrank = -1,
-    .nranks = -1,
-};
-
-#ifdef MYS_NEED_WTIME_START_TICK
-double mys_wtime_start = (double)-1;
-#endif
-
-MYS_API void mys_myspi_init()
+MYS_API void mys_log_init()
 {
-    if (mys_myspi_G.inited == true)
+    if (_mys_log_G.inited == true)
         return;
-    mys_mutex_lock(&mys_myspi_G.lock);
-#if defined(MYS_NO_MPI)
-    mys_myspi_G.myrank = 0;
-    mys_myspi_G.nranks = 1;
-#else
-    int inited;
-    MPI_Initialized(&inited);
-    if (!inited) {
-        MPI_Init_thread(NULL, NULL, MPI_THREAD_SINGLE, &inited);
-        fprintf(stdout, ">>>>> ===================================== <<<<<\n");
-        fprintf(stdout, ">>>>> Nevel let libmys init MPI you dumbass <<<<<\n");
-        fprintf(stdout, ">>>>> ===================================== <<<<<\n");
-        fflush(stdout);
+    mys_mutex_lock(&_mys_log_G.lock);
+    _mys_log_G.inited = true;
+    mys_mutex_unlock(&_mys_log_G.lock);
+}
+
+MYS_API void mys_log(int who, int level, const char *file, int line, const char *fmt, ...)
+{
+    mys_log_init();
+    mys_mutex_lock(&_mys_log_G.lock);
+    int myrank = mys_myrank();
+    if (who == myrank && (int)level >= (int)_mys_log_G.level) {
+        for (int i = 0; i < 128; i++) {
+            if (_mys_log_G.handlers[i].fn == NULL)
+                break;
+            mys_log_event_t event;
+            event.level = level;
+            event.file = file;
+            event.line = line;
+            event.fmt = fmt;
+            event.udata = _mys_log_G.handlers[i].udata;
+            va_start(event.vargs, fmt);
+            _mys_log_G.handlers[i].fn(&event);
+            va_end(event.vargs);
+        }
     }
-    MPI_Comm_size(MPI_COMM_WORLD, &mys_myspi_G.nranks);
-    MPI_Comm_rank(MPI_COMM_WORLD, &mys_myspi_G.myrank);
+    mys_mutex_unlock(&_mys_log_G.lock);
+}
+
+MYS_API int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_udata)
+{
+    mys_log_init();
+    mys_mutex_lock(&_mys_log_G.lock);
+    int used_max_id = INT32_MIN;
+    for (int i = 0; i < 128; i++) {
+        if (_mys_log_G.handlers[i].fn == NULL)
+            break;
+        if (used_max_id < _mys_log_G.handlers[i].id)
+            used_max_id = _mys_log_G.handlers[i].id;
+    }
+    int id = used_max_id + 1;
+    for (int i = 0; i < 128; i++) {
+        if (_mys_log_G.handlers[i].fn != NULL)
+            continue;
+        _mys_log_G.handlers[i].fn = handler_fn;
+        _mys_log_G.handlers[i].udata = handler_udata;
+        _mys_log_G.handlers[i].id = id;
+        break;
+    }
+    mys_mutex_unlock(&_mys_log_G.lock);
+    return id;
+}
+
+MYS_API void mys_log_remove_handler(int handler_id)
+{
+    mys_log_init();
+    mys_mutex_lock(&_mys_log_G.lock);
+    for (int i = 0; i < 128; i++) {
+        if (_mys_log_G.handlers[i].id != handler_id)
+            continue;
+        _mys_log_G.handlers[i].fn = NULL;
+        _mys_log_G.handlers[i].udata = NULL;
+        _mys_log_G.handlers[i].id = 0;
+        for (int j = i + 1; j < 128; j++) {
+            if (_mys_log_G.handlers[j].fn == NULL)
+                break;
+            _mys_log_G.handlers[j - 1].fn = _mys_log_G.handlers[j].fn;
+            _mys_log_G.handlers[j - 1].udata = _mys_log_G.handlers[j].udata;
+            _mys_log_G.handlers[j - 1].id = _mys_log_G.handlers[j].id;
+        }
+        break;
+    }
+    mys_mutex_unlock(&_mys_log_G.lock);
+}
+
+MYS_API int mys_log_get_level()
+{
+    mys_log_init();
+    mys_mutex_lock(&_mys_log_G.lock);
+    int level = _mys_log_G.level;
+    mys_mutex_unlock(&_mys_log_G.lock);
+    return level;
+}
+
+MYS_API void mys_log_set_level(int level)
+{
+    mys_log_init();
+    mys_mutex_lock(&_mys_log_G.lock);
+    _mys_log_G.level = level;
+    mys_mutex_unlock(&_mys_log_G.lock);
+}
+
+MYS_API const char* mys_log_level_string(int level)
+{
+    const char *level_strings[] = {
+        "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
+    };
+    return level_strings[(int)level];
+}
+
+static void _mys_log_stdio_handler(mys_log_event_t *event) {
+    const char *lstr = mys_log_level_string(event->level);
+    const char level_shortname = lstr[0];
+    FILE *file = event->udata != NULL ? (FILE *)event->udata : stdout;
+
+    char base_label[256];
+
+    char *label = base_label;
+    int label_size = sizeof(base_label);
+
+    int myrank = mys_myrank();
+    int nranks = mys_nranks();
+    int rank_digits = trunc(log10(nranks)) + 1;
+    int line_digits = trunc(log10(event->line)) + 1;
+    rank_digits = rank_digits > 3 ? rank_digits : 3;
+    line_digits = line_digits > 3 ? line_digits : 3;
+
+    snprintf(label, label_size, "[%c::%0*d %s:%0*d] ",
+        level_shortname, rank_digits, myrank,
+        event->file, line_digits, event->line
+    );
+
+#ifdef MYS_LOG_COLOR
+    const char *level_colors[] = {
+        "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"
+    };
+    char colorized_label[sizeof(base_label) + 128];
+    if (isatty(fileno(file))) {
+        snprintf(colorized_label, sizeof(colorized_label), "%s%s\x1b[0m",
+            level_colors[(int)event->level], label
+        );
+        label = colorized_label;
+        label_size = sizeof(colorized_label);
+    }
 #endif
-    mys_myspi_G.inited = true;
-    mys_mutex_unlock(&mys_myspi_G.lock);
+
+    fprintf(file, "%s", label);
+    vfprintf(file, event->fmt, event->vargs);
+    fprintf(file, "\n");
+    fflush(file);
 }
 
-MYS_API int mys_myrank()
-{
-    mys_myspi_init();
-    return mys_myspi_G.myrank;
-}
-
-MYS_API int mys_nranks()
-{
-    mys_myspi_init();
-    return mys_myspi_G.nranks;
-}
-
-MYS_API void mys_barrier()
-{
-    mys_myspi_init();
-#if defined(MYS_NO_MPI)
-    return;
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
-}
 
 #endif /*__MYS_IMPL_H__*/
