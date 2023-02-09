@@ -56,6 +56,14 @@ static inline const char *randname() {
 
 ////// Advanced
 
+typedef struct _mys_rand_G_t {
+    bool inited;
+    uint64_t splitmix64_x;
+    uint64_t xoroshiro128_x[2];
+} _mys_rand_G_t;
+
+extern mys_thread_local _mys_rand_G_t _mys_rand_G;
+
 MYS_API void mys_rand_init();
 MYS_API void mys_rand_srand(uint64_t a0, uint64_t a1);
 MYS_API uint64_t mys_rand_seed();
@@ -91,16 +99,6 @@ MYS_API uint64_t mys_rand_splitmix_u64();
  * output to fill __xoroshiro128_x.
  */
 MYS_API uint64_t mys_rand_xoroshiro128ss_u64();
-
-////// Internal
-
-typedef struct _mys_rand_G_t {
-    bool inited;
-    uint64_t splitmix64_x;
-    uint64_t xoroshiro128_x[2];
-} _mys_rand_G_t;
-
-extern mys_thread_local _mys_rand_G_t _mys_rand_G;
 
 
 /* Tester:
