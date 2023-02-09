@@ -30,10 +30,6 @@ mys_myspi_G_t mys_myspi_G = {
     .nranks = -1,
 };
 
-#ifdef MYS_NEED_WTIME_START_TICK
-double mys_wtime_start = (double)-1;
-#endif
-
 MYS_API void mys_myspi_init()
 {
     if (mys_myspi_G.inited == true)
@@ -402,5 +398,113 @@ static void _mys_log_stdio_handler(mys_log_event_t *event) {
     fflush(file);
 }
 
+
+MYS_API inline const char *hrname()
+{
+#if defined(MYS_ENABLED_HRTIMER_AACH64)
+    return mys_hrname_aarch64();
+#elif defined(MYS_ENABLED_HRTIMER_X64)
+    return mys_hrname_x64();
+#elif defined(MYS_ENABLED_HRTIMER_POSIX)
+    return mys_hrname_posix();
+#elif defined(MYS_ENABLED_HRTIMER_WINDOWS)
+    return mys_hrname_windows();
+#elif defined(MYS_USE_OPENMP_TIMER)
+    return mys_hrname_openmp();
+#else
+    return mys_hrname_mpi();
+#endif
+}
+
+MYS_API inline uint64_t hrtick()
+{
+#if defined(MYS_ENABLED_HRTIMER_AACH64)
+    return mys_hrtick_aarch64();
+#elif defined(MYS_ENABLED_HRTIMER_X64)
+    return mys_hrtick_x64();
+#elif defined(MYS_ENABLED_HRTIMER_POSIX)
+    return mys_hrtick_posix();
+#elif defined(MYS_ENABLED_HRTIMER_WINDOWS)
+    return mys_hrtick_windows();
+#elif defined(MYS_USE_OPENMP_TIMER)
+    return mys_hrtick_openmp();
+#else
+    return mys_hrtick_mpi();
+#endif
+}
+
+MYS_API inline uint64_t hrfreq()
+{
+#if defined(MYS_ENABLED_HRTIMER_AACH64)
+    return mys_hrfreq_aarch64();
+#elif defined(MYS_ENABLED_HRTIMER_X64)
+    return mys_hrfreq_x64();
+#elif defined(MYS_ENABLED_HRTIMER_POSIX)
+    return mys_hrfreq_posix();
+#elif defined(MYS_ENABLED_HRTIMER_WINDOWS)
+    return mys_hrfreq_windows();
+#elif defined(MYS_USE_OPENMP_TIMER)
+    return mys_hrfreq_openmp();
+#else
+    return mys_hrfreq_mpi();
+#endif
+}
+
+MYS_API inline double hrtime()
+{
+#if defined(MYS_ENABLED_HRTIMER_AACH64)
+    return mys_hrtime_aarch64();
+#elif defined(MYS_ENABLED_HRTIMER_X64)
+    return mys_hrtime_x64();
+#elif defined(MYS_ENABLED_HRTIMER_POSIX)
+    return mys_hrtime_posix();
+#elif defined(MYS_ENABLED_HRTIMER_WINDOWS)
+    return mys_hrtime_windows();
+#elif defined(MYS_USE_OPENMP_TIMER)
+    return mys_hrtime_openmp();
+#else
+    return mys_hrtime_mpi();
+#endif
+}
+
+#if !defined(MYS_NO_MPI)
+#include <mpi.h>
+extern double _mys_hrstart_mpi;
+MYS_API const char *mys_hrname_mpi() {
+    return "High-resolution timer by <mpi.h> (1us~10us)";
+}
+MYS_API uint64_t mys_hrtick_mpi() {
+    if (_mys_hrstart_mpi < 0)
+        _mys_hrstart_mpi = MPI_Wtime();
+    double current = MPI_Wtime() - _mys_hrstart_mpi;
+    return (uint64_t)(current * 1e9); // in nano second
+}
+MYS_API uint64_t mys_hrfreq_mpi() {
+    return (uint64_t)1000000000;
+}
+MYS_API double mys_hrtime_mpi() {
+    return (double)hrtick() / (double)hrfreq();
+}
+#endif
+
+#if defined(_OPENMP)
+#include <omp.h>
+extern double _mys_hrstart_openmp;
+MYS_API const char *mys_hrname_openmp() {
+    return "High-resolution timer by <omp.h> (1us~10us)";
+}
+MYS_API uint64_t mys_hrtick_openmp() {
+    if (_mys_hrstart_openmp < 0)
+        _mys_hrstart_openmp = omp_get_wtime();
+    double current = omp_get_wtime() - _mys_hrstart_openmp;
+    return (uint64_t)(current * 1e9); // in nano second
+}
+MYS_API uint64_t mys_hrfreq_openmp() {
+    return (uint64_t)1000000000;
+}
+MYS_API double mys_hrtime_openmp() {
+    return (double)hrtick() / (double)hrfreq();
+}
+#endif
 
 #endif /*__MYS_IMPL_H__*/
