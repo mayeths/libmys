@@ -23,7 +23,7 @@
 mys_thread_local int mys_errno = 0;
 
 
-mys_myspi_G_t mys_myspi_G = {
+_mys_myspi_G_t _mys_myspi_G = {
     .inited = false,
     .lock = MYS_MUTEX_INITIALIZER,
     .myrank = -1,
@@ -32,12 +32,12 @@ mys_myspi_G_t mys_myspi_G = {
 
 MYS_API void mys_myspi_init()
 {
-    if (mys_myspi_G.inited == true)
+    if (_mys_myspi_G.inited == true)
         return;
-    mys_mutex_lock(&mys_myspi_G.lock);
+    mys_mutex_lock(&_mys_myspi_G.lock);
 #if defined(MYS_NO_MPI)
-    mys_myspi_G.myrank = 0;
-    mys_myspi_G.nranks = 1;
+    _mys_myspi_G.myrank = 0;
+    _mys_myspi_G.nranks = 1;
 #else
     int inited;
     MPI_Initialized(&inited);
@@ -48,23 +48,23 @@ MYS_API void mys_myspi_init()
         fprintf(stdout, ">>>>> ===================================== <<<<<\n");
         fflush(stdout);
     }
-    MPI_Comm_size(MPI_COMM_WORLD, &mys_myspi_G.nranks);
-    MPI_Comm_rank(MPI_COMM_WORLD, &mys_myspi_G.myrank);
+    MPI_Comm_size(MPI_COMM_WORLD, &_mys_myspi_G.nranks);
+    MPI_Comm_rank(MPI_COMM_WORLD, &_mys_myspi_G.myrank);
 #endif
-    mys_myspi_G.inited = true;
-    mys_mutex_unlock(&mys_myspi_G.lock);
+    _mys_myspi_G.inited = true;
+    mys_mutex_unlock(&_mys_myspi_G.lock);
 }
 
 MYS_API int mys_myrank()
 {
     mys_myspi_init();
-    return mys_myspi_G.myrank;
+    return _mys_myspi_G.myrank;
 }
 
 MYS_API int mys_nranks()
 {
     mys_myspi_init();
-    return mys_myspi_G.nranks;
+    return _mys_myspi_G.nranks;
 }
 
 MYS_API void mys_barrier()
@@ -469,7 +469,7 @@ MYS_API inline double hrtime()
 
 #if !defined(MYS_NO_MPI)
 #include <mpi.h>
-extern double _mys_hrstart_mpi;
+static double _mys_hrstart_mpi;
 MYS_API const char *mys_hrname_mpi() {
     return "High-resolution timer by <mpi.h> (1us~10us)";
 }
@@ -489,7 +489,7 @@ MYS_API double mys_hrtime_mpi() {
 
 #if defined(_OPENMP)
 #include <omp.h>
-extern double _mys_hrstart_openmp;
+static double _mys_hrstart_openmp;
 MYS_API const char *mys_hrname_openmp() {
     return "High-resolution timer by <omp.h> (1us~10us)";
 }
