@@ -35,56 +35,61 @@ mys_log_G_t mys_log_G = {
         { .fn = NULL, .udata = NULL, .id = 0 /* Uninitalized ID is 0 */ },
     },
 };
+
+mys_myspi_G_t mys_myspi_G = {
+    .inited = false,
+    .lock = MYS_MUTEX_INITIALIZER,
+    .myrank = -1,
+    .nranks = -1,
+};
+
 #ifdef MYS_NEED_WTIME_START_TICK
 double mys_wtime_start = (double)-1;
 #endif
 
-MYS_API void mys_ensure_myspi_init()
+MYS_API void mys_myspi_init()
 {
+    if (mys_myspi_G.inited == true)
+        return;
+    mys_mutex_lock(&mys_myspi_G.lock);
 #if defined(MYS_NO_MPI)
-    return;
+    mys_myspi_G.myrank = 0;
+    mys_myspi_G.nranks = 1;
 #else
     int inited;
     MPI_Initialized(&inited);
-    if (inited) return;
-    MPI_Init_thread(NULL, NULL, MPI_THREAD_SINGLE, &inited);
-    fprintf(stdout, ">>>>> ===================================== <<<<<\n");
-    fprintf(stdout, ">>>>> Nevel let libmys init MPI you dumbass <<<<<\n");
-    fprintf(stdout, ">>>>> ===================================== <<<<<\n");
-    fflush(stdout);
+    if (!inited) {
+        MPI_Init_thread(NULL, NULL, MPI_THREAD_SINGLE, &inited);
+        fprintf(stdout, ">>>>> ===================================== <<<<<\n");
+        fprintf(stdout, ">>>>> Nevel let libmys init MPI you dumbass <<<<<\n");
+        fprintf(stdout, ">>>>> ===================================== <<<<<\n");
+        fflush(stdout);
+    }
+    MPI_Comm_size(MPI_COMM_WORLD, &mys_myspi_G.nranks);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mys_myspi_G.myrank);
 #endif
+    mys_myspi_G.inited = true;
+    mys_mutex_unlock(&mys_myspi_G.lock);
 }
 
 MYS_API int mys_myrank()
 {
-#if defined(MYS_NO_MPI)
-    return 0;
-#else
-    mys_ensure_myspi_init();
-    int myrank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-    return myrank;
-#endif
+    mys_myspi_init();
+    return mys_myspi_G.myrank;
 }
 
 MYS_API int mys_nranks()
 {
-#if defined(MYS_NO_MPI)
-    return 1;
-#else
-    mys_ensure_myspi_init();
-    int nranks = 0;
-    MPI_Comm_size(MPI_COMM_WORLD, &nranks);
-    return nranks;
-#endif
+    mys_myspi_init();
+    return mys_myspi_G.nranks;
 }
 
 MYS_API void mys_barrier()
 {
+    mys_myspi_init();
 #if defined(MYS_NO_MPI)
     return;
 #else
-    mys_ensure_myspi_init();
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }
