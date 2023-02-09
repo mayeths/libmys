@@ -6,8 +6,6 @@
 #include "config.h"
 #include "macro.h"
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
 
 MYS_API const char *hrname();
 MYS_API uint64_t hrtick();
@@ -83,7 +81,7 @@ MYS_API static inline double mys_hrtime_aarch64() {
 // /proc/cpuinfo is not reliable under turbo-boost enabled CPU.
 // See the get_clockfreq() and warning about GPTLnanotime in GPTLpr_file() of GPTL.
 MYS_API static inline const char *mys_hrname_x64() {
-    return "High-resolution timer by X64 assembly (TSC_FREQ=" STR(TSC_FREQ) ")";
+    return "High-resolution timer by X64 assembly (TSC_FREQ=" MYS_MACRO2STR(TSC_FREQ) ")";
 }
 MYS_API static inline uint64_t mys_hrtick_x64() {
     uint32_t lo, hi;

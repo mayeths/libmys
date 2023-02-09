@@ -43,3 +43,6 @@
 #define REP100(inst) do { REP50(inst); REP50(inst); } while (0)
 #define REP500(inst) do { REP100(inst); REP100(inst); REP100(inst); REP100(inst); REP100(inst); } while (0)
 #define REP1000(inst) do { REP500(inst); REP500(inst); } while (0)
+
+#define MYS_MACRO2STR_HELPER(x) #x
+#define MYS_MACRO2STR(x) MYS_MACRO2STR_HELPER(x)
