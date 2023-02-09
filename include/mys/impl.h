@@ -18,7 +18,7 @@
 #include "errno.h"
 #include "myspi.h"
 #include "log.h"
-#include "random.h"
+#include "rand.h"
 
 mys_thread_local int mys_errno = 0;
 
