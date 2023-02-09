@@ -100,7 +100,7 @@ static inline std::string readable_size(std::size_t bytes, std::size_t precision
         i++;
     }
     char buf[1024];
-    sprintf(buf, "%.*f %s", (int)precision, size, units[i]); /*%.*f*/
+    snprintf(buf, sizeof(buf), "%.*f %s", (int)precision, size, units[i]); /*%.*f*/
     return std::string(buf);
 }
 static inline std::size_t memusage() { return proc_self_status("VmRSS:") * 1024; }
