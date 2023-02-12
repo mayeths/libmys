@@ -177,9 +177,11 @@ def main():
     generatorArgs.add_argument('-t', '--temp', dest='use_tempfile', action='store_const', const=True, default=False, help="Write output to temp file and print filename", metavar='')
     generatorArgs.set_defaults(left_most_cores=False)
     generatorArgs.set_defaults(no_fingerprint=False)
-    generatorArgs.add_argument('--left-most-cores', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores in NUMA", metavar='')
     generatorArgs.add_argument('--first-node-index', dest='first_node_index', default=101, type=int, help="Inclusive node start index", metavar='')
     generatorArgs.add_argument('--last-node-index', dest='last_node_index', type=int, help="Inclusive node end index", metavar='')
+    # generatorArgs.add_argument('--align', dest='align', default='numa', choices=['numa', 'socket', 'node'], help="Align ranks to numa/socket/node boundary", metavar='')
+    # generatorArgs.add_argument('--allow-unbalance', dest='allow_unbalance', action='store_const', const=True, default=False, help="Allow unbalanced distribution on regions", metavar='')
+    generatorArgs.add_argument('--left-most-cores', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores in NUMA", metavar='')
     generatorArgs.add_argument('--fingerprint', dest='fingerprint', default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
     parser.add_argument('-q', '--quiet', dest='quiet', action='store_const', const=True, default=False, help="Don't print information", metavar='')
     parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
@@ -192,9 +194,11 @@ def main():
     hwinfo = HardwareInfo(args.name_format, args.sockets_per_node, args.numas_per_socket, args.cores_per_numa, 1)
     outfile = args.outfile
     use_tempfile = args.use_tempfile
-    left_most_cores = args.left_most_cores
     first_node_index = args.first_node_index
     last_node_index = args.last_node_index
+    left_most_cores = args.left_most_cores
+    # align = args.align
+    # allow_unbalance = args.allow_unbalance
     fingerprint = args.fingerprint
     QUIET = args.quiet
 
