@@ -1,9 +1,11 @@
-### Test
-# dumper = GPTLDumpper("batch.log/gcr.log.211210#1/run.50km.step71.32.8.256#1/gptl_output/timing000000.txt")
-# dumper.dumpjson("err")
-# print(dumper.topandas())
-
 class GPTLDumpper:
+    """ Dump GPTL generated timing files
+    Example:
+        dumper = GPTLDumpper("batch.log/gcr.log.211210#1/run.50km.step71.32.8.256#1/gptl_output/timing000000.txt")
+        dumper.dumpjson("err")
+        print(dumper.topandas())
+    """
+
     def __init__(self, filename):
         self.filename = filename
         with open(filename) as f:
