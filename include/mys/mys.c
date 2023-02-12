@@ -1,15 +1,15 @@
 /**
- * @file impl.h
+ * @file mys.c
  * @author mayeths (wow@mayeths.com)
  * @brief Implement non-static variables and fucntions
  * 
- * The biggest benifit of using standalone "impl.h"
+ * The biggest benifit of using standalone "mys.c"
  * instead of #ifdef MYS_IMPL in all other headers are,
  * we can use `#pragma once` in these other headers,
  * and the MYS_IMPL macro is still processed correctly
  */
-#ifndef __MYS_IMPL_H__
-#define __MYS_IMPL_H__
+#ifndef __MYS_C__
+#define __MYS_C__
 
 /*********************************************/
 // C definition
@@ -507,4 +507,4 @@ MYS_API double mys_hrtime_openmp() {
 }
 #endif
 
-#endif /*__MYS_IMPL_H__*/
+#endif /*__MYS_C__*/

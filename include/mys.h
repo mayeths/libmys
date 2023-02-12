@@ -63,7 +63,7 @@ extern "C" {
 
 #if defined(MYS_IMPL) && !defined(__MYS_IMPL_ONCE__)
 #define __MYS_IMPL_ONCE__
-#include "./mys/impl.h"
+#include "./mys/mys.c"
 #if defined(MYS_ENABLE_CJSON)
 #include "./mys3/cJSON/cJSON.impl.h"
 #endif
