@@ -1,7 +1,6 @@
 ###
 
 export MYS_DIR=$(dirname $(dirname "$0")/../)
-MYS_MODULE_CONFIG_DIR=$(dirname ~/module/CONFIG)
 
 if $SHELL --version | grep -q bash; then
     source bashrc.sh
@@ -19,7 +18,6 @@ fi
 
 env_prepend PATH "$MYS_DIR/bin"
 env_prepend PYTHONPATH "$MYS_DIR/python"
-env_prepend MODULEPATH "$MYS_MODULE_CONFIG_DIR"
-unset MYS_MODULE_CONFIG_DIR
+#env_prepend CPATH "$MYS_DIR/include"
 
-alias code="invoke-vscode"
+alias code="$MYS_DIR/bin/invoke-vscode"
