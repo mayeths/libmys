@@ -17,14 +17,16 @@ def eprint(text, end='\n', force=False):
         print(text, end=end, file=sys.stderr)
 
 class Slot:
-    node_index: int
+    node_id: int
+    cpu_id: int
     socket_index: int
     numa_index: int
     core_index: int
     hwthread_index: int
 
-    def __init__(self, node_index: int, socket_index: int, numa_index: int, core_index: int, hwthread_index: int):
-        self.node_index = node_index
+    def __init__(self, node_id: int, cpu_id: int, socket_index: int, numa_index: int, core_index: int, hwthread_index: int):
+        self.node_id = node_id
+        self.cpu_id = cpu_id
         self.socket_index = socket_index
         self.numa_index = numa_index
         self.core_index = core_index
@@ -34,20 +36,14 @@ class Slot:
         if not isinstance(other, type(self)):
             return False
         other: Slot = other
-        if self.node_index != other.node_index:
+        if self.node_id != other.node_id:
             return False
-        elif self.socket_index != other.socket_index:
-            return False
-        elif self.numa_index != other.numa_index:
-            return False
-        elif self.core_index != other.core_index:
-            return False
-        elif self.hwthread_index != other.hwthread_index:
+        elif self.cpu_id != other.cpu_id:
             return False
         return True
 
     def __hash__(self) -> int:
-        return hash((self.hwthread_index, self.core_index, self.numa_index, self.socket_index, self.node_index))
+        return hash((self.node_id, self.cpu_id))
 
 class Rank:
     id: int
