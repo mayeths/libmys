@@ -105,6 +105,16 @@ extern int MYSTget_eventvalue (const char *, const char *, int, double *);
 extern int MYSTnum_errors (void);
 extern int MYSTnum_warn (void);
 extern int MYSTget_count (const char *, int, int *);
+
+__attribute__((format(printf, 1, 2)))
+extern int MYSTtick(const char *, ...);
+__attribute__((format(printf, 1, 2)))
+extern int MYSTtock(const char *, ...);
+
+#ifdef MYS_IMPL
+#include "myst.impl.h"
+#endif
+
 #ifdef __cplusplus
 }
 #endif

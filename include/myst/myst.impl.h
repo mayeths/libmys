@@ -125,3 +125,37 @@ int MYSTget_count (const char *timername, int t, int *count)
 {
     return GPTLget_count(timername, t, count);
 }
+
+int MYSTtick(const char *format, ...)
+{
+    char buffer[1024];
+    va_list vargs;
+    va_start(vargs, format);
+    int size_s = vsnprintf(buffer, sizeof(buffer), format, vargs) + 1; // Extra space for '\0'
+    if (size_s < sizeof(buffer)) {
+        MYSTstart(buffer);
+    } else {
+        char *dynamic_buffer = (char *)malloc(size_s * sizeof(char));
+        vsnprintf(dynamic_buffer, size_s, format, vargs);
+        MYSTstart(dynamic_buffer);
+        free(dynamic_buffer);
+    }
+    va_end(vargs);
+}
+
+int MYSTtock(const char *format, ...)
+{
+    char buffer[1024];
+    va_list vargs;
+    va_start(vargs, format);
+    int size_s = vsnprintf(buffer, sizeof(buffer), format, vargs) + 1; // Extra space for '\0'
+    if (size_s < sizeof(buffer)) {
+        MYSTstop(buffer);
+    } else {
+        char *dynamic_buffer = (char *)malloc(size_s * sizeof(char));
+        vsnprintf(dynamic_buffer, size_s, format, vargs);
+        MYSTstop(dynamic_buffer);
+        free(dynamic_buffer);
+    }
+    va_end(vargs);
+}
