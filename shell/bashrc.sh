@@ -52,3 +52,85 @@ env_cut() {
     done
     printf -v "$varName" '%s' "${auxArr[*]}"
 }
+
+
+# SYNOPSIS: _colorful_short_path letter_kept width_percent [MAIN_COLOR]
+#   MAIN_COLOR defaults to green '\\[\\e[32m\\]'
+# @see https://askubuntu.com/a/1355437
+_colorful_short_path() {
+    local letter_kept=$1
+    local width_percent=$2
+    local MAIN_COLOR=${3:-'\\[\\e[32m\\]'}
+    local NORMAL='\\[\\e[0m\\]'
+    local BOLD='\\[\\e[1m\\]'
+    local DIM='\\[\\e[2m\\]'
+
+    local current_path=${PWD/#$HOME/'~'}
+    if [[ "$current_path" == "~" || "$current_path" == "/" ]]; then
+        echo -e "${MAIN_COLOR}${current_path}${NORMAL}"
+    else
+        local terminal_width=$(tput cols)
+        local max_width=$(($terminal_width * $width_percent / 100))
+        local curr_width=${#current_path}
+
+        local dirs=()
+        local count=0
+        local path="$current_path"
+        while :
+        do
+            local dname="${path%\/*}"
+            local bname="${path##*\/}"
+            dirs[$count]="$bname"
+            let count++
+            if [[ "$dname" == "$bname" || -z "$bname" ]]; then
+                break
+            fi
+            path="$dname"
+        done
+
+        local width=$curr_width
+        local i=${#dirs[@]}-1
+        while [[ i -ge 1 && $width -ge $max_width ]]; do
+            local dir=${dirs[$i]}
+            local dir_short=""
+            local dir_short="${dir::$letter_kept}"
+            local dir_width=${#dir}
+            local cut_width=$(($dir_width-$letter_kept))
+            if [[ "$dir" == "~" ]]; then
+                dirs[$i]="${MAIN_COLOR}${dir_short}${NORMAL}"
+            else
+                dirs[$i]="${DIM}${dir_short}${NORMAL}"
+            fi
+            width=$(($width-$cut_width))
+            let i--
+        done
+        while [[ i -ge 1 ]]; do
+            local dir=${dirs[$i]}
+            dirs[$i]="${MAIN_COLOR}${dir}${NORMAL}"
+            let i--
+        done
+        dirs[0]="${MAIN_COLOR}${dirs[0]}${NORMAL}"
+
+        local result="${dirs[count-1]}"
+        for ((i = ${#dirs[@]}-2; i >= 0; i--)); do
+            local dir=${dirs[$i]}
+            result="${result}${MAIN_COLOR}/${NORMAL}${dir}"
+        done
+        echo -e "$result"
+    fi
+}
+
+PROMPT_COMMAND='RET=$?;\
+    _RED="\[\e[31m\]";\
+    _GREEN="\[\e[32m\]";\
+    _NORMAL="\[\e[0m\]";\
+    _BASH_SIGINT_CODE=130;\
+    if [[ $RET != 0 && $RET != $_BASH_SIGINT_CODE ]]; then\
+        _SYMBOL="${_RED}x${_NORMAL}";\
+    else\
+        _SYMBOL="";\
+    fi;\
+    PS1="${_SYMBOL}${_GREEN}[\u@\h:$(eval _colorful_short_path 2 40)${_GREEN}]\$ ${_NORMAL}";\
+'
+# Write to .bash_history immediately
+PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
