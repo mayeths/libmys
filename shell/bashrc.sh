@@ -121,26 +121,75 @@ _colorful_short_path() {
 }
 
 _colorful_driver() {
-    local exit_code=$1
+    local exit_code=$?
     local RED="\[\e[31m\]"
     local GREEN="\[\e[32m\]"
+    local DIM="\[\e[2m\]"
     local NORMAL="\[\e[0m\]"
     local BASH_SIGINT_CODE=130
 
-    local symbol=""
+    local time_it=""
+    if [[ -n $_TIME_IT && -n $_TIME_IT_ELAPSED && -n $_TIME_IT_THRESHOLD && $_TIME_IT_ELAPSED -gt $_TIME_IT_THRESHOLD ]]; then
+        time_it="${DIM}${_TIME_IT}${NORMAL} "
+        unset _TIME_IT
+        unset _TIME_IT_ELAPSED
+    fi
+    local symbol="\$"
     if [[ $exit_code -ne 0 && $exit_code -ne $BASH_SIGINT_CODE ]]; then
         symbol="${RED}x${NORMAL}"
     fi
-    PS1="${symbol}${GREEN}[\u@\h:$(eval _colorful_short_path 2 40)${GREEN}]\$ ${NORMAL}"
+    PS1="${time_it}${GREEN}[\u@\h:$(eval _colorful_short_path 2 40)${GREEN}]${symbol} ${NORMAL}"
     return $exit_code
 }
 
 _flush_history() {
-    local exit_code=$1
+    local exit_code=$?
     history -a
     return $exit_code
 }
 
+displaytime() {
+    if [[ -z $1 ]]; then
+        return
+    fi
+    local D=$(echo $1/60/60/24 | bc)
+    local H=$(echo $1/60/60%24 | bc)
+    local M=$(echo $1/60%60 | bc)
+    local S=$(echo $1%60 | bc)
+    local R=""
+    [[ $D -gt 0 ]] && R+="${D}d "
+    [[ $H -gt 0 ]] && R+="${H}h "
+    [[ $M -gt 0 ]] && R+="${M}m "
+    R+=$(printf "%.0fs\n" $S)
+    echo "$R"
+}
+
+_time_it_begin() {
+    local exit_code=$?
+    _TIME_IT_BEGIN="$(date -u +%s)"
+    return "$exit_code"
+}
+
+_time_it_end() {
+    local exit_code=$?
+    if [[ -z $_TIME_IT_BEGIN ]]; then
+        return "$exit_code"
+    fi
+    local time_it_end="$(date -u +%s)"
+    _TIME_IT_ELAPSED=$(bc <<< "$time_it_end-$_TIME_IT_BEGIN")
+    _TIME_IT=$(displaytime $_TIME_IT_ELAPSED)
+    unset _TIME_IT_BEGIN
+    return "$exit_code"
+}
+
 # Use single quote to escape \$
 # Write to .bash_history immediately
-PROMPT_COMMAND='_RET=$? ; _colorful_driver $_RET; _flush_history $_RET'
+# PROMPT_COMMAND='_RET=$? ; _colorful_driver $_RET; _flush_history $_RET'
+
+# Use bash-preexec.sh to replace PROMPT_COMMAND
+source bash-preexec.sh
+preexec_functions+=(_time_it_begin)
+precmd_functions+=(_time_it_end)
+_TIME_IT_THRESHOLD=30
+precmd_functions+=(_colorful_driver)
+precmd_functions+=(_flush_history)
