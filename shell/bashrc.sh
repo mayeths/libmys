@@ -120,17 +120,27 @@ _colorful_short_path() {
     fi
 }
 
-PROMPT_COMMAND='RET=$?;\
-    _RED="\[\e[31m\]";\
-    _GREEN="\[\e[32m\]";\
-    _NORMAL="\[\e[0m\]";\
-    _BASH_SIGINT_CODE=130;\
-    if [[ $RET != 0 && $RET != $_BASH_SIGINT_CODE ]]; then\
-        _SYMBOL="${_RED}x${_NORMAL}";\
-    else\
-        _SYMBOL="";\
-    fi;\
-    PS1="${_SYMBOL}${_GREEN}[\u@\h:$(eval _colorful_short_path 2 40)${_GREEN}]\$ ${_NORMAL}";\
-'
+_colorful_driver() {
+    local exit_code=$1
+    local RED="\[\e[31m\]"
+    local GREEN="\[\e[32m\]"
+    local NORMAL="\[\e[0m\]"
+    local BASH_SIGINT_CODE=130
+
+    local symbol=""
+    if [[ $exit_code -ne 0 && $exit_code -ne $BASH_SIGINT_CODE ]]; then
+        symbol="${RED}x${NORMAL}"
+    fi
+    PS1="${symbol}${GREEN}[\u@\h:$(eval _colorful_short_path 2 40)${GREEN}]\$ ${NORMAL}"
+    return $exit_code
+}
+
+_flush_history() {
+    local exit_code=$1
+    history -a
+    return $exit_code
+}
+
+# Use single quote to escape \$
 # Write to .bash_history immediately
-PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
+PROMPT_COMMAND='_RET=$? ; _colorful_driver $_RET; _flush_history $_RET'
