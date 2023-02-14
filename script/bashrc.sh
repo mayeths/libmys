@@ -120,37 +120,43 @@ _colorful_short_path() {
     fi
 }
 
-_colorful_driver() {
+_customized_prompt() {
     local exit_code=$?
     local RED="\[\e[31m\]"
     local GREEN="\[\e[32m\]"
+    local YELLOW="\[\e[33m\]"
+    local CYAN="\[\e[36m\]"
     local DIM="\[\e[2m\]"
     local NORMAL="\[\e[0m\]"
     local BASH_SIGINT_CODE=130
 
     local time_it=""
     if [[ -n $_TIME_IT && -n $_TIME_IT_ELAPSED && -n $_TIME_IT_THRESHOLD && $_TIME_IT_ELAPSED -gt $_TIME_IT_THRESHOLD ]]; then
-        time_it="${DIM}${_TIME_IT}${NORMAL} "
+        time_it=" ${YELLOW}${_TIME_IT}${NORMAL}"
         unset _TIME_IT
         unset _TIME_IT_ELAPSED
     fi
-    local symbol="\$"
-    if [[ $exit_code -ne 0 && $exit_code -ne $BASH_SIGINT_CODE ]]; then
-        symbol="${RED}x${NORMAL}"
+    local symbol=" ${GREEN}\$${NORMAL}"
+    if [[ -n "$_REMEMBER_LAST_COMMAND" && $exit_code -ne 0 ]]; then
+        symbol=" ${RED}x${NORMAL}"
+        unset _REMEMBER_LAST_COMMAND
     fi
-    PS1="${time_it}${GREEN}[\u@\h:$(eval _colorful_short_path 2 40)${GREEN}]${symbol} ${NORMAL}"
+    local branch_name=""
+    if [[ -n "$_GIT_BRANCH_NAME" ]]; then
+        branch_name=" ${CYAN}$_GIT_BRANCH_NAME${NORMAL}"
+        unset _GIT_BRANCH_NAME
+    fi
+    PS1="${GREEN}[\u@\h:$(eval _colorful_short_path 2 40)${GREEN}]${NORMAL}${time_it}${branch_name}${symbol} "
     return $exit_code
 }
 
 _flush_history() {
-    local exit_code=$?
     history -a
-    return $exit_code
 }
 
 displaytime() {
     if [[ -z $1 ]]; then
-        return
+        return 1
     fi
     local D=$(echo $1/60/60/24 | bc)
     local H=$(echo $1/60/60%24 | bc)
@@ -165,31 +171,68 @@ displaytime() {
 }
 
 _time_it_begin() {
-    local exit_code=$?
     _TIME_IT_BEGIN="$(date -u +%s)"
-    return "$exit_code"
 }
 
 _time_it_end() {
-    local exit_code=$?
     if [[ -z $_TIME_IT_BEGIN ]]; then
-        return "$exit_code"
+        return 1
     fi
     local time_it_end="$(date -u +%s)"
     _TIME_IT_ELAPSED=$(bc <<< "$time_it_end-$_TIME_IT_BEGIN")
     _TIME_IT=$(displaytime $_TIME_IT_ELAPSED)
     unset _TIME_IT_BEGIN
-    return "$exit_code"
+}
+
+_git_branch_name() {
+    local branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+    if [[ -z $branch ]]; then
+        return
+    fi
+    _GIT_BRANCH_NAME=$branch
+}
+
+_remember_last_command() {
+    _REMEMBER_LAST_COMMAND="$1"
 }
 
 # Use single quote to escape \$
 # Write to .bash_history immediately
-# PROMPT_COMMAND='_RET=$? ; _colorful_driver $_RET; _flush_history $_RET'
+# PROMPT_COMMAND='_RET=$? ; _customized_prompt $_RET; _flush_history $_RET'
 
 # Use bash-preexec.sh to replace PROMPT_COMMAND
 source bash-preexec.sh
-preexec_functions+=(_time_it_begin)
-precmd_functions+=(_time_it_end)
-_TIME_IT_THRESHOLD=30
-precmd_functions+=(_colorful_driver)
-precmd_functions+=(_flush_history)
+
+_append_preexec_functions_once() {
+    if [[ $# -ne 1 ]]; then
+        return 1
+    fi
+    local name
+    for name in "${preexec_functions[@]}"; do
+        if [[ "$1" == "$name" ]]; then
+            return 0
+        fi
+    done
+    preexec_functions+=("$1")
+}
+
+_append_precmd_functions_once() {
+    if [[ $# -ne 1 ]]; then
+        return 1
+    fi
+    local name
+    for name in "${precmd_functions[@]}"; do
+        if [[ "$1" == "$name" ]]; then
+            return 0
+        fi
+    done
+    precmd_functions+=("$1")
+}
+
+_TIME_IT_THRESHOLD=5
+_append_preexec_functions_once _remember_last_command
+_append_preexec_functions_once _time_it_begin
+_append_precmd_functions_once _time_it_end
+_append_precmd_functions_once _git_branch_name
+_append_precmd_functions_once _flush_history
+_append_precmd_functions_once _customized_prompt
