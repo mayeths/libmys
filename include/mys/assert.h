@@ -5,6 +5,9 @@
 #include "config.h"
 #include "log.h"
 
+
+/* Compile-time Assertion */
+
 #ifndef STATIC_ASSERT
 #if defined(__cplusplus) || defined(static_assert)
 #define STATIC_ASSERT(expr, diagnostic) static_assert(expr, diagnostic)
