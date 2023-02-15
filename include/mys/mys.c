@@ -833,4 +833,63 @@ MYS_API void mys_partition_naive(const int gs, const int ge, const int n, const 
     (*le) = (*ls) + size;
 }
 
+MYS_API double mys_arthimetic_mean(double *arr, int n)
+{
+    double sum = 0;
+    for (int i = 0; i < n; i++) {
+        sum += arr[i];
+    }
+    return (1 / (double)n) * sum;
+}
+
+MYS_API double mys_harmonic_mean(double *arr, int n)
+{
+    double sum = 0;
+    for (int i = 0; i < n; i++) {
+        sum += 1 / arr[i];
+    }
+    return ((double)n) / sum;
+}
+
+MYS_API double mys_geometric_mean(double *arr, int n)
+{
+    double product = 1;
+    for (int i = 0; i < n; i++) {
+        product *= arr[i];
+    }
+    return pow(product, 1 / (double)n);
+}
+
+MYS_API double mys_standard_deviation(double *arr, int n)
+{
+    double xbar = arthimetic_mean(arr, n);
+    double denom = 0;
+    double nom = n - 1;
+    for (int i = 0; i < n; i++) {
+        double diff = arr[i] - xbar;
+        denom += diff * diff;
+    }
+    return sqrt(denom / nom);
+}
+
+MYS_API void mys_mutex_init(mys_mutex_t *lock)
+{
+    __MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_UNINITIALIZE, __MYS_MUTEX_IDLE);
+    mys_memory_smp_mb();
+}
+
+MYS_API void mys_mutex_lock(mys_mutex_t *lock)
+{
+    while(__MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_IDLE, __MYS_MUTEX_BUSY) != __MYS_MUTEX_IDLE)
+        continue;
+    mys_memory_smp_mb();
+}
+
+MYS_API void mys_mutex_unlock(mys_mutex_t *lock)
+{
+    while(__MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_BUSY, __MYS_MUTEX_IDLE) != __MYS_MUTEX_BUSY)
+        continue;
+    mys_memory_smp_mb();
+}
+
 #endif /*__MYS_C__*/

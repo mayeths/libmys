@@ -37,23 +37,10 @@ typedef struct mys_mutex_t {
 #define __MYS_MUTEX_BUSY 2
 #define MYS_MUTEX_INITIALIZER { .guard = __MYS_MUTEX_IDLE }
 
-static inline void mys_mutex_init(mys_mutex_t *lock)
-{
-    __MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_UNINITIALIZE, __MYS_MUTEX_IDLE);
-    mys_memory_smp_mb();
-}
-static inline void mys_mutex_lock(mys_mutex_t *lock)
-{
-    while(__MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_IDLE, __MYS_MUTEX_BUSY) != __MYS_MUTEX_IDLE)
-        continue;
-    mys_memory_smp_mb();
-}
-static inline void mys_mutex_unlock(mys_mutex_t *lock)
-{
-    while(__MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_BUSY, __MYS_MUTEX_IDLE) != __MYS_MUTEX_BUSY)
-        continue;
-    mys_memory_smp_mb();
-}
+MYS_API void mys_mutex_init(mys_mutex_t *lock);
+MYS_API void mys_mutex_lock(mys_mutex_t *lock);
+MYS_API void mys_mutex_unlock(mys_mutex_t *lock);
+
 /* gcc -O3 -g -fopenmp a.c && ./a.out 4999
     int size = 1024 * 1024;
     if (argc >= 2) {
