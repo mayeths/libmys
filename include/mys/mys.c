@@ -507,4 +507,265 @@ MYS_API double mys_hrtime_openmp() {
 }
 #endif
 
+
+static void _mys_close_fd(int fd)
+{
+    if (fcntl(fd, F_GETFL) != -1 || errno != EBADF)
+        close(fd);
+}
+
+/**
+ * @brief Create stdin/stdout/stderr pipe to subprocess opened with command
+ * @note
+ * Thanks to http://www.jukie.net/bart/blog/popenRWE
+ * https://github.com/sni/mod_gearman/blob/master/common/popenRWE.c
+ * https://github.com/marssaxman/ozette/blob/833b659757/src/console/popenRWE.cpp
+ */
+static int _mys_popen_rwe(int *ipipe, int *opipe, int *epipe, const char *command)
+{
+    int in[2] = {-1, -1};
+    int out[2] = {-1, -1};
+    int err[2] = {-1, -1};
+    int rc = 0;
+    int pid = 0;
+
+    if ((rc = pipe(in)) < 0)
+        goto error_in;
+    if ((rc = pipe(out)) < 0)
+        goto error_out;
+    if ((rc = pipe(err)) < 0)
+        goto error_err;
+
+    pid = fork();
+    if (pid > 0) { /* parent */
+        _mys_close_fd(in[0]);
+        _mys_close_fd(out[1]);
+        _mys_close_fd(err[1]);
+        *ipipe = in[1];
+        *opipe = out[0];
+        *epipe = err[0];
+        return pid;
+    } else if (pid == 0) { /* child */
+        _mys_close_fd(in[1]);
+        _mys_close_fd(out[0]);
+        _mys_close_fd(err[0]);
+        _mys_close_fd(0);
+        dup(in[0]);
+        _mys_close_fd(1);
+        dup(out[1]);
+        _mys_close_fd(2);
+        dup(err[1]);
+        execl( "/bin/sh", "sh", "-c", command, NULL );
+        _exit(1);
+    } else
+        goto error_fork;
+
+    return pid;
+
+error_fork:
+    _mys_close_fd(err[0]);
+    _mys_close_fd(err[1]);
+error_err:
+    _mys_close_fd(out[0]);
+    _mys_close_fd(out[1]);
+error_out:
+    _mys_close_fd(in[0]);
+    _mys_close_fd(in[1]);
+error_in:
+    return -1;
+}
+
+static int _mys_pclose_rwe(int pid, int ipipe, int opipe, int epipe)
+{
+    _mys_close_fd(ipipe);
+    _mys_close_fd(opipe);
+    _mys_close_fd(epipe);
+    int status = -1;
+    if (waitpid(pid, &status, 0) == pid)
+        status = WEXITSTATUS(status);
+    else
+        status = -1;
+    return status;
+}
+
+MYS_API mys_popen_t mys_popen_create(const char *argv)
+{
+    mys_popen_t result;
+    result.ifd = -1;
+    result.ofd = -1;
+    result.efd = -1;
+    result.pid = _mys_popen_rwe(&result.ifd, &result.ofd, &result.efd, argv);
+    return result;
+}
+
+MYS_API int mys_popen_destroy(mys_popen_t *pd)
+{
+    if (pd == NULL)
+        return 0;
+    int result = _mys_pclose_rwe(pd->pid, pd->ifd, pd->ofd, pd->efd);
+    pd->pid = -1;
+    pd->ifd = -1;
+    pd->ofd = -1;
+    pd->efd = -1;
+    return result;
+}
+
+static size_t _mys_readfd(char **buffer, FILE *fd)
+{
+    *buffer = NULL;
+    size_t capacity = 0;
+    size_t total_size = 0;
+    char trunk[1024] = {0};
+    while (fgets(trunk, sizeof(trunk) - 1, fd)) {
+        size_t read_size = strnlen(trunk, sizeof(trunk));
+        if (capacity < total_size + read_size) {
+            // increase the buffer's capacity to put the new trunk
+            capacity += read_size < 512 ? 512 : read_size;
+            *buffer = (char *)realloc(*buffer, capacity);
+        }
+        // concat new trunk to buffer
+        strncat(*buffer, trunk, read_size);
+        total_size += read_size;
+    }
+
+    // size_t capacity = sizeof(trunk);
+    // size_t total_size = 0;
+    // while (fgets(trunk, sizeof(trunk)-1, fd)) {
+    //     size_t read_size = strlen(trunk);
+    //     if (capacity < total_size + read_size) {
+    //         // increase the capacity to put the new trunk
+    //         capacity += read_size < 512 ? 512 : read_size;
+    //         *buffer = (char *)realloc(*buffer, capacity);
+    //     }
+    //     strncat(*buffer, trunk, capacity - total_size);
+    //     total_size += read_size;
+    // }
+    return total_size;
+}
+
+MYS_API mys_prun_t mys_prun_create(const char *argv)
+{
+    mys_prun_t result;
+    result.retval = -1;
+    result.out = NULL;
+    result.err = NULL;
+
+    mys_popen_t pd = mys_popen_create(argv);
+
+    FILE *outfd = fdopen(pd.ofd, "r");
+    if (outfd) {
+        _mys_readfd(&result.out, outfd);
+        fclose(outfd);
+    } else {
+        result.out = (char *)malloc(0);
+    }
+    FILE *errfd = fdopen(pd.efd, "r");
+    if (errfd) {
+        _mys_readfd(&result.err, errfd);
+        fclose(errfd);
+    } else {
+        result.err = (char *)malloc(0);
+    }
+    result.retval = mys_popen_destroy(&pd);
+    return result;
+}
+
+MYS_API int mys_prun_destroy(mys_prun_t *pd)
+{
+    if (pd == NULL)
+        return 0;
+    if (pd->out != NULL)
+        free((char *)pd->out);
+    if (pd->err != NULL)
+        free((char *)pd->err);
+    pd->out = NULL;
+    pd->err = NULL;
+    pd->retval = -1;
+    return 0;
+}
+
+MYS_API void mys_bfilename(const char *path, char **basename)
+{
+    const char *s = strrchr(path, '/');
+    *basename = s ? strdup(s + 1) : strdup(path);
+}
+
+MYS_API int mys_do_mkdir(const char *path, mode_t mode)
+{
+    struct stat st;
+    int  status = 0;
+    if (stat(path, &st) != 0) {
+        /* Directory does not exist. EEXIST for race condition */
+        if (mkdir(path, mode) != 0 && errno != EEXIST)
+            status = -1;
+    } else if (!S_ISDIR(st.st_mode)) {
+        errno = ENOTDIR;
+        status = -1;
+    }
+    return status;
+}
+
+MYS_API int mys_ensure_dir(const char *path, mode_t mode)
+{
+    char *p = strdup(path);
+    char *pp = p;
+    char *sp = NULL;
+    int status = 0;
+    while (status == 0 && (sp = strchr(pp, '/')) != 0) {
+        if (sp != pp) {
+            *sp = '\0';
+            status = mys_do_mkdir(p, mode);
+            *sp = '/';
+        }
+        pp = sp + 1;
+    }
+    if (status == 0)
+        status = mys_do_mkdir(path, mode);
+    free(p);
+    return status;
+}
+
+MYS_API int mys_ensure_parent(const char *path, mode_t mode)
+{
+    char *dirc = strdup(path);
+    // char *dname = dirname(dirc);
+    // FIXME: why dname is not used?
+    int status = mys_ensure_dir(dirc, mode);
+    free(dirc);
+    return status;
+}
+
+MYS_API int mys_busysleep(double seconds)
+{
+#if defined(POSIX_COMPLIANCE)
+    /* https://stackoverflow.com/a/8158862 */
+    struct timespec req;
+    req.tv_sec = (uint64_t)seconds;
+    req.tv_nsec = (uint64_t)((seconds - (double)req.tv_sec) * 1000000000);
+    do {
+        if(nanosleep(&req, &req) == 0)
+            break;
+        else if(errno != EINTR)
+            return -1;
+    } while (req.tv_sec > 0 || req.tv_nsec > 0);
+    return 0;
+#elif defined(OS_WINDOWS)
+    /* https://stackoverflow.com/a/5801863 */
+    /* https://stackoverflow.com/a/26945754 */
+    LARGE_INTEGER fr,t1,t2;
+    if (!QueryPerformanceFrequency(&fr))
+        return -1;
+    if (!QueryPerformanceCounter(&t1))
+        return -1;
+    do {
+        if (!QueryPerformanceCounter(&t2))
+            return -1;
+    } while(((double)t2.QuadPart-(double)t1.QuadPart)/(double)fr.QuadPart < sec);
+    return 0;
+#else
+    return -2;
+#endif
+}
+
+
 #endif /*__MYS_C__*/

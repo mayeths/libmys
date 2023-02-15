@@ -12,9 +12,103 @@
 
 #if defined(POSIX_COMPLIANCE)
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <libgen.h>
 #elif defined(OS_WINDOWS)
 #include <windows.h>
 #endif
+
+typedef struct mys_prun_t {
+    int retval;
+    char *out;
+    char *err;
+} mys_prun_t;
+
+typedef struct mys_popen_t {
+    int pid;
+    int ifd;
+    int ofd;
+    int efd;
+} mys_popen_t;
+
+/**
+ * @brief Open a subprocess using system shell
+ * 
+ * @param argv The subprocess command line
+ * @return The pid and stdin/stdout/stderr file descriptor
+ */
+MYS_API mys_popen_t mys_popen_create(const char *argv);
+MYS_API int mys_popen_destroy(mys_popen_t *popend);
+/**
+ * @brief Run a subprocess using system shell,
+ * capture the exit code and stdout/stderr messages.
+ * 
+ * @param argv The subprocess command line
+ */
+MYS_API mys_prun_t mys_prun_create(const char *argv);
+/**
+ * @brief Destroy the captured results from mys_prun_create.
+ * 
+ * @param s The subprocess command line
+ */
+MYS_API int mys_prun_destroy(mys_prun_t *pd);
+/**
+ * @brief return a new 
+ * 
+ * @param path 
+ * @return MYS_API* 
+ * 
+ * @note Remember to free return value
+ */
+MYS_API void mys_bfilename(const char *path, char **basename);
+/**
+ * @brief 
+ * 
+ * @param path The path to do mkdir
+ * @param mode The mkdir mode (commonly 0777)
+ * 
+ * @note https://stackoverflow.com/a/675193
+ */
+MYS_API int mys_do_mkdir(const char *path, mode_t mode);
+/**
+ * @brief Ensure all directories in path exist
+ * 
+ * @param path The path where all parent directories will be ensured to exist.
+ * @param mode The mode to create parent directories.
+ * 
+ * @note
+ * Algorithm takes the pessimistic view and works top-down to ensure
+ * each directory in path exists, rather than optimistically creating
+ * the last element and working backwards.
+ * mys_ensure_dir("/a/b/c/d/", 0777)
+ */
+MYS_API int mys_ensure_dir(const char *path, mode_t mode);
+/**
+ * @brief Ensure all directories in parent path exist
+ * 
+ * @param path The path where all parent directories will be ensured to exist.
+ * @param mode The mode to create parent directories
+ */
+MYS_API int mys_ensure_parent(const char *path, mode_t mode);
+MYS_API int mys_busysleep(double seconds);
+
+/* gcc pipe.c && valgrind --leak-check=full --track-fds=yes ./a.out
+int main() {
+    int pipeIOE[3];
+    char *argv = "echo 123";
+    prun_t result = prun_create(argv);
+    printf("status:%d\n", result.status);
+    printf("stdout:\n%s", result.out);
+    printf("stderr:\n%s", result.err);
+    prun_destroy(&result);
+    fclose(stdin);
+    fclose(stdout);
+    fclose(stderr);
+}
+*/
 
 static inline int busysleep(double sec)
 {
@@ -230,20 +324,8 @@ static char *extract_check_result(FILE *fp) {
     return output;
 }
 
-typedef struct popen_t {
-    int pid;
-    int ifd;
-    int ofd;
-    int efd;
-} popen_t;
+typedef mys_popen_t popen_t;
 
-typedef struct prun_t {
-    int status;
-    const char *out;
-    const char *err;
-} prun_t;
-
-static const char *__empty_string = "";
 static popen_t popen_create(const char *argv)
 {
     popen_t result;
@@ -254,12 +336,14 @@ static popen_t popen_create(const char *argv)
     return result;
 }
 
+typedef mys_prun_t prun_t;
+
 MYS_API static prun_t prun_create(const char *argv)
 {
     prun_t result;
-    result.status = -1;
-    result.out = __empty_string;
-    result.err = __empty_string;
+    result.retval = -1;
+    result.out = NULL;
+    result.err = NULL;
 
     popen_t pf = popen_create(argv);
 
@@ -273,19 +357,19 @@ MYS_API static prun_t prun_create(const char *argv)
         result.err = extract_check_result(errfp);
         fclose(errfp);
     }
-    result.status = pcloseRWE(pf.pid, pf.ifd, pf.ofd, pf.efd);
+    result.retval = pcloseRWE(pf.pid, pf.ifd, pf.ofd, pf.efd);
     return result;
 }
 
 MYS_API static void prun_destroy(prun_t *s)
 {
-    if (s->out != NULL && s->out != __empty_string)
+    if (s->out != NULL)
         free((char *)s->out);
-    if (s->err != NULL && s->err != __empty_string)
+    if (s->err != NULL)
         free((char *)s->err);
     s->out = NULL;
     s->err = NULL;
-    s->status = -1;
+    s->retval = -1;
 }
 
 /* Remember to free return value. */
