@@ -5,6 +5,22 @@
 #include "config.h"
 #include "log.h"
 
+#ifndef STATIC_ASSERT
+#if defined(__cplusplus) || defined(static_assert)
+#define STATIC_ASSERT(expr, diagnostic) static_assert(expr, diagnostic)
+#else
+/** glibc: misc/sys/cdefs.h
+ * [commit] 3999d26ead93990b244ada078073fb58fb8bb5be
+ * > Add ersatz _Static_assert on older C hosts
+ * Define a substitute, if on a pre-C11 C platform
+ * that is not known to support _Static_assert.
+ */
+#define STATIC_ASSERT(expr, diagnostic) \
+    extern int (*__Static_assert_function (void)) \
+      [!!sizeof (struct { int emit_error_if_static_assert_failed: (expr) ? 2 : -1; })]
+#endif
+#endif
+
 /* Runtime Assertion */
 
 #define ASSERT(exp, fmt, ...) do {     \
