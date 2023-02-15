@@ -1,29 +1,25 @@
 #pragma once
 
-static inline int partition1DSimple(
+#include "config.h"
+#include "macro.h"
+
+/**
+ * @brief Return balanced partition of i in n
+ * 
+ * @param gs global start index
+ * @param ge global end index
+ * @param n number of partition
+ * @param i index of local partition
+ * @param ls start index of local partition
+ * @param le end index of local partition
+ */
+MYS_API void mys_partition_naive(const int gs, const int ge, const int n, const int i, int *ls, int *le);
+
+MYS_API static int partition1DSimple(
     const int start, const int end,
     const int nworkers, const int workerid,
     int *wstart, int *wend /* return values */
 ) {
-    const int total = end - start;
-    int size = total / nworkers;
-    int rest = total % nworkers;
-    (*wstart) = start;
-    if (workerid < rest) {
-        size += 1;
-        (*wstart) += (workerid * size);
-    } else {
-        (*wstart) += rest + (workerid * size);
-    }
-    (*wend) = (*wstart) + size;
+    mys_partition_naive(start, end, nworkers, workerid, wstart, wend);
     return 0;
-}
-
-static inline int partition1DLoadBalanced(
-    const int *p, const int *j,
-    const int start, const int end,
-    const int nworkers, const int workerid,
-    int *wstart, int *wend
-) {
-    return 1;
 }
