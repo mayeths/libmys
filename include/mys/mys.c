@@ -776,7 +776,7 @@ MYS_API const char *mys_procname()
     char exe[1024];
     int pid = (int)getpid();
     snprintf(exe, sizeof(exe), "/proc/%d/exe", pid);
-    int capacity = 128;
+    size_t capacity = 128;
     char *buffer = (char *)malloc(sizeof(char) * capacity);
     ssize_t len = readlink(exe, buffer, capacity);
     while ((size_t)len >= (capacity - 1)) {
