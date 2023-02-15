@@ -767,5 +767,33 @@ MYS_API int mys_busysleep(double seconds)
 #endif
 }
 
+MYS_API const char *mys_procname()
+{
+    static char *name = NULL;
+    if (name != NULL)
+        return name;
+
+    char exe[1024];
+    int pid = (int)getpid();
+    snprintf(exe, sizeof(exe), "/proc/%d/exe", pid);
+    int capacity = 128;
+    char *buffer = (char *)malloc(sizeof(char) * capacity);
+    ssize_t len = readlink(exe, buffer, capacity);
+    while ((size_t)len >= (capacity - 1)) {
+        capacity += 128;
+        buffer = (char *)realloc(buffer, capacity);
+        len = readlink(exe, buffer, capacity);
+    }
+    if (len <= 0) {
+        char *reason = strerror(errno);
+        int size = snprintf(NULL, 0, "<error_exe.pid=%d (%s)>", pid, reason);
+        name = (char *)malloc(sizeof(char) * size);
+        snprintf(name, size, "<error_exe.pid=%d (%s)>", pid, reason);
+    } else {
+        buffer[len] = '\0';
+        mys_bfilename(buffer, &name);
+    }
+    return name;
+}
 
 #endif /*__MYS_C__*/
