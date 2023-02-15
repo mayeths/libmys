@@ -75,7 +75,6 @@ MYS_API const char* mys_log_level_string(int level);
 #define DEBUG_ORDERED(fmt, ...) DLOG_ORDERED(fmt, ##__VA_ARGS__)
 #define FAILED(fmt, ...) FLOG(MYRANK(), fmt, ##__VA_ARGS__)
 #define THROW_NOT_IMPL() FAILED("Not implemented.")
-#define WAIT_FLAG(flagfile) __mys_wait_flag(__FILE__, __LINE__, flagfile)
 
 
 ////// Internal

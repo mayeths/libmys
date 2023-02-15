@@ -796,4 +796,28 @@ MYS_API const char *mys_procname()
     return name;
 }
 
+MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
+{
+    int myrank = mys_myrank();
+    int nranks = mys_nranks();
+    int digits = trunc(log10(nranks)) + 1;
+    digits = digits > 3 ? digits : 3;
+    if (myrank == 0) {
+        fprintf(stdout, "[WAIT::%0*d %s:%03d] Use \"touch %s\" to continue... ",
+            digits, 0, file, line, flagfile);
+        fflush(stdout);
+    }
+    struct stat fstat;
+    time_t last_modified = stat(flagfile, &fstat) == 0 ? fstat.st_mtime : 0;
+    while (stat(flagfile, &fstat) == 0 && fstat.st_mtime <= last_modified)
+        sleep(1);
+
+    mys_barrier();
+    if (myrank == 0) {
+        fprintf(stdout, "OK\n");
+        fflush(stdout);
+    }
+}
+
+
 #endif /*__MYS_C__*/

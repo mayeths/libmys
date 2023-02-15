@@ -38,7 +38,6 @@ extern "C" {
 #include "./mys/log.h"
 #include "./mys/macro.h"
 #include "./mys/myspi.h"
-#include "./mys/misc.h"
 #include "./mys/os.h"
 #include "./mys/partition.h"
 #include "./mys/rand.h"

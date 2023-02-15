@@ -9,6 +9,8 @@
 
 #include "config.h"
 #include "macro.h"
+#include "myspi.h"
+#include "thread.h"
 
 #if defined(POSIX_COMPLIANCE)
 #include <unistd.h>
@@ -95,6 +97,7 @@ MYS_API int mys_ensure_dir(const char *path, mode_t mode);
 MYS_API int mys_ensure_parent(const char *path, mode_t mode);
 MYS_API int mys_busysleep(double seconds);
 MYS_API const char *mys_procname();
+MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile);
 
 
 ////// Legacy
@@ -110,6 +113,7 @@ MYS_API static const char *procname() { return mys_procname(); }
 MYS_API static int do_mkdir(const char *path, mode_t mode) { return mys_do_mkdir(path, mode); }
 MYS_API static int ensuredir(const char *path, mode_t mode) { return mys_ensure_dir(path, mode); }
 MYS_API static int ensureparent(const char *path, mode_t mode) { return mys_ensure_parent(path, mode); }
+#define WAIT_FLAG(flagfile) mys_wait_flag(__FILE__, __LINE__, flagfile)
 
 /////// check memory leak by valgrind
 /* gcc pipe.c && valgrind --leak-check=full --track-fds=yes ./a.out
