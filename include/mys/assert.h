@@ -16,8 +16,6 @@
         exit(1);                       \
     }                                  \
 } while(0)
-#ifndef __ASSERT_SUGAR__
-#define __ASSERT_SUGAR__
 #define __ASSERTX_ZERO_OP__(exp, expect, actual, fmt, ...) do { \
     ASSERT(                                                     \
         (exp),                                                  \
@@ -70,7 +68,6 @@
 #define ASSERTX_FLOAT_GE(exp1, exp2, fmt, ...)  __ASSERTX_ONE_OP__(exp1,>=,exp2,"%E",fmt,##__VA_ARGS__)
 #define ASSERT_FLOAT_BETWEEN_IE(low, exp, high) __ASSERTX_TWO_OP__(low,<=,exp,< ,high,"%E","")
 #define ASSERT_FLOAT_BETWEEN_II(low, exp, high) __ASSERTX_TWO_OP__(low,<=,exp,<=,high,"%E","")
-#endif /* __ASSERT_SUGAR__ */
 
 /* Validate return value */
 #define CHKRET(fncall) do {              \
