@@ -23,6 +23,10 @@
 #include <windows.h>
 #endif
 
+#if defined(OS_LINUX)
+#include <sched.h>
+#endif
+
 typedef struct mys_prun_t {
     int retval;
     char *out;
@@ -98,7 +102,10 @@ MYS_API int mys_ensure_parent(const char *path, mode_t mode);
 MYS_API int mys_busysleep(double seconds);
 MYS_API const char *mys_procname();
 MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile);
-
+#if defined(OS_LINUX)
+MYS_API const char *mys_get_affinity();
+MYS_API void mys_print_affinity(FILE *fd);
+#endif
 
 ////// Legacy
 

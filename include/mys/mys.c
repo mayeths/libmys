@@ -993,6 +993,53 @@ MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
     }
 }
 
+#if defined(OS_LINUX)
+mys_thread_local char _mys_affinity_buffer[256];
+MYS_API const char *mys_get_affinity() {
+    int ncores = (int)sysconf(_SC_NPROCESSORS_ONLN);
+    if (ncores > sizeof(_mys_affinity_buffer))
+        return NULL;
+
+    cpu_set_t mask;
+    if (sched_getaffinity(0, sizeof(cpu_set_t), &mask) == -1)
+        return NULL;
+
+    for (int i = 0; i < ncores; i++) {
+        _mys_affinity_buffer[i] = CPU_ISSET(i, &mask) ? '1' : '0';
+}
+    _mys_affinity_buffer[ncores] = '\0';
+    return _mys_affinity_buffer;
+}
+
+MYS_API void mys_print_affinity(FILE *fd)
+{
+    int myrank = mys_myrank();
+    // int nranks = mys_nranks();
+#ifdef _OPENMP
+    #pragma omp parallel
+#endif
+    {
+#ifdef _OPENMP
+        int nthreads = omp_get_num_threads();
+        int thread_id = omp_get_thread_num();
+        #pragma omp for ordered schedule(static,1)
+#else
+        int nthreads = 1;
+        int thread_id = 0;
+#endif
+        for (int t = 0; t < nthreads; t++) {
+#ifdef _OPENMP
+            #pragma omp ordered
+#endif
+            {
+                const char *affinity = mys_get_affinity();
+                fprintf(fd, "rank=%d:%d affinity=%s\n", myrank, thread_id, affinity);
+            }
+        }
+    }
+}
+#endif
+
 MYS_API void mys_partition_naive(const int gs, const int ge, const int n, const int i, int *ls, int *le) {
     const int total = ge - gs;
     int size = total / n;

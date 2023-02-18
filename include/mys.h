@@ -21,6 +21,13 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#include "./mys/config.h"
+#include "./mys/macro.h"
+
+#if defined(OS_LINUX) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
+#endif
+
 #if !defined(MYS_NO_MPI)
 #include <mpi.h>
 #endif
@@ -31,12 +38,9 @@
 extern "C" {
 #endif
 #include "./mys/assert.h"
-#include "./mys/config.h"
-// #include "./mys/debug-legacy.h"
 #include "./mys/env.h"
 #include "./mys/hrtime.h"
 #include "./mys/log.h"
-#include "./mys/macro.h"
 #include "./mys/myspi.h"
 #include "./mys/os.h"
 #include "./mys/partition.h"
