@@ -997,7 +997,7 @@ MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
 mys_thread_local char _mys_affinity_buffer[256];
 MYS_API const char *mys_get_affinity() {
     int ncores = (int)sysconf(_SC_NPROCESSORS_ONLN);
-    if (ncores > sizeof(_mys_affinity_buffer))
+    if ((int)ncores > (int)sizeof(_mys_affinity_buffer))
         return NULL;
 
     cpu_set_t mask;
