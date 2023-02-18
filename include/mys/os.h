@@ -105,7 +105,9 @@ MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile);
 #if defined(OS_LINUX)
 MYS_API const char *mys_get_affinity();
 MYS_API void mys_print_affinity(FILE *fd);
+MYS_API void mys_stick_affinity();
 #endif
+
 
 ////// Legacy
 

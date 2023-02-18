@@ -1000,12 +1000,12 @@ MYS_API const char *mys_get_affinity() {
     if ((int)ncores > (int)sizeof(_mys_affinity_buffer))
         return NULL;
 
-    cpu_set_t mask;
-    if (sched_getaffinity(0, sizeof(cpu_set_t), &mask) == -1)
+    cpu_set_t cpu_set;
+    if (sched_getaffinity(0, sizeof(cpu_set_t), &cpu_set) == -1)
         return NULL;
 
     for (int i = 0; i < ncores; i++) {
-        _mys_affinity_buffer[i] = CPU_ISSET(i, &mask) ? '1' : '0';
+        _mys_affinity_buffer[i] = CPU_ISSET(i, &cpu_set) ? '1' : '0';
 }
     _mys_affinity_buffer[ncores] = '\0';
     return _mys_affinity_buffer;
@@ -1037,8 +1037,40 @@ MYS_API void mys_print_affinity(FILE *fd)
                 rank_digits = rank_digits > 3 ? rank_digits : 3;
                 thread_digits = thread_digits > 1 ? thread_digits : 1;
                 const char *affinity = mys_get_affinity();
-                fprintf(fd, "rank=%*d:%*d affinity=%s\n", rank_digits, myrank, thread_digits, thread_id, affinity);
+                fprintf(fd, "rank=%0*d:%0*d affinity=%s\n", rank_digits, myrank, thread_digits, thread_id, affinity);
+                fflush(fd);
             }
+        }
+    }
+}
+
+MYS_API void mys_stick_affinity()
+{
+    int myrank = mys_myrank();
+    int nranks = mys_nranks();
+#ifdef _OPENMP
+    #pragma omp parallel
+#endif
+    {
+#ifdef _OPENMP
+        int thread_id = omp_get_thread_num();
+#else
+        int thread_id = 0;
+#endif
+        const char *affinity = mys_get_affinity();
+        int len = strnlen(affinity, INT_MAX);
+        int count = 0;
+        for (int i = 0; i < len; i++) {
+            if (affinity[i] == '0')
+                continue;
+            if (count == thread_id) {
+                cpu_set_t cpu_set;
+                CPU_ZERO(&cpu_set);
+                CPU_SET(i, &cpu_set);
+                sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set);
+                break;
+            }
+            count += 1;
         }
     }
 }
