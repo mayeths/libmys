@@ -1014,7 +1014,7 @@ MYS_API const char *mys_get_affinity() {
 MYS_API void mys_print_affinity(FILE *fd)
 {
     int myrank = mys_myrank();
-    // int nranks = mys_nranks();
+    int nranks = mys_nranks();
 #ifdef _OPENMP
     #pragma omp parallel
 #endif
@@ -1032,8 +1032,12 @@ MYS_API void mys_print_affinity(FILE *fd)
             #pragma omp ordered
 #endif
             {
+                int rank_digits = trunc(log10(nranks)) + 1;
+                int thread_digits = trunc(log10(nthreads)) + 1;
+                rank_digits = rank_digits > 3 ? rank_digits : 3;
+                thread_digits = thread_digits > 1 ? thread_digits : 1;
                 const char *affinity = mys_get_affinity();
-                fprintf(fd, "rank=%d:%d affinity=%s\n", myrank, thread_id, affinity);
+                fprintf(fd, "rank=%*d:%*d affinity=%s\n", rank_digits, myrank, thread_digits, thread_id, affinity);
             }
         }
     }
