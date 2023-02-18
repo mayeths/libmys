@@ -1015,32 +1015,35 @@ MYS_API void mys_print_affinity(FILE *fd)
 {
     int myrank = mys_myrank();
     int nranks = mys_nranks();
+    for (int rank = 0; rank < nranks; rank++) {
 #ifdef _OPENMP
-    #pragma omp parallel
+        #pragma omp parallel
 #endif
-    {
+        if (myrank == rank) {
 #ifdef _OPENMP
-        int nthreads = omp_get_num_threads();
-        int thread_id = omp_get_thread_num();
-        #pragma omp for ordered schedule(static,1)
+            int nthreads = omp_get_num_threads();
+            int thread_id = omp_get_thread_num();
+            #pragma omp for ordered schedule(static,1)
 #else
-        int nthreads = 1;
-        int thread_id = 0;
+            int nthreads = 1;
+            int thread_id = 0;
 #endif
-        for (int t = 0; t < nthreads; t++) {
+            for (int t = 0; t < nthreads; t++) {
 #ifdef _OPENMP
-            #pragma omp ordered
+                #pragma omp ordered
 #endif
-            {
-                int rank_digits = trunc(log10(nranks)) + 1;
-                int thread_digits = trunc(log10(nthreads)) + 1;
-                rank_digits = rank_digits > 3 ? rank_digits : 3;
-                thread_digits = thread_digits > 1 ? thread_digits : 1;
-                const char *affinity = mys_get_affinity();
-                fprintf(fd, "rank=%0*d:%0*d affinity=%s\n", rank_digits, myrank, thread_digits, thread_id, affinity);
-                fflush(fd);
+                {
+                    int rank_digits = trunc(log10(nranks)) + 1;
+                    int thread_digits = trunc(log10(nthreads)) + 1;
+                    rank_digits = rank_digits > 3 ? rank_digits : 3;
+                    thread_digits = thread_digits > 1 ? thread_digits : 1;
+                    const char *affinity = mys_get_affinity();
+                    fprintf(fd, "rank=%0*d:%0*d affinity=%s\n", rank_digits, myrank, thread_digits, thread_id, affinity);
+                    fflush(fd);
+                }
             }
         }
+        mys_barrier();
     }
 }
 
