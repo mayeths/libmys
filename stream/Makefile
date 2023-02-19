@@ -9,7 +9,7 @@ CFLAGS = -DSTREAM_ARRAY_SIZE=100000000 -DNTIMES=10
 # stream_mpi.c use STREAM_ARRAY_SIZE from runtime argument
 MPICFLAGS = -DNTIMES=10
 
-OPT=-std=c99 -Wall -lm -g -Ofast -ftree-vectorize -fopenmp -mcmodel=large
+OPT=-std=c99 -Wall -lm -Ofast -ftree-vectorize -fopenmp -mcmodel=large
 
 .PHONY: clean
 
