@@ -1,3 +1,4 @@
+//// NOTE: This file has been modified by Mayeths
 /*-----------------------------------------------------------------------*/
 /* Program: STREAM                                                       */
 /* Revision: $Id: stream_mpi.c,v 1.8 2016/07/28 16:00:50 mccalpin Exp mccalpin $ */
@@ -98,6 +99,7 @@
  */
 
 // ----------------------- !!! NOTE CHANGE IN DEFINITION !!! ------------------
+//// Macro STREAM_ARRAY_SIZE has been replaced by runtime argument
 // For the MPI version of STREAM, the three arrays with this many elements
 // each will be *distributed* across the MPI ranks.  
 //
@@ -112,9 +114,6 @@
 //    16 MPI ranks per node -- only the total array size and the total
 //    cache size matter.
 //
-#ifndef STREAM_ARRAY_SIZE
-#   define STREAM_ARRAY_SIZE	10000000
-#endif
 
 /*  2) STREAM runs each kernel "NTIMES" times and reports the *best* result
  *         for any iteration after the first, therefore the minimum value
@@ -223,13 +222,6 @@ static double	avgtime[4] = {0}, maxtime[4] = {0},
 static char	*label[4] = {"Copy:      ", "Scale:     ",
     "Add:       ", "Triad:     "};
 
-static double	bytes[4] = {
-    2 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
-    2 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
-    3 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
-    3 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE
-    };
-
 extern void checkSTREAMresults(STREAM_TYPE *AvgErrByRank, int numranks);
 extern void computeSTREAMerrors(STREAM_TYPE *aAvgErr, STREAM_TYPE *bAvgErr, STREAM_TYPE *cAvgErr);
 #ifdef TUNED
@@ -242,7 +234,7 @@ extern void tuned_STREAM_Triad(STREAM_TYPE scalar);
 extern int omp_get_num_threads();
 #endif
 int
-main()
+main(int argc, char **argv)
     {
     int			quantum, checktick();
     int			BytesPerWord;
@@ -257,8 +249,27 @@ main()
 	STREAM_TYPE *AvgErrByRank;
 
     /* --- SETUP --- call MPI_Init() before anything else! --- */
-
     rc = MPI_Init(NULL, NULL);
+
+	int64_t STREAM_ARRAY_SIZE = 10000000;
+	// int STRIDE = 0;
+
+    if (argc < 2) {
+        printf("Usage: %s <STREAM_ARRAY_SIZE>\n", argv[0]);
+        exit(1);
+    }
+    STREAM_ARRAY_SIZE = (int64_t)atoll(argv[1]);
+	// if (argc > 2) {
+	// 	STRIDE = atoi(argv[2]);
+	// }
+
+	double bytes[4] = {
+    2 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
+    2 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
+    3 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
+    3 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE
+    };
+
 	t0 = MPI_Wtime();
     if (rc != MPI_SUCCESS) {
        printf("ERROR: MPI Initialization failed with return code %d\n",rc);

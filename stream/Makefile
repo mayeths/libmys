@@ -6,9 +6,10 @@ CC ?= gcc
 MPICC ?= mpicc
 
 CFLAGS = -DSTREAM_ARRAY_SIZE=100000000 -DNTIMES=10
-MPICFLAGS = -DSTREAM_ARRAY_SIZE=500000000 -DNTIMES=10
+# stream_mpi.c use STREAM_ARRAY_SIZE from runtime argument
+MPICFLAGS = -DNTIMES=10
 
-OPT=-Ofast -ftree-vectorize -fopenmp -mcmodel=large
+OPT=-std=c99 -Wall -lm -g -Ofast -ftree-vectorize -fopenmp -mcmodel=large
 
 all: stream_mpi.exe stream_omp.exe
 
@@ -20,4 +21,4 @@ stream_omp.exe: stream_omp.c
 	$(CC) -o $@ $(OPT) $(CFLAGS) $<
 
 clean:
-	rm -f stream_c.exe stream_mpi.exe *.o
+	rm -f stream_mpi.exe stream_omp.exe
