@@ -11,7 +11,9 @@ MPICFLAGS = -DNTIMES=10
 
 OPT=-std=c99 -Wall -lm -g -Ofast -ftree-vectorize -fopenmp -mcmodel=large
 
-all: stream_mpi.exe stream_omp.exe
+.PHONY: clean
+
+all: clean stream_mpi.exe stream_omp.exe
 
 # stream_mpi.c also support openmp
 stream_mpi.exe: stream_mpi.c
