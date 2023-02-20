@@ -192,9 +192,9 @@ static inline int get_datacache_size(int level)
         char *type_buffer = NULL;
         char *size_buffer = NULL;
         char *level_buffer = NULL;
-        size_t type_slen = read_all_content(&type_buffer, type_file);
-        size_t size_slen = read_all_content(&size_buffer, size_file);
-        read_all_content(&level_buffer, level_file);
+        size_t type_slen = read_all_content((void **)&type_buffer, type_file);
+        read_all_content((void **)&size_buffer, size_file);
+        read_all_content((void **)&level_buffer, level_file);
         if (type_buffer == NULL || size_buffer == NULL || level_buffer == NULL)
             break;
 

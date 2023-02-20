@@ -201,17 +201,17 @@ extern int omp_get_num_threads();
 int
 main(int argc, char **argv)
     {
-    int			quantum, checktick();
+    int			quantum = 0, checktick();
     int			BytesPerWord;
     int			i,k;
     ssize_t		j;
     STREAM_TYPE		scalar;
     double		t, times[4][NTIMES];
-	double		*TimesByRank;
+	double		*TimesByRank = NULL;
 	double		t0,t1,tmin;
 	int         rc, numranks, myrank;
 	STREAM_TYPE	AvgError[3] = {0.0,0.0,0.0};
-	STREAM_TYPE *AvgErrByRank;
+	STREAM_TYPE *AvgErrByRank = NULL;
 
     /* --- SETUP --- call MPI_Init() before anything else! --- */
     rc = MPI_Init(NULL, NULL);
@@ -379,7 +379,9 @@ main(int argc, char **argv)
 
     /* --- SETUP --- initialize arrays and estimate precision of timer --- */
 
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
     for (j=0; j<array_elements; j++) {
 	    a[j] = 1.0;
 	    b[j] = 2.0;
@@ -427,7 +429,9 @@ main(int argc, char **argv)
     /* Get initial timing estimate to compare to timer granularity. */
 	/* All ranks need to run this code since it changes the values in array a */
     t = MPI_Wtime();
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
     for (j = 0; j < array_elements; j++)
 		a[j] = 2.0E0 * a[j];
     t = 1.0E6 * (MPI_Wtime() - t);
@@ -470,7 +474,9 @@ main(int argc, char **argv)
 #ifdef TUNED
         tuned_STREAM_Copy();
 #else
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
 		for (j=0; j<array_elements; j++)
 			c[j] = a[j];
 #endif
@@ -484,7 +490,9 @@ main(int argc, char **argv)
 #ifdef TUNED
         tuned_STREAM_Scale(scalar);
 #else
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
 		for (j=0; j<array_elements; j++)
 			b[j] = scalar*c[j];
 #endif
@@ -498,7 +506,9 @@ main(int argc, char **argv)
 #ifdef TUNED
         tuned_STREAM_Add();
 #else
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
 		for (j=0; j<array_elements; j++)
 			c[j] = a[j]+b[j];
 #endif
@@ -512,7 +522,9 @@ main(int argc, char **argv)
 #ifdef TUNED
         tuned_STREAM_Triad(scalar);
 #else
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
 		for (j=0; j<array_elements; j++)
 			a[j] = b[j]+scalar*c[j];
 #endif
