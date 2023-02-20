@@ -11,8 +11,9 @@ MYS_API double mys_standard_deviation(double *arr, int n);
 
 
 ////// Legacy
-
+#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_STATISTIC)
 MYS_API static double arthimetic_mean(double *arr, int n) { return mys_arthimetic_mean(arr, n); }
 MYS_API static double harmonic_mean(double *arr, int n) { return mys_harmonic_mean(arr, n); }
 MYS_API static double geometric_mean(double *arr, int n) { return mys_geometric_mean(arr, n); }
 MYS_API static double standard_deviation(double *arr, int n) { return mys_standard_deviation(arr, n); }
+#endif /*MYS_NO_LEGACY*/

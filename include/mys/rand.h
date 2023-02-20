@@ -31,6 +31,7 @@ MYS_API float mys_randf32(float minimum, float maximum);
 MYS_API const char *mys_randname();
 
 ////// Legacy
+#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_RAND)
 
 static inline uint64_t randu64(uint64_t minimum, uint64_t maximum) {
     return mys_randu64(minimum, maximum);
@@ -53,6 +54,8 @@ static inline float randf32(float minimum, float maximum) {
 static inline const char *randname() {
     return mys_randname();
 }
+
+#endif /*MYS_NO_LEGACY*/
 
 ////// Advanced
 

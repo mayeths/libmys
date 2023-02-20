@@ -1,6 +1,5 @@
 #pragma once
 
-#define MYS_LOG_VERSION 2
 // #define MYS_LOG_DISABLE_STDOUT_HANDLER
 
 #include <stdio.h>
@@ -69,12 +68,39 @@ MYS_API void mys_log_set_level(int level);
 MYS_API const char* mys_log_level_string(int level);
 
 
-////// MYS_LOG_VERSION 1 Compatibility
+////// Legacy
+// We disable legacy log DEBUG() macro by default.
+// Some applications use their own DEBUG macro and
+// the following code often comes with surprise.
+#define MYS_NO_LEGACY_LOG
+#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_LOG)
 
+#ifndef DEBUG
 #define DEBUG(who, fmt, ...) DLOG(who, fmt, ##__VA_ARGS__)
+#else
+#warning legacy DEBUG was predefined before libmys
+#endif /*DEBUG*/
+
+#ifndef DEBUG_ORDERED
 #define DEBUG_ORDERED(fmt, ...) DLOG_ORDERED(fmt, ##__VA_ARGS__)
+#else
+#warning legacy DEBUG_ORDERED was predefined before libmys
+#endif /*DEBUG_ORDERED*/
+
+
+#ifndef FAILED
 #define FAILED(fmt, ...) FLOG(MYRANK(), fmt, ##__VA_ARGS__)
+#else
+#warning legacy FAILED was predefined before libmys
+#endif /*FAILED*/
+
+#ifndef THROW_NOT_IMPL
 #define THROW_NOT_IMPL() FAILED("Not implemented.")
+#else
+#warning legacy THROW_NOT_IMPL was predefined before libmys
+#endif /*THROW_NOT_IMPL*/
+
+#endif /*MYS_NO_LEGACY*/
 
 
 ////// Internal

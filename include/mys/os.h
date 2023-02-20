@@ -110,7 +110,7 @@ MYS_API void mys_stick_affinity();
 
 
 ////// Legacy
-
+#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_OS)
 typedef mys_popen_t popen_t;
 typedef mys_prun_t prun_t;
 MYS_API static popen_t popen_create(const char *argv) { return mys_popen_create(argv); }
@@ -122,7 +122,24 @@ MYS_API static const char *procname() { return mys_procname(); }
 MYS_API static int do_mkdir(const char *path, mode_t mode) { return mys_do_mkdir(path, mode); }
 MYS_API static int ensuredir(const char *path, mode_t mode) { return mys_ensure_dir(path, mode); }
 MYS_API static int ensureparent(const char *path, mode_t mode) { return mys_ensure_parent(path, mode); }
+
+#ifndef WAIT_FLAG
 #define WAIT_FLAG(flagfile) mys_wait_flag(__FILE__, __LINE__, flagfile)
+#else
+#warning legacy WAIT_FLAG was predefined before libmys
+#endif /*WAIT_FLAG*/
+
+#endif /*MYS_NO_LEGACY*/
+
+////// Internal
+
+typedef struct _mys_hrtime_G_t {
+    bool inited;
+    union {
+        uint64_t u;
+        double d;
+    } start;
+} _mys_hrtime_G_t;
 
 /////// check memory leak by valgrind
 /* gcc pipe.c && valgrind --leak-check=full --track-fds=yes ./a.out
