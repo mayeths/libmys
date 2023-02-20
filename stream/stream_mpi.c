@@ -1,46 +1,18 @@
-//// NOTE: This file has been modified by Mayeths
 /*-----------------------------------------------------------------------*/
-/* Program: STREAM                                                       */
-/* Revision: $Id: stream_mpi.c,v 1.8 2016/07/28 16:00:50 mccalpin Exp mccalpin $ */
+/* Program: STREAM (forked from 5.10)                                    */
 /* Original code developed by John D. McCalpin                           */
 /* Programmers: John D. McCalpin                                         */
 /*              Joe R. Zagar                                             */
-/*                                                                       */
+/*              Mayeths                                                  */
 /* This program measures memory transfer rates in MB/s for simple        */
 /* computational kernels coded in C.                                     */
 /*-----------------------------------------------------------------------*/
-/* Copyright 1991-2013: John D. McCalpin                                 */
-/*-----------------------------------------------------------------------*/
-/* License:                                                              */
-/*  1. You are free to use this program and/or to redistribute           */
-/*     this program.                                                     */
-/*  2. You are free to modify this program for your own use,             */
-/*     including commercial use, subject to the publication              */
-/*     restrictions in item 3.                                           */
-/*  3. You are free to publish results obtained from running this        */
-/*     program, or from works that you derive from this program,         */
-/*     with the following limitations:                                   */
-/*     3a. In order to be referred to as "STREAM benchmark results",     */
-/*         published results must be in conformance to the STREAM        */
-/*         Run Rules, (briefly reviewed below) published at              */
-/*         http://www.cs.virginia.edu/stream/ref.html                    */
-/*         and incorporated herein by reference.                         */
-/*         As the copyright holder, John McCalpin retains the            */
-/*         right to determine conformity with the Run Rules.             */
-/*     3b. Results based on modified source code or on runs not in       */
-/*         accordance with the STREAM Run Rules must be clearly          */
-/*         labelled whenever they are published.  Examples of            */
-/*         proper labelling include:                                     */
-/*           "tuned STREAM benchmark results"                            */
-/*           "based on a variant of the STREAM benchmark code"           */
-/*         Other comparable, clear, and reasonable labelling is          */
-/*         acceptable.                                                   */
-/*     3c. Submission of results to the STREAM benchmark web site        */
-/*         is encouraged, but not required.                              */
-/*  4. Use of this program or creation of derived works based on this    */
-/*     program constitutes acceptance of these licensing restrictions.   */
-/*  5. Absolutely no warranty is expressed or implied.                   */
-/*-----------------------------------------------------------------------*/
+
+//// TODO: implement ./stream_mpi.exe LLC_size [min_size_per_rank=128MB] [min_run_ms=500]
+//// E.g, Apple M1 has 12MB shared L2, Then ./stream_mpi.exe 12MB 128MB
+//// We will use max(12 * 8, 128) = 128MB per rank
+//// E.g, AMD EPYC 7H12 has 16MB shared L2, Then ./stream_mpi.exe 16MB 128MB
+//// We will use max(16 * 8, 128) = 128MB per rank
 
 # define _XOPEN_SOURCE 600
 
@@ -59,11 +31,6 @@
 /*-----------------------------------------------------------------------
  * INSTRUCTIONS:
  *
- *	1) STREAM requires different amounts of memory to run on different
- *           systems, depending on both the system cache size(s) and the
- *           granularity of the system timer.
- *     You should adjust the value of 'STREAM_ARRAY_SIZE' (below)
- *           to meet *both* of the following criteria:
  *       (a) Each array must be at least 4 times the size of the
  *           available cache memory. I don't worry about the difference
  *           between 10^6 and 2^20, so in practice the minimum array size
@@ -83,10 +50,6 @@
  *               If the chip is capable of 10 GB/s, it moves 2 GB in 200 msec.
  *               This means the each array must be at least 1 GB, or 128M elements.
  *
- *      Version 5.10 increases the default array size from 2 million
- *          elements to 10 million elements in response to the increasing
- *          size of L3 caches.  The new default size is large enough for caches
- *          up to 20 MB. 
  *      Version 5.10 changes the loop index variables from "register int"
  *          to "ssize_t", which allows array indices >2^32 (4 billion)
  *          on properly configured 64-bit systems.  Additional compiler options
@@ -252,34 +215,74 @@ main(int argc, char **argv)
 
     /* --- SETUP --- call MPI_Init() before anything else! --- */
     rc = MPI_Init(NULL, NULL);
+	// if either of these fail there is something really screwed up!
+	MPI_Comm_size(MPI_COMM_WORLD, &numranks);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-	int64_t STREAM_ARRAY_SIZE = 10000000;
+	ssize_t LLC_size = 0;
+	ssize_t min_size_per_rank = parse_readable_size("128MB");
+	double min_run_ms = 500;
 	// int STRIDE = 0;
 
-    if (argc < 2) {
-        printf("Usage: %s <STREAM_ARRAY_SIZE>\n", argv[0]);
-        exit(1);
-    }
-    STREAM_ARRAY_SIZE = (int64_t)atoll(argv[1]);
-	// if (argc > 2) {
-	// 	STRIDE = atoi(argv[2]);
-	// }
+	if (argc >= 2) {
+		LLC_size = parse_readable_size(argv[1]);
+		if (LLC_size <= 0 && myrank == 0) {
+			printf("ERROR on parsing argument LLC_size \"%s\"\n", argv[1]);
+			MPI_Abort(MPI_COMM_WORLD, 1);
+			exit(1);
+		}
+	} else {
+		if (myrank == 0) {
+			printf("Usage:   %s LLC_size [min_size_per_rank=128MB] [min_run_ms=500]\n", argv[0]);
+			printf("Example: %s 16MB 256MB\n", argv[0]);
+			MPI_Abort(MPI_COMM_WORLD, 1);
+			exit(1);
+		}
+	}
+
+	if (argc >= 3) {
+		min_size_per_rank = parse_readable_size(argv[2]);
+		if (min_size_per_rank <= 0 && myrank == 0) {
+			printf("ERROR on parsing argument min_size_per_rank \"%s\"\n", argv[2]);
+			MPI_Abort(MPI_COMM_WORLD, 1);
+			exit(1);
+		}
+	}
+
+	if (argc >= 4) {
+		min_run_ms = str_to_f64(argv[3], -1);
+		if (min_run_ms <= 0 && myrank == 0) {
+			printf("ERROR on parsing argument min_run_ms \"%s\"\n", argv[3]);
+			MPI_Abort(MPI_COMM_WORLD, 1);
+			exit(1);
+		}
+	}
+
+	size_t LLC_suggested_size = (size_t)LLC_size * 4;
+	size_t size_per_rank = MAX(LLC_suggested_size, min_size_per_rank);
+	size_t STREAM_ARRAY_SIZE = size_per_rank * numranks / sizeof(STREAM_TYPE);
+
+	if (myrank == 0) {
+		printf("> LLC_size: %llu -> suggestion: %llu\n",
+			(unsigned long long int)LLC_size, (unsigned long long int)LLC_suggested_size);
+		printf("> min_size_per_rank: %llu\n", (unsigned long long int)min_size_per_rank);
+		printf("> size_per_rank: %llu * %d -> STREAM_ARRAY_SIZE %llu\n",
+			(unsigned long long int)size_per_rank, numranks, (unsigned long long int)STREAM_ARRAY_SIZE);
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	double bytes[4] = {
-    2 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
-    2 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
-    3 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
-    3 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE
-    };
+		2 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
+		2 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
+		3 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
+		3 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE
+	};
 
 	t0 = MPI_Wtime();
     if (rc != MPI_SUCCESS) {
        printf("ERROR: MPI Initialization failed with return code %d\n",rc);
        exit(1);
     }
-	// if either of these fail there is something really screwed up!
-	MPI_Comm_size(MPI_COMM_WORLD, &numranks);
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
     /* --- NEW FEATURE --- distribute requested storage across MPI ranks --- */
 	array_elements = STREAM_ARRAY_SIZE / numranks;		// don't worry about rounding vs truncation

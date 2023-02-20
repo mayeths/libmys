@@ -2,25 +2,26 @@
 # NOTE: stream_omp.c was renamed from stream-5.10/stream.c
 #       stream_mpi.c was copied from stream-5.10/Versions/stream_mpi.c
 
-CC ?= gcc
 MPICC ?= mpicc
+OMPCC ?= gcc
 
-CFLAGS = -DSTREAM_ARRAY_SIZE=100000000 -DNTIMES=10
 # stream_mpi.c use STREAM_ARRAY_SIZE from runtime argument
-MPICFLAGS = -DNTIMES=10
+OPT=-DNTIMES=10
+MPICFLAGS=$(OPT)
+OMPCFLAGS=$(OPT) -DSTREAM_ARRAY_SIZE=100000000
 
-OPT=-std=c99 -Wall -lm -Ofast -ftree-vectorize -fopenmp -mcmodel=large
+OPT=-std=c99 -Wall -lm -Ofast -ftree-vectorize
+MPIOPT=$(OPT)
+OMPOPT=$(OPT) -fopenmp -mcmodel=large
 
 .PHONY: clean
 
-all: clean stream_mpi.exe stream_omp.exe
-
-# stream_mpi.c also support openmp
+# stream_mpi.c also support openmp but we won't use it
 stream_mpi.exe: stream_mpi.c
-	$(MPICC) -o $@ $(OPT) $(MPICFLAGS) $<
+	$(MPICC) -o $@ $(MPIOPT) $(MPICFLAGS) $<
 
 stream_omp.exe: stream_omp.c
-	$(CC) -o $@ $(OPT) $(CFLAGS) $<
+	$(OMPCC) -o $@ $(OMPOPT) $(OMPCFLAGS) $<
 
 clean:
 	rm -f stream_mpi.exe stream_omp.exe
