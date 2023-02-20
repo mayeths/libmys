@@ -282,7 +282,7 @@ main(int argc, char **argv)
 		printf("Element size: %zu bytes\n", bytes_per_word);
 		printf("Local array length: %zu (%s, %s per rank)\n", array_elements, s_local_array_size, s_local_rank_size);
 		printf("Global array length: %zu (%s, %s for all ranks)\n", STREAM_ARRAY_SIZE, s_global_array_size, s_global_rank_size);
-		printf("Each rank uses 3 arrays to perform COPY, SCALE, ADD and TRIAD\n");
+		printf("Each rank uses 3 arrays to perform COPY, SCALE, ADD and TRIAD.\n");
 		free(s_local_array_size);
 		free(s_local_rank_size);
 		free(s_global_array_size);
