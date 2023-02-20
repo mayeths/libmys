@@ -16,6 +16,8 @@ OMPOPT=$(OPT) -fopenmp -mcmodel=large
 
 .PHONY: clean
 
+default: clean stream_mpi.exe
+
 # stream_mpi.c also support openmp but we won't use it
 stream_mpi.exe: stream_mpi.c
 	$(MPICC) -o $@ $(MPIOPT) $(MPICFLAGS) $<

@@ -7,160 +7,60 @@
 /* This program measures memory transfer rates in MB/s for simple        */
 /* computational kernels coded in C.                                     */
 /*-----------------------------------------------------------------------*/
-
-//// TODO: implement ./stream_mpi.exe LLC_size [min_size_per_rank=128MB] [min_run_ms=500]
-//// E.g, Apple M1 has 12MB shared L2, Then ./stream_mpi.exe 12MB 128MB
-//// We will use max(12 * 8, 128) = 128MB per rank
-//// E.g, AMD EPYC 7H12 has 16MB shared L2, Then ./stream_mpi.exe 16MB 128MB
-//// We will use max(16 * 8, 128) = 128MB per rank
-
-# define _XOPEN_SOURCE 600
-
-# include <stdio.h>
-# include <stdlib.h>
-# include <unistd.h>
-# include <math.h>
-# include <float.h>
-# include <string.h>
-# include <limits.h>
-# include <sys/time.h>
-# include "mpi.h"
+#define _XOPEN_SOURCE 600
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <math.h>
+#include <float.h>
+#include <string.h>
+#include <limits.h>
+#include <sys/time.h>
+#include <mpi.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include "os.h"
 
-/*-----------------------------------------------------------------------
- * INSTRUCTIONS:
- *
- *       (a) Each array must be at least 4 times the size of the
- *           available cache memory. I don't worry about the difference
- *           between 10^6 and 2^20, so in practice the minimum array size
- *           is about 3.8 times the cache size.
- *           Example 1: One Xeon E3 with 8 MB L3 cache
- *               STREAM_ARRAY_SIZE should be >= 4 million, giving
- *               an array size of 30.5 MB and a total memory requirement
- *               of 91.5 MB.  
- *           Example 2: Two Xeon E5's with 20 MB L3 cache each (using OpenMP)
- *               STREAM_ARRAY_SIZE should be >= 20 million, giving
- *               an array size of 153 MB and a total memory requirement
- *               of 458 MB.  
- *       (b) The size should be large enough so that the 'timing calibration'
- *           output by the program is at least 20 clock-ticks.  
- *           Example: most versions of Windows have a 10 millisecond timer
- *               granularity.  20 "ticks" at 10 ms/tic is 200 milliseconds.
- *               If the chip is capable of 10 GB/s, it moves 2 GB in 200 msec.
- *               This means the each array must be at least 1 GB, or 128M elements.
- *
- *      Version 5.10 changes the loop index variables from "register int"
- *          to "ssize_t", which allows array indices >2^32 (4 billion)
- *          on properly configured 64-bit systems.  Additional compiler options
- *          (such as "-mcmodel=medium") may be required for large memory runs.
- *
- *      Array size can be set at compile time without modifying the source
- *          code for the (many) compilers that support preprocessor definitions
- *          on the compile line.  E.g.,
- *                gcc -O -DSTREAM_ARRAY_SIZE=100000000 stream.c -o stream.100M
- *          will override the default size of 10M with a new size of 100M elements
- *          per array.
- */
+static const char *usage =
+	"\x1b[36mSTREAM version 5.10 (modified by Mayeths)\x1b[0m\n"
+	"\x1b[36mUSAGE\x1b[0m\n"
+	"    %s ncores anchor_size\n"
+	"    [Apple M1] 8 cores 12MB shared L2, but we want bigger anchor size, ./stream_mpi.exe 128MB 8\n"
+	"    [Kunpeng920] 128 cores 48MB shared L3, ./stream_mpi.exe 48MB 128\n"
+	"\x1b[36mINSIDED ALGORITHM\x1b[0m\n"
+	"    We ensure local_array_size is anchor_size when using full machines:\n"
+	"    local_array_size = anchor_size * (log2(ncores)+1) / (log2(nranks)+1)\n"
+	"\x1b[36mNOTE FROM ORIGINAL STREAM\x1b[0m\n"
+	"    1. Each array must be at least 4 (3.8 in practice) times the cache size.\n"
+	"    2. The size must be large enough that the 'timing calibration' is at least 20 clock-ticks.\n"
+;
 
-// ----------------------- !!! NOTE CHANGE IN DEFINITION !!! ------------------
-//// Macro STREAM_ARRAY_SIZE has been replaced by runtime argument
-// For the MPI version of STREAM, the three arrays with this many elements
-// each will be *distributed* across the MPI ranks.  
-//
-// Be careful when computing the array size needed for a particular target
-// system to meet the minimum size requirement to ensure overflowing the caches.
-//
-// Example:
-//    Assume 4 nodes with two Intel Xeon E5-2680 processors (20 MiB L3) each.
-//    The *total* L3 cache size is 4*2*20 = 160 MiB, so each array must be
-//    at least 640 MiB, or at least 80 million 8 Byte elements. 
-// Note that it does not matter whether you use one MPI rank per node or 
-//    16 MPI ranks per node -- only the total array size and the total
-//    cache size matter.
-//
-
-/*  2) STREAM runs each kernel "NTIMES" times and reports the *best* result
- *         for any iteration after the first, therefore the minimum value
- *         for NTIMES is 2.
- *      There are no rules on maximum allowable values for NTIMES, but
- *         values larger than the default are unlikely to noticeably
- *         increase the reported performance.
- *      NTIMES can also be set on the compile line without changing the source
- *         code using, for example, "-DNTIMES=7".
- */
+// Run each kernel "NTIMES" times and reports the best result for any
+// iteration after the firsttherefore the minimum value for NTIMES is 2.
 #ifdef NTIMES
-#if NTIMES<=1
-#   define NTIMES	10
+#if NTIMES <= 1
+#define NTIMES 10
 #endif
 #endif
 #ifndef NTIMES
-#   define NTIMES	10
+#define NTIMES 10
 #endif
 
-// Make the scalar coefficient modifiable at compile time.
-// The old value of 3.0 cause floating-point overflows after a relatively small
-// number of iterations.  The new default of 0.42 allows over 2000 iterations for
-// 32-bit IEEE arithmetic and over 18000 iterations for 64-bit IEEE arithmetic.
-// The growth in the solution can be eliminated (almost) completely by setting 
-// the scalar value to 0.41421445, but this also means that the error checking
-// code no longer triggers an error if the code does not actually execute the
-// correct number of iterations!
+// Use "STREAM_TYPE" as the element type
+#ifndef STREAM_TYPE
+#define STREAM_TYPE double
+#endif
+
+// The "SCALAR" 0.42 allows over 2000 iterations for 32-bit IEEE arithmetic
+// and over 18000 iterations for 64-bit IEEE arithmetic.
 #ifndef SCALAR
 #define SCALAR 0.42
 #endif
 
-
-// ----------------------- !!! NOTE CHANGE IN DEFINITION !!! ------------------
-// The OFFSET preprocessor variable is not used in this version of the benchmark.
-// The user must change the code at or after the "posix_memalign" array allocations
-//    to change the relative alignment of the pointers.
-// ----------------------- !!! NOTE CHANGE IN DEFINITION !!! ------------------
-#ifndef OFFSET
-#   define OFFSET	0
-#endif
-
-
-/*
- *	3) Compile the code with optimization.  Many compilers generate
- *       unreasonably bad code before the optimizer tightens things up.  
- *     If the results are unreasonably good, on the other hand, the
- *       optimizer might be too smart for me!
- *
- *     For a simple single-core version, try compiling with:
- *            cc -O stream.c -o stream
- *     This is known to work on many, many systems....
- *
- *     To use multiple cores, you need to tell the compiler to obey the OpenMP
- *       directives in the code.  This varies by compiler, but a common example is
- *            gcc -O -fopenmp stream.c -o stream_omp
- *       The environment variable OMP_NUM_THREADS allows runtime control of the 
- *         number of threads/cores used when the resulting "stream_omp" program
- *         is executed.
- *
- *     To run with single-precision variables and arithmetic, simply add
- *         -DSTREAM_TYPE=float
- *     to the compile line.
- *     Note that this changes the minimum array sizes required --- see (1) above.
- *
- *     The preprocessor directive "TUNED" does not do much -- it simply causes the 
- *       code to call separate functions to execute each kernel.  Trivial versions
- *       of these functions are provided, but they are *not* tuned -- they just 
- *       provide predefined interfaces to be replaced with tuned code.
- *
- *
- *	4) Optional: Mail the results to mccalpin@cs.virginia.edu
- *	   Be sure to include info that will help me understand:
- *		a) the computer hardware configuration (e.g., processor model, memory type)
- *		b) the compiler name/version and compilation flags
- *      c) any run-time information (such as OMP_NUM_THREADS)
- *		d) all of the output from the test case.
- *
- * Thanks!
- *
- *-----------------------------------------------------------------------*/
-
-# define HLINE "-------------------------------------------------------------\n"
+# define HLINE "--------------------------------------------------------------\n"
 
 # ifndef MIN
 # define MIN(x,y) ((x)<(y)?(x):(y))
@@ -169,13 +69,27 @@
 # define MAX(x,y) ((x)>(y)?(x):(y))
 # endif
 
-#ifndef STREAM_TYPE
-#define STREAM_TYPE double
-#endif
+static void exit_with_usage(FILE *fd, const char *prog, const char *reason, ...) {
+	int myrank = -1;
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	if (myrank == 0) {
+		if (reason != NULL) {
+			va_list opt;
+			va_start(opt, reason);
+			vfprintf(fd, reason, opt);
+			va_end(opt);
+		}
 
-//static STREAM_TYPE	a[STREAM_ARRAY_SIZE+OFFSET],
-//			b[STREAM_ARRAY_SIZE+OFFSET],
-//			c[STREAM_ARRAY_SIZE+OFFSET];
+		int len = snprintf(NULL, 0, usage, prog) + 1;
+		char *buffer = (char *)malloc(sizeof(char) * len);
+		snprintf(buffer, len, usage, prog);
+		fprintf(fd, "%s", buffer);
+		fflush(fd);
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Finalize();
+	exit(0);
+}
 
 // Some compilers require an extra keyword to recognize the "restrict" qualifier.
 double * restrict a, * restrict b, * restrict c;
@@ -187,89 +101,58 @@ static double	avgtime[4] = {0}, maxtime[4] = {0},
 static char	*label[4] = {"Copy:      ", "Scale:     ",
     "Add:       ", "Triad:     "};
 
-extern void checkSTREAMresults(STREAM_TYPE *AvgErrByRank, int numranks);
+extern void checkSTREAMresults(STREAM_TYPE *AvgErrByRank, int numranks, double epsilon);
 extern void computeSTREAMerrors(STREAM_TYPE *aAvgErr, STREAM_TYPE *bAvgErr, STREAM_TYPE *cAvgErr);
-#ifdef TUNED
-extern void tuned_STREAM_Copy();
-extern void tuned_STREAM_Scale(STREAM_TYPE scalar);
-extern void tuned_STREAM_Add();
-extern void tuned_STREAM_Triad(STREAM_TYPE scalar);
-#endif
-#ifdef _OPENMP
-extern int omp_get_num_threads();
-#endif
+
 int
 main(int argc, char **argv)
     {
     int			quantum = 0, checktick();
-    int			BytesPerWord;
     int			i,k;
     ssize_t		j;
     STREAM_TYPE		scalar;
     double		t, times[4][NTIMES];
 	double		*TimesByRank = NULL;
 	double		t0,t1,tmin;
-	int         rc, numranks, myrank;
 	STREAM_TYPE	AvgError[3] = {0.0,0.0,0.0};
 	STREAM_TYPE *AvgErrByRank = NULL;
 
     /* --- SETUP --- call MPI_Init() before anything else! --- */
-    rc = MPI_Init(NULL, NULL);
+    if (MPI_Init(NULL, NULL) != MPI_SUCCESS) {
+       printf("ERROR: MPI Initialization failed\n");
+       exit(1);
+    }
 	// if either of these fail there is something really screwed up!
+	int numranks, myrank;
 	MPI_Comm_size(MPI_COMM_WORLD, &numranks);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+#ifdef _OPENMP
+	int numthreads = omp_get_max_threads();
+#endif
 
-	ssize_t LLC_size = 0;
-	ssize_t min_size_per_rank = parse_readable_size("128MB");
-	double min_run_ms = 500;
-	// int STRIDE = 0;
+	if (argc != 3)
+		exit_with_usage(stderr, argv[0], NULL, NULL);
 
-	if (argc >= 2) {
-		LLC_size = parse_readable_size(argv[1]);
-		if (LLC_size <= 0 && myrank == 0) {
-			printf("ERROR on parsing argument LLC_size \"%s\"\n", argv[1]);
-			MPI_Abort(MPI_COMM_WORLD, 1);
-			exit(1);
-		}
-	} else {
-		if (myrank == 0) {
-			printf("Usage:   %s LLC_size [min_size_per_rank=128MB] [min_run_ms=500]\n", argv[0]);
-			printf("Example: %s 16MB 256MB\n", argv[0]);
-			MPI_Abort(MPI_COMM_WORLD, 1);
-			exit(1);
-		}
+	int call_help = 0;
+	call_help |= strncmp(argv[1], "-h", sizeof("-h")) == 0;
+	call_help |= strncmp(argv[1], "--help", sizeof("--help")) == 0;
+	if (call_help) {
+		exit_with_usage(stderr, argv[0], NULL, NULL);
 	}
 
-	if (argc >= 3) {
-		min_size_per_rank = parse_readable_size(argv[2]);
-		if (min_size_per_rank <= 0 && myrank == 0) {
-			printf("ERROR on parsing argument min_size_per_rank \"%s\"\n", argv[2]);
-			MPI_Abort(MPI_COMM_WORLD, 1);
-			exit(1);
-		}
+	int ncores = str_to_i32(argv[1], -1);
+	if (ncores == -1) {
+		exit_with_usage(stderr, argv[0], "ERROR invalid ncores \"%s\"\n", argv[1]);
 	}
 
-	if (argc >= 4) {
-		min_run_ms = str_to_f64(argv[3], -1);
-		if (min_run_ms <= 0 && myrank == 0) {
-			printf("ERROR on parsing argument min_run_ms \"%s\"\n", argv[3]);
-			MPI_Abort(MPI_COMM_WORLD, 1);
-			exit(1);
-		}
+	ssize_t anchor_size = from_readable_size(argv[2]);
+	if (anchor_size == -1) {
+		exit_with_usage(stderr, argv[0], "ERROR invalid anchor_size \"%s\"\n", argv[2]);
 	}
 
-	size_t LLC_suggested_size = (size_t)LLC_size * 4;
-	size_t size_per_rank = MAX(LLC_suggested_size, min_size_per_rank);
-	size_t STREAM_ARRAY_SIZE = size_per_rank * numranks / sizeof(STREAM_TYPE);
-
-	if (myrank == 0) {
-		printf("> LLC_size: %llu -> suggestion: %llu\n",
-			(unsigned long long int)LLC_size, (unsigned long long int)LLC_suggested_size);
-		printf("> min_size_per_rank: %llu\n", (unsigned long long int)min_size_per_rank);
-		printf("> size_per_rank: %llu * %d -> STREAM_ARRAY_SIZE %llu\n",
-			(unsigned long long int)size_per_rank, numranks, (unsigned long long int)STREAM_ARRAY_SIZE);
-	}
-	MPI_Barrier(MPI_COMM_WORLD);
+	size_t local_array_size = (size_t)((double)anchor_size * (log2(ncores) + 1) / (log2(numranks) + 1));
+	size_t global_array_size = local_array_size * numranks;
+	size_t STREAM_ARRAY_SIZE = global_array_size / sizeof(STREAM_TYPE);
 
 	double bytes[4] = {
 		2 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE,
@@ -278,18 +161,22 @@ main(int argc, char **argv)
 		3 * sizeof(STREAM_TYPE) * STREAM_ARRAY_SIZE
 	};
 
-	t0 = MPI_Wtime();
-    if (rc != MPI_SUCCESS) {
-       printf("ERROR: MPI Initialization failed with return code %d\n",rc);
-       exit(1);
-    }
+	double epsilon = -1;
+	if (sizeof(STREAM_TYPE) == 4)
+		epsilon = 1.e-6;
+	else if (sizeof(STREAM_TYPE) == 8)
+		epsilon = 1.e-13;
+	else {
+		printf("WEIRD: sizeof(STREAM_TYPE) = %lu\n",sizeof(STREAM_TYPE));
+		epsilon = 1.e-6;
+	}
 
+	t0 = MPI_Wtime();
     /* --- NEW FEATURE --- distribute requested storage across MPI ranks --- */
 	array_elements = STREAM_ARRAY_SIZE / numranks;		// don't worry about rounding vs truncation
     array_alignment = 64;						// Can be modified -- provides partial support for adjusting relative alignment
 
 	// Dynamically allocate the three arrays using "posix_memalign()"
-	// NOTE that the OFFSET parameter is not used in this version of the code!
     array_bytes = array_elements * sizeof(STREAM_TYPE);
     k = posix_memalign((void **)&a, array_alignment, array_bytes);
     if (k != 0) {
@@ -309,73 +196,6 @@ main(int argc, char **argv)
 		MPI_Abort(MPI_COMM_WORLD, 2);
         exit(1);
     }
-
-	// Initial informational printouts -- rank 0 handles all the output
-	if (myrank == 0) {
-		printf(HLINE);
-		printf("STREAM version $Revision: 1.8 $\n");
-		printf(HLINE);
-		BytesPerWord = sizeof(STREAM_TYPE);
-		printf("This system uses %d bytes per array element.\n",
-		BytesPerWord);
-
-		printf(HLINE);
-#ifdef N
-		printf("*****  WARNING: ******\n");
-		printf("      It appears that you set the preprocessor variable N when compiling this code.\n");
-		printf("      This version of the code uses the preprocesor variable STREAM_ARRAY_SIZE to control the array size\n");
-		printf("      Reverting to default value of STREAM_ARRAY_SIZE=%llu\n",(unsigned long long) STREAM_ARRAY_SIZE);
-		printf("*****  WARNING: ******\n");
-#endif
-		if (OFFSET != 0) {
-			printf("*****  WARNING: ******\n");
-			printf("   This version ignores the OFFSET parameter.\n");
-			printf("*****  WARNING: ******\n");
-		}
-
-		printf("Total Aggregate Array size = %llu (elements)\n" , (unsigned long long) STREAM_ARRAY_SIZE);
-		printf("Total Aggregate Memory per array = %.1f MiB (= %.1f GiB).\n", 
-			BytesPerWord * ( (double) STREAM_ARRAY_SIZE / 1024.0/1024.0),
-			BytesPerWord * ( (double) STREAM_ARRAY_SIZE / 1024.0/1024.0/1024.0));
-		printf("Total Aggregate memory required = %.1f MiB (= %.1f GiB).\n",
-			(3.0 * BytesPerWord) * ( (double) STREAM_ARRAY_SIZE / 1024.0/1024.),
-			(3.0 * BytesPerWord) * ( (double) STREAM_ARRAY_SIZE / 1024.0/1024./1024.));
-		printf("Data is distributed across %d MPI ranks\n",numranks);
-		printf("   Array size per MPI rank = %llu (elements)\n" , (unsigned long long) array_elements);
-		printf("   Memory per array per MPI rank = %.1f MiB (= %.1f GiB).\n", 
-			BytesPerWord * ( (double) array_elements / 1024.0/1024.0),
-			BytesPerWord * ( (double) array_elements / 1024.0/1024.0/1024.0));
-		printf("   Total memory per MPI rank = %.1f MiB (= %.1f GiB).\n",
-			(3.0 * BytesPerWord) * ( (double) array_elements / 1024.0/1024.),
-			(3.0 * BytesPerWord) * ( (double) array_elements / 1024.0/1024./1024.));
-
-		printf(HLINE);
-		printf("Each kernel will be executed %d times.\n", NTIMES);
-		printf(" The *best* time for each kernel (excluding the first iteration)\n"); 
-		printf(" will be used to compute the reported bandwidth.\n");
-		printf("The SCALAR value used for this run is %f\n",SCALAR);
-
-#ifdef _OPENMP
-		printf(HLINE);
-#pragma omp parallel 
-		{
-#pragma omp master
-		{
-			k = omp_get_num_threads();
-			printf ("Number of Threads requested for each MPI rank = %i\n",k);
-			}
-		}
-#endif
-
-#ifdef _OPENMP
-		k = 0;
-#pragma omp parallel
-#pragma omp atomic 
-			k++;
-		printf ("Number of Threads counted for rank 0 = %i\n",k);
-#endif
-
-	}
 
     /* --- SETUP --- initialize arrays and estimate precision of timer --- */
 
@@ -412,20 +232,6 @@ main(int argc, char **argv)
 		memset(TimesByRank,0,4*NTIMES*sizeof(double)*numranks);
 	}
 
-	// Simple check for granularity of the timer being used
-	if (myrank == 0) {
-		printf(HLINE);
-
-		if  ( (quantum = checktick()) >= 1) 
-		printf("Your timer granularity/precision appears to be "
-			"%d microseconds.\n", quantum);
-		else {
-		printf("Your timer granularity appears to be "
-			"less than one microsecond.\n");
-		quantum = 1;
-		}
-	}
-
     /* Get initial timing estimate to compare to timer granularity. */
 	/* All ranks need to run this code since it changes the values in array a */
     t = MPI_Wtime();
@@ -436,24 +242,51 @@ main(int argc, char **argv)
 		a[j] = 2.0E0 * a[j];
     t = 1.0E6 * (MPI_Wtime() - t);
 
+	// Initial informational printouts -- rank 0 handles all the output
 	if (myrank == 0) {
-		printf("Each test below will take on the order"
-		" of %d microseconds.\n", (int) t  );
-		printf("   (= %d timer ticks)\n", (int) (t/quantum) );
-		printf("Increase the size of the arrays if this shows that\n");
-		printf("you are not getting at least 20 timer ticks per test.\n");
+		printf(HLINE);
+		printf("STREAM version 5.10 (modified by Mayeths)\n");
 
 		printf(HLINE);
-
-		printf("WARNING -- The above is only a rough guideline.\n");
-		printf("For best results, please be sure you know the\n");
-		printf("precision of your system timer.\n");
-		printf(HLINE);
-#ifdef VERBOSE
-		t1 = MPI_Wtime();
-		printf("VERBOSE: total setup time for rank 0 = %f seconds\n",t1-t0);
-		printf(HLINE);
+		printf("MPI ranks: %d\n", numranks);
+#ifdef _OPENMP
+		printf("OpenMP threads: %d\n", numthreads);
+#else
+		printf("OpenMP threads: disabled\n");
 #endif
+		printf("Repeat: %d (Report the best excluding the first iteration)\n", NTIMES);
+		printf("Scalar value: %f\n", SCALAR);
+		printf("Validation epsilon: %e\n", epsilon);
+		if  ( (quantum = checktick()) >= 1) 
+		printf("Timer granularity: ~ %d ms\n", quantum);
+		else {
+		printf("Timer granularity: < 1 ms\n");
+		quantum = 1;
+		}
+		int nticks = (int)(t/quantum);
+		printf("Array traversal cost: ~ %d ms (%d ticks)\n", (int)t, nticks);
+		if (nticks < 20) {
+			printf("\x1b[33mWARNING\x1b[0m Increase the size for at least 20 ticks\n");
+		}
+
+		printf(HLINE);
+		size_t bytes_per_word = sizeof(STREAM_TYPE);
+		char *s_local_array_size = NULL;
+		char *s_local_rank_size = NULL;
+		char *s_global_array_size = NULL;
+		char *s_global_rank_size = NULL;
+		to_readable_size(&s_local_array_size, local_array_size, 1);
+		to_readable_size(&s_local_rank_size, local_array_size * 3, 1);
+		to_readable_size(&s_global_array_size, global_array_size, 1);
+		to_readable_size(&s_global_rank_size, global_array_size * 3, 1);
+		printf("Element size: %zu bytes\n", bytes_per_word);
+		printf("Local array length: %zu (%s, %s per rank)\n", array_elements, s_local_array_size, s_local_rank_size);
+		printf("Global array length: %zu (%s, %s for all ranks)\n", STREAM_ARRAY_SIZE, s_global_array_size, s_global_rank_size);
+		printf("Each rank uses 3 arrays to perform COPY, SCALE, ADD and TRIAD\n");
+		free(s_local_array_size);
+		free(s_local_rank_size);
+		free(s_global_array_size);
+		free(s_global_rank_size);
 	}
     
     /*	--- MAIN LOOP --- repeat test cases NTIMES times --- */
@@ -465,21 +298,18 @@ main(int argc, char **argv)
 	// MPI_Barrier(), when it should have been *before* the MPI_Barrier().
     // 
 
+	MPI_Barrier(MPI_COMM_WORLD);
     scalar = SCALAR;
     for (k=0; k<NTIMES; k++)
 	{
 		// kernel 1: Copy
 		t0 = MPI_Wtime();
 		MPI_Barrier(MPI_COMM_WORLD);
-#ifdef TUNED
-        tuned_STREAM_Copy();
-#else
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
 		for (j=0; j<array_elements; j++)
 			c[j] = a[j];
-#endif
 		MPI_Barrier(MPI_COMM_WORLD);
 		t1 = MPI_Wtime();
 		times[0][k] = t1 - t0;
@@ -487,15 +317,11 @@ main(int argc, char **argv)
 		// kernel 2: Scale
 		t0 = MPI_Wtime();
 		MPI_Barrier(MPI_COMM_WORLD);
-#ifdef TUNED
-        tuned_STREAM_Scale(scalar);
-#else
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
 		for (j=0; j<array_elements; j++)
 			b[j] = scalar*c[j];
-#endif
 		MPI_Barrier(MPI_COMM_WORLD);
 		t1 = MPI_Wtime();
 		times[1][k] = t1-t0;
@@ -503,15 +329,11 @@ main(int argc, char **argv)
 		// kernel 3: Add
 		t0 = MPI_Wtime();
 		MPI_Barrier(MPI_COMM_WORLD);
-#ifdef TUNED
-        tuned_STREAM_Add();
-#else
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
 		for (j=0; j<array_elements; j++)
 			c[j] = a[j]+b[j];
-#endif
 		MPI_Barrier(MPI_COMM_WORLD);
 		t1 = MPI_Wtime();
 		times[2][k] = t1-t0;
@@ -519,15 +341,11 @@ main(int argc, char **argv)
 		// kernel 4: Triad
 		t0 = MPI_Wtime();
 		MPI_Barrier(MPI_COMM_WORLD);
-#ifdef TUNED
-        tuned_STREAM_Triad(scalar);
-#else
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
 		for (j=0; j<array_elements; j++)
 			a[j] = b[j]+scalar*c[j];
-#endif
 		MPI_Barrier(MPI_COMM_WORLD);
 		t1 = MPI_Wtime();
 		times[3][k] = t1-t0;
@@ -572,18 +390,18 @@ main(int argc, char **argv)
 			}
 		}
     
-		// note that "bytes[j]" is the aggregate array size, so no "numranks" is needed here
-		printf("Function    Best Rate MB/s  Avg time     Min time     Max time\n");
+		// note that "bytes[j]" is the global array size, so no "numranks" is needed here
+		printf(HLINE);
+		printf("Function      Best MB/s     Avg time     Min time     Max time\n");
 		for (j=0; j<4; j++) {
 			avgtime[j] = avgtime[j]/(double)(NTIMES-1);
 
-			printf("%s%11.1f  %11.6f  %11.6f  %11.6f\n", label[j],
+			printf("%s %11.1f  %11.6f  %11.6f  %11.6f\n", label[j],
 			   1.0E-06 * bytes[j]/mintime[j],
 			   avgtime[j],
 			   mintime[j],
 			   maxtime[j]);
 		}
-		printf(HLINE);
 	}
 
     /* --- Every Rank Checks its Results --- */
@@ -602,8 +420,8 @@ main(int argc, char **argv)
 				AvgErrByRank[3*k+1],AvgErrByRank[3*k+2]);
 		}
 #endif
-		checkSTREAMresults(AvgErrByRank,numranks);
 		printf(HLINE);
+		checkSTREAMresults(AvgErrByRank,numranks, epsilon);
 	}
 
 #ifdef VERBOSE
@@ -704,14 +522,13 @@ void computeSTREAMerrors(STREAM_TYPE *aAvgErr, STREAM_TYPE *bAvgErr, STREAM_TYPE
 
 
 
-void checkSTREAMresults (STREAM_TYPE *AvgErrByRank, int numranks)
+void checkSTREAMresults (STREAM_TYPE *AvgErrByRank, int numranks, double epsilon)
 {
 	STREAM_TYPE aj,bj,cj,scalar;
 	STREAM_TYPE aSumErr,bSumErr,cSumErr;
 	STREAM_TYPE aAvgErr,bAvgErr,cAvgErr;
-	double epsilon;
 	ssize_t	j;
-	int	k,ierr,err;
+	int	k,ierr;
 
 	// Repeat the computation of aj, bj, cj because I am lazy
     /* reproduce initialization */
@@ -743,20 +560,7 @@ void checkSTREAMresults (STREAM_TYPE *AvgErrByRank, int numranks)
 	bAvgErr = bSumErr / (STREAM_TYPE) numranks;
 	cAvgErr = cSumErr / (STREAM_TYPE) numranks;
 
-	if (sizeof(STREAM_TYPE) == 4) {
-		epsilon = 1.e-6;
-	}
-	else if (sizeof(STREAM_TYPE) == 8) {
-		epsilon = 1.e-13;
-	}
-	else {
-		printf("WEIRD: sizeof(STREAM_TYPE) = %lu\n",sizeof(STREAM_TYPE));
-		epsilon = 1.e-6;
-	}
-
-	err = 0;
 	if (abs(aAvgErr/aj) > epsilon) {
-		err++;
 		printf ("Failed Validation on array a[], AvgRelAbsErr > epsilon (%e)\n",epsilon);
 		printf ("     Expected Value: %e, AvgAbsErr: %e, AvgRelAbsErr: %e\n",aj,aAvgErr,abs(aAvgErr)/aj);
 		ierr = 0;
@@ -774,7 +578,6 @@ void checkSTREAMresults (STREAM_TYPE *AvgErrByRank, int numranks)
 		printf("     For array a[], %d errors were found.\n",ierr);
 	}
 	if (abs(bAvgErr/bj) > epsilon) {
-		err++;
 		printf ("Failed Validation on array b[], AvgRelAbsErr > epsilon (%e)\n",epsilon);
 		printf ("     Expected Value: %e, AvgAbsErr: %e, AvgRelAbsErr: %e\n",bj,bAvgErr,abs(bAvgErr)/bj);
 		printf ("     AvgRelAbsErr > Epsilon (%e)\n",epsilon);
@@ -793,7 +596,6 @@ void checkSTREAMresults (STREAM_TYPE *AvgErrByRank, int numranks)
 		printf("     For array b[], %d errors were found.\n",ierr);
 	}
 	if (abs(cAvgErr/cj) > epsilon) {
-		err++;
 		printf ("Failed Validation on array c[], AvgRelAbsErr > epsilon (%e)\n",epsilon);
 		printf ("     Expected Value: %e, AvgAbsErr: %e, AvgRelAbsErr: %e\n",cj,cAvgErr,abs(cAvgErr)/cj);
 		printf ("     AvgRelAbsErr > Epsilon (%e)\n",epsilon);
@@ -811,9 +613,6 @@ void checkSTREAMresults (STREAM_TYPE *AvgErrByRank, int numranks)
 		}
 		printf("     For array c[], %d errors were found.\n",ierr);
 	}
-	if (err == 0) {
-		printf ("Solution Validates: avg error less than %e on all three arrays\n",epsilon);
-	}
 #ifdef VERBOSE
 	printf ("Results Validation Verbose Results: \n");
 	printf ("    Expected a(1), b(1), c(1): %f %f %f \n",aj,bj,cj);
@@ -821,39 +620,3 @@ void checkSTREAMresults (STREAM_TYPE *AvgErrByRank, int numranks)
 	printf ("    Rel Errors on a, b, c:     %e %e %e \n",abs(aAvgErr/aj),abs(bAvgErr/bj),abs(cAvgErr/cj));
 #endif
 }
-
-#ifdef TUNED
-/* stubs for "tuned" versions of the kernels */
-void tuned_STREAM_Copy()
-{
-	ssize_t j;
-#pragma omp parallel for
-        for (j=0; j<array_elements; j++)
-            c[j] = a[j];
-}
-
-void tuned_STREAM_Scale(STREAM_TYPE scalar)
-{
-	ssize_t j;
-#pragma omp parallel for
-	for (j=0; j<array_elements; j++)
-	    b[j] = scalar*c[j];
-}
-
-void tuned_STREAM_Add()
-{
-	ssize_t j;
-#pragma omp parallel for
-	for (j=0; j<array_elements; j++)
-	    c[j] = a[j]+b[j];
-}
-
-void tuned_STREAM_Triad(STREAM_TYPE scalar)
-{
-	ssize_t j;
-#pragma omp parallel for
-	for (j=0; j<array_elements; j++)
-	    a[j] = b[j]+scalar*c[j];
-}
-/* end of stubs for the "tuned" versions of the kernels */
-#endif

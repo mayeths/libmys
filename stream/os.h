@@ -18,7 +18,7 @@ static inline int64_t str_to_i64(const char *str, int64_t default_val)
     int error = errno;
     errno = 0;
 
-    if (stop == str || stop != NULL)
+    if (stop == str)
         return default_val; /* contains with non-number */
     if ((num == LLONG_MAX || num == LLONG_MIN) && error == ERANGE)
         return default_val; /* number out of range for LONG */
@@ -44,7 +44,7 @@ static inline double str_to_f64(const char *str, double default_val)
     int error = errno;
     errno = 0;
 
-    if (stop == str || stop != NULL)
+    if (stop == str)
         return default_val; /* contains with non-number */
     if (error == ERANGE)
         return default_val; /* number out of range for DOUBLE */
@@ -69,7 +69,7 @@ static inline float str_to_f32(const char *str, float default_val)
     int error = errno;
     errno = 0;
 
-    if (stop == str || stop != NULL)
+    if (stop == str)
         return default_val; /* contains with non-number */
     if (error == ERANGE)
         return default_val; /* number out of range for FLOAT */
@@ -78,7 +78,21 @@ static inline float str_to_f32(const char *str, float default_val)
     return num;
 }
 
-static ssize_t parse_readable_size(const char *text) {
+static inline void to_readable_size(char **ptr, size_t bytes, size_t precision)
+{
+    int i = 0;
+    const char* units[] = {"Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+    double size = bytes;
+    while (size > 1024) {
+        size /= 1024;
+        i++;
+    }
+    int len = snprintf(NULL, 0, "%.*f %s", (int)precision, size, units[i]) + 1; /*%.*f*/
+    *ptr = (char *)malloc(sizeof(char) * len);
+    snprintf(*ptr, len, "%.*f %s", (int)precision, size, units[i]);
+}
+
+static ssize_t from_readable_size(const char *text) {
     typedef struct {
         const char *suffix;
         size_t base;
