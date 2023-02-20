@@ -29,3 +29,10 @@ env_prepend PYTHONPATH "$MYS_DIR/python"
 
 
 alias code="$MYS_DIR/bin/invoke-vscode"
+
+# export EDITOR=nvim
+# alias v='nvim'
+# alias vi="nvim"
+# alias vim='nvim'
+# alias vimdiff='nvim -d'
+# alias view="nvim -R"
