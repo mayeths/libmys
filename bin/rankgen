@@ -161,14 +161,14 @@ def aligned_fill(ranks: List[Rank], hwinfo: HardwareInfo, align: str, left_most_
         eexit(1, f"{num_rank} ranks with {threads_per_rank} threads are too many "
                 +f"for {num_node} node ({hwinfo.cores_per_node} cores per node)")
     # Check if requested slot is too many for region.
-    if ranks_per_node * threads_per_rank / regions_per_node > cores_per_region:
+    if (num_rank * threads_per_rank) / (regions_per_node * num_node) > cores_per_region:
         suggestion = ""
         if align != "node":
             suggestion = '. Maybe you want "--align=node"?'
         eexit(1, f"{num_rank} ranks with {threads_per_rank} threads are too many "
                 +f"for {align} ({cores_per_region} cores per {align}){suggestion}")
     # Check if requested slot cannot be splitted to region equally
-    if ranks_per_node % regions_per_node != 0:
+    if (num_rank * threads_per_rank / num_node) % regions_per_node != 0:
         suggestion = ""
         if align != "node":
             suggestion = '. Maybe you want "--align=node"?'
