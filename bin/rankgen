@@ -16,34 +16,20 @@ def eprint(text, end='\n', force=False):
     if force or not QUIET:
         print(text, end=end, file=sys.stderr)
 
-class Slot:
-    node_id: int
-    cpu_id: int
-    socket_index: int
-    numa_index: int
-    core_index: int
-    hwthread_index: int
+def eexit(code, text=None, end='\n'):
+    if text is not None:
+        eprint('[ERROR] ' + text, end=end, force=True)
+    exit(code)
 
-    def __init__(self, node_id: int, cpu_id: int, socket_index: int, numa_index: int, core_index: int, hwthread_index: int):
-        self.node_id = node_id
-        self.cpu_id = cpu_id
-        self.socket_index = socket_index
-        self.numa_index = numa_index
-        self.core_index = core_index
-        self.hwthread_index = hwthread_index
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, type(self)):
-            return False
-        other: Slot = other
-        if self.node_id != other.node_id:
-            return False
-        elif self.cpu_id != other.cpu_id:
-            return False
-        return True
-
-    def __hash__(self) -> int:
-        return hash((self.node_id, self.cpu_id))
+class RecorderAction(argparse.Action):
+    named_record = {}
+    unnamed_record = []
+    def __call__(self, parser, namespace, values, option_string=None):
+        if option_string is not None:
+            RecorderAction.named_record[option_string] = values
+        else:
+            RecorderAction.unnamed_record.append(values)
+        setattr(namespace, self.dest, values)
 
 class Rank:
     id: int
@@ -75,8 +61,7 @@ class Rank:
             raise ValueError(f"rank {self.id} is not assigned to any node {self.node_index}")
         node_name = self.node_format.format(self.node_index)
         if self.node_index < 0:
-            eprint(f'[ERROR] rank {self.id} is assigned to negative node index {self.node_index}, causing node name "{node_name}"', force=True)
-            exit(1)
+            eexit(1, f'rank {self.id} is assigned to negative node index {self.node_index}, causing node name "{node_name}"')
         return node_name
 
     @staticmethod
@@ -148,81 +133,65 @@ def print_fingerprint(hwinfo: HardwareInfo, ranks: list[Rank], align: str,
         if i == hwinfo.cores_per_node - 1:
             finger += "]"
         elif i % hwinfo.cores_per_node == hwinfo.cores_per_node - 1:
-            finger += "] {n1:{digit}d}\n{node_name} {n2:{digit}d} [".format(node_name=node_name, digit=digit, n1=i, n2=i+1)
+            finger += "] \n{node_name} [".format(node_name=node_name)
         elif align == "socket" and i % hwinfo.cores_per_socket == hwinfo.cores_per_socket - 1:
             finger += "]["
         elif align == "numa" and i % hwinfo.cores_per_numa == hwinfo.cores_per_numa - 1:
             finger += "]["
     eprint(finger)
 
+def aligned_fill(ranks: List[Rank], hwinfo: HardwareInfo, align: str, left_most_cores: bool,
+                 num_rank: int, first_node_index: int, last_node_index: int,
+                 ranks_per_node: int, threads_per_rank: int, num_node: int):
+    if align == "numa":
+        regions_per_node = hwinfo.numas_per_node
+        cores_per_region = hwinfo.cores_per_numa
+    elif align == "socket":
+        regions_per_node = hwinfo.sockets_per_node
+        cores_per_region = hwinfo.cores_per_socket
+    elif align == "node":
+        regions_per_node = 1
+        cores_per_region = hwinfo.cores_per_node
+    ranks_per_region = ranks_per_node // regions_per_node
+    slots_per_region = ranks_per_region * threads_per_rank
+    slots_per_node = slots_per_region * regions_per_node
 
-def fill_by_align_to_numa(ranks: List[Rank], hwinfo: HardwareInfo,
-                         num_rank: int, first_node_index: int, left_most_cores: bool,
-                         ranks_per_node: int, threads_per_rank: int, num_node: int):
-    ranks_per_numa = ranks_per_node // hwinfo.numas_per_node
-    slots_per_numa = ranks_per_numa * threads_per_rank
-    slots_per_node = slots_per_numa * hwinfo.numas_per_node
-    assert ranks_per_node % hwinfo.numas_per_node == 0, f"Requested rank per node ({ranks_per_node}) cannot be split to numa ({hwinfo.numas_per_node}) equally"
-    assert slots_per_numa <= hwinfo.cores_per_numa, f"{num_node} nodes, {num_rank} procs and {threads_per_rank} threads need {slots_per_numa} slots per numa but only {hwinfo.cores_per_numa} cores per numa"
-
-    nranks = len(ranks)
-    for i in range(nranks):
-        rank = ranks[i]
-        global_slot_start = i * threads_per_rank
-        numa_index = (global_slot_start // slots_per_numa) % hwinfo.numas_per_node # which numa in node
-        slot_start_index = numa_index * hwinfo.cores_per_numa + (i % ranks_per_numa) * threads_per_rank
-        slot_stop_index = slot_start_index + threads_per_rank - 1
-        if not left_most_cores:
-            offset = hwinfo.cores_per_numa - slots_per_numa
-            slot_start_index = offset + slot_start_index
-            slot_stop_index = offset + slot_stop_index
-        rank.slots = [i for i in range(slot_start_index, slot_stop_index+1)]
-        rank.node_format = hwinfo.name_format
-        rank.node_index = first_node_index + (global_slot_start // slots_per_node) # which node
-
-def fill_by_align_to_socket(ranks: List[Rank], hwinfo: HardwareInfo,
-                         num_rank: int, first_node_index: int, left_most_cores: bool,
-                         ranks_per_node: int, threads_per_rank: int, num_node: int):
-    ranks_per_socket = ranks_per_node // hwinfo.sockets_per_node
-    slots_per_socket = ranks_per_socket * threads_per_rank
-    slots_per_node = slots_per_socket * hwinfo.sockets_per_node
-    assert ranks_per_node % hwinfo.sockets_per_node == 0, f"Requested rank per node ({ranks_per_node}) cannot be split to socket ({hwinfo.sockets_per_node}) equally"
-    assert slots_per_socket <= hwinfo.cores_per_socket, f"{num_node} nodes, {num_rank} procs and {threads_per_rank} threads need {slots_per_socket} slots per socket but only {hwinfo.cores_per_socket} cores per socket"
-
-    nranks = len(ranks)
-    for i in range(nranks):
-        rank = ranks[i]
-        global_slot_start = i * threads_per_rank
-        socket_index = (global_slot_start // slots_per_socket) % hwinfo.sockets_per_node # which socket in node
-        slot_start_index = socket_index * hwinfo.cores_per_socket + (i % ranks_per_socket) * threads_per_rank
-        slot_stop_index = slot_start_index + threads_per_rank - 1
-        if not left_most_cores:
-            offset = hwinfo.cores_per_socket - slots_per_socket
-            slot_start_index = offset + slot_start_index
-            slot_stop_index = offset + slot_stop_index
-        rank.slots = [i for i in range(slot_start_index, slot_stop_index+1)]
-        rank.node_format = hwinfo.name_format
-        rank.node_index = first_node_index + (global_slot_start // slots_per_node) # which node
-
-def fill_by_align_to_node(ranks: List[Rank], hwinfo: HardwareInfo,
-                         num_rank: int, first_node_index: int, left_most_cores: bool,
-                         ranks_per_node: int, threads_per_rank: int, num_node: int):
-    slots_per_node = ranks_per_node * threads_per_rank
-    assert slots_per_node <= hwinfo.cores_per_node, f"{num_node} nodes, {num_rank} procs and {threads_per_rank} threads need {slots_per_node} slots per node but only {hwinfo.cores_per_node} cores per node"
+    # Check if requested slot is too many for node. We first output assert of node for beauty
+    if num_rank * threads_per_rank > num_node * hwinfo.cores_per_node:
+        eexit(1, f"{num_rank} ranks with {threads_per_rank} threads are too many "
+                +f"for {num_node} node ({hwinfo.cores_per_node} cores per node)")
+    # Check if requested slot is too many for region.
+    if ranks_per_node * threads_per_rank / regions_per_node > cores_per_region:
+        suggestion = ""
+        if align != "node":
+            suggestion = '. Maybe you want "--align=node"?'
+        eexit(1, f"{num_rank} ranks with {threads_per_rank} threads are too many "
+                +f"for {align} ({cores_per_region} cores per {align}){suggestion}")
+    # Check if requested slot cannot be splitted to region equally
+    if ranks_per_node % regions_per_node != 0:
+        suggestion = ""
+        if align != "node":
+            suggestion = '. Maybe you want "--align=node"?'
+        eexit(1, f"{num_rank} ranks with {threads_per_rank} threads cannot be "
+                +f"split to {align} equally ({cores_per_region} cores per {align}){suggestion}")
 
     nranks = len(ranks)
     for i in range(nranks):
         rank = ranks[i]
         global_slot_start = i * threads_per_rank
-        slot_start_index = (i % ranks_per_node) * threads_per_rank
+        region_index = (global_slot_start // slots_per_region) % regions_per_node # which region in node
+        slot_start_index = region_index * cores_per_region + (i % ranks_per_region) * threads_per_rank
         slot_stop_index = slot_start_index + threads_per_rank - 1
         if not left_most_cores:
-            offset = hwinfo.cores_per_node - slots_per_node
+            offset = cores_per_region - slots_per_region
             slot_start_index = offset + slot_start_index
             slot_stop_index = offset + slot_stop_index
         rank.slots = [i for i in range(slot_start_index, slot_stop_index+1)]
         rank.node_format = hwinfo.name_format
         rank.node_index = first_node_index + (global_slot_start // slots_per_node) # which node
+        if rank.node_index < first_node_index or rank.node_index > last_node_index:
+            eexit(1, f'rank {i} is out of range for node index range [{first_node_index}, {last_node_index}]')
+
 
 
 def main():
@@ -231,9 +200,9 @@ def main():
     parser = argparse.ArgumentParser(
         prog='rankgen',
         description=f'Genrate rankfile or command line arguments by specified distribution (version {VERSION})\n',
-        epilog='Example: %(prog)s --fingerprint=all --name-format="bn{:03d}" --last-node-index=108 2 24 10',
+        epilog='Example: %(prog)s --finger=all --name="bn{:03d}" --last=108 2 24 10',
         add_help=False,
-        usage='%(prog)s <num_node> <num_rank> <threads_per_rank> [OPTIONS]',
+        usage='%(prog)s [OPTIONS] <num_node> <num_rank> <threads_per_rank>',
         formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=terminal_width)
     )
     parser.add_argument('num_node', type=int, help=f"Number of node to use")
@@ -241,7 +210,9 @@ def main():
     parser.add_argument('threads_per_rank', type=int, default=1, help=f"Number of threads per rank")
     # metavar='' for removing dest variable from help text
     hwinfoArgs = parser.add_argument_group('Hardware information arguments')
-    hwinfoArgs.add_argument('--name-format', dest='name_format', default="cn{:03d}", type=str, help=f"Node name format in python formatting syntax", metavar='')
+    hwinfoArgs.add_argument('--name', dest='name', default="cn{:03d}", type=str, help=f"Node name format in python formatting syntax", metavar='')
+    hwinfoArgs.add_argument('--first', dest='first', action=RecorderAction, default=101, type=int, help="Inclusive node start index", metavar='')
+    hwinfoArgs.add_argument('--last', dest='last', action=RecorderAction, type=int, help="Inclusive node end index", metavar='')
     hwinfoArgs.add_argument('--sockets-per-node', dest='sockets_per_node', default=2, type=int, help=f"Sockets per node", metavar='')
     hwinfoArgs.add_argument('--numas-per-socket', dest='numas_per_socket', default=2, type=int, help=f"NUMAs per socket", metavar='')
     hwinfoArgs.add_argument('--cores-per-numa', dest='cores_per_numa', default=32, type=int, help=f"Cores per numa", metavar='')
@@ -251,12 +222,10 @@ def main():
     generatorArgs.add_argument('-t', '--temp', dest='use_tempfile', action='store_const', const=True, default=False, help="Write output to temp file and print filename", metavar='')
     generatorArgs.set_defaults(left_most_cores=False)
     generatorArgs.set_defaults(no_fingerprint=False)
-    generatorArgs.add_argument('--first-node-index', dest='first_node_index', default=101, type=int, help="Inclusive node start index", metavar='')
-    generatorArgs.add_argument('--last-node-index', dest='last_node_index', type=int, help="Inclusive node end index", metavar='')
-    generatorArgs.add_argument('--align', dest='align', default='numa', choices=['numa', 'socket', 'node'], help="Align ranks to numa/socket/node boundary", metavar='')
-    # generatorArgs.add_argument('--allow-unbalance', dest='allow_unbalance', action='store_const', const=True, default=False, help="Allow unbalanced distribution on regions", metavar='')
-    generatorArgs.add_argument('--left-most-cores', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores in NUMA", metavar='')
-    generatorArgs.add_argument('--fingerprint', dest='fingerprint', default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
+    generatorArgs.add_argument('--align', dest='align', default='numa', choices=['numa', 'socket', 'node'], help="Align ranks to the numa/socket/node region", metavar='')
+    # generatorArgs.add_argument('--imbalance', dest='imbalance', action='store_const', const=True, default=False, help="Allow imbalancing over regions", metavar='')
+    generatorArgs.add_argument('--left', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores of the region", metavar='')
+    generatorArgs.add_argument('--finger', dest='fingerprint', default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
     parser.add_argument('-q', '--quiet', dest='quiet', action='store_const', const=True, default=False, help="Don't print information", metavar='')
     parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
     parser.add_argument('-h', '--help', action='help', help=f"Show this help message and exit")
@@ -265,36 +234,33 @@ def main():
     num_node = args.num_node
     num_rank = args.num_rank
     threads_per_rank = args.threads_per_rank
-    hwinfo = HardwareInfo(args.name_format, args.sockets_per_node, args.numas_per_socket, args.cores_per_numa, 1)
+    hwinfo = HardwareInfo(args.name, args.sockets_per_node, args.numas_per_socket, args.cores_per_numa, 1)
     outfile = args.outfile
     use_tempfile = args.use_tempfile
-    first_node_index = args.first_node_index
-    last_node_index = args.last_node_index
     left_most_cores = args.left_most_cores
     align = args.align
     # allow_unbalance = args.allow_unbalance
     fingerprint = args.fingerprint
     QUIET = args.quiet
 
-    # NOTE: Currently, slot is core TODO: support --slot=hwthread or --slot=core
-    ranks_per_node = num_rank // num_node
+    if "--last" not in RecorderAction.named_record:
+        first_node_index = args.first
+        last_node_index = first_node_index + num_node - 1
+    else: #"--last" in RecorderAction.named_record
+        if "--first" not in RecorderAction.named_record:
+            last_node_index = args.last
+            first_node_index = last_node_index - num_node + 1
+        else: #"--first" in RecorderAction.named_record
+            first_node_index = args.first
+            last_node_index = args.last
 
+    ranks_per_node = num_rank // num_node
     nranks = ranks_per_node * num_node
     ranks = [Rank(i) for i in range(nranks)]
-    if last_node_index is None:
-        last_node_index = first_node_index + num_node - 1
-    else:
-        first_node_index = last_node_index - num_node + 1
 
-    if align == "numa":
-        fill_by_align_to_numa(ranks, hwinfo, num_rank, first_node_index, left_most_cores,
-                              ranks_per_node, threads_per_rank, num_node)
-    elif align == "socket":
-        fill_by_align_to_socket(ranks, hwinfo, num_rank, first_node_index, left_most_cores,
-                                ranks_per_node, threads_per_rank, num_node)
-    elif align == "node":
-        fill_by_align_to_node(ranks, hwinfo, num_rank, first_node_index, left_most_cores,
-                              ranks_per_node, threads_per_rank, num_node)
+    aligned_fill(ranks, hwinfo, align, left_most_cores,
+                 num_rank, first_node_index, last_node_index,
+                 ranks_per_node, threads_per_rank, num_node)
 
     eprint(f"{parser.prog}: {parser.description}")
     eprint(f"=== Node Information")
