@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <float.h>
+
 #include "config.h"
 #include "macro.h"
 
@@ -75,6 +77,27 @@ static inline uint64_t test_freq()
     return raw2 - raw1;
 }
 #endif
+
+static inline double mys_hrfreq_check() {
+    double ticks[16];
+
+    int n = sizeof(ticks) / sizeof(double);
+    for (int i = 0; i < n; i++) {
+        double t1 = mys_hrtick();
+        double t2 = 0;
+        size_t count = 0;
+        while ((t2 = mys_hrtick()) - t1 < 1e-6)
+            count++;
+        ticks[i] = (t2 - t1) / (double)count;
+    }
+
+    double tick = FLT_MAX;
+    for (int i = 1; i < n; i++)
+        if (ticks[i] < tick) tick = ticks[i];
+
+    return tick;
+}
+
 
 /* g++ -std=c++11 -I../include -lm ./a.cpp && ./a.out
 #include <stdlib.h>
