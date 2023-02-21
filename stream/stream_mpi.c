@@ -25,23 +25,6 @@
 
 #include "os.h"
 
-static const char *usage =
-	"=== STREAM version 5.10 (modified by Mayeths)\n"
-	"=== Usage\n"
-	"    %s ncores min_size\n"
-	"    * Use the size of LLC (LLC_size) as min_size if it's larger than 32MB.\n"
-	"    [Kunpeng920] ./stream_mpi.exe 128 48MB (for 128 cores and 48MB shared L3)\n"
-	"    [Apple M1] ./stream_mpi.exe 8 128MB (for 8 cores and 16MB shared L2)\n"
-	"=== Size Algorithm (by Mayeths)\n"
-	"    local_array_size = min_size * (log2(ncores)+1) / (log2(nranks)+1)\n"
-	"    * local_array_size is min_size * log2(ncores) when utilizing one core.\n"
-	"    * local_array_size is min_size when utilizing all cores.\n"
-	"    * global_array_size ranges from [min_size * (log2(ncores)+1), min_size * ncores]\n"
-	"=== Note (from original STREAM)\n"
-	"    * local_array_size must be large enough that the traversal cost > 20 clock-ticks.\n"
-	"    * Ensure global_array_size >= 4 * LLC_size. So min_size > 4 * LLC_size if ncores <= 8.\n"
-;
-
 // Run each kernel "NTIMES" times and reports the best result for any
 // iteration after the firsttherefore the minimum value for NTIMES is 2.
 #ifdef NTIMES
@@ -63,6 +46,23 @@ static const char *usage =
 #ifndef SCALAR
 #define SCALAR 0.42
 #endif
+
+static const char *usage =
+	"=== STREAM version 5.10 (modified by Mayeths)\n"
+	"=== Usage\n"
+	"    %s ncores min_size\n"
+	"    * Use the size of LLC (LLC_size) as min_size if it's larger than 32MB.\n"
+	"    [Kunpeng920] ./stream_mpi.exe 128 48MB (for 128 cores and 48MB shared L3)\n"
+	"    [Apple M1] ./stream_mpi.exe 8 128MB (for 8 cores and 16MB shared L2)\n"
+	"=== Size Algorithm (by Mayeths)\n"
+	"    local_array_size = min_size * (log2(ncores)+1) / (log2(nranks)+1)\n"
+	"    * local_array_size is min_size * log2(ncores) when utilizing one core.\n"
+	"    * local_array_size is min_size when utilizing all cores.\n"
+	"    * global_array_size ranges from [min_size * (log2(ncores)+1), min_size * ncores]\n"
+	"=== Note (from original STREAM)\n"
+	"    * local_array_size must be large enough that the traversal cost > 20 clock-ticks.\n"
+	"    * Ensure global_array_size >= 4 * LLC_size. So min_size > 4 * LLC_size if ncores <= 8.\n"
+;
 
 # define HLINE "--------------------------------------------------------------\n"
 
