@@ -25,17 +25,20 @@
 #include "os.h"
 
 static const char *usage =
-	"\x1b[36mSTREAM version 5.10 (modified by Mayeths)\x1b[0m\n"
-	"\x1b[36mUSAGE\x1b[0m\n"
-	"    %s ncores anchor_size\n"
-	"    [Apple M1] 8 cores 12MB shared L2, but we want bigger anchor size, ./stream_mpi.exe 128MB 8\n"
-	"    [Kunpeng920] 128 cores 48MB shared L3, ./stream_mpi.exe 48MB 128\n"
-	"\x1b[36mINSIDED ALGORITHM\x1b[0m\n"
-	"    We ensure local_array_size is anchor_size when using full machines:\n"
-	"    local_array_size = anchor_size * (log2(ncores)+1) / (log2(nranks)+1)\n"
-	"\x1b[36mNOTE FROM ORIGINAL STREAM\x1b[0m\n"
-	"    1. Each array must be at least 4 (3.8 in practice) times the cache size.\n"
-	"    2. The size must be large enough that the 'timing calibration' is at least 20 clock-ticks.\n"
+	"\x1b[36m------ STREAM version 5.10 (modified by Mayeths) ------\x1b[0m\n"
+	"\x1b[36m[Usage]\x1b[0m\n"
+	"    %s ncores min_size\n"
+	"    [Apple M1] 8 cores 12MB shared L2, but we want bigger min_size, ./stream_mpi.exe 8 128MB\n"
+	"    [Kunpeng920] 128 cores 48MB shared L3, ./stream_mpi.exe 128 48MB\n"
+	"    * Use the size of LLC (LLC_size) as min_size if it's larger than 32MB else 128MB.\n"
+	"\x1b[36m[Insided Algorithm]\x1b[0m\n"
+	"    local_array_size = min_size * (log2(ncores)+1) / (log2(nranks)+1)\n"
+	"    * local_array_size is min_size * log2(ncores) when utilizing one core.\n"
+	"    * local_array_size is min_size when utilizing all cores.\n"
+	"    * global_array_size ranges from [min_size * (log2(ncores)+1), min_size * ncores]\n"
+	"\x1b[36m[Note From Original Stream]\x1b[0m\n"
+	"    * local_array_size must be large enough that the traversal cost > 20 clock-ticks.\n"
+	"    * Ensure global_array_size >= 4 * LLC_size. So min_size > 4 * LLC_size if ncores <= 8.\n"
 ;
 
 // Run each kernel "NTIMES" times and reports the best result for any
@@ -103,11 +106,12 @@ static char	*label[4] = {"Copy:      ", "Scale:     ",
 
 extern void checkSTREAMresults(STREAM_TYPE *AvgErrByRank, int numranks, double epsilon);
 extern void computeSTREAMerrors(STREAM_TYPE *aAvgErr, STREAM_TYPE *bAvgErr, STREAM_TYPE *cAvgErr);
+extern double checktick();
 
 int
 main(int argc, char **argv)
     {
-    int			quantum = 0, checktick();
+    double		quantum = 0;
     int			i,k;
     ssize_t		j;
     STREAM_TYPE		scalar;
@@ -145,12 +149,14 @@ main(int argc, char **argv)
 		exit_with_usage(stderr, argv[0], "ERROR invalid ncores \"%s\"\n", argv[1]);
 	}
 
-	ssize_t anchor_size = from_readable_size(argv[2]);
-	if (anchor_size == -1) {
-		exit_with_usage(stderr, argv[0], "ERROR invalid anchor_size \"%s\"\n", argv[2]);
+	ssize_t min_size = from_readable_size(argv[2]);
+	if (min_size == -1) {
+		exit_with_usage(stderr, argv[0], "ERROR invalid min_size \"%s\"\n", argv[2]);
 	}
 
-	size_t local_array_size = (size_t)((double)anchor_size * (log2(ncores) + 1) / (log2(numranks) + 1));
+	// Use log2() to prevent numranks=1 got too large array
+	// size_t local_array_size = (size_t)((double)min_size * (double)ncores / (double)numranks);
+	size_t local_array_size = (size_t)((double)min_size * (log2(ncores) + 1) / (log2(numranks) + 1));
 	size_t global_array_size = local_array_size * numranks;
 	size_t STREAM_ARRAY_SIZE = global_array_size / sizeof(STREAM_TYPE);
 
@@ -208,6 +214,74 @@ main(int argc, char **argv)
 	    c[j] = 0.0;
 	}
 
+    /* Get initial timing estimate to compare to timer granularity. */
+	/* All ranks need to run this code since it changes the values in array a */
+    t = MPI_Wtime();
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (j = 0; j < array_elements; j++)
+		a[j] = 2.0E0 * a[j];
+    t = MPI_Wtime() - t;
+	quantum = checktick();
+
+	// Initial informational printouts -- rank 0 handles all the output
+	if (myrank == 0) {
+		printf(HLINE);
+		printf("STREAM version 5.10 (modified by Mayeths)\n");
+
+		printf(HLINE);
+		printf("MPI ranks: %d\n", numranks);
+#ifdef _OPENMP
+		printf("OpenMP threads: %d\n", numthreads);
+#else
+		printf("OpenMP threads: disabled\n");
+#endif
+		printf("Scalar value: %f\n", SCALAR);
+		printf("Validation epsilon: %e\n", epsilon);
+		if (quantum * 1e3 >= 1)
+			printf("Timer granularity: ~ %d ms\n", (int)(quantum * 1e3));
+		else if (quantum * 1e6 >= 1)
+			printf("Timer granularity: ~ %d us\n", (int)(quantum * 1e6));
+		else if (quantum * 1e9 >= 1)
+			printf("Timer granularity: ~ %d ns\n", (int)(quantum * 1e9));
+		else
+			printf("Timer granularity: %.1f ns\n", quantum * 1e9);
+
+		size_t nticks = (size_t)(t/quantum);
+		if (t * 1e3 >= 1)
+			printf("Array traversal cost: ~ %zu ms (%zu ticks)\n", (size_t)(t * 1e3), nticks);
+		else if (t * 1e6 >= 1)
+			printf("Array traversal cost: ~ %zu us (%zu ticks)\n", (size_t)(t * 1e6), nticks);
+		else if (t * 1e9 >= 1)
+			printf("Array traversal cost: ~ %zu ns (%zu ticks)\n", (size_t)(t * 1e9), nticks);
+		else
+			printf("Array traversal cost: %.1f ns (%zu ticks)\n", t * 1e9, nticks);
+
+		if (nticks < 20)
+			printf("\x1b[33mWARNING\x1b[0m Increase the size for at least 20 ticks\n");
+
+		printf("Repeat: %d (Report the best run excluding the first one)\n", NTIMES);
+		printf(HLINE);
+		size_t bytes_per_word = sizeof(STREAM_TYPE);
+		char *s_local_array_size = NULL;
+		char *s_local_rank_size = NULL;
+		char *s_global_array_size = NULL;
+		char *s_global_rank_size = NULL;
+		to_readable_size(&s_local_array_size, local_array_size, 1);
+		to_readable_size(&s_local_rank_size, local_array_size * 3, 1);
+		to_readable_size(&s_global_array_size, global_array_size, 1);
+		to_readable_size(&s_global_rank_size, global_array_size * 3, 1);
+		printf("Element size: %zu bytes\n", bytes_per_word);
+		printf("Local array length: %zu (%s, %s per rank)\n", array_elements, s_local_array_size, s_local_rank_size);
+		printf("Global array length: %zu (%s, %s for all ranks)\n", STREAM_ARRAY_SIZE, s_global_array_size, s_global_rank_size);
+		printf("Each rank uses 3 arrays to perform COPY, SCALE, ADD and TRIAD.\n");
+		free(s_local_array_size);
+		free(s_local_rank_size);
+		free(s_global_array_size);
+		free(s_global_rank_size);
+	}
+
 	// Rank 0 needs to allocate arrays to hold error data and timing data from
 	// all ranks for analysis and output.
 	// Allocate and instantiate the arrays here -- after the primary arrays 
@@ -232,63 +306,6 @@ main(int argc, char **argv)
 		memset(TimesByRank,0,4*NTIMES*sizeof(double)*numranks);
 	}
 
-    /* Get initial timing estimate to compare to timer granularity. */
-	/* All ranks need to run this code since it changes the values in array a */
-    t = MPI_Wtime();
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (j = 0; j < array_elements; j++)
-		a[j] = 2.0E0 * a[j];
-    t = 1.0E6 * (MPI_Wtime() - t);
-
-	// Initial informational printouts -- rank 0 handles all the output
-	if (myrank == 0) {
-		printf(HLINE);
-		printf("STREAM version 5.10 (modified by Mayeths)\n");
-
-		printf(HLINE);
-		printf("MPI ranks: %d\n", numranks);
-#ifdef _OPENMP
-		printf("OpenMP threads: %d\n", numthreads);
-#else
-		printf("OpenMP threads: disabled\n");
-#endif
-		printf("Repeat: %d (Report the best excluding the first iteration)\n", NTIMES);
-		printf("Scalar value: %f\n", SCALAR);
-		printf("Validation epsilon: %e\n", epsilon);
-		if  ( (quantum = checktick()) >= 1) 
-		printf("Timer granularity: ~ %d ms\n", quantum);
-		else {
-		printf("Timer granularity: < 1 ms\n");
-		quantum = 1;
-		}
-		int nticks = (int)(t/quantum);
-		printf("Array traversal cost: ~ %d ms (%d ticks)\n", (int)t, nticks);
-		if (nticks < 20) {
-			printf("\x1b[33mWARNING\x1b[0m Increase the size for at least 20 ticks\n");
-		}
-
-		printf(HLINE);
-		size_t bytes_per_word = sizeof(STREAM_TYPE);
-		char *s_local_array_size = NULL;
-		char *s_local_rank_size = NULL;
-		char *s_global_array_size = NULL;
-		char *s_global_rank_size = NULL;
-		to_readable_size(&s_local_array_size, local_array_size, 1);
-		to_readable_size(&s_local_rank_size, local_array_size * 3, 1);
-		to_readable_size(&s_global_array_size, global_array_size, 1);
-		to_readable_size(&s_global_rank_size, global_array_size * 3, 1);
-		printf("Element size: %zu bytes\n", bytes_per_word);
-		printf("Local array length: %zu (%s, %s per rank)\n", array_elements, s_local_array_size, s_local_rank_size);
-		printf("Global array length: %zu (%s, %s for all ranks)\n", STREAM_ARRAY_SIZE, s_global_array_size, s_global_rank_size);
-		printf("Each rank uses 3 arrays to perform COPY, SCALE, ADD and TRIAD.\n");
-		free(s_local_array_size);
-		free(s_local_rank_size);
-		free(s_global_array_size);
-		free(s_global_rank_size);
-	}
-    
     /*	--- MAIN LOOP --- repeat test cases NTIMES times --- */
 
     // This code has more barriers and timing calls than are actually needed, but
@@ -443,37 +460,25 @@ main(int argc, char **argv)
 	return(0);
 }
 
-# define	M	20
+#define M 32
+double checktick() {
+	double ticks[M];
 
-int
-checktick()
-    {
-    int		i, minDelta, Delta;
-    double	t1, t2, timesfound[M];
-
-/*  Collect a sequence of M unique time values from the system. */
-
-    for (i = 0; i < M; i++) {
-	t1 = MPI_Wtime();
-	while( ((t2=MPI_Wtime()) - t1) < 1.0E-6 )
-	    ;
-	timesfound[i] = t1 = t2;
+	for (int i = 0; i < M; i++) {
+		double t1 = MPI_Wtime();
+		double t2 = 0;
+		size_t count = 0;
+		while ((t2 = MPI_Wtime()) - t1 < 1e-6)
+			count++;
+		ticks[i] = (t2 - t1) / (double)count;
 	}
 
-/*
- * Determine the minimum difference between these M values.
- * This result will be our estimate (in microseconds) for the
- * clock granularity.
- */
+	double tick = FLT_MAX;
+	for (int i = 1; i < M; i++)
+		tick = MIN(tick, ticks[i]);
 
-    minDelta = 1000000;
-    for (i = 1; i < M; i++) {
-	Delta = (int)( 1.0E6 * (timesfound[i]-timesfound[i-1]));
-	minDelta = MIN(minDelta, MAX(Delta,0));
-	}
-
-   return(minDelta);
-    }
+	return tick;
+}
 
 
 // ----------------------------------------------------------------------------------
