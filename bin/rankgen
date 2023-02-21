@@ -3,7 +3,6 @@ VERSION="230207"
 
 import sys
 import argparse
-import textwrap
 import shutil
 import math
 import pathlib
@@ -118,8 +117,7 @@ def print_fingerprint(hwinfo: HardwareInfo, ranks: list[Rank], align: str,
     symbol_index = 0
     last_rank = 0
     node_name = ranks[0].get_node_name()
-    digit = int(math.log10(hwinfo.cores_per_node)) + 1
-    finger = "{node_name} [".format(node_name=node_name)
+    finger = "{node_name} |".format(node_name=node_name)
     for i in range(len(core_ranks)):
         core_rank = core_ranks[i]
         if core_rank == -1:
@@ -130,14 +128,24 @@ def print_fingerprint(hwinfo: HardwareInfo, ranks: list[Rank], align: str,
             last_rank = core_rank
         else:
             finger += symbols[symbol_index]
-        if i == hwinfo.cores_per_node - 1:
-            finger += "]"
-        elif i % hwinfo.cores_per_node == hwinfo.cores_per_node - 1:
-            finger += "] \n{node_name} [".format(node_name=node_name)
-        elif align == "socket" and i % hwinfo.cores_per_socket == hwinfo.cores_per_socket - 1:
-            finger += "]["
-        elif align == "numa" and i % hwinfo.cores_per_numa == hwinfo.cores_per_numa - 1:
-            finger += "]["
+        total_end = i == hwinfo.cores_per_node - 1
+        node_end = i % hwinfo.cores_per_node == hwinfo.cores_per_node - 1
+        socket_end = align == "socket" and i % hwinfo.cores_per_socket == hwinfo.cores_per_socket - 1
+        numa_end = align == "numa" and i % hwinfo.cores_per_numa == hwinfo.cores_per_numa - 1
+        if total_end:
+            finger += "|"
+        elif node_end:
+            finger += "| \n{node_name} |".format(node_name=node_name)
+            symbol_index = 0
+            last_rank = core_rank + 1
+        elif socket_end:
+            finger += "|"
+            symbol_index = 0
+            last_rank = core_rank + 1
+        elif numa_end:
+            finger += "|"
+            symbol_index = 0
+            last_rank = core_rank + 1
     eprint(finger)
 
 def aligned_fill(ranks: List[Rank], hwinfo: HardwareInfo, align: str, left_most_cores: bool,
