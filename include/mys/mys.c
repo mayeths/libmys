@@ -357,11 +357,9 @@ MYS_API const char* mys_log_level_string(int level)
 }
 
 static void _mys_log_stdio_handler(mys_log_event_t *event) {
-    const char *lstr = mys_log_level_string(event->level);
-    const char level_shortname = lstr[0];
     FILE *file = event->udata != NULL ? (FILE *)event->udata : stdout;
 
-    char base_label[256];
+    char base_label[256] = {'\0'};
 
     char *label = base_label;
     int label_size = sizeof(base_label);
@@ -373,26 +371,29 @@ static void _mys_log_stdio_handler(mys_log_event_t *event) {
     rank_digits = rank_digits > 3 ? rank_digits : 3;
     line_digits = line_digits > 3 ? line_digits : 3;
 
-    snprintf(label, label_size, "[%c::%0*d %s:%0*d] ",
-        level_shortname, rank_digits, myrank,
-        event->file, line_digits, event->line
-    );
-
-#ifdef MYS_LOG_COLOR
-    const char *level_colors[] = {
-        "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"
-    };
-    char colorized_label[sizeof(base_label) + 128];
-    if (isatty(fileno(file))) {
-        snprintf(colorized_label, sizeof(colorized_label), "%s%s\x1b[0m",
-            level_colors[(int)event->level], label
+    if ((int)event->level < (int)MYS_LOG_RAW) {
+        const char *lstr = mys_log_level_string(event->level);
+        const char level_shortname = lstr[0];
+        snprintf(label, label_size, "[%c::%0*d %s:%0*d] ",
+            level_shortname, rank_digits, myrank,
+            event->file, line_digits, event->line
         );
-        label = colorized_label;
-        label_size = sizeof(colorized_label);
-    }
+#ifdef MYS_LOG_COLOR
+        const char *level_colors[] = {
+            "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"
+        };
+        char colorized_label[sizeof(base_label) + 128];
+        if (isatty(fileno(file))) {
+            snprintf(colorized_label, sizeof(colorized_label), "%s%s\x1b[0m",
+                level_colors[(int)event->level], label
+            );
+            label = colorized_label;
+            label_size = sizeof(colorized_label);
+        }
 #endif
+        fprintf(file, "%s", label);
+    }
 
-    fprintf(file, "%s", label);
     vfprintf(file, event->fmt, event->vargs);
     fprintf(file, "\n");
     fflush(file);

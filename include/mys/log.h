@@ -25,7 +25,14 @@
 #endif
 
 enum {
-    MYS_LOG_TRACE, MYS_LOG_DEBUG, MYS_LOG_INFO, MYS_LOG_WARN, MYS_LOG_ERROR, MYS_LOG_FATAL, MYS_LOG_LEVEL_COUNT
+    MYS_LOG_TRACE,
+    MYS_LOG_DEBUG,
+    MYS_LOG_INFO,
+    MYS_LOG_WARN,
+    MYS_LOG_ERROR,
+    MYS_LOG_FATAL,
+    MYS_LOG_RAW,
+    MYS_LOG_LEVEL_COUNT
 };
 
 #define TLOG(who, fmt, ...) mys_log(who, MYS_LOG_TRACE, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
@@ -34,6 +41,7 @@ enum {
 #define WLOG(who, fmt, ...) mys_log(who, MYS_LOG_WARN,  MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define ELOG(who, fmt, ...) mys_log(who, MYS_LOG_ERROR, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define FLOG(who, fmt, ...) mys_log(who, MYS_LOG_FATAL, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define RLOG(who, fmt, ...) mys_log(who, MYS_LOG_RAW, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define __LOG_ORDERED(LOG, fmt, ...) do { \
     int nranks = mys_nranks();            \
     for (int i = 0; i < nranks; i++) {    \
@@ -47,6 +55,9 @@ enum {
 #define WLOG_ORDERED(fmt, ...) __LOG_ORDERED(WLOG, fmt, ##__VA_ARGS__)
 #define ELOG_ORDERED(fmt, ...) __LOG_ORDERED(ELOG, fmt, ##__VA_ARGS__)
 #define FLOG_ORDERED(fmt, ...) __LOG_ORDERED(FLOG, fmt, ##__VA_ARGS__)
+#define RLOG_ORDERED(fmt, ...) __LOG_ORDERED(RLOG, fmt, ##__VA_ARGS__)
+
+#define THROW_NOT_IMPL() FLOG(MYRANK(), "Not implemented.")
 
 typedef struct {
     int level;
@@ -93,12 +104,6 @@ MYS_API const char* mys_log_level_string(int level);
 #else
 #warning legacy FAILED was predefined before libmys
 #endif /*FAILED*/
-
-#ifndef THROW_NOT_IMPL
-#define THROW_NOT_IMPL() FAILED("Not implemented.")
-#else
-#warning legacy THROW_NOT_IMPL was predefined before libmys
-#endif /*THROW_NOT_IMPL*/
 
 #endif /*MYS_NO_LEGACY*/
 
