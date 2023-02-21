@@ -26,18 +26,18 @@
 #include "os.h"
 
 static const char *usage =
-	"\x1b[36m------ STREAM version 5.10 (modified by Mayeths) ------\x1b[0m\n"
-	"\x1b[36m[Usage]\x1b[0m\n"
+	"=== STREAM version 5.10 (modified by Mayeths)\n"
+	"=== Usage\n"
 	"    %s ncores min_size\n"
 	"    [Apple M1] 8 cores 12MB shared L2, but we want bigger min_size, ./stream_mpi.exe 8 128MB\n"
 	"    [Kunpeng920] 128 cores 48MB shared L3, ./stream_mpi.exe 128 48MB\n"
 	"    * Use the size of LLC (LLC_size) as min_size if it's larger than 32MB else 128MB.\n"
-	"\x1b[36m[Insided Algorithm]\x1b[0m\n"
+	"=== Insided Algorithm\n"
 	"    local_array_size = min_size * (log2(ncores)+1) / (log2(nranks)+1)\n"
 	"    * local_array_size is min_size * log2(ncores) when utilizing one core.\n"
 	"    * local_array_size is min_size when utilizing all cores.\n"
 	"    * global_array_size ranges from [min_size * (log2(ncores)+1), min_size * ncores]\n"
-	"\x1b[36m[Note From Original Stream]\x1b[0m\n"
+	"=== Note From Original Stream\n"
 	"    * local_array_size must be large enough that the traversal cost > 20 clock-ticks.\n"
 	"    * Ensure global_array_size >= 4 * LLC_size. So min_size > 4 * LLC_size if ncores <= 8.\n"
 ;
@@ -260,7 +260,7 @@ main(int argc, char **argv)
 			printf("Array traversal cost: %.1f ns (%zu ticks)\n", t * 1e9, nticks);
 
 		if (nticks < 20)
-			printf("\x1b[33mWARNING\x1b[0m Increase the size for at least 20 ticks\n");
+			printf("====== WARNING: Increase the size for at least 20 ticks ======\n");
 
 		printf("Repeat: %d (Report the best run excluding the first one)\n", NTIMES);
 		printf(HLINE);
