@@ -1,5 +1,6 @@
 /*-----------------------------------------------------------------------*/
-/* Program: STREAM (forked from 5.10)                                    */
+/* Program: STREAM MPI variant (forked from version 5.10)                */
+/* See https://www.cs.virginia.edu/stream/FTP/Code/Versions/stream_mpi.c */
 /* Original code developed by John D. McCalpin                           */
 /* Programmers: John D. McCalpin                                         */
 /*              Joe R. Zagar                                             */

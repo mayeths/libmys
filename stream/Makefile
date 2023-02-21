@@ -6,13 +6,9 @@ MPICC ?= mpicc
 OMPCC ?= gcc
 
 # stream_mpi.c use STREAM_ARRAY_SIZE from runtime argument
-OPT=-DNTIMES=10
+OPT=-DNTIMES=10 -std=c99 -Wall -lm -Ofast -ftree-vectorize
 MPICFLAGS=$(OPT)
-OMPCFLAGS=$(OPT) -DSTREAM_ARRAY_SIZE=100000000
-
-OPT=-std=c99 -Wall -lm -Ofast -ftree-vectorize
-MPIOPT=$(OPT)
-OMPOPT=$(OPT) -fopenmp -mcmodel=large
+OMPCFLAGS=$(OPT) -fopenmp -mcmodel=large -DSTREAM_ARRAY_SIZE=100000000
 
 .PHONY: clean
 
@@ -20,10 +16,10 @@ default: clean stream_mpi.exe
 
 # stream_mpi.c also support openmp but we won't use it
 stream_mpi.exe: stream_mpi.c
-	$(MPICC) -o $@ $(MPIOPT) $(MPICFLAGS) $<
+	$(MPICC) -o $@ $(MPICFLAGS) $<
 
 stream_omp.exe: stream_omp.c
-	$(OMPCC) -o $@ $(OMPOPT) $(OMPCFLAGS) $<
+	$(OMPCC) -o $@ $(OMPCFLAGS) $<
 
 clean:
 	rm -f stream_mpi.exe stream_omp.exe
