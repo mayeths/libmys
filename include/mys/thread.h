@@ -18,6 +18,7 @@
 #elif __STDC_VERSION__ >= 201112 && !defined(__STDC_NO_THREADS__)
 #define mys_thread_local _Thread_local
 #elif defined(__cplusplus)
+// C++ thread_local does't allow static non-zero initalze
 #define mys_thread_local thread_local
 #else
 #error "Cannot define mys_thread_local"
@@ -26,7 +27,13 @@
 /**********************************/
 // mys_mutex_t
 /**********************************/
+// #define MYS_USE_POSIX_MUTEX // For no __sync_val_compare_and_swap
+#ifdef MYS_USE_POSIX_MUTEX
+#include <pthread.h>
+typedef pthread_mutex_t mys_mutex_t;
+#define MYS_MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 
+#else
 typedef struct mys_mutex_t {
     int guard;
 } mys_mutex_t;
@@ -37,7 +44,10 @@ typedef struct mys_mutex_t {
 #define __MYS_MUTEX_BUSY 2
 #define MYS_MUTEX_INITIALIZER { .guard = __MYS_MUTEX_IDLE }
 
+#endif /*MYS_USE_POSIX_MUTEX*/
+
 MYS_API void mys_mutex_init(mys_mutex_t *lock);
+MYS_API void mys_mutex_destroy(mys_mutex_t *lock);
 MYS_API void mys_mutex_lock(mys_mutex_t *lock);
 MYS_API void mys_mutex_unlock(mys_mutex_t *lock);
 

@@ -1133,10 +1133,38 @@ MYS_API double mys_standard_deviation(double *arr, int n)
     return sqrt(denom / nom);
 }
 
+#ifdef MYS_USE_POSIX_MUTEX
+MYS_API void mys_mutex_init(mys_mutex_t *lock)
+{
+    pthread_mutex_init(lock, NULL);
+}
+
+MYS_API void mys_mutex_destroy(mys_mutex_t *lock)
+{
+    pthread_mutex_destroy(lock);
+}
+
+MYS_API void mys_mutex_lock(mys_mutex_t *lock)
+{
+    pthread_mutex_lock(lock);
+}
+
+MYS_API void mys_mutex_unlock(mys_mutex_t *lock)
+{
+    pthread_mutex_unlock(lock);
+}
+#else
 MYS_API void mys_mutex_init(mys_mutex_t *lock)
 {
     __MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_UNINITIALIZE, __MYS_MUTEX_IDLE);
     mys_memory_smp_mb();
+}
+
+MYS_API void mys_mutex_destroy(mys_mutex_t *lock)
+{
+    mys_mutex_lock(lock);
+    lock->guard = __MYS_MUTEX_UNINITIALIZE;
+    mys_mutex_unlock(lock);
 }
 
 MYS_API void mys_mutex_lock(mys_mutex_t *lock)
@@ -1152,5 +1180,6 @@ MYS_API void mys_mutex_unlock(mys_mutex_t *lock)
         continue;
     mys_memory_smp_mb();
 }
+#endif /*MYS_USE_POSIX_MUTEX*/
 
 #endif /*__MYS_C__*/
