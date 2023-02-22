@@ -283,12 +283,12 @@ def main():
     parser.add_argument('threads_per_rank', type=int, default=1, help=f"Number of threads per rank")
     # metavar='' for removing dest variable from help text
     hwinfoArgs = parser.add_argument_group('Hardware information arguments')
-    hwinfoArgs.add_argument('--name', dest='name', default="cn{:03d}", type=str, help=f"Node name format in python formatting syntax", metavar='')
+    hwinfoArgs.add_argument('--name', dest='name', default="cn{:03d}", type=str, help=f"Node name in python formatting syntax", metavar='')
     hwinfoArgs.add_argument('--first', dest='first', action=RecorderAction, default=101, type=int, help="Inclusive node start index", metavar='')
     hwinfoArgs.add_argument('--last', dest='last', action=RecorderAction, type=int, help="Inclusive node end index", metavar='')
-    hwinfoArgs.add_argument('--sockets-per-node', dest='sockets_per_node', default=2, type=int, help=f"Sockets per node", metavar='')
-    hwinfoArgs.add_argument('--numas-per-socket', dest='numas_per_socket', default=2, type=int, help=f"Numas per socket", metavar='')
-    hwinfoArgs.add_argument('--cores-per-numa', dest='cores_per_numa', default=32, type=int, help=f"Cores per numa", metavar='')
+    hwinfoArgs.add_argument('-S', '--sockets-per-node', dest='sockets_per_node', default=2, type=int, help=f"Sockets per node", metavar='')
+    hwinfoArgs.add_argument('-N', '--numas-per-socket', dest='numas_per_socket', default=2, type=int, help=f"Numas per socket", metavar='')
+    hwinfoArgs.add_argument('-C', '--cores-per-numa', dest='cores_per_numa', default=32, type=int, help=f"Cores per numa", metavar='')
     # TODO: Support hwthread
     # hwinfoArgs.add_argument('--hwthreads-per-core', dest='hwthreads_per_core', default=1, type=int, help=f"HWThreads per core", metavar='')
     generatorArgs = parser.add_argument_group('generator arguments')
@@ -297,8 +297,8 @@ def main():
     generatorArgs.set_defaults(left_most_cores=False)
     generatorArgs.set_defaults(no_fingerprint=False)
     generatorArgs.add_argument('--align', dest='region', default='numa', choices=['numa', 'socket', 'node'], help="Align ranks to the numa/socket/node region", metavar='')
+    generatorArgs.add_argument('--left', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores in the region", metavar='')
     generatorArgs.add_argument('--imbalance', dest='imbalance', action='store_const', const=True, default=False, help="Allow imbalancing over regions", metavar='')
-    generatorArgs.add_argument('--left', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores of the region", metavar='')
     generatorArgs.add_argument('--finger', dest='fingerprint', default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
     parser.add_argument('-q', '--quiet', dest='quiet', action='store_const', const=True, default=False, help="Don't print information", metavar='')
     parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
@@ -317,9 +317,18 @@ def main():
     fingerprint = args.fingerprint
     QUIET = args.quiet
 
-    # TODO: Check arguments are positive int
-    # if imbalance:
-    #     eexit(1, f"imbalance not implemented.")
+    if num_node <= 0:
+        eexit(1, f"Invalid number of node: {num_node}")
+    if num_rank <= 0:
+        eexit(1, f"Invalid number of rank: {num_rank}")
+    if threads_per_rank <= 0:
+        eexit(1, f"Invalid threads per rank: {threads_per_rank}")
+    if args.sockets_per_node <= 0:
+        eexit(1, f"Invalid sockets per node: {args.sockets_per_node}")
+    if args.numas_per_socket <= 0:
+        eexit(1, f"Invalid numas per socket: {args.numas_per_socket}")
+    if args.cores_per_numa <= 0:
+        eexit(1, f"Invalid cores per numa: {args.cores_per_numa}")
 
     if "--last" not in RecorderAction.named_record:
         first_node_index = args.first
