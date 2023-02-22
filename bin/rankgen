@@ -135,12 +135,6 @@ class Rank:
 # Fingerprint is only correct for contiguous slot mapping
 def print_fingerprint(hwinfo: HardwareInfo, ranks: list[Rank], region: str,
                       target_node_index: int, symbols=["+", "-"], void_symbol="."):
-    if region == "numa":
-        cores_per_region = hwinfo.cores_per_numa
-    elif region == "socket":
-        cores_per_region = hwinfo.cores_per_socket
-    else:
-        cores_per_region = hwinfo.cores_per_node
     
     ranks = [rank for rank in ranks if rank.node_index == target_node_index]
     if not ranks:
@@ -346,13 +340,6 @@ def main():
                imbalance, first_node_index, last_node_index,
                num_node, num_rank, threads_per_rank)
 
-    if region == "numa":
-        regions_per_node = hwinfo.numas_per_node
-    elif region == "socket":
-        regions_per_node = hwinfo.sockets_per_node
-    elif region == "node":
-        regions_per_node = 1
-
     eprint(f"{parser.prog}: {parser.description}")
     eprint(f"=== Platform Summary")
     eprint(f"Name format: {hwinfo.name_format}")
@@ -388,8 +375,11 @@ def main():
         eprint(f"")
     else:
         pathlib.Path(outfile).parent.mkdir(parents=True, exist_ok=True)
-        with open(outfile, "w") as f:
-            f.write(content)
+        try:
+            with open(outfile, "w") as f:
+                f.write(content)
+        except:
+            eprint(f"Cannot open {outfile} to write output.")
     if fingerprint == "first":
         eprint(f"=== Fingerprint of first node")
         print_fingerprint(hwinfo, ranks, region, first_node_index)
