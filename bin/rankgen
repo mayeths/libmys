@@ -7,6 +7,7 @@ import shutil
 import math
 import pathlib
 import tempfile
+import functools
 from typing import Union, List
 
 QUIET = False
@@ -19,6 +20,31 @@ def eexit(code, text=None, end='\n'):
     if text is not None:
         eprint('[ERROR] ' + text, end=end, force=True)
     exit(code)
+
+@functools.total_ordering
+class Slot:
+    node_index: int
+    region_index: int # in node
+    start: int # in node
+    stop: int # in node
+
+    def __init__(self, node_index: int, region_index: int, slot_start: int, slot_stop: int) -> None:
+        self.node_index = node_index
+        self.region_index = region_index
+        self.start = slot_start
+        self.stop = slot_stop
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Slot):
+            return False
+        return ((self.node_index, self.region_index, self.start, self.stop) ==
+                (other.node_index, self.region_index, other.start, other.stop))
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, Slot):
+            return False
+        return ((self.node_index, self.region_index, self.start, self.stop) <
+                (other.node_index, self.region_index, other.start, other.stop))
 
 class RecorderAction(argparse.Action):
     named_record = {}
@@ -108,52 +134,46 @@ class Rank:
 
 # Fingerprint is only correct for contiguous slot mapping
 def print_fingerprint(hwinfo: HardwareInfo, ranks: list[Rank], region: str,
+# def print_fingerprint(hwinfo: HardwareInfo, region: str, used_cores: List[int],
                       target_node_index: int, symbols=["+", "-"], void_symbol="."):
+    if region == "numa":
+        cores_per_region = hwinfo.cores_per_numa
+    elif region == "socket":
+        cores_per_region = hwinfo.cores_per_socket
+    else:
+        cores_per_region = hwinfo.cores_per_node
+    
     ranks = [rank for rank in ranks if rank.node_index == target_node_index]
     if not ranks:
         return
-    core_ranks = [-1] * hwinfo.cores_per_node
+    core_to_ranks = [-1] * hwinfo.cores_per_node
     for i in range(len(ranks)):
         rank = ranks[i]
-        for used in rank.slots:
-            core_ranks[used] = i
+        for core in rank.slots:
+            core_to_ranks[core] = i
+
+    result = ""
     symbol_index = 0
     last_rank = 0
-    node_name = ranks[0].get_node_name()
-    finger = "{node_name} |".format(node_name=node_name)
-    for i in range(len(core_ranks)):
-        core_rank = core_ranks[i]
-        if core_rank == -1:
-            finger += void_symbol
-        elif core_rank != last_rank:
+    for i in range(hwinfo.cores_per_node):
+        if i % cores_per_region == 0:
+            result += "|"
+        rank = core_to_ranks[i]
+        if rank == -1:
+            result += void_symbol
+        elif rank != last_rank:
             symbol_index = (symbol_index + 1) % len(symbols)
-            finger += symbols[symbol_index]
-            last_rank = core_rank
+            result += symbols[symbol_index]
+            last_rank = rank
         else:
-            finger += symbols[symbol_index]
-        total_end = i == hwinfo.cores_per_node - 1
-        node_end = i % hwinfo.cores_per_node == hwinfo.cores_per_node - 1
-        socket_end = region == "socket" and i % hwinfo.cores_per_socket == hwinfo.cores_per_socket - 1
-        numa_end = region == "numa" and i % hwinfo.cores_per_numa == hwinfo.cores_per_numa - 1
-        if total_end:
-            finger += "|"
-        elif node_end:
-            finger += "| \n{node_name} |".format(node_name=node_name)
-            symbol_index = 0
-            last_rank = core_rank + 1
-        elif socket_end:
-            finger += "|"
-            symbol_index = 0
-            last_rank = core_rank + 1
-        elif numa_end:
-            finger += "|"
-            symbol_index = 0
-            last_rank = core_rank + 1
-    eprint(finger)
+            result += symbols[symbol_index]
+    result += "|"
+    eprint(result)
 
-def aligned_fill(ranks: List[Rank], hwinfo: HardwareInfo, region: str, left_most_cores: bool,
-                 num_rank: int, first_node_index: int, last_node_index: int,
-                 ranks_per_node: int, threads_per_rank: int, num_node: int):
+
+def fill_ranks(hwinfo: HardwareInfo, region: str, left_most_cores: bool,
+                 enable_imbalance: bool, first_node_index: int, last_node_index: int,
+                 num_node: int, num_rank: int, threads_per_rank: int):
     if region == "numa":
         regions_per_node = hwinfo.numas_per_node
         cores_per_region = hwinfo.cores_per_numa
@@ -163,46 +183,88 @@ def aligned_fill(ranks: List[Rank], hwinfo: HardwareInfo, region: str, left_most
     elif region == "node":
         regions_per_node = 1
         cores_per_region = hwinfo.cores_per_node
-    ranks_per_region = ranks_per_node // regions_per_node
+
+    num_region = regions_per_node * num_node
+    ranks_per_region = num_rank // (regions_per_node * num_node)
+    ranks_per_node = ranks_per_region * regions_per_node
+    ranks_tail = num_rank - ranks_per_node * num_node
+
     slots_per_region = ranks_per_region * threads_per_rank
     slots_per_node = slots_per_region * regions_per_node
 
-    # Check if requested slot is too many for node. We first output assert of node for beauty
-    if num_rank * threads_per_rank > num_node * hwinfo.cores_per_node:
-        eexit(1, f"{num_rank} ranks with {threads_per_rank} threads are too many "
-                +f"for {num_node} nodes ({hwinfo.cores_per_node} cores per node)")
+    first_node_name = HardwareInfo.generate_node_name(hwinfo.name_format, first_node_index)
+    last_node_name = HardwareInfo.generate_node_name(hwinfo.name_format, last_node_index)
+
+    # Check if requested slot is too many for node. We first assert node-wise for clear
+    max_num_node = last_node_index - first_node_index + 1
+    if num_node > max_num_node:
+        eexit(1, f"Requested {num_node} nodes but "+
+                 f"node [{first_node_name}, {last_node_name}] is {max_num_node} nodes only.")
+
+    num_slots = num_rank * threads_per_rank
+    max_slot = num_node * hwinfo.cores_per_node
+    # Check if requested slot is too many for node first. (for clear information)
+    if num_slots > max_slot:
+        eexit(1, f"Requested {num_slots} cores but up to "
+                +f"{max_slot} cores are allocatable on node [{first_node_name}, {last_node_name}].")
     # Check if requested slot is too many for region.
-    if (num_rank * threads_per_rank) / (regions_per_node * num_node) > cores_per_region:
-        suggestion = ""
-        if region != "node":
-            suggestion = '. Maybe you want "--align=node"?'
-        eexit(1, f"{num_rank} ranks with {threads_per_rank} threads are too many "
-                +f"for {region} ({cores_per_region} cores per {region}){suggestion}")
-    # Check if requested slot cannot be splitted to region equally
-    if (num_rank * threads_per_rank / num_node) % regions_per_node != 0:
-        suggestion = ""
-        if region != "node":
-            suggestion = '. Maybe you want "--align=node"?'
-        eexit(1, f"{num_rank} ranks with {threads_per_rank} threads cannot be "
-                +f"split to {region} equally ({cores_per_region} cores per {region}){suggestion}")
+    if ranks_tail == 0:
+        # Ideal distribution. Use slots_per_region to detect if too many
+        if slots_per_region > cores_per_region:
+            eexit(1, f"Requested {num_slots} cores ({slots_per_region} per {region}) but up to"
+                    +f'{cores_per_region} cores per {region} only. '
+                    +f'Maybe you want "--align=node"?')
+    else:
+        # Check if imbalanced and no enable_imbalance
+        if not enable_imbalance:
+            # Ask for explicit --imbalance
+            eexit(1, f'Cannot split {num_rank} ranks (with {threads_per_rank} threads) to {region} equally '
+                    +f'({cores_per_region} cores per {region}). Maybe you want "--align=node" or "--imbalance"?')
+        if slots_per_region > cores_per_region:
+            # For example, 1 rank with 33 threads on 2 sockets 4 numas 128 cores machine (32 cores per numa).
+            eexit(1, f'{num_rank} ranks with {threads_per_rank} threads are imbalanced and too many '
+                    +f'for {region} ({slots_per_region} but {cores_per_region} cores per {region} only). '
+                    +f'Maybe you want "--align=node"?')
 
-    nranks = len(ranks)
-    for i in range(nranks):
-        rank = ranks[i]
-        global_slot_start = i * threads_per_rank
-        region_index = (global_slot_start // slots_per_region) % regions_per_node # which region in node
-        slot_start_index = region_index * cores_per_region + (i % ranks_per_region) * threads_per_rank
-        slot_stop_index = slot_start_index + threads_per_rank - 1
-        if not left_most_cores:
-            offset = cores_per_region - slots_per_region
-            slot_start_index = offset + slot_start_index
-            slot_stop_index = offset + slot_stop_index
-        rank.slots = [i for i in range(slot_start_index, slot_stop_index+1)]
-        rank.node_format = hwinfo.name_format
-        rank.node_index = first_node_index + (global_slot_start // slots_per_node) # which node
-        if rank.node_index < first_node_index or rank.node_index > last_node_index:
-            eexit(1, f'rank {i} is out of range for node index range [{first_node_index}, {last_node_index}]')
+    slots: List[Slot] = []
 
+    for i in range(num_rank):
+        # Distribute by user specified nodes first. For example, user specified 2 node and 2 ranks,
+        # We should put each rank on different node
+        node_index = i % num_node # global
+        region_index = (i % num_region) // num_node # in node
+        region_index_g = node_index * regions_per_node + region_index # global
+        inner_index = i // num_region # in region
+        if left_most_cores:
+            slot_start = region_index * cores_per_region + inner_index * threads_per_rank
+            slot_stop = slot_start + threads_per_rank - 1
+        else:
+            slot_stop = (region_index + 1) * cores_per_region - 1 - inner_index * threads_per_rank
+            slot_start = slot_stop - threads_per_rank + 1
+        slot = Slot(first_node_index + node_index, region_index, slot_start, slot_stop)
+        slots.append(slot)
+
+    slots.sort()
+    ranks = []
+
+    for i in range(num_rank):
+        slot = slots[i]
+        core_list = [i for i in range(slot.start, slot.stop+1)]
+        rank = Rank(i, hwinfo.name_format, slot.node_index, core_list)
+
+        if slot.node_index > last_node_index:
+            eexit(1, f'Invalid {str(rank)}. Out of range [{first_node_name}, {last_node_name}]')
+
+        region_ok = slot.region_index >= 0 and slot.region_index < regions_per_node
+        core_list_b1 = slot.region_index * cores_per_region
+        core_list_b2 = (slot.region_index + 1) * cores_per_region - 1
+        core_list_ok = slot.start >= core_list_b1 and slot.stop <= core_list_b2
+        if not region_ok or not core_list_ok:
+            eexit(1, f'Invalid {str(rank)}. Out of {region} {slot.region_index}: [{core_list_b1}, {core_list_b2}]')
+
+        ranks.append(rank)
+
+    return ranks
 
 
 def main():
@@ -235,7 +297,7 @@ def main():
     generatorArgs.set_defaults(left_most_cores=False)
     generatorArgs.set_defaults(no_fingerprint=False)
     generatorArgs.add_argument('--align', dest='region', default='numa', choices=['numa', 'socket', 'node'], help="Align ranks to the numa/socket/node region", metavar='')
-    # generatorArgs.add_argument('--imbalance', dest='imbalance', action='store_const', const=True, default=False, help="Allow imbalancing over regions", metavar='')
+    generatorArgs.add_argument('--imbalance', dest='imbalance', action='store_const', const=True, default=False, help="Allow imbalancing over regions", metavar='')
     generatorArgs.add_argument('--left', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores of the region", metavar='')
     generatorArgs.add_argument('--finger', dest='fingerprint', default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
     parser.add_argument('-q', '--quiet', dest='quiet', action='store_const', const=True, default=False, help="Don't print information", metavar='')
@@ -251,9 +313,13 @@ def main():
     use_tempfile = args.use_tempfile
     left_most_cores = args.left_most_cores
     region = args.region
-    # allow_unbalance = args.allow_unbalance
+    imbalance = args.imbalance
     fingerprint = args.fingerprint
     QUIET = args.quiet
+
+    # TODO: Check arguments are positive int
+    # if imbalance:
+    #     eexit(1, f"imbalance not implemented.")
 
     if "--last" not in RecorderAction.named_record:
         first_node_index = args.first
@@ -273,22 +339,14 @@ def main():
         else: #"--first" in RecorderAction.named_record
             first_node_index = args.first
             last_node_index = args.last
-            fisrt_name = HardwareInfo.generate_node_name(hwinfo.name_format, first_node_index)
-            last_name = HardwareInfo.generate_node_name(hwinfo.name_format, last_node_index)
-            if num_node > last_node_index - first_node_index + 1:
-                eexit(1, f'Node num {num_node} is out of range in [{fisrt_name}, {last_name}]')
             if first_node_index == last_node_index:
                 node_range_intro = f"{first_node_index}"
             else:
                 node_range_intro = f"{first_node_index} to {last_node_index}"
 
-    ranks_per_node = num_rank // num_node
-    nranks = ranks_per_node * num_node
-    ranks = [Rank(i) for i in range(nranks)]
-
-    aligned_fill(ranks, hwinfo, region, left_most_cores,
-                 num_rank, first_node_index, last_node_index,
-                 ranks_per_node, threads_per_rank, num_node)
+    ranks = fill_ranks(hwinfo, region, left_most_cores,
+               imbalance, first_node_index, last_node_index,
+               num_node, num_rank, threads_per_rank)
 
     eprint(f"{parser.prog}: {parser.description}")
     eprint(f"=== Node Information")
@@ -303,11 +361,12 @@ def main():
         eprint(f"Number of node: 1 ({ranks[0].get_node_name()})")
     else:
         eprint(f"Number of node: {num_node} ({ranks[0].get_node_name()} to {ranks[-1].get_node_name()})")
-    eprint(f"Number of rank: {num_rank} ({ranks_per_node} per node)")
+    eprint(f"Number of rank: {num_rank} ({num_rank // num_node} per node)")
     eprint(f"Number of thread: {threads_per_rank} per rank")
     eprint(f"Total cores required: {num_rank * threads_per_rank}")
     boundary = "left" if left_most_cores else "right"
-    eprint(f"Ranks are aligned to {boundary} most of {region}")
+    imbalance_message = " Imbalance enabled." if imbalance else ""
+    eprint(f"Ranks are aligned to {boundary} most of {region}.{imbalance_message}")
     eprint(f"")
 
     content = "\n".join([str(rank) for rank in ranks])
@@ -328,7 +387,7 @@ def main():
         print_fingerprint(hwinfo, ranks, region, first_node_index)
     elif fingerprint == "all":
         eprint(f"=== Fingerprint of all {num_node} nodes")
-        for i in range(first_node_index, last_node_index+1):
+        for i in range(first_node_index, first_node_index + num_node):
             print_fingerprint(hwinfo, ranks, region, i)
 
 if __name__ == '__main__':
