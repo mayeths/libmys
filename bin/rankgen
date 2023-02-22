@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-VERSION="230207"
+VERSION="2023.02.22"
 
 import sys
 import argparse
@@ -151,13 +151,13 @@ def print_fingerprint(hwinfo: HardwareInfo, ranks: list[Rank], region: str,
         for core in rank.slots:
             core_to_ranks[core] = i
 
-    result = f"{ranks[0].get_node_name()} ["
+    result = f"{ranks[0].get_node_name()} |"
     symbol_index = 0
     last_rank = 0
     for i in range(hwinfo.cores_per_node):
-        if i != 0 and i % cores_per_region == 0:
-            result += "]["
-        elif i != 0 and i % hwinfo.cores_per_numa == 0:
+        # if i != 0 and i % cores_per_region == 0:
+        #     result += "|"
+        if i != 0 and i % hwinfo.cores_per_numa == 0:
             result += "|"
         rank = core_to_ranks[i]
         if rank == -1:
@@ -168,7 +168,7 @@ def print_fingerprint(hwinfo: HardwareInfo, ranks: list[Rank], region: str,
             last_rank = rank
         else:
             result += symbols[symbol_index]
-    result += "]"
+    result += "|"
     eprint(result)
 
 
@@ -189,6 +189,7 @@ def fill_ranks(hwinfo: HardwareInfo, region: str, left_most_cores: bool,
     ranks_per_region = num_rank // (regions_per_node * num_node)
     ranks_per_node = ranks_per_region * regions_per_node
     ranks_tail = num_rank - ranks_per_node * num_node
+    imbalanced = ranks_tail > 0
 
     slots_per_region = ranks_per_region * threads_per_rank
     slots_per_node = slots_per_region * regions_per_node
@@ -208,23 +209,10 @@ def fill_ranks(hwinfo: HardwareInfo, region: str, left_most_cores: bool,
     if num_slots > max_slot:
         eexit(1, f"Requested {num_slots} cores but up to "
                 +f"{max_slot} cores are allocatable on node [{first_node_name}, {last_node_name}].")
-    if ranks_tail == 0:
-        # No imbalancing. Use slots_per_region to detect if too many
-        if slots_per_region > cores_per_region:
-            eexit(1, f"Requested {num_slots} cores ({slots_per_region} per {region}) but up to"
-                    +f'{cores_per_region} cores per {region} only. '
-                    +f'Maybe you want "--align=node"?')
-    else: # Inbalanced
-        # Ask for explicit --imbalance
-        if not enable_imbalance:
-            eexit(1, f'Cannot split {num_rank} ranks (with {threads_per_rank} threads) to {region} equally '
-                    +f'({cores_per_region} cores per {region}). Maybe you want "--align=node" or "--imbalance"?')
-        # Use slots_per_region to detect if too many
-        if slots_per_region > cores_per_region:
-            # For example, 1 rank with 33 threads on 2 sockets 4 numas 128 cores machine (32 cores per numa).
-            eexit(1, f'{num_rank} ranks with {threads_per_rank} threads are imbalanced and too many '
-                    +f'for {region} ({slots_per_region} but {cores_per_region} cores per {region} only). '
-                    +f'Maybe you want "--align=node"?')
+
+    if imbalanced and not enable_imbalance:
+        eexit(1, f'Cannot split {num_rank} ranks to {num_region} {region}s on {num_node} nodes equally. '
+                +f'Try "--align=node" or insist with "--imbalance".')
 
     slots: List[Slot] = []
 
@@ -260,11 +248,14 @@ def fill_ranks(hwinfo: HardwareInfo, region: str, left_most_cores: bool,
         core_list_b2 = (slot.region_index + 1) * cores_per_region - 1
         core_list_ok = slot.start >= core_list_b1 and slot.stop <= core_list_b2
         if not region_ok or not core_list_ok:
-            eexit(1, f'Invalid {str(rank)}. Out of {region} {slot.region_index}: [{core_list_b1}, {core_list_b2}]')
+            node_name = HardwareInfo.generate_node_name(hwinfo.name_format, slot.node_index)
+            eexit(1, f'rank {i} on {node_name} violate {region} {slot.region_index} boundary: ' +
+                     f'[{slot.start}, {slot.stop}] not in [{core_list_b1}, {core_list_b2}]. ' +
+                     f'Try "--align=node" or other configuration.')
 
         ranks.append(rank)
 
-    return ranks
+    return ranks, imbalanced
 
 
 def main():
@@ -272,37 +263,35 @@ def main():
     terminal_width = shutil.get_terminal_size((80, 20))[0]
     parser = argparse.ArgumentParser(
         prog='rankgen',
-        description=f'Genrate rankfile or command line arguments by specified distribution (version {VERSION})\n',
-        epilog='Example: %(prog)s --finger=all --name="bn{:03d}" --last=108 2 24 10',
-        add_help=False,
         usage='%(prog)s [OPTIONS] <num_node> <num_rank> <threads_per_rank>',
+        description=f'OpenMPI rankfile genrator (version {VERSION})\n',
+        add_help=False,
+        epilog='Example: %(prog)s --finger=all --name="sw{:03d}" --last=108 --left --imbalance --align=socket 2 9 3',
         formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=terminal_width)
     )
-    parser.add_argument('num_node', type=int, help=f"Number of node to use")
+    parser.add_argument('num_node', type=int, help=f"Number of nodes to use")
     parser.add_argument('num_rank', type=int, help=f"Number of ranks")
     parser.add_argument('threads_per_rank', type=int, default=1, help=f"Number of threads per rank")
     # metavar='' for removing dest variable from help text
+    parser.add_argument('-q', '--quiet', dest='quiet', action='store_const', const=True, default=False, help="Don't print summary to stderr", metavar='')
+    parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
+    parser.add_argument('-h', '--help', action='help', help=f"Show this help message and exit")
     hwinfoArgs = parser.add_argument_group('Hardware information arguments')
     hwinfoArgs.add_argument('--name', dest='name', default="cn{:03d}", type=str, help=f"Node name in python formatting syntax", metavar='')
     hwinfoArgs.add_argument('--first', dest='first', action=RecorderAction, default=101, type=int, help="Inclusive node start index", metavar='')
     hwinfoArgs.add_argument('--last', dest='last', action=RecorderAction, type=int, help="Inclusive node end index", metavar='')
     hwinfoArgs.add_argument('-S', '--sockets-per-node', dest='sockets_per_node', default=2, type=int, help=f"Sockets per node", metavar='')
     hwinfoArgs.add_argument('-N', '--numas-per-socket', dest='numas_per_socket', default=2, type=int, help=f"Numas per socket", metavar='')
-    hwinfoArgs.add_argument('-C', '--cores-per-numa', dest='cores_per_numa', default=32, type=int, help=f"Cores per numa", metavar='')
-    # TODO: Support hwthread
-    # hwinfoArgs.add_argument('--hwthreads-per-core', dest='hwthreads_per_core', default=1, type=int, help=f"HWThreads per core", metavar='')
+    hwinfoArgs.add_argument('-C', '--cores-per-numa', dest='cores_per_numa', default=8, type=int, help=f"Cores per numa", metavar='') # TODO: Support hwthread
     generatorArgs = parser.add_argument_group('generator arguments')
-    generatorArgs.add_argument('-o', dest='outfile', default="<stdout>", type=str, help=f"Write output to file", metavar='')
-    generatorArgs.add_argument('-t', '--temp', dest='use_tempfile', action='store_const', const=True, default=False, help="Write output to temp file and print filename", metavar='')
+    generatorArgs.add_argument('-o', dest='outfile', default="<stdout>", type=str, help=f"Output to file", metavar='')
+    generatorArgs.add_argument('-t', dest='use_tempfile', action='store_const', const=True, default=False, help="Output to tempfile and print its path to stdout", metavar='')
     generatorArgs.set_defaults(left_most_cores=False)
     generatorArgs.set_defaults(no_fingerprint=False)
     generatorArgs.add_argument('--align', dest='region', default='numa', choices=['numa', 'socket', 'node'], help="Align ranks to the numa/socket/node region", metavar='')
     generatorArgs.add_argument('--left', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores in the region", metavar='')
     generatorArgs.add_argument('--imbalance', dest='imbalance', action='store_const', const=True, default=False, help="Allow imbalancing over regions", metavar='')
     generatorArgs.add_argument('--finger', dest='fingerprint', default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
-    parser.add_argument('-q', '--quiet', dest='quiet', action='store_const', const=True, default=False, help="Don't print information", metavar='')
-    parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
-    parser.add_argument('-h', '--help', action='help', help=f"Show this help message and exit")
 
     args = parser.parse_args()
     num_node = args.num_node
@@ -353,29 +342,39 @@ def main():
             else:
                 node_range_intro = f"{first_node_index} to {last_node_index}"
 
-    ranks = fill_ranks(hwinfo, region, left_most_cores,
+    ranks, imbalanced = fill_ranks(hwinfo, region, left_most_cores,
                imbalance, first_node_index, last_node_index,
                num_node, num_rank, threads_per_rank)
 
+    if region == "numa":
+        regions_per_node = hwinfo.numas_per_node
+    elif region == "socket":
+        regions_per_node = hwinfo.sockets_per_node
+    elif region == "node":
+        regions_per_node = 1
+
     eprint(f"{parser.prog}: {parser.description}")
-    eprint(f"=== Node Information")
+    eprint(f"=== Platform Summary")
     eprint(f"Name format: {hwinfo.name_format}")
     eprint(f"Valid index: {node_range_intro}")
     eprint(f"Sockets per node: {hwinfo.sockets_per_node}")
     eprint(f"Numas per node: {hwinfo.numas_per_node}")
     eprint(f"Cores per node: {hwinfo.cores_per_node}")
     eprint(f"")
-    eprint(f"=== Generator Information")
+    eprint(f"=== Generator Summary")
     if num_node == 1:
         eprint(f"Number of node: 1 ({ranks[0].get_node_name()})")
     else:
         eprint(f"Number of node: {num_node} ({ranks[0].get_node_name()} to {ranks[-1].get_node_name()})")
     eprint(f"Number of rank: {num_rank} ({num_rank // num_node} per node)")
     eprint(f"Number of thread: {threads_per_rank} per rank")
-    eprint(f"Total cores required: {num_rank * threads_per_rank}")
+    eprint(f"* Total slots required: {num_rank * threads_per_rank} cores")
     boundary = "left" if left_most_cores else "right"
-    imbalance_message = " Imbalance enabled." if imbalance else ""
-    eprint(f"Ranks are aligned to {boundary} most of {region}.{imbalance_message}")
+    if imbalanced:
+        eprint(f"* Ranks are imbalanced distribution to {region}s.")
+    else:
+        eprint(f"* Ranks are balanced distribution to {region}s.")
+    eprint(f"* Aligned to {boundary} boundary of {region}.")
     eprint(f"")
 
     content = "\n".join([str(rank) for rank in ranks])
