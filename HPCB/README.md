@@ -1,6 +1,6 @@
-## HPCB - High Performance Computing Benchmark (of Mayeths)
+## HPCB - High Performance Computing Benchmarks (of Mayeths)
 
-**HPCB** is inspired by [HPC Challenge Benchmark](https://en.wikipedia.org/wiki/HPC_Challenge_Benchmark) and [UL HPC MPI Tutorial](https://ulhpc-tutorials.readthedocs.io/en/latest/parallel/mpi/OSU_MicroBenchmarks/). It's a suite based on widely-used benchmarks that help understanding several performance aspects of a computing cluster, such as the computational efficiency, the bandwidth of local memory access, and the latency of remote communication.
+**HPCB** is inspired by [HPC Challenge Benchmark](https://en.wikipedia.org/wiki/HPC_Challenge_Benchmark) and [UL HPC MPI Tutorial](https://ulhpc-tutorials.readthedocs.io/en/latest/parallel/mpi/OSU_MicroBenchmarks/). It's a suite based on 5 widely-used benchmarks that help understanding several performance aspects of a computing cluster, such as the computational efficiency, the bandwidth of local memory access, and the latency of remote communication.
 
 ### Motivation
 
