@@ -1,13 +1,12 @@
-# Mayeths' STREAM Benchmark 230218 (based on STREAM Benchmark 5.10)
-# NOTE: stream_omp.c was renamed from stream-5.10/stream.c
-#       stream_mpi.c was copied from stream-5.10/Versions/stream_mpi.c
+# Mayeths' STREAM Benchmark 2023.02.18 (based on STREAM Benchmark 5.10)
+# NOTE: stream_mpi.c was stream/Versions/stream_mpi.c
+#       stream_omp.c was stream/stream.c
 
 MPICC ?= mpicc
 OMPCC ?= gcc
 
-# stream_mpi.c use STREAM_ARRAY_SIZE from runtime argument
 OPT=-DNTIMES=10 -std=c99 -Wall -lm -Ofast -ftree-vectorize
-MPICFLAGS=$(OPT)
+MPICFLAGS=$(OPT) # stream_mpi.c get array size from command line
 OMPCFLAGS=$(OPT) -fopenmp -mcmodel=large -DSTREAM_ARRAY_SIZE=100000000
 
 .PHONY: clean
