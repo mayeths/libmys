@@ -6,19 +6,20 @@ MPICC ?= mpicc
 OMPCC ?= gcc
 
 OPT=-DNTIMES=10 -std=c99 -Wall -lm -Ofast -ftree-vectorize
-MPICFLAGS=$(OPT) # stream_mpi.c get array size from command line
+# stream_mpi.c get the array size from command line
+MPICFLAGS=$(OPT)
 OMPCFLAGS=$(OPT) -fopenmp -mcmodel=large -DSTREAM_ARRAY_SIZE=100000000
 
 .PHONY: clean
 
-default: clean stream_mpi.exe
+default: clean stream_mpi
 
 # stream_mpi.c also support openmp but we won't use it
-stream_mpi.exe: stream_mpi.c
+stream_mpi: src/stream_mpi.c
 	$(MPICC) -o $@ $(MPICFLAGS) $<
 
-stream_omp.exe: stream_omp.c
+stream_omp: src/stream_omp.c
 	$(OMPCC) -o $@ $(OMPCFLAGS) $<
 
 clean:
-	rm -f stream_mpi.exe stream_omp.exe
+	rm -f stream_mpi stream_omp
