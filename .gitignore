@@ -3,9 +3,51 @@ include/mys0/*
 !include/mys0/README.md
 lib/
 ugly/
-build
+build/
 .DS_Store
 *.out
 *.o
 *.log
 *.exe
+*.bk
+
+# HPCB/HPCG
+HPCB/HPCG/bin/
+# HPCB/HPL
+HPCB/HPL/bin/
+HPCB/HPL/*/**/lib.grd
+HPCB/HPL/*/**/Make.inc
+HPCB/HPL/*/**/Makefile
+HPCB/HPL/*/**/dexe.grd
+HPCB/HPL/Make.*
+!HPCB/HPL/Make.top
+!HPCB/HPL/Makefile
+# HPCB/NPB
+HPCB/NPB/bin
+HPCB/NPB/*/**/*.mod
+HPCB/NPB/*/**/npbparams.h
+HPCB/NPB/config/make.*
+HPCB/NPB/config/suite.*
+!HPCB/NPB/config/make.def.Mac_M1
+!HPCB/NPB/config/make.def.template
+!HPCB/NPB/config/make.dummy
+!HPCB/NPB/config/suite.def.template
+HPCB/NPB/sys/**/setparams
+HPCB/NPB/sys/**/Info.plist
+# HPCB/OSU
+HPCB/OSU/p2p_bibw
+HPCB/OSU/p2p_bw
+HPCB/OSU/p2p_latency
+HPCB/OSU/coll_allgather
+HPCB/OSU/coll_allreduce
+HPCB/OSU/coll_alltoall
+HPCB/OSU/coll_barrier
+HPCB/OSU/coll_bcast
+HPCB/OSU/win_get_bw
+HPCB/OSU/win_get_latency
+HPCB/OSU/win_put_bibw
+HPCB/OSU/win_put_bw
+HPCB/OSU/win_put_latency
+# HPCB/STREAM
+HPCB/STREAM/stream_mpi
+HPCB/STREAM/stream_omp

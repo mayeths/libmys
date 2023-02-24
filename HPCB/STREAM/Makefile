@@ -10,7 +10,7 @@ OPT=-DNTIMES=10 -std=c99 -Wall -lm -Ofast -ftree-vectorize
 MPICFLAGS=$(OPT)
 OMPCFLAGS=$(OPT) -fopenmp -mcmodel=large -DSTREAM_ARRAY_SIZE=100000000
 
-.PHONY: clean
+.PHONY: clean all
 
 default: clean stream_mpi
 
@@ -20,6 +20,8 @@ stream_mpi: src/stream_mpi.c
 
 stream_omp: src/stream_omp.c
 	$(OMPCC) -o $@ $(OMPCFLAGS) $<
+
+all: stream_mpi stream_omp
 
 clean:
 	rm -f stream_mpi stream_omp
