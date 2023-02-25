@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(SmileBox)
 set(ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
-set(EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external")
+set(EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../ext")
 option(ENABLE_FREETYPE "Enable support of freetype." OFF)
 option(COPY_ASSETS "Copy assets/ folder into build directory" ON)
 
