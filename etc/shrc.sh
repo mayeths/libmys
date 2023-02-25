@@ -1,5 +1,7 @@
 ###
 
+export MYS_DIR=$(dirname $(dirname "$0")/..)
+
 if $SHELL --version | grep -q bash; then
     source bashrc.sh
 elif $SHELL --version | grep -q zsh; then
@@ -10,7 +12,6 @@ command -v realpath >/dev/null 2>&1 || realpath() {
     echo "$(cd "$(dirname -- "$1")" >/dev/null; pwd -P)/$(basename -- "$1")"
 }
 
-export MYS_DIR=$(dirname $(dirname "$0")/..)
 export PYTHONDONTWRITEBYTECODE=1
 export MYS_TMUX_CONF=$(realpath $MYS_DIR/tmux/tmux.conf)
 export MYS_TMUX_CONF_LOCAL=$(realpath $MYS_DIR/tmux/tmux.conf.local)

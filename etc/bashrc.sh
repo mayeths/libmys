@@ -1,7 +1,12 @@
 ###
 
-source bash-preexec.sh
-source bash-functions.sh
+if [[ -z $MYS_DIR ]]; then
+    echo "ERROR: MYS_DIR is not defined. Stop sourcing $0"
+    return 0
+fi
+
+source $MYS_DIR/script/bash-preexec.sh
+source $MYS_DIR/script/bash-functions.sh
 
 _TIME_IT_THRESHOLD=5
 _append_preexec_functions_once _remember_last_command
