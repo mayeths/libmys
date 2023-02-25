@@ -1,0 +1,142 @@
+### Set default-terminal if needed
+#if 'infocmp -x tmux-256color > /dev/null 2>&1' 'set -g default-terminal "tmux-256color"'
+
+### Set default-command if needed
+if-shell '[[ $(uname -s) = Darwin ]]' {
+    set -g default-command "/bin/zsh"
+} {
+    set -g default-command "/bin/bash"
+}
+
+### Prefix key C-q
+# Disable GNU-Screen compatible prefix C-a in .tmux.conf
+set -gu prefix2
+unbind C-a
+unbind C-b
+# Set Custom prefix key C-q
+set -g prefix C-q
+bind C-q send-prefix
+
+### Bind keys
+# split current window vertically
+bind | split-window -h
+
+### Increase tmux history buffer size
+set -g history-limit 20000
+
+### Start with mouse mode disabled
+set -g mouse off
+
+### Refresh window status
+set-option -g status-interval 1
+set-option -g automatic-rename-format '#{?#{m:bash,#{pane_current_command}},#{b:pane_current_path},#{pane_current_command}}'
+
+# new window retains current path, possible values are:
+tmux_conf_new_window_retain_current_path=true
+
+# status line command style (<prefix> : Escape)
+tmux_conf_theme_message_command_fg="$tmux_conf_theme_colour_3"
+tmux_conf_theme_message_command_bg="$tmux_conf_theme_colour_1"
+tmux_conf_theme_message_command_attr="bold"
+
+# window status style (Inactivated window style HHP)
+#   - built-in variables are:
+#     - #{circled_window_index}
+#     - #{circled_session_name}
+#     - #{hostname}
+#     - #{hostname_ssh}
+#     - #{hostname_full}
+#     - #{hostname_full_ssh}
+#     - #{username}
+#     - #{username_ssh}
+tmux_conf_theme_window_status_fg="$tmux_conf_theme_colour_3"
+tmux_conf_theme_window_status_bg="$tmux_conf_theme_colour_1"
+tmux_conf_theme_window_status_attr="none"
+tmux_conf_theme_window_status_format="#I #W"
+#tmux_conf_theme_window_status_format="#{circled_window_index} #W"
+#tmux_conf_theme_window_status_format="#I #W#{?window_bell_flag,🔔,}#{?window_zoomed_flag,🔍,}"
+
+# window current status style (Activated window style HHP)
+#   - built-in variables are:
+#     - #{circled_window_index}
+#     - #{circled_session_name}
+#     - #{hostname}
+#     - #{hostname_ssh}
+#     - #{hostname_full}
+#     - #{hostname_full_ssh}
+#     - #{username}
+#     - #{username_ssh}
+tmux_conf_theme_window_status_current_fg="$tmux_conf_theme_colour_6"
+tmux_conf_theme_window_status_current_bg="$tmux_conf_theme_colour_4"
+tmux_conf_theme_window_status_current_attr="none"
+#tmux_conf_theme_window_status_current_format="#W"
+#tmux_conf_theme_window_status_current_format="#I #W"
+#tmux_conf_theme_window_status_current_format="#{circled_window_index} #W"
+tmux_conf_theme_window_status_current_format="#I #W#{?window_zoomed_flag,🔍,}"
+
+# window activity status style HHP: no activating window
+tmux_conf_theme_window_status_activity_fg="default"
+tmux_conf_theme_window_status_activity_bg="default"
+#tmux_conf_theme_window_status_activity_attr="underscore"
+tmux_conf_theme_window_status_activity_attr="none"
+
+# window bell status style
+tmux_conf_theme_window_status_bell_fg="$tmux_conf_theme_colour_5"
+tmux_conf_theme_window_status_bell_bg="default"
+tmux_conf_theme_window_status_bell_attr="blink,bold"
+
+# window last status style (Last open window HHP)
+tmux_conf_theme_window_status_last_fg="default"
+tmux_conf_theme_window_status_last_bg="default"
+tmux_conf_theme_window_status_last_attr="none"
+
+# status left/right content:
+#   - separate main sections with "|"
+#   - separate subsections with ","
+#   - built-in variables are:
+#     - #{battery_bar}
+#     - #{battery_hbar}
+#     - #{battery_percentage}
+#     - #{battery_status}
+#     - #{battery_vbar}
+#     - #{circled_session_name}
+#     - #{hostname_ssh}
+#     - #{hostname}
+#     - #{hostname_full}
+#     - #{hostname_full_ssh}
+#     - #{loadavg}
+#     - #{mouse}
+#     - #{pairing}
+#     - #{prefix}
+#     - #{root}
+#     - #{synchronized}
+#     - #{uptime_y}
+#     - #{uptime_d} (modulo 365 when #{uptime_y} is used)
+#     - #{uptime_h}
+#     - #{uptime_m}
+#     - #{uptime_s}
+#     - #{username}
+#     - #{username_ssh}
+tmux_conf_theme_status_left=""
+#tmux_conf_theme_status_left="#{?#{client_prefix},^, }#S "
+
+tmux_conf_theme_status_right="#{?#{window_zoomed_flag},#{e|-|:#{window_panes},1} zoomed panes,}#{?#{session_many_attached},#{session_attached} clients,} |#S#{?#{client_prefix},^, }"
+#tmux_conf_theme_status_right="#{mouse}#{?#{client_prefix},^prefix,}#{?#{session_many_attached},#{session_attached} clients,}"
+#tmux_conf_theme_status_right='#{?#{session_many_attached},#{session_attached} clients | ,}#{P:#{?#{pane_active},#[fg=#080808]#[bg=#8a8a8a],#[fg=gray]} #P #{?#{m:bash,#{pane_current_command}},#{b:pane_current_path},#{pane_current_command}} #[default]}'
+#tmux_conf_theme_status_right="#{?#{session_many_attached},#{session_attached} clients,} |#S#{?#{client_prefix},^, }"
+#tmux_conf_theme_status_right="#{?#{window_zoomed_flag},#{e|-|:#{window_panes},1} zoomed panes,}#{?#{session_many_attached},#{session_attached} clients,}#(/bin/bash -c 'touch -a /tmp/tmux-haha; haha=\$\(cat /tmp/tmux-haha\); let haha=++haha%4; echo \$haha > /tmp/tmux-haha; arr=\"-\\|/\"; echo \$\{arr:\$haha:1\}') |#S#{?#{client_prefix},^, }"
+
+
+
+# status left style
+#tmux_conf_theme_status_left_fg="$tmux_conf_theme_colour_4,$tmux_conf_theme_colour_6,$tmux_conf_theme_colour_8"
+#tmux_conf_theme_status_left_bg="$tmux_conf_theme_colour_1,$tmux_conf_theme_colour_12,$tmux_conf_theme_colour_11"
+#tmux_conf_theme_status_left_attr="bold,bold,none"
+tmux_conf_theme_status_left_fg="$tmux_conf_theme_colour_6"
+tmux_conf_theme_status_left_bg="$tmux_conf_theme_colour_12"
+tmux_conf_theme_status_left_attr="bold"
+
+# status right style
+tmux_conf_theme_status_right_fg="$tmux_conf_theme_colour_12,$tmux_conf_theme_colour_4"
+tmux_conf_theme_status_right_bg="$tmux_conf_theme_colour_1,$tmux_conf_theme_colour_1"
+tmux_conf_theme_status_right_attr="none,bold"
