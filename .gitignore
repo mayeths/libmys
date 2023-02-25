@@ -11,6 +11,17 @@ build/
 *.exe
 *.bk
 
+# ext
+ext/*
+!ext/
+!ext/download-*.sh
+!ext/download-*.sh
+!ext/download-*.sh
+!ext/download-*.sh
+!ext/download-*.sh
+!ext/download-*.sh
+!ext/download-*.sh
+
 # HPCB/HPCG
 HPCB/HPCG/bin/
 # HPCB/HPL
