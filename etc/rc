@@ -3,9 +3,9 @@
 export MYS_DIR=$(dirname $(dirname "$0")/..)
 
 if $SHELL --version | grep -q bash; then
-    source bashrc.sh
+    source ./bashrc
 elif $SHELL --version | grep -q zsh; then
-    source zshrc.sh
+    source ./zshrc
 fi
 
 command -v realpath >/dev/null 2>&1 || realpath() {
