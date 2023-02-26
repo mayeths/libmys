@@ -29,12 +29,12 @@
 
 // Report a warning if time granularity >= "TIMER_THRESHOLD"
 #ifndef TIMER_THRESHOLD
-#define TIMER_THRESHOLD (50 * 1e-10)
+#define TIMER_THRESHOLD (50 * 1e-6)
 #endif
 
 // Report a warning if any mintime < "MINTIME_THRESHOLD"
 #ifndef MINTIME_THRESHOLD
-#define MINTIME_THRESHOLD (30 * 1e-3)
+#define MINTIME_THRESHOLD (20 * 1e-3)
 #endif
 
 // Report a warning if rank is too slow than the fast one
@@ -472,7 +472,8 @@ main(int argc, char **argv)
 
 		for (j = 0; j < 4; j++) {
 			if (mintime[j] < MINTIME_THRESHOLD) {
-				printf("WARNING: min time of %s is too fast (%.2f ms < %.2f ms)\n",
+				// We don't say anything about whether it's accurate. just print warning.
+				printf("WARNING: %s is too fast (%.1f ms < %.1f ms)\n",
 					label[j], mintime[j] * 1e3, MINTIME_THRESHOLD * 1e3
 				);
 				bad = 2;
