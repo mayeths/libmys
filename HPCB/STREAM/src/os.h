@@ -7,6 +7,13 @@
 #include <errno.h>
 #include <limits.h>
 
+// Use this if strnlen is missing.
+size_t naive_strnlen(const char *str, size_t max)
+{
+    const char *end = memchr(str, 0, max);
+    return end ? (size_t)(end - str) : max;
+}
+
 static inline int64_t str_to_i64(const char *str, int64_t default_val)
 {
     if (str == NULL)

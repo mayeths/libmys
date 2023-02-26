@@ -25,6 +25,23 @@
 
 #include "os.h"
 
+#define MYS_MODIFIED_ON "2023.02.26"
+
+// Report a warning if time granularity >= "TIMER_THRESHOLD"
+#ifndef TIMER_THRESHOLD
+#define TIMER_THRESHOLD (50 * 1e-10)
+#endif
+
+// Report a warning if any mintime < "MINTIME_THRESHOLD"
+#ifndef MINTIME_THRESHOLD
+#define MINTIME_THRESHOLD (30 * 1e-3)
+#endif
+
+// Report a warning if rank is too slow than the fast one
+#ifndef IMBALANCE_THRESHOLD
+#define IMBALANCE_THRESHOLD 0.05
+#endif
+
 // Run each kernel "NTIMES" times and reports the best result for any
 // iteration after the firsttherefore the minimum value for NTIMES is 2.
 #ifdef NTIMES
@@ -48,7 +65,7 @@
 #endif
 
 static const char *usage =
-	"=== STREAM version 5.10 (modified by Mayeths)\n"
+	"=== STREAM version 5.10 (last modified by Mayeths on %s)\n"
 	"=== Usage\n"
 	"    %s ncores min_size\n"
 	"    * Use the size of LLC (LLC_size) as min_size if it's larger than 32MB.\n"
@@ -84,9 +101,9 @@ static void exit_with_usage(FILE *fd, const char *prog, const char *reason, ...)
 			va_end(opt);
 		}
 
-		int len = snprintf(NULL, 0, usage, prog) + 1;
+		int len = snprintf(NULL, 0, usage, MYS_MODIFIED_ON, prog) + 1;
 		char *buffer = (char *)malloc(sizeof(char) * len);
-		snprintf(buffer, len, usage, prog);
+		snprintf(buffer, len, usage, MYS_MODIFIED_ON, prog);
 		fprintf(fd, "%s", buffer);
 		fflush(fd);
 	}
@@ -102,8 +119,7 @@ size_t		array_elements, array_bytes, array_alignment;
 static double	avgtime[4] = {0}, maxtime[4] = {0},
 		mintime[4] = {FLT_MAX,FLT_MAX,FLT_MAX,FLT_MAX};
 
-static char	*label[4] = {"Copy:      ", "Scale:     ",
-    "Add:       ", "Triad:     "};
+static char	*label[4] = {"Copy", "Scale", "Add", "Triad"};
 
 extern void checkSTREAMresults(STREAM_TYPE *AvgErrByRank, int numranks, double epsilon);
 extern void computeSTREAMerrors(STREAM_TYPE *aAvgErr, STREAM_TYPE *bAvgErr, STREAM_TYPE *cAvgErr);
@@ -229,7 +245,7 @@ main(int argc, char **argv)
 	// Initial informational printouts -- rank 0 handles all the output
 	if (myrank == 0) {
 		printf(HLINE);
-		printf("STREAM version 5.10 (modified by Mayeths)\n");
+		printf("STREAM version 5.10 (last modified by Mayeths on %s)\n", MYS_MODIFIED_ON);
 
 		printf(HLINE);
 		printf("MPI ranks: %d\n", numranks);
@@ -262,7 +278,7 @@ main(int argc, char **argv)
 		if (nticks < 20)
 			printf("====== WARNING: Increase the size for at least 20 ticks ======\n");
 
-		printf("Repeat: %d (Report the best run excluding the first one)\n", NTIMES);
+		printf("Repeat: %d (report the best run excluding the first one)\n", NTIMES);
 		printf(HLINE);
 		size_t bytes_per_word = sizeof(STREAM_TYPE);
 		char *s_local_array_size = NULL;
@@ -380,8 +396,13 @@ main(int argc, char **argv)
 	// Gather all timing data to MPI rank 0
 	MPI_Gather(times, 4*NTIMES, MPI_DOUBLE, TimesByRank, 4*NTIMES, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
+	double *MinTimesByRank = NULL;
+
 	// Rank 0 processes all timing data
 	if (myrank == 0) {
+		MinTimesByRank = (double *)malloc(sizeof(double) * 4 * numranks);
+		for (i = 0; i < 4 * numranks; i++)
+			MinTimesByRank[i] = FLT_MAX;
 		// for each iteration and each kernel, collect the minimum time across all MPI ranks
 		// and overwrite the rank 0 "times" variable with the minimum so the original post-
 		// processing code can still be used.
@@ -390,7 +411,9 @@ main(int argc, char **argv)
 				tmin = 1.0e36;
 				for (i=0; i<numranks; i++) {
 					// printf("DEBUG: Timing: iter %d, kernel %lu, rank %d, tmin %f, TbyRank %f\n",k,j,i,tmin,TimesByRank[4*NTIMES*i+j*NTIMES+k]);
-					tmin = MIN(tmin, TimesByRank[4*NTIMES*i+j*NTIMES+k]);
+					double t = TimesByRank[4*NTIMES*i+j*NTIMES+k];
+					MinTimesByRank[4 * i + j] = MIN(MinTimesByRank[4 * i + j], t);
+					tmin = MIN(tmin, t);
 				}
 				// printf("DEBUG: Final Timing: iter %d, kernel %lu, final tmin %f\n",k,j,tmin);
 				times[j][k] = tmin;
@@ -413,13 +436,12 @@ main(int argc, char **argv)
 		printf("Function      Best MB/s     Avg time     Min time     Max time\n");
 		for (j=0; j<4; j++) {
 			avgtime[j] = avgtime[j]/(double)(NTIMES-1);
-
-			printf("%s %11.1f  %11.6f  %11.6f  %11.6f\n", label[j],
-			   1.0E-06 * bytes[j]/mintime[j],
-			   avgtime[j],
-			   mintime[j],
-			   maxtime[j]);
+			int len = naive_strnlen(label[j], 10);
+			printf("%s:%*c %11.1f  %11.6f  %11.6f  %11.6f\n",
+			   label[j], 10-len, ' ', 1.0E-06 * bytes[j]/mintime[j],
+			   avgtime[j], mintime[j], maxtime[j]);
 		}
+		printf(HLINE);
 	}
 
     /* --- Every Rank Checks its Results --- */
@@ -430,6 +452,70 @@ main(int argc, char **argv)
 	/* --- Collect the Average Errors for Each Array on Rank 0 --- */
 	MPI_Gather(AvgError, 3, MPI_DOUBLE, AvgErrByRank, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
+	////// print WARNING or ERROR if needed
+	if (myrank == 0) {
+		int bad = 0;
+		if (quantum >= (double)TIMER_THRESHOLD) {
+			if (TIMER_THRESHOLD < 1e-6)
+				printf("WARNING: inappropriate timer granularity (%.0f ns > %.0f ns)\n",
+					quantum * 1e9, TIMER_THRESHOLD * 1e9);
+			else if (TIMER_THRESHOLD < 1e-3)
+				printf("WARNING: inappropriate timer granularity (%.0f us > %.0f us)\n",
+					quantum * 1e6, TIMER_THRESHOLD * 1e6);
+			else if (TIMER_THRESHOLD < 1)
+				printf("WARNING: inappropriate timer granularity (%.0f ms > %.0f ms)\n",
+					quantum * 1e3, TIMER_THRESHOLD * 1e3);
+			else
+				printf("WARNING: inappropriate timer granularity (> %.2f sec)\n", TIMER_THRESHOLD);
+			bad = 1;
+		}
+
+		for (j = 0; j < 4; j++) {
+			if (mintime[j] < MINTIME_THRESHOLD) {
+				printf("WARNING: min time of %s is too fast (%.2f ms < %.2f ms)\n",
+					label[j], mintime[j] * 1e3, MINTIME_THRESHOLD * 1e3
+				);
+				bad = 2;
+			}
+		}
+
+		for (i = 0; i < numranks; i++) {
+			for (j = 0; j < 4; j++) {
+				double rel = fabs(MinTimesByRank[4 * i + j] - mintime[j]) / mintime[j];
+				if (rel >= IMBALANCE_THRESHOLD)
+					break;
+			}
+			if (j != 4)
+				break;
+		}
+		if (i != numranks) {
+			printf("WARNING: significant variance of min time (> %.0f%%)\n", IMBALANCE_THRESHOLD * 100);
+			printf("              ");
+			for (j = 0; j < 4; j++)
+				printf(" %11s", label[j]);
+			printf("\n      Min time");
+			for (j = 0; j < 4; j++)
+				printf(" %11.6f", mintime[0]);
+			printf("\n Rank variance -----------------------------------------------\n");
+			int digits = trunc(log10(numranks)) + 1;
+			for (i = 0; i < numranks; i++) {
+				printf("%*c%*d", 14-digits, ' ', digits, i);
+				for (j = 0; j < 4; j++) {
+					double rel = (MinTimesByRank[4 * i + j] - mintime[j]) / mintime[j];
+					char mark = rel >= IMBALANCE_THRESHOLD ? 'x' /*: rel == 0 ? 'o'*/ : ' ';
+					int digits = ceil(log10(rel * 100));
+					digits = digits < 1 ? 1 : digits;
+					printf("     %c %3.*f%%", mark, 3-digits, rel * 100);
+				}
+				printf("\n");
+			}
+			bad = 3;
+		}
+
+		if (bad != 0)
+			printf(HLINE);
+	}
+
 	/* -- Combined averaged errors and report on Rank 0 only --- */
 	if (myrank == 0) {
 #ifdef VERBOSE
@@ -438,7 +524,6 @@ main(int argc, char **argv)
 				AvgErrByRank[3*k+1],AvgErrByRank[3*k+2]);
 		}
 #endif
-		printf(HLINE);
 		checkSTREAMresults(AvgErrByRank,numranks, epsilon);
 	}
 
@@ -454,6 +539,7 @@ main(int argc, char **argv)
 	free(c);
 	if (myrank == 0) {
 		free(TimesByRank);
+		free(MinTimesByRank);
 		free(AvgErrByRank);
 	}
 
