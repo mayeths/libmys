@@ -9,5 +9,5 @@ git clone https://github.com/mayeths/libmys.git
 source libmys/etc/rc
 # To rsync libmys
 cd libmys
-rsync --filter=':- .gitignore' -avz . REMOTE:~/project/libmys/
+rsync --filter=':- .gitignore' -avz ./ REMOTE:~/project/libmys/
 ```
