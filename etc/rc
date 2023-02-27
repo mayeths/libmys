@@ -8,8 +8,8 @@ fi
 
 # export MYS_DIR=$(dirname $(dirname "$0")/..)
 
-$SHELL --version | grep -q bash && source ./bashrc
-$SHELL --version | grep -q zsh && source ./zshrc
+$SHELL --version | grep -q bash && source $MYS_DIR/etc/bashrc
+$SHELL --version | grep -q zsh && source $MYS_DIR/etc/zshrc
 source $MYS_DIR/script/welcome-to-may-world.sh
 
 command -v realpath >/dev/null 2>&1 || realpath() {

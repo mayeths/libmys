@@ -18,7 +18,7 @@ welcome_to_may_world() {
         export HOME="$MYS_WORLD"
         if [[ $($SHELL --version | grep -q bash) -eq 0 ]]; then
             source "$HOME/.bashrc"
-        else if [[ $($SHELL --version | grep -q zsh) -eq 0 ]]; then
+        elif [[ $($SHELL --version | grep -q zsh) -eq 0 ]]; then
             source "$HOME/.zshrc"
         fi
         if [[ $? -ne 0 ]]; then
@@ -45,6 +45,6 @@ welcome_to_may_world() {
     if [[ -z "$THE_HOST" ]]; then
         $COMMAND
     else
-        ssh -t $THE_HOST $COMMAND
+        ssh -t "$THE_HOST" "$COMMAND"
     fi
 }
