@@ -1966,6 +1966,7 @@ void allocate_memory_one_sided(int rank, char **user_buf,
     int purehost = 0;
     int mem_on_dev = 0;
 
+    int getpagesize(void);
     page_size = getpagesize();
     assert(page_size <= MAX_ALIGNMENT);
 
@@ -2610,6 +2611,7 @@ void allocate_atomic_memory(int rank,
     int purehost = 0;
     int mem_on_dev = 0;
 
+    int getpagesize(void);
     page_size = getpagesize();
     assert(page_size <= MAX_ALIGNMENT);
 

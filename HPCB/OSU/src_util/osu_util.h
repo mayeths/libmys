@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <strings.h>
 #include <stdint.h>
 #include <getopt.h>
 #include <pthread.h>
@@ -29,7 +30,7 @@
 #include <sys/time.h>
 #include <limits.h>
 #include <sys/types.h>
-
+#include <sys/wait.h>
 #ifdef _ENABLE_PAPI_
 #include <papi.h>
 #endif
