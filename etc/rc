@@ -6,7 +6,7 @@ if [[ -n "$1" ]]; then
     # echo "No MYS_MODDIR provided."
 fi
 
-export MYS_DIR=$(dirname $(dirname "$0")/..)
+# export MYS_DIR=$(dirname $(dirname "$0")/..)
 
 $SHELL --version | grep -q bash && source ./bashrc
 $SHELL --version | grep -q zsh && source ./zshrc
