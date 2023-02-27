@@ -1,35 +1,45 @@
 ###
+# We need MYS_MODDIR to work
+
+if [[ -z "$1" ]]; then
+    echo "USAGE: source $0 <MYS_MODDIR>"
+    return 1
+fi
+export MYS_MODDIR="$1"
 
 export MYS_DIR=$(dirname $(dirname "$0")/..)
 
-if $SHELL --version | grep -q bash; then
-    source ./bashrc
-elif $SHELL --version | grep -q zsh; then
-    source ./zshrc
-fi
+$SHELL --version | grep -q bash && source ./bashrc
+$SHELL --version | grep -q zsh && source ./zshrc
+source $MYS_DIR/script/welcome-to-may-world.sh
 
 command -v realpath >/dev/null 2>&1 || realpath() {
     echo "$(cd "$(dirname -- "$1")" >/dev/null; pwd -P)/$(basename -- "$1")"
 }
-
-export PYTHONDONTWRITEBYTECODE=1
-export MYS_TMUX_CONF=$(realpath $MYS_DIR/tmux/tmux.conf)
-export MYS_TMUX_CONF_LOCAL=$(realpath $MYS_DIR/tmux/tmux.conf.local)
-
-if test $[HISTSIZE] -lt 50000; then
-    export HISTSIZE=50000
-fi
-
-if test $[HISTFILESIZE] -lt 50000; then
-    export HISTFILESIZE=50000
-fi
+# command -v realpath >/dev/null 2>&1 || alias realpath="mys_realpath"
+# https://gist.github.com/jedisct1/1072377/e7b60f653a744b0eb8dff509f0816051ae9793ea
+# https://gist.github.com/ryo1kato/3712562
+# https://github.com/coreutils/coreutils/blob/master/src/realpath.c
 
 env_prepend PATH "$MYS_DIR/bin"
-env_prepend PYTHONPATH "$MYS_DIR/python"
 #env_prepend CPATH "$MYS_DIR/include"
+env_prepend PYTHONPATH "$MYS_DIR/python"
+
+env_prepend MODULEPATH "$MYS_MODDIR/CONFIG"
+env_prepend PATH "$MYS_MODDIR/BASE/bin"
+env_prepend CPATH "$MYS_MODDIR/BASE/include"
+env_prepend LD_LIBRARY_PATH "$MYS_MODDIR/BASE/lib"
+env_prepend LD_LIBRARY_PATH "$MYS_MODDIR/BASE/lib64"
+env_prepend MANPATH "$MYS_MODDIR/BASE/share/man"
 
 
-alias code="$MYS_DIR/bin/invoke-vscode"
+export LANG=en_US.utf8
+export PYTHONDONTWRITEBYTECODE=1 # I don't like __pycache__
+
+[ $HISTSIZE -ge 50000 ] || export HISTSIZE=50000
+[ $HISTFILESIZE -ge 50000 ] || export HISTFILESIZE=50000
+alias tmux="tmux -f $MYS_DIR/etc/tmux.conf"
+command -v code >/dev/null 2>&1 || alias code="invoke-vscode"
 
 # export EDITOR=nvim
 # alias v='nvim'

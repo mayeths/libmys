@@ -344,7 +344,7 @@ tmux_conf_copy_to_os_clipboard=false
 # this is the place to override or undo settings
 
 %if #{==:#{TMUX_CONF_MYS},}
-  run '"$TMUX_PROGRAM" set-environment -g TMUX_CONF_MYS "$TMUX_CONF.mys"'
+  run '"$TMUX_PROGRAM" set-environment -g TMUX_CONF_MYS "$TMUX_CONF.custom"'
 %endif
 
 run '"$TMUX_PROGRAM" source "$TMUX_CONF_MYS"'
