@@ -28,7 +28,7 @@ welcome_to_may_world() {
         fi
     fi
     [ -n "$MYS_DIR" ] || return 1
-    [ -n "$MYS_MODDIR" ] || return 1
+    # [ -n "$MYS_MODDIR" ] || return 1
 
     [ -n "$(command -v tmux)" ] && THE_TMUX="$(command -v tmux)"
     [ -x "$MYS_MODDIR/BASE/bin/tmux" ] && THE_TMUX="$MYS_MODDIR/BASE/bin/tmux"
