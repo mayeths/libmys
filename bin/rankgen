@@ -4,10 +4,10 @@ VERSION="2023.02.22"
 import sys
 import argparse
 import shutil
-import math
 import pathlib
 import tempfile
 import functools
+import base64
 from typing import Union, List
 
 QUIET = False
@@ -252,6 +252,14 @@ def fill_ranks(hwinfo: HardwareInfo, region: str, left_most_cores: bool,
     return ranks, imbalanced
 
 
+def sanitize(text: str):
+    return base64.urlsafe_b64encode(text.encode()).decode().replace("=", "")
+
+def contaminate(sanitized_text: str):
+    padded_text = sanitized_text + '=' * (-len(sanitized_text) % 4)
+    return base64.urlsafe_b64decode(padded_text.encode()).decode()
+
+
 def main():
     global QUIET
     terminal_width = shutil.get_terminal_size((80, 20))[0]
@@ -270,13 +278,14 @@ def main():
     parser.add_argument('-q', '--quiet', dest='quiet', action='store_const', const=True, default=False, help="Don't print summary to stderr", metavar='')
     parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
     parser.add_argument('-h', '--help', action='help', help=f"Show this help message and exit")
-    hwinfoArgs = parser.add_argument_group('Hardware information arguments')
+    hwinfoArgs = parser.add_argument_group('hardware information arguments')
     hwinfoArgs.add_argument('--name', dest='name', default="cn{:03d}", type=str, help=f"Node name in python formatting syntax", metavar='')
     hwinfoArgs.add_argument('--first', dest='first', action=RecorderAction, default=101, type=int, help="Inclusive node start index", metavar='')
     hwinfoArgs.add_argument('--last', dest='last', action=RecorderAction, type=int, help="Inclusive node end index", metavar='')
     hwinfoArgs.add_argument('-S', '--sockets-per-node', dest='sockets_per_node', default=2, type=int, help=f"Sockets per node", metavar='')
     hwinfoArgs.add_argument('-N', '--numas-per-socket', dest='numas_per_socket', default=2, type=int, help=f"Numas per socket", metavar='')
     hwinfoArgs.add_argument('-C', '--cores-per-numa', dest='cores_per_numa', default=8, type=int, help=f"Cores per numa", metavar='') # TODO: Support hwthread
+    # cat /sys/devices/system/cpu/cpu0/topology/thread_siblings_list for hwthread list
     generatorArgs = parser.add_argument_group('generator arguments')
     generatorArgs.add_argument('-o', dest='outfile', default="<stdout>", type=str, help=f"Output to file", metavar='')
     generatorArgs.add_argument('-t', dest='use_tempfile', action='store_const', const=True, default=False, help="Output to tempfile and print its path to stdout", metavar='')
@@ -286,6 +295,7 @@ def main():
     generatorArgs.add_argument('--left', dest='left_most_cores', action='store_const', const=True, help="Use left-most cores in the region", metavar='')
     generatorArgs.add_argument('--imbalance', dest='imbalance', action='store_const', const=True, default=False, help="Allow imbalancing over regions", metavar='')
     generatorArgs.add_argument('--finger', dest='fingerprint', default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
+    # Please note that modify name of tempfile bellow every time add critical arugments influencing the result of generator, for example hwthread
 
     args = parser.parse_args()
     num_node = args.num_node
@@ -355,7 +365,7 @@ def main():
         eprint(f"Number of node: {num_node} ({ranks[0].get_node_name()} to {ranks[-1].get_node_name()})")
     eprint(f"Number of rank: {num_rank} ({num_rank // num_node} per node)")
     eprint(f"Number of thread: {threads_per_rank} per rank")
-    eprint(f"* Total slots required: {num_rank * threads_per_rank} cores")
+    eprint(f"* Total slots required: {num_rank * threads_per_rank} cores.")
     boundary = "left" if left_most_cores else "right"
     if imbalanced:
         eprint(f"* Ranks are imbalanced distribution to {region}s.")
@@ -366,8 +376,19 @@ def main():
 
     content = "\n".join([str(rank) for rank in ranks])
     if use_tempfile:
-        with tempfile.NamedTemporaryFile(mode="w", delete=True) as tmp:
+        # Prevent collision of number with '-', for example 1125 can be treat as 1-12-5 or 11-2-5
+        sign1 = f'{args.sockets_per_node}-{args.numas_per_socket}-{args.cores_per_numa}-{first_node_index}-{last_node_index}'
+        sign2 = f'{num_node}-{num_rank}-{threads_per_rank}-{region}-{"L" if left_most_cores else "R"}-{"I" if imbalance else "B"}'
+        sign3 = args.name
+        bign1 = sanitize(sign1)
+        bign2 = sanitize(sign2)
+        bign3 = sanitize(sign3)
+        dir = tempfile.gettempdir()
+        path = f"{dir}/{bign1}/{bign2}/{bign3}.rf"
+        pathlib.Path(path).parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as tmp:
             tmp.write(content)
+            eprint(f"=== Temporary file used to write output:")
             print(tmp.name)
     elif outfile == "<stdout>":
         eprint(f"=== Content generated to <stdout>:")
