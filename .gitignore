@@ -35,16 +35,16 @@ HPCB/HPL/Make.*
 !HPCB/HPL/Makefile
 # HPCB/NPB
 HPCB/NPB/bin
-HPCB/NPB/*/**/*.mod
-HPCB/NPB/*/**/npbparams.h
+HPCB/NPB/*/*.mod
+HPCB/NPB/*/npbparams.h
 HPCB/NPB/config/make.*
 HPCB/NPB/config/suite.*
 !HPCB/NPB/config/make.def.Mac_M1
 !HPCB/NPB/config/make.def.template
 !HPCB/NPB/config/make.dummy
 !HPCB/NPB/config/suite.def.template
-HPCB/NPB/sys/**/setparams
-HPCB/NPB/sys/**/Info.plist
+HPCB/NPB/sys/setparams
+HPCB/NPB/sys/setparams.dSYM
 # HPCB/OSU
 HPCB/OSU/p2p_bibw
 HPCB/OSU/p2p_bw
