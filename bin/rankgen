@@ -380,7 +380,8 @@ def main():
     try:
         args = parser.parse_args()
     except SystemExit as e:
-        eprint(' ' * len(parser.prog) + f'  run "{parser.prog} -h" for more information')
+        if e.code != 0:
+            eprint(' ' * len(parser.prog) + f'  run "{parser.prog} -h" for more information')
         exit(e.code)
     num_node = args.num_node
     num_rank = args.num_rank
