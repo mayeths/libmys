@@ -488,12 +488,20 @@ def main():
         bign2 = sanitize(sign2)
         bign3 = sanitize(sign3)
         dir = tempfile.gettempdir()
-        path = f"{dir}/{bign1}/{bign2}/{bign3}.rf"
-        pathlib.Path(path).parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w") as tmp:
-            tmp.write(content)
-            eprint(f"=== Temporary file used to write output:")
-            print(tmp.name)
+        file = f"{dir}/{bign1}/{bign2}/{bign3}.rf"
+        path = pathlib.Path(file)
+        do_write = True
+        if path.exists():
+            with open(file) as tmp:
+                old_content = tmp.read()
+            if old_content == content:
+                do_write = False
+        if do_write:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(file, "w") as tmp:
+                tmp.write(content)
+        eprint(f"=== Temporary file used to write output:")
+        print(tmp.name)
     elif outfile == "<stdout>":
         eprint(f"=== Content generated to <stdout>:")
         print(content)
