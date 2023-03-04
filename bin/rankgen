@@ -103,8 +103,14 @@ class Rank:
 
 # Fingerprint is only correct for contiguous slot mapping
 def print_fingerprint(hwinfo: HardwareInfo, ranks: list[Rank], region: str,
-                      target_node: str, symbols=["+", "-"], void_symbol="."):
-    
+                      target_node: str, symbols=["+", "-"], void_symbol=".", devide_on_region=True):
+    if region == "numa":
+        cores_per_region = hwinfo.cores_per_numa
+    elif region == "socket":
+        cores_per_region = hwinfo.cores_per_socket
+    elif region == "node":
+        cores_per_region = hwinfo.cores_per_node
+
     ranks = [rank for rank in ranks if rank.node == target_node]
     if not ranks:
         return
@@ -118,9 +124,9 @@ def print_fingerprint(hwinfo: HardwareInfo, ranks: list[Rank], region: str,
     symbol_index = 0
     last_rank = 0
     for i in range(hwinfo.cores_per_node):
-        # if i != 0 and i % cores_per_region == 0:
-        #     result += "|"
-        if i != 0 and i % hwinfo.cores_per_numa == 0:
+        if devide_on_region and i != 0 and i % cores_per_region == 0:
+            result += "|"
+        elif not devide_on_region and i != 0 and i % hwinfo.cores_per_numa == 0:
             result += "|"
         rank = core_to_ranks[i]
         if rank == -1:
@@ -344,13 +350,57 @@ def contaminate(sanitized_text: str):
     return base64.urlsafe_b64decode(padded_text.encode()).decode()
 
 
+
+class ExtendedUsageAction(argparse.Action):
+    def __init__(self, option_strings, dest=argparse.SUPPRESS, default=argparse.SUPPRESS, **kwargs):
+        super(ExtendedUsageAction, self).__init__(option_strings, dest, nargs=0, default=default, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print('----------------------------')
+        print("1. Using rankgen inside a sbatch's submit script")
+        print("   After slurm allocates resources for your job, it run the script on the machine you ran sbatch.")
+        print('   Some SLURM_* variables are set for your script, where SLURM_NODELIST can be passed to rankgen.')
+        print('   The following example is example.sbatch.sh')
+        print('')
+        print("   #!/bin/bash")
+        print("   #SBATCH -J example")
+        print("   #SBATCH -N 1")
+        print("   #SBATCH -n 4")
+        print("   #SBATCH --cpus-per-task 2")
+        print("   #SBATCH --exclusive")
+        print("   rankfile=$(rankgen -t -q -w $SLURM_NODELIST 1 4 2)")
+        print("   mpirun -np 4 -rf $rankfile ./a.out")
+        print('----------------------------')
+        print('2. Using rankgen with salloc on the fly')
+        print('   After slurm allocates resources for your job, it run the command on the machine you ran salloc.')
+        print('   Some SLURM_* variables such as SLURM_NODELIST are also set for the environment of command.')
+        print('')
+        print('   export N=1 P=4 T=2')
+        print('   export rankgen_cmd="\$(rankgen -t -q -w \$SLURM_NODELIST $N $P $T)"')
+        print('   salloc --exclusive -N $N bash -c "mpirun -np $P -rf $rankgen_cmd ./a.out"')
+        print('----------------------------')
+        print('3. Using rankgen with salloc for a group of fixed nodes')
+        print('   You may ask slurm for fixed nodes to ensure stable and reproducible performance.')
+        print('')
+        print('   export N=100 P=400 T=2')
+        print('   export rankfile=./${N}-${P}-${T}.rf')
+        print('   rankgen -q -w cn[101-200] -o $rankfile $N $P $T')
+        print('   salloc --exclusive -N $N -w cn[101-200] mpirun -np $P -rf $rankfile ./a.out')
+        print('----------------------------')
+        print('x. Using rankgen with srun')
+        print("   This is impossible because srun invoke mpirun internally and we can't pass the rankfile to it.")
+        print("   rankgen aims to fine-grained process placement with OpenMPI mpirun.")
+        print("   Use the high-level options srun supports instead. See https://slurm.schedmd.com/mc_support.html")
+        print('----------------------------')
+        parser.exit()
+
 def main():
     global QUIET
     terminal_width = shutil.get_terminal_size((80, 20))[0]
     parser = argparse.ArgumentParser(
         prog='rankgen',
         usage='%(prog)s [OPTIONS] <num_node> <num_rank> <threads_per_rank>',
-        description=f'OpenMPI rankfile genrator (version {VERSION})\n',
+        description=f'OpenMPI rankfile genrator for easy fine-grained process placement (version {VERSION})\n',
         add_help=False,
         epilog='Example: %(prog)s --finger=all -w "bn000,cn2[0-1][1,0],dn999" --imbalance --align=socket 5 7 3',
         formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=terminal_width)
@@ -366,17 +416,17 @@ def main():
     # cat /sys/devices/system/cpu/cpu0/topology/thread_siblings_list for hwthread list
     generatorArgs = parser.add_argument_group('generator arguments')
     generatorArgs.add_argument('-o', dest='outfile', default="<stdout>", type=str, help=f"Output to file", metavar='')
-    generatorArgs.add_argument('-t', dest='use_tempfile', action='store_const', const=True, default=False, help="Output to tempfile and print its path to stdout", metavar='')
-    generatorArgs.add_argument('-w', '--nodelist', dest='nodelist', default='cn[001-008]', type=str, help="List of nodes in SLURM's nodelist syntax", metavar='')
+    generatorArgs.add_argument('-t', dest='use_tempfile', action='store_const', const=True, default=False, help="Output to tempfile and print its path to <stdout>", metavar='')
+    generatorArgs.add_argument('-w', '--nodelist', dest='nodelist', default='cn[001-008]', type=str, help="The list of nodes in SLURM's nodelist syntax", metavar='')
     generatorArgs.add_argument('-a', '--align', dest='region', default='numa', choices=['numa', 'socket', 'node'], help="Align ranks to the numa/socket/node region", metavar='')
-    generatorArgs.add_argument('-l', '--left', dest='left_most_cores', action='store_const', const=True, default=False, help="Use left-most cores in the region", metavar='')
+    generatorArgs.add_argument('-l', '--left', dest='left_most_cores', action='store_const', const=True, default=False, help="Use left-most slots in the region", metavar='')
     generatorArgs.add_argument('-i', '--imbalance', dest='imbalance', action='store_const', const=True, default=False, help="Allow imbalancing over regions", metavar='')
     generatorArgs.add_argument('-f', '--finger', dest='fingerprint', default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
     # Please note that modify name of tempfile bellow every time add critical arugments influencing the result of generator, for example hwthread
-    parser.add_argument('-q', '--quiet', dest='quiet', action='store_const', const=True, default=False, help="Don't print summary to stderr", metavar='')
+    parser.add_argument('-q', '--quiet', dest='quiet', action='store_const', const=True, default=False, help="Don't print summary to <stderr>", metavar='')
+    parser.add_argument('-u', '--usage', action=ExtendedUsageAction, help="Show extended usages and exit", metavar='')
     parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
     parser.add_argument('-h', '--help', action='help', help=f"Show this help message and exit")
-
     try:
         args = parser.parse_args()
     except SystemExit as e:
@@ -421,11 +471,11 @@ def main():
     eprint(f"")
     eprint(f"=== Generator Summary")
     eprint(f"Number of node: {num_node}")
-    eprint(f"Number of rank: {num_rank} ({num_rank // num_node} per node)")
-    eprint(f"Number of thread: {threads_per_rank} per rank")
-    eprint(f"* Total slots required: {num_rank * threads_per_rank} cores.")
-    eprint(f"* Aligned to {'left' if left_most_cores else 'right'} boundary of {region}.")
-    eprint(f"* Ranks are {'imbalanced' if imbalanced else 'balanced'} distribution to {region}s.")
+    eprint(f"Number of rank: {num_rank}")
+    eprint(f"Number of thread: {threads_per_rank} (per rank)")
+    eprint(f"* Total [{num_rank * threads_per_rank}] slots are required among [{num_node}] nodes.")
+    eprint(f"* Align to the [{'left' if left_most_cores else 'right'}] boundary of [{region}].")
+    eprint(f"* Ranks are [{'imbalanced' if imbalanced else 'balanced'}] in their distributed among [{region}]s.")
     eprint(f"")
 
     content = "\n".join([str(rank) for rank in ranks])
