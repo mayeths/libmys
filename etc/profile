@@ -37,6 +37,9 @@ export PYTHONDONTWRITEBYTECODE=1
 #------ Convinient alias
 alias tmux="tmux -f $MYS_DIR/etc/tmux.conf"
 command -v code >/dev/null 2>&1 || alias code="invoke-vscode"
+command -v h >/dev/null 2>&1 || alias h="history"
+command -v hs >/dev/null 2>&1 || alias hs="history | grep"
+command -v hsi >/dev/null 2>&1 || alias hsi="history | grep -i"
 # alias v='nvim'
 # alias vi="nvim"
 # alias vim='nvim'
