@@ -1,47 +1,42 @@
-###
-# We need MYS_MODDIR to work
+[[ -n "$MYS_DIR" ]] || MYS_DIR=$(dirname $(dirname "${BASH_SOURCE[0]:-$0}"))
 
-if [[ -n "$1" ]]; then
-    export MYS_MODDIR="$1"
-    # echo "No MYS_MODDIR provided."
-fi
-
-# export MYS_DIR=$(dirname $(dirname "$0")/..)
-
+source $MYS_DIR/script/sh-functions.sh
 $SHELL --version | grep -q bash && source $MYS_DIR/etc/bashrc
 $SHELL --version | grep -q zsh && source $MYS_DIR/etc/zshrc
-source $MYS_DIR/script/welcome-to-may-world.sh
-
-command -v realpath >/dev/null 2>&1 || realpath() {
-    echo "$(cd "$(dirname -- "$1")" >/dev/null; pwd -P)/$(basename -- "$1")"
-}
-# command -v realpath >/dev/null 2>&1 || alias realpath="mys_realpath"
-# https://gist.github.com/jedisct1/1072377/e7b60f653a744b0eb8dff509f0816051ae9793ea
-# https://gist.github.com/ryo1kato/3712562
-# https://github.com/coreutils/coreutils/blob/master/src/realpath.c
 
 env_prepend PATH "$MYS_DIR/bin"
-#env_prepend CPATH "$MYS_DIR/include"
 env_prepend PYTHONPATH "$MYS_DIR/python"
-
 if [[ -n "$MYS_MODDIR" ]]; then
-    env_prepend MODULEPATH "$MYS_MODDIR/CONFIG"
-    env_prepend PATH "$MYS_MODDIR/BASE/bin"
-    env_prepend CPATH "$MYS_MODDIR/BASE/include"
-    env_prepend LD_LIBRARY_PATH "$MYS_MODDIR/BASE/lib"
-    env_prepend LD_LIBRARY_PATH "$MYS_MODDIR/BASE/lib64"
-    env_prepend MANPATH "$MYS_MODDIR/BASE/share/man"
+    __ensured_prepend__() {
+        [[ -d "$2" ]] || mkdir -p "$2" && env_prepend "$1" "$2"
+    }
+    __ensured_prepend__ MODULEPATH "$MYS_MODDIR/CONFIG"
+    __ensured_prepend__ PATH "$MYS_MODDIR/BASE/bin"
+    __ensured_prepend__ CPATH "$MYS_MODDIR/BASE/include"
+    __ensured_prepend__ LD_LIBRARY_PATH "$MYS_MODDIR/BASE/lib64"
+    __ensured_prepend__ LD_LIBRARY_PATH "$MYS_MODDIR/BASE/lib"
+    __ensured_prepend__ MANPATH "$MYS_MODDIR/BASE/share/man"
 fi
 
-export LANG=en_US.utf8
-export PYTHONDONTWRITEBYTECODE=1 # I don't like __pycache__
+#------ Load necessary scripts
+__load_mys_scripts__() {
+    local path
+    for path in "$@"; do
+        [[ -f "$path" ]] && source $path
+    done
+}
+__load_mys_scripts__ "$MYS_DIR/script/welcome-to-may-world.sh"
 
-[ $HISTSIZE -ge 50000 ] || export HISTSIZE=50000
-[ $HISTFILESIZE -ge 50000 ] || export HISTFILESIZE=50000
+#------ Set environment variables
+# export EDITOR=nvim
+export LANG=en_US.utf8
+export PYTHONDONTWRITEBYTECODE=1
+[[ $HISTSIZE -ge 50000 ]] || export HISTSIZE=50000
+[[ $HISTFILESIZE -ge 50000 ]] || export HISTFILESIZE=50000
+
+#------ Convinient alias
 alias tmux="tmux -f $MYS_DIR/etc/tmux.conf"
 command -v code >/dev/null 2>&1 || alias code="invoke-vscode"
-
-# export EDITOR=nvim
 # alias v='nvim'
 # alias vi="nvim"
 # alias vim='nvim'

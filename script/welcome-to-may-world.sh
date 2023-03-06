@@ -1,4 +1,4 @@
-# alias enter_mayeths="MYS_WORLD=.... welcome_to_may_world"
+# alias enter_mayeths="MYS_WORLD=....; $MYS_WORLD/project/libmys/script/welcome_to_may_world.sh"
 
 # Enter mayeths' world (tmux), which normally called from enter.sh
 # For non default value,
@@ -17,9 +17,13 @@ welcome_to_may_world() {
         export OLD_HOME="$HOME"
         export HOME="$MYS_WORLD"
         if [[ $($SHELL --version | grep -q bash) -eq 0 ]]; then
-            source "$HOME/.bashrc"
+            if [[ -f "$HOME/.bashrc" ]]; then
+                source "$HOME/.bashrc"
+            fi
         elif [[ $($SHELL --version | grep -q zsh) -eq 0 ]]; then
-            source "$HOME/.zshrc"
+            if [[ -f "$HOME/.zshrc" ]]; then
+                source "$HOME/.zshrc"
+            fi
         fi
         if [[ $? -ne 0 ]]; then
             export HOME="$OLD_HOME"
@@ -27,12 +31,20 @@ welcome_to_may_world() {
             return 1
         fi
     fi
-    [ -n "$MYS_DIR" ] || return 1
+
+    if [[ -z "$MYS_DIR" ]]; then
+        MYS_DIR=$(dirname $(dirname "${BASH_SOURCE[0]:-$0}")) # BASH_SOURCE works in bash and zsh
+    fi
     # [ -n "$MYS_MODDIR" ] || return 1
 
     [ -n "$(command -v tmux)" ] && THE_TMUX="$(command -v tmux)"
     [ -x "$MYS_MODDIR/BASE/bin/tmux" ] && THE_TMUX="$MYS_MODDIR/BASE/bin/tmux"
     [ -x "$MYS_TMUX" ] && THE_TMUX=$MYS_TMUX
+
+    if [[ "$(echo $($THE_TMUX -V) | awk '{printf $2}' | awk -F '.' '{printf $1}')" -lt 3 ]]; then
+        echo "ERROR: Require tmux version > 3 ($(command -v $THE_TMUX) is $($THE_TMUX -V) here)"
+        return 1
+    fi
 
     THE_CONF=${MYS_TMUX_CONF:-"$MYS_DIR/etc/tmux.conf"}
     THE_SOCKET=${MYS_TMUX_SOCKET:-"mayeths-tmux-socket"}
