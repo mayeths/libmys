@@ -5,6 +5,8 @@ CC=mpicc
 CFLAGS=-std=c99 -Wall -Ofast -I./src_util
 LFLAGS=-lm
 
+-include Makefile.in
+
 .PHONY: clean p2p coll win
 
 default: p2p coll win
