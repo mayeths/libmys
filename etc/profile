@@ -1,8 +1,13 @@
 [[ -n "$MYS_DIR" ]] || MYS_DIR=$(dirname $(dirname "${BASH_SOURCE[0]:-$0}"))
 
+$SHELL --version | grep -q bash && MYS_SHELL=bash
+$SHELL --version | grep -q zsh && MYS_SHELL=zsh
+
 source $MYS_DIR/script/sh-functions.sh
-$SHELL --version | grep -q bash && source $MYS_DIR/etc/bashrc
-$SHELL --version | grep -q zsh && source $MYS_DIR/etc/zshrc
+[[ "$MYS_SHELL" == "bash" ]] && source $MYS_DIR/etc/bashrc
+[[ "$MYS_SHELL" == "zsh"  ]] && source $MYS_DIR/etc/zshrc
+
+command -v realpath >/dev/null 2>&1 || realpath() { mys_realpath "$@" }
 
 env_prepend PATH "$MYS_DIR/bin"
 env_prepend PYTHONPATH "$MYS_DIR/python"
@@ -19,13 +24,7 @@ if [[ -n "$MYS_MODDIR" ]]; then
 fi
 
 #------ Load necessary scripts
-__load_mys_scripts__() {
-    local path
-    for path in "$@"; do
-        [[ -f "$path" ]] && source $path
-    done
-}
-__load_mys_scripts__ "$MYS_DIR/script/welcome-to-may-world.sh"
+mys_load_script "$MYS_DIR/script/welcome-to-may-world.sh"
 
 #------ Set environment variables
 # export EDITOR=nvim
@@ -46,3 +45,5 @@ command -v hsi >/dev/null 2>&1 || alias hsi="history | grep -i"
 # alias vim='nvim'
 # alias vimdiff='nvim -d'
 # alias view="nvim -R"
+# If wanna the alias affect shell script, use function instead
+# mys_backup_command echo old_echo && echo() { old_echo -e "$@" }
