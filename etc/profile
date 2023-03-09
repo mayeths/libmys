@@ -34,13 +34,13 @@ locale -a | grep -q "en_US.utf8"  && export LANG="en_US.utf8"  LC_ALL="en_US.utf
 
 #------ Alias with mys_backup_command
 #       The problem of builtin alias is we can't use it inside script
-mys_backup_command tmux old_tmux && tmux() { old_tmux -f $MYS_DIR/etc/omt/tmux.conf }
 command -v code >/dev/null 2>&1 || alias code="invoke-vscode"
 command -v h >/dev/null 2>&1 || alias h="history"
 command -v hs >/dev/null 2>&1 || alias hs="history | grep"
 command -v hsi >/dev/null 2>&1 || alias hsi="history | grep -i"
-# alias v='nvim'
-# alias vi="nvim"
-# alias vim='nvim'
-# alias vimdiff='nvim -d'
-# alias view="nvim -R"
+tmux() { command tmux -f $MYS_DIR/etc/omt/tmux.conf "$@" }
+# v() { nvim "$@" }
+# vi() { nvim "$@" }
+# vim() { nvim "$@" }
+# vimdiff() { nvim -d "$@" }
+# view() { nvim -R "$@" }
