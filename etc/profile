@@ -35,7 +35,11 @@ locale -a | grep -q "en_US.UTF-8" && export LANG="en_US.UTF-8" LC_ALL="en_US.UTF
 locale -a | grep -q "en_US.utf8"  && export LANG="en_US.utf8"  LC_ALL="en_US.utf8"
 
 #------ Convinient alias
-alias tmux="tmux -f $MYS_DIR/etc/omt/tmux.conf"
+if [[ $(tmux -V | awk '{printf $2}' | awk -F. '{printf $1}') -ge 3 ]]; then
+    alias tmux="tmux -f $MYS_DIR/etc/omt/tmux.conf"
+else
+    alias tmux='echo "The version of tmux is too old for libmys."; tmux'
+fi
 command -v code >/dev/null 2>&1 || alias code="invoke-vscode"
 command -v h >/dev/null 2>&1 || alias h="history"
 command -v hs >/dev/null 2>&1 || alias hs="history | grep"
