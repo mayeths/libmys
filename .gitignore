@@ -11,6 +11,14 @@ build/
 *.exe
 *.bk
 
+*.zwc
+*.swp
+etc/omz/custom/
+etc/omz/cache/
+etc/omz/log/
+!etc/omz/lib/
+
+
 # ext
 ext/*
 !ext/
