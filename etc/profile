@@ -32,14 +32,9 @@ export PYTHONDONTWRITEBYTECODE=1
 locale -a | grep -q "en_US.UTF-8" && export LANG="en_US.UTF-8" LC_ALL="en_US.UTF-8"
 locale -a | grep -q "en_US.utf8"  && export LANG="en_US.utf8"  LC_ALL="en_US.utf8"
 
-#------ Convinient alias
-if command -v tmux >/dev/null 2>&1; then
-    if [[ $(tmux -V | awk '{printf $2}' | awk -F. '{printf $1}') -ge 3 ]]; then
-        alias tmux="tmux -f $MYS_DIR/etc/omt/tmux.conf"
-    else
-        alias tmux='echo "The version of tmux is too old for libmys."; tmux'
-    fi
-fi
+#------ Alias with mys_backup_command
+#       The problem of builtin alias is we can't use it inside script
+mys_backup_command tmux old_tmux && tmux() { old_tmux -f $MYS_DIR/etc/omt/tmux.conf }
 command -v code >/dev/null 2>&1 || alias code="invoke-vscode"
 command -v h >/dev/null 2>&1 || alias h="history"
 command -v hs >/dev/null 2>&1 || alias hs="history | grep"
@@ -49,5 +44,3 @@ command -v hsi >/dev/null 2>&1 || alias hsi="history | grep -i"
 # alias vim='nvim'
 # alias vimdiff='nvim -d'
 # alias view="nvim -R"
-# If wanna the alias affect shell script, use function instead
-# mys_backup_command echo old_echo && echo() { old_echo -e "$@" }
