@@ -4,7 +4,7 @@
 # For non default value,
 # Define MYS_WORLD then we use HOME=$MYS_WORLD in the tmux
 # Define MYS_TMUX then we use it as the tmux, "$MYS_MODDIR/BASE/bin/tmux" and "tmux" otherwise
-# Define MYS_TMUX_CONF then we use it as tmux profile, "$MYS_DIR/etc/tmux.conf" otherwise
+# Define MYS_TMUX_CONF then we use it as tmux profile, "$MYS_DIR/etc/omt/tmux.conf" otherwise
 # Define MYS_TMUX_SOCKET then we use it as tmux socket name, "mayeths-tmux-socket" otherwise
 # Define MYS_TMUX_SESSION then we use it as tmux session name, "main" otherwise
 welcome_to_may_world() {
@@ -46,7 +46,7 @@ welcome_to_may_world() {
         return 1
     fi
 
-    THE_CONF=${MYS_TMUX_CONF:-"$MYS_DIR/etc/tmux.conf"}
+    THE_CONF=${MYS_TMUX_CONF:-"$MYS_DIR/etc/omt/tmux.conf"}
     THE_SOCKET=${MYS_TMUX_SOCKET:-"mayeths-tmux-socket"}
     THE_SESSION=${MYS_TMUX_SESSION:-"main"}
 
