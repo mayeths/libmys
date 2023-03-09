@@ -1,9 +1,7 @@
 [[ -n "$MYS_DIR" ]] || MYS_DIR=$(dirname $(dirname "${BASH_SOURCE[0]:-$0}"))
 
-$SHELL --version | grep -q bash && MYS_SHELL=bash
-$SHELL --version | grep -q zsh && MYS_SHELL=zsh
-
 source $MYS_DIR/script/sh-functions.sh
+MYS_SHELL=$(mys_find_shell)
 [[ "$MYS_SHELL" == "bash" ]] && source $MYS_DIR/etc/bashrc
 [[ "$MYS_SHELL" == "zsh"  ]] && source $MYS_DIR/etc/zshrc
 
