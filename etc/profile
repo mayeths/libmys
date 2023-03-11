@@ -38,9 +38,8 @@ command -v code >/dev/null 2>&1 || alias code="invoke-vscode"
 command -v h >/dev/null 2>&1 || alias h="history"
 command -v hs >/dev/null 2>&1 || alias hs="history | grep"
 command -v hsi >/dev/null 2>&1 || alias hsi="history | grep -i"
-tmux() { command tmux -f $MYS_DIR/etc/omt/tmux.conf "$@" }
-# v() { nvim "$@" }
-# vi() { nvim "$@" }
-# vim() { nvim "$@" }
-# vimdiff() { nvim -d "$@" }
-# view() { nvim -R "$@" }
+tmux() {
+    # TMUX_CONF is detected in tmux.conf
+    local conf="$MYS_DIR/etc/omt/tmux.conf"
+    TMUX_CONF=$conf command tmux -f $conf "$@"
+}
