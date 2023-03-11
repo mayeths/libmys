@@ -1,20 +1,104 @@
-### Set default-terminal if needed
-#if 'infocmp -x tmux-256color > /dev/null 2>&1' 'set -g default-terminal "tmux-256color"'
+#--------------------------------------
+# Bindings
+#--------------------------------------
+# Prefix key (C-q)
+set -gu prefix2
+unbind C-a
+unbind C-b
+set -g prefix C-q
+bind C-q send-prefix
+# Split current window vertically
+bind | split-window -h
 
-### Set default-command if needed
-# default-command shell-command
+#--------------------------------------
+# Settings
+#--------------------------------------
+# Increase tmux history buffer size
+set -g history-limit 20000
+# Start with mouse mode disabled
+set -g mouse off
+# Refresh window status
+set -g status-interval 1
+set -g automatic-rename-format '#{?#{m:zsh,#{pane_current_command}},#{b:pane_current_path},#{?#{m:bash,#{pane_current_command}},#{b:pane_current_path},#{pane_current_command}}}'
+# Start new window in current path
+tmux_conf_new_window_retain_current_path=true
+
+#--------------------------------------
+# Variables
+#--------------------------------------
+color_darkgray="#080808"    # dark gray
+color_gray="#303030"    # gray
+color_lightgray="#8a8a8a"    # light gray
+color_lightblue="#00afff"    # light blue
+color_yellow="#ffff00"    # yellow
+color_darkgray="#080808"    # dark gray
+color_white="#e4e4e4"    # white
+color_darkgray="#080808"    # dark gray
+color_yellow="#ffff00"    # yellow
+color_pink="#ff00af"   # pink
+color_green="#5fff00"   # green
+color_lightgray="#8a8a8a"   # light gray
+color_white="#e4e4e4"   # white
+color_darkgray="#080808"   # dark gray
+color_darkgray="#080808"   # dark gray
+color_red="#d70000"   # red
+color_white="#e4e4e4"   # white
+
+#--------------------------------------
+# Styles
+#--------------------------------------
+# status style: message command
+tmux_conf_theme_message_command_fg="$color_lightgray"
+tmux_conf_theme_message_command_bg="$color_darkgray"
+tmux_conf_theme_message_command_attr="bold"
+# status style: focused window
+tmux_conf_theme_window_status_current_fg="$color_darkgray"
+tmux_conf_theme_window_status_current_bg="$color_lightblue"
+tmux_conf_theme_window_status_current_attr="none"
+tmux_conf_theme_window_status_current_format="#I #W"
+# status style: background window
+tmux_conf_theme_window_status_fg="$color_lightgray"
+tmux_conf_theme_window_status_bg="$color_darkgray"
+tmux_conf_theme_window_status_attr="none"
+tmux_conf_theme_window_status_format="#I #W"
+# status style: activated background window (finished a command)
+tmux_conf_theme_window_status_activity_fg="default"
+tmux_conf_theme_window_status_activity_bg="default"
+tmux_conf_theme_window_status_activity_attr="none"
+# status style: belled window
+tmux_conf_theme_window_status_bell_fg="$color_yellow"
+tmux_conf_theme_window_status_bell_bg="default"
+tmux_conf_theme_window_status_bell_attr="none"
+# status style: last opened window
+tmux_conf_theme_window_status_last_fg="default"
+tmux_conf_theme_window_status_last_bg="default"
+tmux_conf_theme_window_status_last_attr="none"
+# status style: LEFT content (separate main sections with "|", subsections with ",")
+tmux_conf_theme_status_left="#{?#{client_prefix},,}" # BUG: we cannot pass len 0 string "" here
+tmux_conf_theme_status_left_fg="$color_darkgray"
+tmux_conf_theme_status_left_bg="$color_darkgray"
+tmux_conf_theme_status_left_attr="none"
+# status style: RIGHT content (separate main sections with "|", subsections with ",")
+tmux_conf_theme_status_right="#{?#{window_zoomed_flag},#{e|-|:#{window_panes},1} zoomed panes,}#{?#{session_many_attached},#{session_attached} clients,} |#S#{?#{client_prefix},^, }"
+tmux_conf_theme_status_right_fg="$color_lightgray,$color_lightblue"
+tmux_conf_theme_status_right_bg="$color_darkgray,$color_darkgray"
+tmux_conf_theme_status_right_attr="none,bold"
+
+#--------------------------------------
+# Set default-command if needed
+# > default-command shell-command
 #     Set the command used for new windows (if not specified when the window is created) to shell-command,
 #     which may be any sh(1) command. The default is an empty string, which instructs tmux to create a
 #     login shell using the value of the default-shell option.
-# default-shell path
+# > default-shell path
 #     Specify the default shell. This is used as the login shell for new windows when the default-command
 #     option is set to empty, and must be the full path of the executable. When started tmux tries to set
 #     a default value from the first suitable of the SHELL environment variable, the shell returned by
 #     getpwuid(3), or /bin/sh.  This option should be configured when tmux is used as a login shell.
-#
 # So the default-command is empty on default tmux configure. When default-command is presented, tmux creates
 #     windows as non-login shell with [shell-command]. But if default-command is empty, creates windows as
 #     login shell with [path]. For the best consistency, always use default-command.
+#--------------------------------------
 if-shell '[[ -x "$MYS_SHELL" ]]' {
     set -g default-command "$MYS_SHELL"
 } {
@@ -28,136 +112,3 @@ if-shell '[[ -x "$MYS_SHELL" ]]' {
         }
     }
 }
-
-### Prefix key C-q
-# Disable GNU-Screen compatible prefix C-a in .tmux.conf
-set -gu prefix2
-unbind C-a
-unbind C-b
-# Set Custom prefix key C-q
-set -g prefix C-q
-bind C-q send-prefix
-
-### Bind keys
-# split current window vertically
-bind | split-window -h
-
-### Increase tmux history buffer size
-set -g history-limit 20000
-
-### Start with mouse mode disabled
-set -g mouse off
-
-### Refresh window status
-set-option -g status-interval 1
-set-option -g automatic-rename-format '#{?#{m:bash,#{pane_current_command}},#{b:pane_current_path},#{pane_current_command}}'
-
-# new window retains current path, possible values are:
-tmux_conf_new_window_retain_current_path=true
-
-# status line command style (<prefix> : Escape)
-tmux_conf_theme_message_command_fg="$tmux_conf_theme_colour_3"
-tmux_conf_theme_message_command_bg="$tmux_conf_theme_colour_1"
-tmux_conf_theme_message_command_attr="bold"
-
-# window status style (Inactivated window style HHP)
-#   - built-in variables are:
-#     - #{circled_window_index}
-#     - #{circled_session_name}
-#     - #{hostname}
-#     - #{hostname_ssh}
-#     - #{hostname_full}
-#     - #{hostname_full_ssh}
-#     - #{username}
-#     - #{username_ssh}
-tmux_conf_theme_window_status_fg="$tmux_conf_theme_colour_3"
-tmux_conf_theme_window_status_bg="$tmux_conf_theme_colour_1"
-tmux_conf_theme_window_status_attr="none"
-tmux_conf_theme_window_status_format="#I #W"
-#tmux_conf_theme_window_status_format="#{circled_window_index} #W"
-#tmux_conf_theme_window_status_format="#I #W#{?window_bell_flag,🔔,}#{?window_zoomed_flag,🔍,}"
-
-# window current status style (Activated window style HHP)
-#   - built-in variables are:
-#     - #{circled_window_index}
-#     - #{circled_session_name}
-#     - #{hostname}
-#     - #{hostname_ssh}
-#     - #{hostname_full}
-#     - #{hostname_full_ssh}
-#     - #{username}
-#     - #{username_ssh}
-tmux_conf_theme_window_status_current_fg="$tmux_conf_theme_colour_6"
-tmux_conf_theme_window_status_current_bg="$tmux_conf_theme_colour_4"
-tmux_conf_theme_window_status_current_attr="none"
-#tmux_conf_theme_window_status_current_format="#W"
-#tmux_conf_theme_window_status_current_format="#I #W"
-#tmux_conf_theme_window_status_current_format="#{circled_window_index} #W"
-tmux_conf_theme_window_status_current_format="#I #W#{?window_zoomed_flag,🔍,}"
-
-# window activity status style HHP: no activating window
-tmux_conf_theme_window_status_activity_fg="default"
-tmux_conf_theme_window_status_activity_bg="default"
-#tmux_conf_theme_window_status_activity_attr="underscore"
-tmux_conf_theme_window_status_activity_attr="none"
-
-# window bell status style
-tmux_conf_theme_window_status_bell_fg="$tmux_conf_theme_colour_5"
-tmux_conf_theme_window_status_bell_bg="default"
-tmux_conf_theme_window_status_bell_attr="blink,bold"
-
-# window last status style (Last open window HHP)
-tmux_conf_theme_window_status_last_fg="default"
-tmux_conf_theme_window_status_last_bg="default"
-tmux_conf_theme_window_status_last_attr="none"
-
-# status left/right content:
-#   - separate main sections with "|"
-#   - separate subsections with ","
-#   - built-in variables are:
-#     - #{battery_bar}
-#     - #{battery_hbar}
-#     - #{battery_percentage}
-#     - #{battery_status}
-#     - #{battery_vbar}
-#     - #{circled_session_name}
-#     - #{hostname_ssh}
-#     - #{hostname}
-#     - #{hostname_full}
-#     - #{hostname_full_ssh}
-#     - #{loadavg}
-#     - #{mouse}
-#     - #{pairing}
-#     - #{prefix}
-#     - #{root}
-#     - #{synchronized}
-#     - #{uptime_y}
-#     - #{uptime_d} (modulo 365 when #{uptime_y} is used)
-#     - #{uptime_h}
-#     - #{uptime_m}
-#     - #{uptime_s}
-#     - #{username}
-#     - #{username_ssh}
-tmux_conf_theme_status_left=""
-#tmux_conf_theme_status_left="#{?#{client_prefix},^, }#S "
-
-tmux_conf_theme_status_right="#{?#{window_zoomed_flag},#{e|-|:#{window_panes},1} zoomed panes,}#{?#{session_many_attached},#{session_attached} clients,} |#S#{?#{client_prefix},^, }"
-#tmux_conf_theme_status_right="#{mouse}#{?#{client_prefix},^prefix,}#{?#{session_many_attached},#{session_attached} clients,}"
-#tmux_conf_theme_status_right='#{?#{session_many_attached},#{session_attached} clients | ,}#{P:#{?#{pane_active},#[fg=#080808]#[bg=#8a8a8a],#[fg=gray]} #P #{?#{m:bash,#{pane_current_command}},#{b:pane_current_path},#{pane_current_command}} #[default]}'
-#tmux_conf_theme_status_right="#{?#{session_many_attached},#{session_attached} clients,} |#S#{?#{client_prefix},^, }"
-#tmux_conf_theme_status_right="#{?#{window_zoomed_flag},#{e|-|:#{window_panes},1} zoomed panes,}#{?#{session_many_attached},#{session_attached} clients,}#(/bin/bash -c 'touch -a /tmp/tmux-haha; haha=\$\(cat /tmp/tmux-haha\); let haha=++haha%4; echo \$haha > /tmp/tmux-haha; arr=\"-\\|/\"; echo \$\{arr:\$haha:1\}') |#S#{?#{client_prefix},^, }"
-
-
-
-# status left style
-#tmux_conf_theme_status_left_fg="$tmux_conf_theme_colour_4,$tmux_conf_theme_colour_6,$tmux_conf_theme_colour_8"
-#tmux_conf_theme_status_left_bg="$tmux_conf_theme_colour_1,$tmux_conf_theme_colour_12,$tmux_conf_theme_colour_11"
-#tmux_conf_theme_status_left_attr="bold,bold,none"
-tmux_conf_theme_status_left_fg="$tmux_conf_theme_colour_6"
-tmux_conf_theme_status_left_bg="$tmux_conf_theme_colour_12"
-tmux_conf_theme_status_left_attr="bold"
-
-# status right style
-tmux_conf_theme_status_right_fg="$tmux_conf_theme_colour_12,$tmux_conf_theme_colour_4"
-tmux_conf_theme_status_right_bg="$tmux_conf_theme_colour_1,$tmux_conf_theme_colour_1"
-tmux_conf_theme_status_right_attr="none,bold"
