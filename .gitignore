@@ -1,10 +1,10 @@
 .vscode/
 include/mys0/*
 !include/mys0/README.md
-lib/
 ugly/
 build/
 .DS_Store
+*.a
 *.out
 *.o
 *.log
@@ -16,19 +16,12 @@ build/
 etc/omz/custom/
 etc/omz/cache/
 etc/omz/log/
-!etc/omz/lib/
 
 
 # ext
 ext/*
-!ext/
 !ext/download-*.sh
-!ext/download-*.sh
-!ext/download-*.sh
-!ext/download-*.sh
-!ext/download-*.sh
-!ext/download-*.sh
-!ext/download-*.sh
+!ext/build-*.sh
 
 # HPCB/HPCG
 HPCB/HPCG/bin/
