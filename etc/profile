@@ -18,7 +18,16 @@ if [[ -n "$MYS_MODDIR" ]]; then
     __ensured_prepend__ CPATH "$MYS_MODDIR/BASE/include"
     __ensured_prepend__ LD_LIBRARY_PATH "$MYS_MODDIR/BASE/lib64"
     __ensured_prepend__ LD_LIBRARY_PATH "$MYS_MODDIR/BASE/lib"
-    __ensured_prepend__ MANPATH "$MYS_MODDIR/BASE/share/man"
+    #-------------
+    # We don't need to set MANPATH with well behaved packages.
+    # manpath will examines user's $PATH. For each path_element found there,
+    # it adds "manpath_element" such as "path_element/../man" to the search path,
+    # where "manpath_element" are fields in /etc/manpath.config.
+    # Use "manpath" command to show the implicit search path deduced from PATH variable.
+    # See https://manpages.ubuntu.com/manpages/jammy/en/man5/manpath.5.html#search%20path
+    # and https://askubuntu.com/a/693612
+    #-------------
+    # __ensured_prepend__ MANPATH "$MYS_MODDIR/BASE/share/man"
 fi
 
 #------ Load necessary scripts

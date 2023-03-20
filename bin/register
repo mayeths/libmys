@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-VERSION="221215 4.0"
+VERSION="2023.03.20 4.1"
 
 import os
 import sys
@@ -22,7 +22,13 @@ mapper = {
     "lib64": "LD_LIBRARY_PATH",
     "include": None,
     "sbin": "PATH",
-    "share/man": "MANPATH",
+    #------
+    # DO NOT set MANPATH manually anymore.
+    # It can be deduced from PATH by manpath for well behaved packages.
+    # Broken MANPATH will overrides default search path.
+    # See https://askubuntu.com/a/693612
+    #------
+    # "share/man": "MANPATH",
 }
 checkinglist = [("configure.log", "config.log")]
 categories = ["libs", "langs", "tools", "science"]
