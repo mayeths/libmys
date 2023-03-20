@@ -8,5 +8,5 @@ else
     echo "Download to default path $TOP_DIR"
 fi
 
-mkdir -p $TOP_DIR
-wget -O "$TOP_DIR/tmux-3.3a.tar.gz" https://github.com/tmux/tmux/releases/download/3.3a/tmux-3.3a.tar.gz
+mkdir -p $TOP_DIR/tmux
+wget -O "$TOP_DIR/tmux/tmux-3.3a.tar.gz" https://github.com/tmux/tmux/releases/download/3.3a/tmux-3.3a.tar.gz
