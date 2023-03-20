@@ -8,6 +8,7 @@ import pathlib
 import tempfile
 import functools
 import base64
+import hashlib
 from collections import OrderedDict
 from typing import Union, List
 
@@ -342,13 +343,15 @@ def fill_ranks(hwinfo: HardwareInfo, nodes: List[str], region: str,
     return ranks, imbalanced
 
 
-def sanitize(text: str):
+def base64_encode(text: str):
     return base64.urlsafe_b64encode(text.encode()).decode().replace("=", "")
 
-def contaminate(sanitized_text: str):
+def base64_decode(sanitized_text: str):
     padded_text = sanitized_text + '=' * (-len(sanitized_text) % 4)
     return base64.urlsafe_b64decode(padded_text.encode()).decode()
 
+def sha512_encode(text: str):
+    return hashlib.sha512(text.encode()).hexdigest()
 
 
 class ExtendedUsageAction(argparse.Action):
@@ -484,9 +487,13 @@ def main():
         sign1 = f'{args.sockets_per_node}-{args.numas_per_socket}-{args.cores_per_numa}'
         sign2 = f'{num_node}-{num_rank}-{threads_per_rank}-{region}-{"L" if left_most_cores else "R"}-{"I" if imbalance else "B"}'
         sign3 = args.nodelist
-        bign1 = sanitize(sign1)
-        bign2 = sanitize(sign2)
-        bign3 = sanitize(sign3)
+        bign1 = base64_encode(sign1) # bign1 = sign1
+        bign2 = base64_encode(sign2) # bign2 = sign2
+        hashed = base64_encode(sign3)
+        if len(hashed) < 250:
+            bign3 = f"B/{hashed}"
+        else:
+            bign3 = f"S/{sha256_encode(sign3)}"
         dir = tempfile.gettempdir()
         file = f"{dir}/{bign1}/{bign2}/{bign3}.rf"
         path = pathlib.Path(file)
