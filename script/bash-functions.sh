@@ -5,6 +5,7 @@
 #   SEP defaults to ':'
 # EXAMPLE: env_contain PATH /usr/local/bin
 env_contain() {
+    [[ $# -ge 1 && $# -le 3 ]] || return 1
     local varName=$1 fieldVal=$2 IFS=${3:-':'} auxArr
     read -ra auxArr <<< "${!varName}"
     for i in "${!auxArr[@]}"; do
@@ -18,6 +19,7 @@ env_contain() {
 #       Duplicates are removed, too.
 # EXAMPLE: env_prepend PATH /usr/local/bin
 env_prepend() {
+    [[ $# -ge 1 && $# -le 3 ]] || return 1
     local varName=$1 fieldVal=$2 IFS=${3:-':'} auxArr
     read -ra auxArr <<< "${!varName}"
     for i in "${!auxArr[@]}"; do
@@ -32,6 +34,7 @@ env_prepend() {
 #       Duplicates are removed, too.
 # EXAMPLE: env_append PATH /usr/local/bin
 env_append() {
+    [[ $# -ge 1 && $# -le 3 ]] || return 1
     local varName=$1 fieldVal=$2 IFS=${3:-':'} auxArr
     read -ra auxArr <<< "${!varName}"
     for i in "${!auxArr[@]}"; do
@@ -40,11 +43,12 @@ env_append() {
     auxArr+=("$fieldVal")
     printf -v "$varName" '%s' "${auxArr[*]}"
 }
-# SYNOPSIS: env_cut varName fieldVal [sep]
+# SYNOPSIS: env_remove varName fieldVal [sep]
 #   SEP defaults to ':'
 # Note: Duplicates are removed, too.
-# EXAMPLE: env_cut PATH /usr/local/bin
-env_cut() {
+# EXAMPLE: env_remove PATH /usr/local/bin
+env_remove() {
+    [[ $# -ge 1 && $# -le 3 ]] || return 1
     local varName=$1 fieldVal=$2 IFS=${3:-':'} auxArr
     read -ra auxArr <<< "${!varName}"
     for i in "${!auxArr[@]}"; do

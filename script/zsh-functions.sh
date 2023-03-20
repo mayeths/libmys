@@ -6,6 +6,7 @@
 # Note: Find if a substring is in path-like environment variable
 # EXAMPLE: env_contain PATH /usr/local/bin
 env_contain() {
+    [[ $# -ge 1 && $# -le 3 ]] || return 1
     local varName="$1" fieldVal="$2" IFS=${3:-':'}
     local auxArr=($(eval printf '%s' "\"\$${varName}\""))
     for i in {1..$#auxArr}; do
@@ -20,6 +21,7 @@ env_contain() {
 #       Duplicates and empties are removed, too.
 # EXAMPLE: env_prepend PATH /usr/local/bin
 env_prepend() {
+    [[ $# -ge 1 && $# -le 3 ]] || return 1
     local varName="$1" fieldVal="$2" IFS=${3:-':'}
     local auxArr=($(eval printf '%s' "\"\$${varName}\""))
     for i in {1..$#auxArr}; do
@@ -35,6 +37,7 @@ env_prepend() {
 #       Duplicates and empties are removed, too.
 # EXAMPLE: env_append PATH /usr/local/bin
 env_append() {
+    [[ $# -ge 1 && $# -le 3 ]] || return 1
     local varName="$1" fieldVal="$2" IFS=${3:-':'}
     local auxArr=($(eval printf '%s' "\"\$${varName}\""))
     for i in {1..$#auxArr}; do
@@ -44,12 +47,13 @@ env_append() {
     printf -v "$varName" '%s' "${(@j.:.)auxArr:#}"
 }
 
-# SYNOPSIS: env_cut varName fieldVal [sep]
+# SYNOPSIS: env_remove varName fieldVal [sep]
 #   SEP defaults to ':'
 # Note: Remove the fieldVal in varName.
 #       Duplicates and empties are removed, too.
-# EXAMPLE: env_cut PATH /usr/local/bin
-env_cut() {
+# EXAMPLE: env_remove PATH /usr/local/bin
+env_remove() {
+    [[ $# -ge 1 && $# -le 3 ]] || return 1
     local varName="$1" fieldVal="$2" IFS=${3:-':'}
     local auxArr=($(eval printf '%s' "\"\$${varName}\""))
     for i in {1..$#auxArr}; do
