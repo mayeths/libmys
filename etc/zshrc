@@ -12,3 +12,8 @@ source $MYS_DIR/script/zsh-functions.sh
 unsetopt INC_APPEND_HISTORY
 unsetopt SHARE_HISTORY
 setopt INC_APPEND_HISTORY_TIME
+
+# Bash-like history up-down keys
+# See https://unix.stackexchange.com/a/324658
+bindkey "$terminfo[kcuu1]" up-history
+bindkey "$terminfo[kcud1]" down-history

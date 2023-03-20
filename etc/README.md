@@ -42,25 +42,49 @@ source $MYS_DIR/etc/profile
 On several supercomputers, I have to use the shared account with my peers in the lab (We can't request another new account if someone joins us). So I use a private directory as my own `$HOME`, and wrote these lines in driver scirpt `$HOME/enter.sh`:
 
 ```bash
-export HOME="/SOMEWHERE/AS/MY/NEW/HOME"
-export MYS_DIR="$HOME/project/libmys"
-export MYS_MODDIR="$HOME/module"
-_TMUX="$MYS_MODDIR/BASE/bin/tmux"
-_CONF="$MYS_DIR/etc/omt/tmux.conf"
-_SOCKET="mayeths-tmux-socket"
-_SESSION="main"
-_CMD="$_TMUX -L $_SOCKET a || $_TMUX -f $_CONF -L $_SOCKET new -s $_SESSION"
-# _HOST="psn002" # if you want to enter may world only on a specific master machine
-echo "$_CMD"
-[[ -z "$_HOST" ]] && $_CMD || ssh -t "$_HOST" "$_CMD"
+[[ -n "$TMUX" ]] && echo "ERROR: Already inside a tmux session ($TMUX)" && exit 1
+
+_HOST="psn002" # If you want to enter may world only on a specific master machine
+_CMD=""
+_CMD+='export HOME=/SOMEWHERE/AS/MY/NEW/HOME;' # You may change this line
+_CMD+='export MYS_DIR=$HOME/project/libmys;' # You may change this line
+_CMD+='export MYS_MODDIR=$HOME/module;' # You may change this line
+_CMD+='_TMUX=$MYS_MODDIR/BASE/bin/tmux;' # You may change this line
+
+_CMD+='cd $HOME;'
+_CMD+='_CONF=$MYS_DIR/etc/omt/tmux.conf;'
+_CMD+='_SOCKET=mayeths-tmux-socket;'
+_CMD+='_SESSION=main;'
+_CMD+='$_TMUX -L $_SOCKET a || $_TMUX -f $_CONF -L $_SOCKET new -s $_SESSION'
+#echo "$_CMD"
+[[ -z "$_HOST" && "$_HOST" == $(hostname) ]] && eval "$_CMD" || ssh -t "$_HOST" "eval '$_CMD'"
 ```
 
 and in `$HOME/.zshrc`:
 
 ```bash
+# For module, etc.
+for i in /etc/profile.d/*.sh; do
+    if [ -r "$i" ]; then
+        if [ "$PS1" ]; then
+            . "$i"
+        else
+            . "$i" >/dev/null
+        fi
+    fi
+done
+
 export MYS_DIR=~/project/libmys
 export MYS_MODDIR=~/module
 source $MYS_DIR/etc/profile
 
+# Don't source $OLD_HOME/bashrc because bash commands like shopt is undefined in zsh
+export OLD_HOME=/THE/OLD/SHARED/HOME
+if [ -f "$OLD_HOME/.zshrc" ]; then
+    . "$OLD_HOME/.zshrc"
+fi
+
 # ... other commands
 ```
+
+TMUX will automatically pick up the `$MYS_MODDIR/BASE/bin/zsh` as default command (in `$MYS_DIR/etc/omt/tmux.conf.custom`). So no need for worring about how to switch the shell.

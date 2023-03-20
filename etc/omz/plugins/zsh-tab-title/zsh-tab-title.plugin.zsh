@@ -53,5 +53,9 @@ function omz_termsupport_preexec {
     local CMD="${1[(wr)^(*=*|sudo|ssh|mosh|rake|-*)]:gs/%/%%}"
     local LINE="${2:gs/%/%%}"
 
-    title "%m: $CMD" "%n@%m: %100>...>${LINE}%<<"
+    if [[ "$TERM_PROGRAM" == Apple_Terminal || "$TERM_PROGRAM" == vscode ]]; then
+        title "$CMD" "%100>...>${LINE}%<<"
+    else
+        title "%m: $CMD" "%n@%m: %100>...>${LINE}%<<"
+    fi
 }
