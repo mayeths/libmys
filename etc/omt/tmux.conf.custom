@@ -51,6 +51,7 @@ color_white="#e4e4e4"   # white
 #--------------------------------------
 set -g @resurrect-save 'O'
 set -g @resurrect-restore 'P'
+set -g @resurrect-capture-pane-contents 'on'
 # We use default $HOME/.local/share/tmux/resurrect
 # Seems like $HOME/.local/ is the convention to put this kind of data
 # set -g @resurrect-dir ''
