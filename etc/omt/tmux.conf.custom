@@ -47,6 +47,16 @@ color_red="#d70000"   # red
 color_white="#e4e4e4"   # white
 
 #--------------------------------------
+# Plugins
+#--------------------------------------
+set -g @resurrect-save 'O'
+set -g @resurrect-restore 'P'
+# We use default $HOME/.local/share/tmux/resurrect
+# Seems like $HOME/.local/ is the convention to put this kind of data
+# set -g @resurrect-dir ''
+run-shell "$TMUX_PLUGIN_DIR/tmux-resurrect/resurrect.tmux"
+
+#--------------------------------------
 # Styles
 #--------------------------------------
 # status style: message command
