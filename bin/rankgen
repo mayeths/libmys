@@ -350,6 +350,9 @@ def base64_decode(sanitized_text: str):
     padded_text = sanitized_text + '=' * (-len(sanitized_text) % 4)
     return base64.urlsafe_b64decode(padded_text.encode()).decode()
 
+def sha256_encode(text: str):
+    return hashlib.sha256(text.encode()).hexdigest()
+
 def sha512_encode(text: str):
     return hashlib.sha512(text.encode()).hexdigest()
 
