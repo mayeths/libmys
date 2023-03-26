@@ -103,7 +103,7 @@ MYS_API static ssize_t mys_parse_readable_size(const char *text)
     if (*endptr == '\0')
         return (ssize_t)dnum; /* no suffix */
 
-    for (int i = 0; i < sizeof(units) / sizeof(struct unit_t); i++) {
+    for (size_t i = 0; i < sizeof(units) / sizeof(struct unit_t); i++) {
         struct unit_t *unit = &units[i];
         int matched = strncmp(endptr, unit->suffix, 32) == 0;
         if (matched)
