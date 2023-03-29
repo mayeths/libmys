@@ -374,7 +374,7 @@ static void _mys_log_stdio_handler(mys_log_event_t *event) {
     if ((int)event->level < (int)MYS_LOG_RAW) {
         const char *lstr = mys_log_level_string(event->level);
         const char level_shortname = lstr[0];
-        snprintf(label, label_size, "[%c::%0*d %s:%0*d] ",
+        snprintf(label, label_size, "[%c::%0*d %s:%0*d]",
             level_shortname, rank_digits, myrank,
             event->file, line_digits, event->line
         );
@@ -391,7 +391,7 @@ static void _mys_log_stdio_handler(mys_log_event_t *event) {
             label_size = sizeof(colorized_label);
         }
 #endif
-        fprintf(file, "%s", label);
+        fprintf(file, "%s ", label);
     }
 
     vfprintf(file, event->fmt, event->vargs);
