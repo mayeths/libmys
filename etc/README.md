@@ -57,12 +57,24 @@ _CMD+='_SOCKET=mayeths-tmux-socket;'
 _CMD+='_SESSION=main;'
 _CMD+='$_TMUX -L $_SOCKET a || $_TMUX -f $_CONF -L $_SOCKET new -s $_SESSION'
 #echo "$_CMD"
-[[ -z "$_HOST" && "$_HOST" == $(hostname) ]] && eval "$_CMD" || ssh -t "$_HOST" "eval '$_CMD'"
+[[ -z "$_HOST" || "$_HOST" == $(hostname) ]] && eval "$_CMD" || ssh -t "$_HOST" "eval '$_CMD'"
 ```
 
 and in `$HOME/.zshrc`:
 
 ```bash
+export OLD_HOME=/THE/OLD/SHARED/HOME
+# DO NOT source $OLD_HOME/bashrc because bash commands like shopt is undefined in zsh
+# Use a trick to source it
+ENVFILE=$(mktemp)
+bash --init-file $OLD_HOME/.bashrc -c "export -p" > $ENVFILE
+set -o allexport
+emulate sh -c "source $ENVFILE"
+set +o allexport
+rm -f $ENVFILE
+# Now try to source $OLD_HOME/.zshrc
+[[ -f "$OLD_HOME/.zshrc" ]] && source "$OLD_HOME/.zshrc"
+
 # For module, etc.
 for i in /etc/profile.d/*.sh; do
     if [ -r "$i" ]; then
@@ -77,13 +89,6 @@ done
 export MYS_DIR=~/project/libmys
 export MYS_MODDIR=~/module
 source $MYS_DIR/etc/profile
-
-# Don't source $OLD_HOME/bashrc because bash commands like shopt is undefined in zsh
-export OLD_HOME=/THE/OLD/SHARED/HOME
-if [ -f "$OLD_HOME/.zshrc" ]; then
-    . "$OLD_HOME/.zshrc"
-fi
-
 # ... other commands
 ```
 
