@@ -55,7 +55,7 @@ MYS_API size_t mys_base64_decode_len(const char *str);
  * @param src_size the size of source string
  * @return The size of content written to dst, not including the tailing '\0', same as strlen(dst)
  */
-MYS_API size_t mys_base64_encode(char *dst, size_t dst_size, const char *src, size_t src_size);
+MYS_API size_t mys_base64_encode(char *dst, size_t dst_size, const void *src, size_t src_size);
 /**
  * @brief Decode the base64-encoded string
  * 
@@ -65,5 +65,5 @@ MYS_API size_t mys_base64_encode(char *dst, size_t dst_size, const char *src, si
  * @param src_size the size of source string
  * @return The size of content written to dst, not including the tailing '\0', same as strlen(dst)
  */
-MYS_API size_t mys_base64_decode(char *dst, size_t dst_size, const char *src, size_t src_size);
+MYS_API size_t mys_base64_decode(void *dst, size_t dst_size, const char *src, size_t src_size);
 
