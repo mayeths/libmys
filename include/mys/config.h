@@ -19,7 +19,7 @@
 #elif defined(__NVCC__)
 #define COMPILER_NAME "NVCC"
 #define COMPILER_NVCC
-#elif defined(__SWCC__)
+#elif defined(__sw_64__)
 #define COMPILER_NAME "SWCC"
 #define COMPILER_SWCC
 #else
@@ -63,7 +63,7 @@
 #elif defined(__arm__) || defined(_M_ARM)
 #define ARCH_NAME "Arm32"
 #define ARCH_ARM32
-#elif defined(__SWCC__)
+#elif defined(__sw_64__)
 #define ARCH_NAME "Sunway"
 #define ARCH_SUNWAY
 #else
