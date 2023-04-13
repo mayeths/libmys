@@ -495,7 +495,7 @@ MYS_API uint64_t mys_hrfreq_aarch64() {
     return f;
 }
 MYS_API double mys_hrtime_aarch64() {
-    return (double)hrtick() / (double)hrfreq();
+    return (double)mys_hrtick_aarch64() / (double)mys_hrfreq_aarch64();
 }
 #endif
 
@@ -532,7 +532,7 @@ MYS_API uint64_t mys_hrfreq_x64() {
     return (uint64_t)TSC_FREQ;
 }
 MYS_API double mys_hrtime_x64() {
-    return (double)hrtick() / (double)hrfreq();
+    return (double)mys_hrtick_x64() / (double)mys_hrfreq_x64();
 }
 #endif
 
@@ -594,7 +594,7 @@ MYS_API uint64_t mys_hrfreq_posix() {
 #endif
 }
 MYS_API double mys_hrtime_posix() {
-    return (double)hrtick() / (double)hrfreq();
+    return (double)mys_hrtick_posix() / (double)mys_hrfreq_posix();
 }
 #endif
 
@@ -620,7 +620,7 @@ MYS_API uint64_t mys_hrfreq_windows() {
     return (uint64_t)f.QuadPart;
 }
 MYS_API double mys_hrtime_windows() {
-    return (double)hrtick() / (double)hrfreq();
+    return (double)mys_hrtick_windows() / (double)mys_hrfreq_windows();
 }
 #endif
 
@@ -649,7 +649,7 @@ MYS_API uint64_t mys_hrfreq_mpi() {
     return (uint64_t)1000000000;
 }
 MYS_API double mys_hrtime_mpi() {
-    return (double)hrtick() / (double)hrfreq();
+    return (double)mys_hrtick_mpi() / (double)mys_hrfreq_mpi();
 }
 #endif
 
@@ -678,7 +678,7 @@ MYS_API uint64_t mys_hrfreq_openmp() {
     return (uint64_t)1000000000;
 }
 MYS_API double mys_hrtime_openmp() {
-    return (double)hrtick() / (double)hrfreq();
+    return (double)mys_hrtick_openmp() / (double)mys_hrfreq_openmp();
 }
 #endif
 
