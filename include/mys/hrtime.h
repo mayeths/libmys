@@ -58,10 +58,10 @@ MYS_API double mys_hrtime_windows();
 
 //////// Legacy
 #if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_HRTIME)
-MYS_API static const char *hrname() { return mys_hrname(); }
-MYS_API static uint64_t hrtick() { return mys_hrtick(); }
-MYS_API static uint64_t hrfreq() { return mys_hrfreq(); }
-MYS_API static double hrtime() { return mys_hrtime(); }
+MYS_API const char *hrname();
+MYS_API uint64_t hrtick();
+MYS_API uint64_t hrfreq();
+MYS_API double hrtime();
 #endif
 
 /******* AUX *******/

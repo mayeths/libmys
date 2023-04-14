@@ -66,7 +66,7 @@ extern "C" {
 
 /* Implementation */
 
-#if defined(MYS_IMPL) && !defined(__MYS_IMPL_ONCE__)
+#if (defined(MYS_IMPL) || defined(MYS_IMPL_LOCAL)) && !defined(__MYS_IMPL_ONCE__)
 #define __MYS_IMPL_ONCE__
 #include "./mys/mys.c"
 #if defined(MYS_ENABLE_CJSON)

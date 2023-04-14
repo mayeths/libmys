@@ -29,7 +29,7 @@
 #endif
 
 /* Cache clean */
-MYS_API static void cachebrush(size_t nbytes) /* = 10 * 1024 * 1024 */
+_MYS_UNUSED static void cachebrush(size_t nbytes) /* = 10 * 1024 * 1024 */
 {
     char * volatile arr = (char *)malloc(nbytes * sizeof(char));
     memset(arr, 0, nbytes);
@@ -42,7 +42,7 @@ MYS_API static void cachebrush(size_t nbytes) /* = 10 * 1024 * 1024 */
     free(arr);
 }
 
-MYS_API static ssize_t mys_parse_readable_size(const char *text)
+_MYS_UNUSED static ssize_t mys_parse_readable_size(const char *text)
 {
     static const size_t Bbase = 1ULL;
     static const size_t Kbase = 1024ULL * Bbase;
@@ -113,7 +113,7 @@ MYS_API static ssize_t mys_parse_readable_size(const char *text)
     return -1;
 }
 
-static inline void mys_readable_size(char **ptr, size_t bytes, size_t precision)
+_MYS_UNUSED static void mys_readable_size(char **ptr, size_t bytes, size_t precision)
 {
     int i = 0;
     const char* units[] = {"Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};

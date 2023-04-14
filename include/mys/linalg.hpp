@@ -8,6 +8,7 @@
 #include <cmath>
 #include "config.h"
 #include "macro.h"
+#include "type.hpp"
 
 enum class MatrixType: int {
     CSR = 0,
@@ -391,9 +392,10 @@ static DATA_T CalcResidual(INDEX_T nrow, INDEX_T *Ap, INDEX_T *Aj, DATA_T *Av, D
     return sqrt(norm2);
 }
 
-MYS_API static void readtxt(const char *fname, int *narrs_, double **Va_) {
+template<typename T>
+static void readtxt(const char *fname, int *narrs_, T **Va_) {
     FILE *f = fopen(fname, "r");
-    std::vector<double> tmparr(0);
+    std::vector<T> tmparr(0);
 
     if (f == NULL) {
         printf("Could not open %s\n", fname);
@@ -401,11 +403,12 @@ MYS_API static void readtxt(const char *fname, int *narrs_, double **Va_) {
     }
 
     while (!feof(f)) {
-        double tmp;
-        fscanf(f, "%lf\n", &tmp);
+        T tmp;
+        fscanf(f, _fmtspec<T>, &tmp);
+        fscanf(f, "\n");
         tmparr.push_back(tmp);
     }
-    (*Va_) = (double *)malloc(tmparr.size() * sizeof(double));
+    (*Va_) = (T *)malloc(tmparr.size() * sizeof(T));
     std::copy(tmparr.begin(), tmparr.end(), (*Va_));
     (*narrs_) = tmparr.size();
 

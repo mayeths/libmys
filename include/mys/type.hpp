@@ -1,6 +1,8 @@
 #pragma once
 
 #include <complex>
+#include <cstdio>
+#include <cinttypes>
 
 enum class TypeNameType: int {
     C, /* unsigned long long int (typename in C) */
@@ -45,4 +47,25 @@ static inline const char * TYPENAME() noexcept {
   } else if (type == TypeNameType::Rust) {
   } else if (type == TypeNameType::CPP) {
   }
+}
+
+template <typename T> static const char *_fmtspec = "<unsupported type>";
+template <> static const char *_fmtspec<char> = "%c";
+template <> static const char *_fmtspec<char *> = "%s";
+template <> static const char *_fmtspec<int> = "%d";
+template <> static const char *_fmtspec<long> = "%ld";
+template <> static const char *_fmtspec<long long> = "%lld";
+template <> static const char *_fmtspec<long long int> = "%lld";
+template <> static const char *_fmtspec<long int> = "%ld";
+template <> static const char *_fmtspec<unsigned int> = "%u";
+template <> static const char *_fmtspec<unsigned long> = "%lu";
+template <> static const char *_fmtspec<unsigned long int> = "%lu";
+template <> static const char *_fmtspec<unsigned long long> = "%llu";
+template <> static const char *_fmtspec<unsigned long long int> = "%llu";
+template <> static const char *_fmtspec<float> = "%f";
+template <> static const char *_fmtspec<double> = "%lf";
+
+template <typename UIntValue> void printHex (UIntValue value) {
+    printf(hexFormat<UIntValue>, value);
+    printf("\n");
 }

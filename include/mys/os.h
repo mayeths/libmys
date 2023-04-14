@@ -113,15 +113,15 @@ MYS_API void mys_stick_affinity();
 #if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_OS)
 typedef mys_popen_t popen_t;
 typedef mys_prun_t prun_t;
-MYS_API static popen_t popen_create(const char *argv) { return mys_popen_create(argv); }
-MYS_API static prun_t prun_create(const char *argv) { return mys_prun_create(argv); }
-MYS_API static int prun_destroy(prun_t *pd) { return mys_prun_destroy(pd); }
-MYS_API static int busysleep(double sec) { return mys_busysleep(sec); }
-MYS_API static char *bfilename(const char *path) { char *r; mys_bfilename(path, &r); return r; }
-MYS_API static const char *procname() { return mys_procname(); }
-MYS_API static int do_mkdir(const char *path, mode_t mode) { return mys_do_mkdir(path, mode); }
-MYS_API static int ensuredir(const char *path, mode_t mode) { return mys_ensure_dir(path, mode); }
-MYS_API static int ensureparent(const char *path, mode_t mode) { return mys_ensure_parent(path, mode); }
+MYS_API popen_t popen_create(const char *argv);
+MYS_API prun_t prun_create(const char *argv);
+MYS_API int prun_destroy(prun_t *pd);
+MYS_API int busysleep(double sec);
+MYS_API char *bfilename(const char *path);
+MYS_API const char *procname();
+MYS_API int do_mkdir(const char *path, mode_t mode);
+MYS_API int ensuredir(const char *path, mode_t mode);
+MYS_API int ensureparent(const char *path, mode_t mode);
 
 #ifndef WAIT_FLAG
 #define WAIT_FLAG(flagfile) mys_wait_flag(__FILE__, __LINE__, flagfile)

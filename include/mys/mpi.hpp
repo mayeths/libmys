@@ -162,7 +162,7 @@ static MPI_Datatype MPI_TYPE() noexcept {
 //     }
 // }
 
-MYS_API static std::string MPI_COMMNAME(MPI_Comm comm) noexcept {
+_MYS_UNUSED static std::string MPI_COMMNAME(MPI_Comm comm) noexcept {
     static std::map<MPI_Comm, std::string> mpi_commname {
         {MPI_COMM_NULL, "MPI_COMM_NULL"},
         {MPI_COMM_SELF, "MPI_COMM_SELF"},
@@ -180,7 +180,7 @@ MYS_API static std::string MPI_COMMNAME(MPI_Comm comm) noexcept {
     }
 }
 
-MYS_API static std::string MPI_OPNAME(MPI_Op op) noexcept {
+_MYS_UNUSED static std::string MPI_OPNAME(MPI_Op op) noexcept {
     static std::map<MPI_Op, std::string> mpi_opname {
         {MPI_OP_NULL, "MPI_OP_NULL"},
         {MPI_MAX, "MPI_MAX"},
@@ -209,7 +209,7 @@ MYS_API static std::string MPI_OPNAME(MPI_Op op) noexcept {
     }
 }
 
-MYS_API static std::string MPI_REQUESTNAME(MPI_Request request) noexcept {
+_MYS_UNUSED static std::string MPI_REQUESTNAME(MPI_Request request) noexcept {
     static std::map<MPI_Request, std::string> mpi_requestname {
         {MPI_REQUEST_NULL, "MPI_REQUEST_NULL"},
     };
@@ -589,7 +589,7 @@ MYS_API static std::string MPI_REQUESTNAME(MPI_Request request) noexcept {
 #define ID_MPI_Finalize	362
 #define ID_COUNT	(ID_MPI_Finalize)+1
 
-MYS_API static const char *MPI_NAME(int id)
+_MYS_UNUSED static const char *MPI_NAME(int id)
 {
     static const char* names[] = {
         "<undefined_placeholder>",

@@ -1,22 +1,5 @@
 #pragma once
 
-/* MYS_API for libmys. See CJSON_PUBLIC of cJSON */
-#if defined(COMPILER_GCC)
-#define MYS_API __attribute__((unused)) /*__attribute__((visibility("default")))*/
-#elif defined(COMPILER_CLANG)
-#define MYS_API __attribute__((unused)) /*__attribute__((visibility("default")))*/
-#elif defined(COMPILER_ICC)
-#define MYS_API __attribute__((unused)) /*__attribute__((visibility("default")))*/
-#elif defined(COMPILER_NVCC)
-#define MYS_API __attribute__((unused)) /*__attribute__((visibility("default")))*/
-#elif defined(COMPILER_SWCC)
-#define MYS_API __attribute__((unused)) /*__attribute__((visibility("default")))*/
-#elif defined(COMPILER_MSVC)
-#define MYS_API /*__declspec(dllexport)*/
-#else
-#define MYS_API /* Emit nothing */
-#endif
-
 #define PREVENT_ELIMIMATED(a) do {     \
     static volatile uint64_t sink = 0; \
     sink = (uint64_t)a;                \

@@ -682,6 +682,27 @@ MYS_API double mys_hrtime_openmp() {
 }
 #endif
 
+#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_HRTIME)
+MYS_API const char *hrname()
+{
+    return mys_hrname();
+}
+
+MYS_API uint64_t hrtick()
+{
+    return mys_hrtick();
+}
+
+MYS_API uint64_t hrfreq()
+{
+    return mys_hrfreq();
+}
+
+MYS_API double hrtime()
+{
+    return mys_hrtime();
+}
+#endif
 
 static void _mys_close_fd(int fd)
 {
@@ -994,6 +1015,53 @@ MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
     }
 }
 
+#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_OS)
+MYS_API popen_t popen_create(const char *argv)
+{
+    return mys_popen_create(argv);
+}
+
+MYS_API prun_t prun_create(const char *argv)
+{
+    return mys_prun_create(argv);
+}
+
+MYS_API int prun_destroy(prun_t *pd)
+{
+    return mys_prun_destroy(pd);
+}
+
+MYS_API int busysleep(double sec)
+{
+    return mys_busysleep(sec);
+}
+
+MYS_API char *bfilename(const char *path)
+{
+    char *r; mys_bfilename(path, &r); return r;
+}
+
+MYS_API const char *procname()
+{
+    return mys_procname();
+}
+
+MYS_API int do_mkdir(const char *path, mode_t mode)
+{
+    return mys_do_mkdir(path, mode);
+}
+
+MYS_API int ensuredir(const char *path, mode_t mode)
+{
+    return mys_ensure_dir(path, mode);
+}
+
+MYS_API int ensureparent(const char *path, mode_t mode)
+{
+    return mys_ensure_parent(path, mode);
+}
+#endif
+
 #if defined(OS_LINUX)
 mys_thread_local char _mys_affinity_buffer[256];
 MYS_API const char *mys_get_affinity() {
@@ -1094,6 +1162,17 @@ MYS_API void mys_partition_naive(const int gs, const int ge, const int n, const 
     (*le) = (*ls) + size;
 }
 
+#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_PARTITION)
+MYS_API int partition1DSimple(
+    const int start, const int end,
+    const int nworkers, const int workerid,
+    int *wstart, int *wend /* return values */
+) {
+    mys_partition_naive(start, end, nworkers, workerid, wstart, wend);
+    return 0;
+}
+#endif
+
 MYS_API double mys_arthimetic_mean(double *arr, int n)
 {
     double sum = 0;
@@ -1132,6 +1211,28 @@ MYS_API double mys_standard_deviation(double *arr, int n)
     }
     return sqrt(denom / nom);
 }
+
+#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_STATISTIC)
+MYS_API double arthimetic_mean(double *arr, int n)
+{
+    return mys_arthimetic_mean(arr, n);
+}
+
+MYS_API double harmonic_mean(double *arr, int n)
+{
+    return mys_harmonic_mean(arr, n);
+}
+
+MYS_API double geometric_mean(double *arr, int n)
+{
+    return mys_geometric_mean(arr, n);
+}
+
+MYS_API double standard_deviation(double *arr, int n)
+{
+    return mys_standard_deviation(arr, n);
+}
+#endif
 
 #ifdef MYS_USE_POSIX_MUTEX
 MYS_API void mys_mutex_init(mys_mutex_t *lock)

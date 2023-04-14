@@ -111,7 +111,7 @@ extern int MYSTtick(const char *, ...);
 __attribute__((format(printf, 1, 2)))
 extern int MYSTtock(const char *, ...);
 
-#ifdef MYS_IMPL
+#if defined(MYS_IMPL) || defined(MYS_IMPL_LOCAL)
 #include "myst.impl.h"
 #endif
 

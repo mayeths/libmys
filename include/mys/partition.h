@@ -15,11 +15,10 @@
  */
 MYS_API void mys_partition_naive(const int gs, const int ge, const int n, const int i, int *ls, int *le);
 
-MYS_API static int partition1DSimple(
+#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_PARTITION)
+MYS_API int partition1DSimple(
     const int start, const int end,
     const int nworkers, const int workerid,
     int *wstart, int *wend /* return values */
-) {
-    mys_partition_naive(start, end, nworkers, workerid, wstart, wend);
-    return 0;
-}
+);
+#endif

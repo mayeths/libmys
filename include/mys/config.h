@@ -16,6 +16,9 @@
 #elif defined(_MSC_VER)
 #define COMPILER_NAME "MSVC"
 #define COMPILER_MSVC
+#elif defined(__CYGWIN__)
+#define COMPILER_NAME "CYGWIN"
+#define COMPILER_CYGWIN
 #elif defined(__NVCC__)
 #define COMPILER_NAME "NVCC"
 #define COMPILER_NVCC
@@ -69,4 +72,114 @@
 #else
 #define ARCH_NAME "Unknown"
 #define ARCH_UNKNOWN
+#endif
+
+/*------------------------------------------------------------------*/
+/*                         Defining MYS_API                         */
+/*------------------------------------------------------------------*/
+
+// Defining _MYS_UNUSED
+#if defined(COMPILER_GCC)
+#define _MYS_UNUSED __attribute__((unused))
+#elif defined(COMPILER_CLANG)
+#define _MYS_UNUSED __attribute__((unused))
+#elif defined(COMPILER_ICC)
+#define _MYS_UNUSED __attribute__((unused))
+#elif defined(COMPILER_NVCC)
+#define _MYS_UNUSED __attribute__((unused))
+#elif defined(COMPILER_SWCC)
+#define _MYS_UNUSED __attribute__((unused))
+#elif defined(COMPILER_MSVC)
+#define _MYS_UNUSED
+#else
+#define _MYS_UNUSED
+#endif
+
+// Defining _MYS_API_IMPORT, _MYS_API_EXPORT and _MYS_API_LOCAL
+#if defined(OS_WINDOWS) || defined(COMPILER_CYGWIN)
+#define _MYS_API_IMPORT __declspec(dllimport)
+#define _MYS_API_EXPORT __declspec(dllexport)
+#define _MYS_API_LOCAL
+#elif defined(COMPILER_GCC)
+#define _MYS_API_IMPORT __attribute__((visibility("default")))
+#define _MYS_API_EXPORT __attribute__((visibility("default")))
+#define _MYS_API_LOCAL  __attribute__((visibility("hidden")))
+#else
+#define _MYS_API_IMPORT
+#define _MYS_API_EXPORT
+#define _MYS_API_LOCAL
+#endif
+
+/**
+ * @brief Use MYS_IMPL and MYS_IMPL_LOCAL to control the visibility of libmys.
+ * 
+ * @note
+ *       Define MYS_IMPL to build a copy libmys and export its symbols to other dynamic
+ *              shared objects (DSOs) and the executable (EXE).
+ *       Define MYS_IMPL_LOCAL to build a copy of libmys and hide its symbols, so this DSO
+ *              or EXE won't use the libmys export by other DSO or EXE, who export symbols
+ *              with defining MYS_IMPL.
+ *       No definition for both MYS_IMPL and MYS_IMPL_LOCAL will use the libmys export by
+ *              other DSO or EXE that export symbols by defining MYS_IMPL.
+ * 
+ * @example The following code snippets will build two libmys, one for the main executable
+ *          and liba, and another for libb. You can see changing logging level in main only
+ *          affect the output of main and liba, but leaving libb alone.
+ * 
+ * <test-api-main.c>
+    #include <mys.h>
+    void a_hello();
+    void b_hello();
+    int main() {
+        MPI_Init(NULL, NULL);
+        DLOG(0, "Hello from main (level %d)!", mys_log_get_level());
+        a_hello();
+        b_hello();
+        mys_log_set_level(MYS_LOG_DEBUG);
+        DLOG(0, "Hello from main (level %d)!", mys_log_get_level());
+        a_hello();
+        b_hello();
+        MPI_Finalize();
+        return 0;
+    }
+
+ * <test-api-liba.c>
+    #define MYS_IMPL
+    #include <mys.h>
+    void a_hello()
+    {
+        DLOG(0, "Hello from a (level %d)!", mys_log_get_level());
+    }
+
+ * <test-api-libb.c>
+    #define MYS_IMPL_LOCAL
+    #include <mys.h>
+    void b_hello()
+    {
+        DLOG(0, "Hello from b (level %d)!", mys_log_get_level());
+    }
+
+ * <Compile & Run sequence>
+    mpicc -Wall -Wextra -Werror -I${MYS_DIR}/include -c test-api-main.c
+    mpicc -Wall -Wextra -Werror -I${MYS_DIR}/include -c test-api-liba.c
+    mpicc -Wall -Wextra -Werror -I${MYS_DIR}/include -c test-api-libb.c
+    mpicc -Wall -Wextra -Werror -dynamiclib -o liba.dylib test-api-liba.o
+    mpicc -Wall -Wextra -Werror -dynamiclib -o libb.dylib test-api-libb.o
+    mpicc -Wall -Wextra -Werror test-api-main.o -L. -la -lb
+    mpirun -n 1 ./a.out
+
+ * <Expected output>
+    [D::000 test-api-main.c:010] Hello from main (level 0)!
+    [D::000 test-api-liba.c:008] Hello from a (level 0)!
+    [D::000 test-api-libb.c:008] Hello from b (level 0)!
+    [D::000 test-api-main.c:014] Hello from main (level 1)!
+    [D::000 test-api-liba.c:008] Hello from a (level 1)!
+    [D::000 test-api-libb.c:008] Hello from b (level 0)!
+ */
+#if defined(MYS_IMPL)         // Make libmys with public visibility.
+#define MYS_API _MYS_API_EXPORT _MYS_UNUSED
+#elif defined(MYS_IMPL_LOCAL) // Make libmys with private visibility.
+#define MYS_API _MYS_API_LOCAL  _MYS_UNUSED
+#else // Don't make libmys and use the one made by the EXE or other DSO who define MYS_IMPL.
+#define MYS_API _MYS_API_IMPORT _MYS_UNUSED
 #endif
