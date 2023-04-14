@@ -32,14 +32,20 @@
 #define TIMER_THRESHOLD (50 * 1e-6)
 #endif
 
+// Report a warning if rank is too slow than the fast one
+#ifndef IMBALANCE_THRESHOLD
+#define IMBALANCE_THRESHOLD 0.05
+#endif
+
 // Report a warning if any mintime < "MINTIME_THRESHOLD"
 #ifndef MINTIME_THRESHOLD
 #define MINTIME_THRESHOLD (20 * 1e-3)
 #endif
 
-// Report a warning if rank is too slow than the fast one
-#ifndef IMBALANCE_THRESHOLD
-#define IMBALANCE_THRESHOLD 0.05
+// The minimum size of local array in eacy rank
+// Choose by empirical
+#ifndef MINSIZE_THRESHOLD
+#define MINSIZE_THRESHOLD "32MB"
 #endif
 
 // Run each kernel "NTIMES" times and reports the best result for any
@@ -124,6 +130,7 @@ static char	*label[4] = {"Copy", "Scale", "Add", "Triad"};
 extern void checkSTREAMresults(STREAM_TYPE *AvgErrByRank, int numranks, double epsilon);
 extern void computeSTREAMerrors(STREAM_TYPE *aAvgErr, STREAM_TYPE *bAvgErr, STREAM_TYPE *cAvgErr);
 extern double checktick();
+extern double estimate(int myrank, int numranks, double mintime, size_t minsize, size_t anchor_size, size_t *result);
 
 int
 main(int argc, char **argv)
@@ -161,19 +168,22 @@ main(int argc, char **argv)
 		exit_with_usage(stderr, argv[0], NULL, NULL);
 	}
 
-	int ncores = str_to_i32(argv[1], -1);
-	if (ncores == -1) {
-		exit_with_usage(stderr, argv[0], "ERROR invalid ncores \"%s\"\n", argv[1]);
-	}
-
 	ssize_t min_size = from_readable_size(argv[2]);
 	if (min_size == -1) {
 		exit_with_usage(stderr, argv[0], "ERROR invalid min_size \"%s\"\n", argv[2]);
 	}
 
 	// Use log2() to prevent numranks=1 got too large array
-	// size_t local_array_size = (size_t)((double)min_size * (double)ncores / (double)numranks);
-	size_t local_array_size = (size_t)((double)min_size * (log2(ncores) + 1) / (log2(numranks) + 1));
+	// int ncores = str_to_i32(argv[1], -1);
+	// if (ncores == -1) {
+	// 	exit_with_usage(stderr, argv[0], "ERROR invalid ncores \"%s\"\n", argv[1]);
+	// }
+	// size_t local_array_size = (size_t)((double)min_size * (log2(ncores) + 1) / (log2(numranks) + 1));
+	quantum = checktick();
+	size_t minsize_threshold = from_readable_size(MINSIZE_THRESHOLD);
+	size_t local_array_size = 0;
+	t = estimate(myrank, numranks, MINTIME_THRESHOLD, minsize_threshold, min_size, &local_array_size);
+
 	size_t global_array_size = local_array_size * numranks;
 	size_t STREAM_ARRAY_SIZE = global_array_size / sizeof(STREAM_TYPE);
 
@@ -226,21 +236,10 @@ main(int argc, char **argv)
 #pragma omp parallel for
 #endif
     for (j=0; j<array_elements; j++) {
-	    a[j] = 1.0;
+	    a[j] = 2.0;
 	    b[j] = 2.0;
 	    c[j] = 0.0;
 	}
-
-    /* Get initial timing estimate to compare to timer granularity. */
-	/* All ranks need to run this code since it changes the values in array a */
-    t = MPI_Wtime();
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (j = 0; j < array_elements; j++)
-		a[j] = 2.0E0 * a[j];
-    t = MPI_Wtime() - t;
-	quantum = checktick();
 
 	// Initial informational printouts -- rank 0 handles all the output
 	if (myrank == 0) {
@@ -267,13 +266,13 @@ main(int argc, char **argv)
 
 		size_t nticks = (size_t)(t/quantum);
 		if (t * 1e3 >= 1)
-			printf("Array traversal cost: ~ %zu ms (%zu ticks)\n", (size_t)(t * 1e3), nticks);
+			printf("Estimated traversal cost: ~ %zu ms\n", (size_t)(t * 1e3));
 		else if (t * 1e6 >= 1)
-			printf("Array traversal cost: ~ %zu us (%zu ticks)\n", (size_t)(t * 1e6), nticks);
+			printf("Estimated traversal cost: ~ %zu us\n", (size_t)(t * 1e6));
 		else if (t * 1e9 >= 1)
-			printf("Array traversal cost: ~ %zu ns (%zu ticks)\n", (size_t)(t * 1e9), nticks);
+			printf("Estimated traversal cost: ~ %zu ns\n", (size_t)(t * 1e9));
 		else
-			printf("Array traversal cost: %.1f ns (%zu ticks)\n", t * 1e9, nticks);
+			printf("Estimated traversal cost: %.1f ns\n", t * 1e9);
 
 		if (nticks < 20)
 			printf("====== WARNING: Increase the size for at least 20 ticks ======\n");
@@ -713,3 +712,42 @@ void checkSTREAMresults (STREAM_TYPE *AvgErrByRank, int numranks, double epsilon
 	printf ("    Rel Errors on a, b, c:     %e %e %e \n",abs(aAvgErr/aj),abs(bAvgErr/bj),abs(cAvgErr/cj));
 #endif
 }
+
+
+double estimate(int myrank, int numranks, double mintime, size_t minsize, size_t anchor_size, size_t *result)
+{
+	STREAM_TYPE *helper_a = NULL;
+	STREAM_TYPE *helper_b = NULL;
+	int k = 0;
+	size_t nbytes = MAX(anchor_size / numranks, minsize);
+	size_t nmembs = nbytes / sizeof(STREAM_TYPE);
+    k |= posix_memalign((void **)&helper_a, 4096, nbytes);
+    k |= posix_memalign((void **)&helper_b, 4096, nbytes);
+	if (k != 0) {
+        printf("Rank %d: Allocation of helper array failed, return code is %d\n", myrank, k);
+		MPI_Abort(MPI_COMM_WORLD, 2);
+        exit(1);
+	}
+
+	double times[4];
+	double local_best = FLT_MAX;
+	for (int iter = 0; iter < sizeof(times) / sizeof(double); iter++) {
+		MPI_Barrier(MPI_COMM_WORLD);
+		times[iter] = MPI_Wtime();
+		for (int j = 0; j < nmembs; j++)
+			helper_a[j] = helper_b[j];
+		times[iter] = MPI_Wtime() - times[iter];
+		local_best = MIN(local_best, times[iter]);
+	}
+	double best = 0;
+	printf("rank %d local_best %f\n", myrank, local_best);
+	MPI_Allreduce(&local_best, &best, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+	free(helper_a);
+	free(helper_b);
+
+	double multiplier = best > MINTIME_THRESHOLD ? 1 : (MINTIME_THRESHOLD * 1.25 / best);
+	if (myrank == 0) printf("multiplier is %f nbytes %zu best %f\n", multiplier, nbytes, best);
+	*result = (size_t)((double)nbytes * multiplier);
+	return best * multiplier;
+}
+
