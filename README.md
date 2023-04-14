@@ -11,5 +11,5 @@ export MYS_MODDIR=~/module
 source "$MYS_DIR/etc/profile"
 # Rsync libmys
 cd libmys
-rsync --filter=':- .gitignore' -avz ./ REMOTE:~/project/libmys/
+rsync --filter=':- .gitignore' -av ./ REMOTE:~/project/libmys/
 ```
