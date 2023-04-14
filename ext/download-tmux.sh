@@ -10,3 +10,6 @@ fi
 
 mkdir -p $TOP_DIR/tmux
 wget -O "$TOP_DIR/tmux/tmux-3.3a.tar.gz" https://github.com/tmux/tmux/releases/download/3.3a/tmux-3.3a.tar.gz
+# Maybe we should add deps: libevents and ncurses here
+# And what about build readline also
+# Building with gcc-4.8.5 ok

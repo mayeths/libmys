@@ -10,3 +10,4 @@ fi
 
 mkdir -p $TOP_DIR/zsh
 wget -O "$TOP_DIR/zsh/zsh-5.9.tar.xz" https://jaist.dl.sourceforge.net/project/zsh/zsh/5.9/zsh-5.9.tar.xz
+# Rely on ncursew
