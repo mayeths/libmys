@@ -1,27 +1,34 @@
 # Mayeths' STREAM Benchmark 2023.02.18 (based on STREAM Benchmark 5.10)
-# NOTE: stream_mpi.c was stream/Versions/stream_mpi.c
-#       stream_omp.c was stream/stream.c
+# NOTE: stream.c was stream/Versions/stream_mpi.c
 
 MPICC ?= mpicc
-OMPCC ?= gcc
 
-OPT=-DNTIMES=10 -std=c99 -Wall -lm -Ofast -ftree-vectorize
-# stream_mpi.c get the array size from command line
-MPICFLAGS=$(OPT)
-OMPCFLAGS=$(OPT) -fopenmp -mcmodel=large -DSTREAM_ARRAY_SIZE=100000000
+MPICFLAGS=-DNTIMES=10 -Wall -Wextra -lm -Ofast -ftree-vectorize
 
-.PHONY: clean all
+.PHONY: clean default naive sunway
 
-default: clean stream_mpi
+default: clean naive
 
-# stream_mpi.c also support openmp but we won't use it
-stream_mpi: src/stream_mpi.c
-	$(MPICC) -o $@ $(MPICFLAGS) $<
+naive: naive.o
+	$(MPICC) -o stream $(MPICFLAGS) -std=c99  src/stream.c $^
 
-stream_omp: src/stream_omp.c
-	$(OMPCC) -o $@ $(OMPCFLAGS) $<
+sunway: naive.o swgld_host.o swgld_slave.o swdma_host.o swdma_slave.o
+	$(MPICC) -o stream $(MPICFLAGS) -std=c99 -DTEST_SUNWAY_GLD -DTEST_SUNWAY_DMA  src/stream.c $^
 
-all: stream_mpi stream_omp
+naive.o: src/impl-naive.c
+	$(MPICC) -o $@ $(MPICFLAGS) -c $<
+
+swgld_host.o: src/impl-swgld_host.c
+	$(MPICC) -mhost -o $@ $(MPICFLAGS) -c $<
+
+swgld_slave.o: src/impl-swgld_slave.c
+	$(MPICC) -mslave -msimd -o $@ $(MPICFLAGS) -c $<
+
+swdma_host.o: src/impl-swdma_host.c
+	$(MPICC) -mhost -o $@ $(MPICFLAGS) -c $<
+
+swdma_slave.o: src/impl-swdma_slave.c
+	$(MPICC) -mslave -msimd -o $@ $(MPICFLAGS) -c $<
 
 clean:
-	rm -f stream_mpi stream_omp
+	rm -f stream *.o
