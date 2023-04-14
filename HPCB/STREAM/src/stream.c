@@ -10,10 +10,29 @@
 /*-----------------------------------------------------------------------*/
 #include "stream.h"
 
-#define HLINE "--------------------------------------------------------------\n"
-
-static char *label[4];
-static const char *usage;
+static const char *usage =
+    HLINE
+    "STREAM version 5.10 (last modified by Mayeths on %s)\n"
+    HLINE
+    "Usage\n"
+    "    mpirun -n nproc  %s ncores min_size\n"
+    "    * Use the size of LLC (LLC_size) as min_size if it's larger than 32MB.\n"
+    "    [Kunpeng920] ./stream 128 48MB (for 128 cores and 48MB shared L3)\n"
+    "    [Apple M1]   ./stream 8  128MB (for 8 cores and 16MB shared L2)\n"
+    HLINE
+    "Size Algorithm (by Mayeths)\n"
+    "    local_array_size = min_size * (log2(ncores)+1) / (log2(nranks)+1)\n"
+    "    - local_array_size is min_size * log2(ncores) when utilizing one core.\n"
+    "    - local_array_size is min_size when utilizing all cores.\n"
+    "    - global_array_size ranges from [min_size * (log2(ncores)+1), min_size * ncores]\n"
+    HLINE
+    "Note (from original STREAM)\n"
+    "    - local_array_size must be large enough that the traversal cost > 20 clock-ticks.\n"
+    "    - Ensure global_array_size >= 4 * LLC_size. So min_size > 4 * LLC_size if ncores <= 8.\n"
+    HLINE
+	"STREAM early exit. (reason: %s)\n"
+    HLINE
+;
 
 size_t array_elements;
 size_t array_bytes;
@@ -22,11 +41,12 @@ STREAM_TYPE * restrict a;
 STREAM_TYPE * restrict b;
 STREAM_TYPE * restrict c;
 
+static char *label[4]    = {"Copy", "Scale", "Add", "Triad"};
 static double avgtime[4] = {0, 0, 0, 0};
 static double maxtime[4] = {0, 0, 0, 0};
 static double mintime[4] = {FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX};
 
-static void check_results(STREAM_TYPE *AvgErrByRank, int numranks, double epsilon);
+static int check_results(STREAM_TYPE *AvgErrByRank, int numranks, double epsilon);
 static void compute_errors(STREAM_TYPE *aAvgErr, STREAM_TYPE *bAvgErr, STREAM_TYPE *cAvgErr);
 static double check_timer_granularity();
 static double reset_arrays(STREAM_TYPE *a, STREAM_TYPE *b, STREAM_TYPE *c, size_t narr);
@@ -43,6 +63,7 @@ int main(int argc, char **argv)
     double		quantum = 0;
     int			i,k;
     ssize_t		j;
+	size_t passed = 0;
     double		times[4][NTIMES];
 	double		*TimesByRank = NULL;
 	double		t0,t1,tmin;
@@ -64,24 +85,24 @@ int main(int argc, char **argv)
 #endif
 
 	if (argc != 3)
-		exit_with_usage(stderr, argv[0], NULL, NULL);
+		exit_with_usage(stderr, argv[0], "no arguments provided", NULL);
 
 	int call_help = 0;
 	call_help |= strncmp(argv[1], "-h", sizeof("-h")) == 0;
 	call_help |= strncmp(argv[1], "--help", sizeof("--help")) == 0;
 	if (call_help) {
-		exit_with_usage(stderr, argv[0], NULL, NULL);
+		exit_with_usage(stderr, argv[0], "print help message", NULL);
 	}
 
 	ssize_t min_size = from_readable_size(argv[2]);
 	if (min_size == -1) {
-		exit_with_usage(stderr, argv[0], "ERROR invalid min_size \"%s\"\n", argv[2]);
+		exit_with_usage(stderr, argv[0], "invalid min_size \"%s\"", argv[2]);
 	}
 
 	// Use log2() to prevent numranks=1 got too large array
 	int ncores = str_to_i32(argv[1], -1);
 	if (ncores == -1) {
-		exit_with_usage(stderr, argv[0], "ERROR invalid ncores \"%s\"\n", argv[1]);
+		exit_with_usage(stderr, argv[0], "invalid ncores \"%s\"", argv[1]);
 	}
 	size_t local_array_size = (size_t)((double)min_size * (log2(ncores) + 1) / (log2(numranks) + 1));
 	// size_t minsize_threshold = from_readable_size(MINSIZE_THRESHOLD);
@@ -104,7 +125,7 @@ int main(int argc, char **argv)
 	else if (sizeof(STREAM_TYPE) == 8)
 		epsilon = 1.e-13;
 	else {
-		printf("[WEIRD] sizeof(STREAM_TYPE) = %lu\n",sizeof(STREAM_TYPE));
+		printf("[WARNING] sizeof(STREAM_TYPE) = %lu\n",sizeof(STREAM_TYPE));
 		epsilon = 1.e-6;
 	}
 
@@ -389,10 +410,16 @@ int main(int argc, char **argv)
 
 		/* -- Combined averaged errors and report on Rank 0 only --- */
 		if (myrank == 0) {
-			check_results(AvgErrByRank,numranks, epsilon);
+			if (check_results(AvgErrByRank,numranks, epsilon) == 0)
+				passed += 1;
 			printf(HLINE);
 		}
 
+	}
+
+	if (myrank == 0) {
+		printf("TOTAL %zu tests, %zu PASSED, %zu FAILED.\n", ntest, passed, ntest - passed);
+		printf(HLINE);
 	}
 
 	free(a);
@@ -475,13 +502,13 @@ static void compute_errors(STREAM_TYPE *aAvgErr, STREAM_TYPE *bAvgErr, STREAM_TY
 
 
 
-static void check_results (STREAM_TYPE *AvgErrByRank, int numranks, double epsilon)
+static int check_results (STREAM_TYPE *AvgErrByRank, int numranks, double epsilon)
 {
 	STREAM_TYPE aj,bj,cj,scalar;
 	STREAM_TYPE aSumErr,bSumErr,cSumErr;
 	STREAM_TYPE aAvgErr,bAvgErr,cAvgErr;
 	size_t	j;
-	int	k,ierr;
+	int	k,ierr = 0;
 
 	// Repeat the computation of aj, bj, cj because I am lazy
     /* reproduce initialization */
@@ -572,6 +599,7 @@ static void check_results (STREAM_TYPE *AvgErrByRank, int numranks, double epsil
 	printf ("    Observed a(1), b(1), c(1): %f %f %f \n",a[1],b[1],c[1]);
 	printf ("    Rel Errors on a, b, c:     %e %e %e \n",abs(aAvgErr/aj),abs(bAvgErr/bj),abs(cAvgErr/cj));
 #endif
+	return ierr;
 }
 
 double hrtime() {
@@ -725,40 +753,22 @@ static void exit_with_usage(FILE *fd, const char *prog, const char *reason, ...)
 	int myrank = -1;
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	if (myrank == 0) {
+		char reason_str[4096] = "unknown";
 		if (reason != NULL) {
 			va_list opt;
 			va_start(opt, reason);
-			vfprintf(fd, reason, opt);
+			vsnprintf(reason_str, sizeof(reason_str), reason, opt);
 			va_end(opt);
 		}
 
-		int len = snprintf(NULL, 0, usage, MYS_MODIFIED_ON, prog) + 1;
+		int len = snprintf(NULL, 0, usage, MYS_MODIFIED_ON, prog, reason_str) + 1;
 		char *buffer = (char *)malloc(sizeof(char) * len);
-		snprintf(buffer, len, usage, MYS_MODIFIED_ON, prog);
+		snprintf(buffer, len, usage, MYS_MODIFIED_ON, prog, reason_str);
 		fprintf(fd, "%s", buffer);
 		fflush(fd);
+		free(buffer);
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Finalize();
 	exit(0);
 }
-
-static char *label[4] = {"Copy", "Scale", "Add", "Triad"};
-
-
-static const char *usage =
-	"=== STREAM version 5.10 (last modified by Mayeths on %s)\n"
-	"=== Usage\n"
-	"    %s ncores min_size\n"
-	"    * Use the size of LLC (LLC_size) as min_size if it's larger than 32MB.\n"
-	"    [Kunpeng920] ./stream_mpi.exe 128 48MB (for 128 cores and 48MB shared L3)\n"
-	"    [Apple M1] ./stream_mpi.exe 8 128MB (for 8 cores and 16MB shared L2)\n"
-	"=== Size Algorithm (by Mayeths)\n"
-	"    local_array_size = min_size * (log2(ncores)+1) / (log2(nranks)+1)\n"
-	"    * local_array_size is min_size * log2(ncores) when utilizing one core.\n"
-	"    * local_array_size is min_size when utilizing all cores.\n"
-	"    * global_array_size ranges from [min_size * (log2(ncores)+1), min_size * ncores]\n"
-	"=== Note (from original STREAM)\n"
-	"    * local_array_size must be large enough that the traversal cost > 20 clock-ticks.\n"
-	"    * Ensure global_array_size >= 4 * LLC_size. So min_size > 4 * LLC_size if ncores <= 8.\n"
-;

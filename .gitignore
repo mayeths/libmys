@@ -61,5 +61,4 @@ HPCB/OSU/win_put_bibw
 HPCB/OSU/win_put_bw
 HPCB/OSU/win_put_latency
 # HPCB/STREAM
-HPCB/STREAM/stream_mpi
-HPCB/STREAM/stream_omp
+HPCB/STREAM/stream

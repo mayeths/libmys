@@ -2,16 +2,19 @@
 #define _STREAM_H_
 
 #define _XOPEN_SOURCE 600
+#include <errno.h>
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
-#include <errno.h>
-#include <mpi.h>
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+#include <mpi.h>
 
 #include "common.h"
+
+#define HLINE "--------------------------------------------------------------\n"
 
 /* Testcase Routines
  *   desc_function_t:  Testcase description
