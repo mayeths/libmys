@@ -49,23 +49,19 @@ static inline const char * TYPENAME() noexcept {
   }
 }
 
-template <typename T> static const char *_fmtspec = "<unsupported type>";
-template <> static const char *_fmtspec<char> = "%c";
-template <> static const char *_fmtspec<char *> = "%s";
-template <> static const char *_fmtspec<int> = "%d";
-template <> static const char *_fmtspec<long> = "%ld";
-template <> static const char *_fmtspec<long long> = "%lld";
-template <> static const char *_fmtspec<long long int> = "%lld";
-template <> static const char *_fmtspec<long int> = "%ld";
-template <> static const char *_fmtspec<unsigned int> = "%u";
-template <> static const char *_fmtspec<unsigned long> = "%lu";
-template <> static const char *_fmtspec<unsigned long int> = "%lu";
-template <> static const char *_fmtspec<unsigned long long> = "%llu";
-template <> static const char *_fmtspec<unsigned long long int> = "%llu";
-template <> static const char *_fmtspec<float> = "%f";
-template <> static const char *_fmtspec<double> = "%lf";
+template <typename T> const char *_fmtspec = "<unsupported type>";
+template <> const char *_fmtspec<char> = "%c";
+template <> const char *_fmtspec<char *> = "%s";
+template <> const char *_fmtspec<int> = "%d";
+template <> const char *_fmtspec<long> = "%ld";
+template <> const char *_fmtspec<long long> = "%lld";
+template <> const char *_fmtspec<unsigned int> = "%u";
+template <> const char *_fmtspec<unsigned long> = "%lu";
+template <> const char *_fmtspec<unsigned long long> = "%llu";
+template <> const char *_fmtspec<float> = "%f";
+template <> const char *_fmtspec<double> = "%lf";
 
-template <typename UIntValue> void printHex (UIntValue value) {
-    printf(hexFormat<UIntValue>, value);
-    printf("\n");
-}
+// template <typename UIntValue> void printHex (UIntValue value) {
+//     printf(hexFormat<UIntValue>, value);
+//     printf("\n");
+// }
