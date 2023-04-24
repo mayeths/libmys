@@ -14,6 +14,11 @@
 #include <osu_util_papi.c>
 #include <osu_util.c>
 
+#ifdef USE_MYS_A2A
+#include "mys_alltoall.h"
+#define MPI_Alltoall mys_alltoall
+#endif
+
 int main (int argc, char *argv[])
 {
     int i, j, numprocs, rank, size;
@@ -65,6 +70,11 @@ int main (int argc, char *argv[])
         case PO_OKAY:
             break;
     }
+
+#ifdef USE_MYS_A2A
+    if (rank == 0) printf("mys alltoall\n");
+    options.validate = 1;
+#endif
 
     if (numprocs < 2) {
         if (rank == 0) {
