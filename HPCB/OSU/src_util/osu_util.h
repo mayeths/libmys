@@ -109,38 +109,38 @@ do {                                                            \
 
 #define CHECK(stmt)                                              \
 do {                                                             \
-   int errno = (stmt);                                           \
-   if (0 != errno) {                                             \
+   int ierrn = (stmt);                                           \
+   if (0 != ierrn) {                                             \
        fprintf(stderr, "[%s:%d] function call failed with %d \n",\
-        __FILE__, __LINE__, errno);                              \
+        __FILE__, __LINE__, ierrn);                              \
        exit(EXIT_FAILURE);                                       \
    }                                                             \
-   assert(0 == errno);                                           \
+   assert(0 == ierrn);                                           \
 } while (0)
 
 #if defined(_ENABLE_CUDA_)
 #define CUDA_CHECK(stmt)                                                \
 do {                                                                    \
-   int errno = (stmt);                                                  \
-   if (0 != errno) {                                                    \
+   int ierrn = (stmt);                                                  \
+   if (0 != ierrn) {                                                    \
        fprintf(stderr, "[%s:%d] CUDA call '%s' failed with %d: %s \n",  \
-        __FILE__, __LINE__, #stmt, errno, cudaGetErrorString(errno));   \
+        __FILE__, __LINE__, #stmt, ierrn, cudaGetErrorString(ierrn));   \
        exit(EXIT_FAILURE);                                              \
    }                                                                    \
-   assert(cudaSuccess == errno);                                        \
+   assert(cudaSuccess == ierrn);                                        \
 } while (0)
 #endif
 
 #if defined(_ENABLE_ROCM_)
 #define ROCM_CHECK(stmt)                                                \
 do {                                                                    \
-   hipError_t errno = (stmt);                                           \
-   if (0 != errno) {                                                    \
+   hipError_t ierrn = (stmt);                                           \
+   if (0 != ierrn) {                                                    \
        fprintf(stderr, "[%s:%d] ROCM call '%s' failed with %d: %s \n",  \
-        __FILE__, __LINE__, #stmt, errno, hipGetErrorString(errno));    \
+        __FILE__, __LINE__, #stmt, ierrn, hipGetErrorString(ierrn));    \
        exit(EXIT_FAILURE);                                              \
    }                                                                    \
-   assert(hipSuccess == errno);                                         \
+   assert(hipSuccess == ierrn);                                         \
 } while (0)
 #endif
 
