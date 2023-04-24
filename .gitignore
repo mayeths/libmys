@@ -10,6 +10,8 @@ build/
 *.log
 *.exe
 *.bk
+Makefile.in
+
 
 *.zwc
 *.swp
