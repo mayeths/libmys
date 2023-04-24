@@ -19,6 +19,7 @@
 #include "myspi.h"
 #include "log.h"
 #include "rand.h"
+#include "os.h"
 
 mys_thread_local int mys_errno = 0;
 
@@ -1118,8 +1119,6 @@ MYS_API void mys_print_affinity(FILE *fd)
 
 MYS_API void mys_stick_affinity()
 {
-    int myrank = mys_myrank();
-    int nranks = mys_nranks();
 #ifdef _OPENMP
     #pragma omp parallel
 #endif
