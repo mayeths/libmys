@@ -5,6 +5,13 @@
 #include <stdbool.h>
 #include <mpi.h>
 
+#ifdef A2A_ENABLE_GPTL
+#include <gptl.h>
+#else
+#define GPTLstart(...) ((void)(0))
+#define GPTLstop(...) ((void)(0))
+#endif
+
 /**
  * Define the group size of grouping-based alltoallw.
  * Must be positive number.
@@ -123,6 +130,7 @@ int mys_alltoallw(
     }
 
     for (stage = 0; stage < nrows; stage++) {
+        GPTLstart("stage");
         /* The following formula find our opposite row on current stage.
          * 看下面这个4行的匹配阵例子，打o说明两行匹配，如(1,2)为o，说明行1和行2匹配。
          *    第0个stage时，4行的矩阵就是画(0,0),(3,1),(2,2),(1,3)的斜线，也就是0和2自己内部通信，1和3通信
@@ -142,6 +150,8 @@ int mys_alltoallw(
          */
         row = (nrows - col_pkg.myrank + stage) % nrows;
 
+        GPTLstart("pre_thing");
+
         // Mark these variables as NULL so we can simply free them when cleanup.
         // Freeing NULL is safe that guaranteed by C standard.
         sbytes          = NULL, rbytes          = NULL;
@@ -152,6 +162,7 @@ int mys_alltoallw(
         send_buffer     = NULL;
         requests        = NULL;
 
+        GPTLstart("pre_thing_10");
         _CHKPTR(sbytes = (int *)calloc(ncols, sizeof(int)));
         _CHKPTR(rbytes = (int *)calloc(ncols, sizeof(int)));
         total_sbytes = 0;
@@ -172,7 +183,9 @@ int mys_alltoallw(
             total_sbytes += sbytes[col];
             total_rbytes += rbytes[col];
         }
+        GPTLstop("pre_thing_10");
 
+        GPTLstart("pre_thing_20");
         sendbytes = NULL;
         recvbytes = NULL;
         proxyout_nbytes = NULL;
@@ -188,20 +201,29 @@ int mys_alltoallw(
         _CHKRET(MPI_Gather(&total_sbytes, 1, MPI_INT, proxyout_nbytes, 1, MPI_INT, 0, row_pkg.comm));
         _CHKRET(MPI_Reduce(&total_sbytes, &proxyout_len, 1, MPI_INT, MPI_SUM, 0, row_pkg.comm));
         _CHKRET(MPI_Reduce(&total_rbytes, &proxyin_len, 1, MPI_INT, MPI_SUM, 0, row_pkg.comm));
+        GPTLstop("pre_thing_20");
 
+        GPTLstart("pre_thing_30");
         proxyout_buffer = NULL;
         proxyin_buffer = NULL;
         proxyout_displs = NULL;
         if (row_pkg.isroot) {
-            _CHKPTR(proxyout_buffer = (uint8_t *)calloc(proxyout_len, sizeof(uint8_t)));
-            _CHKPTR(proxyin_buffer  = (uint8_t *)calloc(proxyin_len, sizeof(uint8_t)));
-            _CHKPTR(proxyout_displs = (int *)calloc(ncols, sizeof(int)));
+            GPTLstart("pre_thing_31");
+            _CHKPTR(proxyout_buffer = (uint8_t *)malloc(proxyout_len * sizeof(uint8_t)));
+            _CHKPTR(proxyin_buffer  = (uint8_t *)malloc(proxyin_len * sizeof(uint8_t)));
+            _CHKPTR(proxyout_displs = (int *)malloc(ncols * sizeof(int)));
+            GPTLstop("pre_thing_31");
+            GPTLstart("pre_thing_32");
             for (i = 1; i < ncols; i++) {
                 proxyout_displs[i] = proxyout_displs[i - 1] + proxyout_nbytes[i - 1];
             }
+            GPTLstop("pre_thing_32");
         }
+        GPTLstop("pre_thing_30");
+        GPTLstop("pre_thing");
 
         /* [1.0] Intra Row Gather: Pack our data to memory */
+        GPTLstart("intra_row_gather");
         _CHKPTR(send_buffer = (uint8_t *)calloc(_MAX(total_sbytes, 1), sizeof(uint8_t)));
         position = 0;
         for (col = 0; col < ncols; col++) {
@@ -252,8 +274,10 @@ int mys_alltoallw(
             }
         }
 #endif
+        GPTLstop("intra_row_gather");
 
         /* [2.0] Inter Row Exchange */
+        GPTLstart("inter_row_exchange");
         if (row_pkg.isroot) {
             _CHKRET(MPI_Sendrecv(
                 proxyout_buffer, proxyout_len, MPI_UINT8_T, row, 8864,
@@ -261,9 +285,11 @@ int mys_alltoallw(
                 col_pkg.comm, MPI_STATUS_IGNORE
             ));
         }
+        GPTLstop("inter_row_exchange");
 
         /* [3.0] Intra Row Scatter: Scatter data from processes in opposite row one by one */
         offset = 0;
+        GPTLstart("intra_row_scatter");
         for (col = 0; col < ncols; col++) {
             int mat_rank = row * ncols + col;
             if (mat_rank >= mat_pkg.nranks)
@@ -327,9 +353,11 @@ int mys_alltoallw(
                 free(counts);
             }
         }
+        GPTLstop("intra_row_scatter");
 
         /* [4.0] End of Communication Between Two Rows */
 _CHKJUMP:
+        GPTLstart("post_thing");
         if (row_pkg.isroot) {
             free(sendbytes);
             free(recvbytes);
@@ -345,6 +373,9 @@ _CHKJUMP:
             MPI_Abort(MPI_COMM_WORLD, 7777777);
             break;
         }
+        GPTLstop("post_thing");
+
+        GPTLstop("stage");
     }
 
     return _CHKIERR;
@@ -359,3 +390,8 @@ _CHKJUMP:
 #undef _RMIDX
 #undef _CMIDX
 #undef _STATIC_ASSERT
+
+#ifndef A2A_ENABLE_GPTL
+#undef GPTLstart
+#undef GPTLstop
+#endif

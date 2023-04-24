@@ -14,9 +14,23 @@
 #include <osu_util_papi.c>
 #include <osu_util.c>
 
+#ifdef A2A_ENABLE_GPTL
+#include <gptl.h>
+#else
+#define GPTLinitialize(...)
+#define GPTLpr(...)
+#define GPTLfinalize(...)
+#define GPTLstart(...)
+#define GPTLstop(...)
+#endif
+
 #ifdef USE_MYS_A2A
+#define MYS_IMPL
+#include <mys.h>
 #include "mys_alltoall.h"
-#define MPI_Alltoall mys_alltoall
+#include "topo_alltoall.h"
+// #define MPI_Alltoall mys_alltoall
+#define MPI_Alltoall topo_alltoall
 #endif
 
 int main (int argc, char *argv[])
@@ -52,6 +66,8 @@ int main (int argc, char *argv[])
     MPI_CHECK(MPI_Init(&argc, &argv));
     MPI_CHECK(MPI_Comm_rank(MPI_COMM_WORLD, &rank));
     MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &numprocs));
+
+    GPTLinitialize();
 
     omb_graph_options_init(&omb_graph_options);
     switch (po_ret) {
@@ -195,6 +211,9 @@ int main (int argc, char *argv[])
 
     free_buffer(sendbuf, options.accel);
     free_buffer(recvbuf, options.accel);
+
+    GPTLpr(rank);
+    GPTLfinalize();
 
     MPI_CHECK(MPI_Finalize());
 
