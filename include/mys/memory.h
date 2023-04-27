@@ -44,17 +44,17 @@ _MYS_UNUSED static void cachebrush(size_t nbytes) /* = 10 * 1024 * 1024 */
 
 _MYS_UNUSED static ssize_t mys_parse_readable_size(const char *text)
 {
-    static const size_t Bbase = 1ULL;
-    static const size_t Kbase = 1024ULL * Bbase;
-    static const size_t Mbase = 1024ULL * Kbase;
-    static const size_t Gbase = 1024ULL * Mbase;
-    static const size_t Tbase = 1024ULL * Gbase;
-    static const size_t Pbase = 1024ULL * Tbase;
-    static const size_t Ebase = 1024ULL * Pbase;
-    static const size_t Zbase = 1024ULL * Ebase;
+    static const double Bbase = 1.0;
+    static const double Kbase = 1024.0 * Bbase;
+    static const double Mbase = 1024.0 * Kbase;
+    static const double Gbase = 1024.0 * Mbase;
+    static const double Tbase = 1024.0 * Gbase;
+    static const double Pbase = 1024.0 * Tbase;
+    static const double Ebase = 1024.0 * Pbase;
+    static const double Zbase = 1024.0 * Ebase;
     struct unit_t {
         const char *suffix;
-        size_t base;
+        double base;
     };
     struct unit_t units[] = {
         { .suffix = "Bytes",  .base = Bbase },
@@ -96,8 +96,6 @@ _MYS_UNUSED static ssize_t mys_parse_readable_size(const char *text)
     if (dnum != dnum)
         return -1; /* not a number */
 
-    ssize_t num = (ssize_t)dnum;
-
     while (*endptr == ' ')
         endptr++;
     if (*endptr == '\0')
@@ -107,7 +105,7 @@ _MYS_UNUSED static ssize_t mys_parse_readable_size(const char *text)
         struct unit_t *unit = &units[i];
         int matched = strncmp(endptr, unit->suffix, 32) == 0;
         if (matched)
-            return num * unit->base;
+            return (ssize_t)(dnum * unit->base);
     }
 
     return -1;
