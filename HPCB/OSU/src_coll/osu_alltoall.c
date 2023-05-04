@@ -8,28 +8,11 @@
  * For detailed copyright and licensing information, please refer to the
  * copyright file COPYRIGHT in the top level OMB directory.
  */
-#ifdef USE_MYS_A2A
-#define MYS_IMPL
-#include <mys.h>
-#include "mys_alltoall.h"
-#define MPI_Alltoall mys_alltoall
-#endif
-
 #include <osu_util_mpi.h>
 #include <osu_util_graph.c>
 #include <osu_util_mpi.c>
 #include <osu_util_papi.c>
 #include <osu_util.c>
-
-#ifdef A2A_ENABLE_GPTL
-#include <gptl.h>
-#else
-#define GPTLinitialize(...)
-#define GPTLpr(...)
-#define GPTLfinalize(...)
-#define GPTLstart(...)
-#define GPTLstop(...)
-#endif
 
 int main (int argc, char *argv[])
 {
@@ -65,8 +48,6 @@ int main (int argc, char *argv[])
     MPI_CHECK(MPI_Comm_rank(MPI_COMM_WORLD, &rank));
     MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &numprocs));
 
-    GPTLinitialize();
-
     omb_graph_options_init(&omb_graph_options);
     switch (po_ret) {
         case PO_BAD_USAGE:
@@ -84,11 +65,6 @@ int main (int argc, char *argv[])
         case PO_OKAY:
             break;
     }
-
-#ifdef USE_MYS_A2A
-    if (rank == 0) printf("mys alltoall\n");
-    options.validate = 1;
-#endif
 
     if (numprocs < 2) {
         if (rank == 0) {
@@ -209,9 +185,6 @@ int main (int argc, char *argv[])
 
     free_buffer(sendbuf, options.accel);
     free_buffer(recvbuf, options.accel);
-
-    GPTLpr(rank);
-    GPTLfinalize();
 
     MPI_CHECK(MPI_Finalize());
 
