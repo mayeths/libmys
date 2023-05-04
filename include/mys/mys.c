@@ -379,7 +379,7 @@ static void _mys_log_stdio_handler(mys_log_event_t *event) {
             level_shortname, rank_digits, myrank,
             event->file, line_digits, event->line
         );
-#ifdef MYS_LOG_COLOR
+#ifndef MYS_LOG_NO_COLOR
         const char *level_colors[] = {
             "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"
         };

@@ -11,7 +11,17 @@ build/
 *.exe
 *.bk
 Makefile.in
-
+*.dSYM
+timing.0*
+timing.1*
+timing.2*
+timing.3*
+timing.4*
+timing.5*
+timing.6*
+timing.7*
+timing.8*
+timing.9*
 
 *.zwc
 *.swp
