@@ -8,17 +8,14 @@
 
 #include <mys.h>
 
-// #define FAKE_LOC 2
-#include "nodeloc.h"
+#ifdef A2A_ENABLE_GPTL
+#include <gptl.h>
+#else
+#define GPTLstart(...)
+#define GPTLstop(...)
+#endif
 
-/**
- * Use gatherv and scatterv to implement grouping-based alltoallw.
- * But note that they may encounter problems with argument count == 0 on Sunway 9A system.
- * So you may fallback to naive send/recv based method by undefining these macros.
- * We will fix this problem in the future by checking arguments of gatherv/scatterv carefully before invoking them.
- */
-// #define A2A_USE_GATHERV
-// #define A2A_USE_SCATTERV
+#include "nodeloc.h"
 
 /*-------------------------------------------------------------------------------------*/
 /*                               Internal Implementation                               */
@@ -28,15 +25,6 @@
 #define _MIN(a, b)                     ((a) < (b) ? (a) : (b))
 #define _RMIDX(row, col, nrows, ncols) ((row) * (ncols) + (col))  // Row major indexing
 #define _CMIDX(row, col, nrows, ncols) ((col) * (nrows) + (row))  // Col major indexing
-
-/* Provide Linux-like static_assert if we don't run in C++ and C11 */
-#if defined(__cplusplus) || defined(static_assert)
-#define _STATIC_ASSERT(expr, diagnostic) static_assert(expr, diagnostic)
-#else /* from glibc: misc/sys/cdefs.h [commit] 3999d26ead93990b244ada078073fb58fb8bb5be */
-#define _STATIC_ASSERT(expr, diagnostic)       \
-    extern int(*__Static_assert_function(void) \
-    )[!!sizeof(struct { int emit_error_if_static_assert_failed : (expr) ? 2 : -1; })]
-#endif
 
 typedef struct comm_pkg_t {
     MPI_Comm comm;
@@ -58,7 +46,6 @@ static void _mys_form_matrix(
     int matrank_offset = 0;
     MPI_Exscan(&ginfo.intra_nranks, &matrank_offset, 1, MPI_INT, MPI_SUM, ginfo.inter_comm);
     MPI_Bcast(&matrank_offset, 1, MPI_INT, 0, ginfo.intra_comm);
-    int my_new_rank = matrank_offset + ginfo.intra_myrank;
 
     int shape[2] = {ginfo.inter_nranks, ginfo.intra_nranks};
     MPI_Allreduce(MPI_IN_PLACE, shape, 2, MPI_INT, MPI_MAX, comm);
@@ -86,6 +73,7 @@ static void _mys_form_matrix(
         col_pkg->isroot = col_pkg->myrank == 0;
     }
 
+    // int my_new_rank = matrank_offset + ginfo.intra_myrank;
     // DLOG_ORDERED("rank=%d matrank_offset=%d my_new_rank=%d", mat_pkg->myrank, matrank_offset, my_new_rank);
 
     MPI_Comm_free(&ginfo.inter_comm);
@@ -189,36 +177,29 @@ int mys_alltoallw(
     MPI_Comm comm
 )
 {
+    GPTLstart("mys_alltoallw");
     int *sbytes              = NULL, *rbytes          = NULL;
     uint8_t *recvbuf_ptr     = NULL, *sendbuf_ptr     = NULL;
-    uint8_t *send_buffer     = NULL;
-    MPI_Request *requests    = NULL;
     int stage                = -1,    i            = -1;
     int ncols                = -1,    nrows        = -1;
     int row                  = -1,    col          = -1;
     int total_sbytes         = -1,    total_rbytes = -1;
-    int position             = -1,    offset       = -1;
+    int position             = -1;
     assert(sendbuf != recvbuf);
 
-// #define A2A_VALIDATION
-#ifdef A2A_VALIDATION
-    size_t sendbuf_len = 0;
-    size_t recvbuf_len = 0;
-#endif
-
+    GPTLstart("FormMatrix");
     comm_pkg_t mat_pkg, row_pkg, col_pkg;
     _mys_form_matrix(comm, &nrows, &ncols, &mat_pkg, &row_pkg, &col_pkg);
     assert((size_t)nrows * (size_t)ncols < (size_t)INT_MAX);
+    GPTLstop("FormMatrix");
 
     for (stage = 0; stage < nrows; stage++) {
         row = (nrows - col_pkg.myrank + stage) % nrows;
-        // DLOG_ORDERED("I'm on row %d Talking with row %d", col_pkg.myrank, row);
 
         sbytes          = NULL, rbytes          = NULL;
         recvbuf_ptr     = NULL, sendbuf_ptr     = NULL;
-        send_buffer     = NULL;
-        requests        = NULL;
 
+        GPTLstart("LocalPrepare");
         CHKPTR(sbytes = (int *)calloc(ncols, sizeof(int)));
         CHKPTR(rbytes = (int *)calloc(ncols, sizeof(int)));
         total_sbytes = 0;
@@ -238,12 +219,10 @@ int mys_alltoallw(
             rbytes[col] = rbytes[col] * recvcounts[mat_rank];
             total_sbytes += sbytes[col];
             total_rbytes += rbytes[col];
-#ifdef A2A_VALIDATION
-            sendbuf_len += sbytes[col];
-            recvbuf_len += rbytes[col];
-#endif
         }
+        GPTLstop("LocalPrepare");
 
+        GPTLstart("RootPrepare");
         struct root_ctx_t {
             int *sendbytes;
             int *recvbytes;
@@ -274,9 +253,14 @@ int mys_alltoallw(
                 ctx0.proxyout_displs[i] = ctx0.proxyout_displs[i - 1] + ctx0.proxyout_nbytes[i - 1];
             }
         }
+        GPTLstop("RootPrepare");
+
+        GPTLstart("CreateSharedMemory");
         adjust_ctx_shared(&a2a_shared_ctx, total_sbytes, total_rbytes, &row_pkg);
+        GPTLstop("CreateSharedMemory");
 
         /* [1.0] Intra Row Gather: Pack our data to memory */
+        GPTLstart("Internal_Gather");
         position = 0;
         for (col = 0; col < ncols; col++) {
             int mat_rank = row * ncols + col;
@@ -295,40 +279,23 @@ int mys_alltoallw(
 
         // Ensure to wait other processes write
         MPI_Barrier(mat_pkg.comm);
+        GPTLstop("Internal_Gather");
 
         /* [2.0] Inter Row Exchange */
+        GPTLstart("External_Exchange");
         if (row_pkg.isroot) {
-            if (stage == 0) {
-                if (mat_pkg.myrank == 0) {
-                    // WLOG(MYRANK(), "stage-0 %d %f %f %c",
-                    //     *(int *)(&a2a_shared_ctx.proxyout.buf[0]),
-                    //     *(double *)(&a2a_shared_ctx.proxyout.buf[4]),
-                    //     *(double *)(&a2a_shared_ctx.proxyout.buf[12]),
-                    //     *(char *)(&a2a_shared_ctx.proxyout.buf[20])
-                    // );
-                }
-            }
-            if (stage == 1) {
-                if (mat_pkg.myrank == 0) {
-                    // WLOG(MYRANK(), "stage-1 %c %c",
-                    //     *(char *)(&a2a_shared_ctx.proxyout.buf[0]),
-                    //     *(char *)(&a2a_shared_ctx.proxyout.buf[1])
-                    // );
-                } else if (mat_pkg.myrank == 2) {
-                    // WLOG(MYRANK(), "stage-1 %f",
-                    //     *(double *)(&a2a_shared_ctx.proxyout.buf[0])
-                    // );
-                }
-            }
             CHKRET(MPI_Sendrecv(
                 a2a_shared_ctx.proxyout.buf, ctx0.proxyout_len, MPI_UINT8_T, row, 1008864,
                 a2a_shared_ctx.proxyin.buf, ctx0.proxyin_len, MPI_UINT8_T, row, 1008864,
                 col_pkg.comm, MPI_STATUS_IGNORE
             ));
         }
+        GPTLstop("External_Exchange");
 
         /* [3.0] Intra Row Scatter: Scatter data from processes in opposite row one by one */
-        int *displs = (int *)malloc(ncols * sizeof(int));
+        int *displs = NULL;
+        GPTLstart("Internal_Scatter");
+        CHKPTR(displs = (int *)calloc(ncols, sizeof(int)));
         if (row_pkg.isroot) {
             displs[0] = 0;
             for (col = 1; col < ncols; col++) {
@@ -344,12 +311,6 @@ int mys_alltoallw(
             }
             if (stage == 0) {
                 if (mat_pkg.myrank == 0) {
-                    // WLOG(MYRANK(), "recv stage-0 %d %f %f %c",
-                    //     *(int *)(&a2a_shared_ctx.proxyin.buf[0]),
-                    //     *(double *)(&a2a_shared_ctx.proxyin.buf[4]),
-                    //     *(double *)(&a2a_shared_ctx.proxyin.buf[12]),
-                    //     *(char *)(&a2a_shared_ctx.proxyin.buf[20])
-                    // );
                 }
             }
         } else {
@@ -369,33 +330,26 @@ int mys_alltoallw(
                 &a2a_shared_ctx.proxyin.buf[displs[col]], a2a_shared_ctx.proxyin.capacity,
                 &position, recvbuf_ptr, recvcounts[mat_rank], recvtypes[mat_rank], MPI_COMM_WORLD
             );
-            // if (col == 0) {
-            //     TLOG(1, "UNpacking from rank %d. displs %d count %d | %f %f", mat_rank, rdispls[mat_rank], recvcounts[mat_rank], ((double *)recvbuf_ptr)[0], ((double *)recvbuf_ptr)[1]);
-            // } else if (col == 1) {
-            //     TLOG(1, "displs[%d] is %d | %c", col, displs[col], a2a_shared_ctx.proxyin.buf[displs[col]]);
-            //     TLOG(1, "UNpacking from rank %d. displs %d count %d | %c", mat_rank, rdispls[mat_rank], recvcounts[mat_rank], ((char *)recvbuf_ptr)[0]);
-            // }
         }
         free(displs);
 
         // Ensure to wait other processes read
         MPI_Barrier(mat_pkg.comm);
+        GPTLstop("Internal_Scatter");
 
-//         /* [4.0] End of Communication Between Two Rows */
-//         if (row_pkg.isroot) {
-//             free(sendbytes);
-//             free(recvbytes);
-//             free(proxyout_nbytes);
-//             free(proxyin_nbytes);
-//             free(proxyout_displs);
-//             // free(proxyout_buffer);
-//             // free(proxyin_buffer);
-//         }
-//         // _free_ctx_shared(&ctx);
-//         free(rbytes);
-//         free(sbytes);
-//         free(send_buffer);
-
+        /* [4.0] End of Communication Between Two Rows */
+        GPTLstart("ReleaseResource");
+        if (row_pkg.isroot) {
+            free(ctx0.sendbytes);
+            free(ctx0.recvbytes);
+            free(ctx0.proxyout_nbytes);
+            free(ctx0.proxyin_nbytes);
+            free(ctx0.proxyout_displs);
+        }
+        // _free_ctx_shared(&ctx);
+        free(rbytes);
+        free(sbytes);
+        GPTLstop("ReleaseResource");
     }
 
 #ifdef A2A_VALIDATION
@@ -404,8 +358,8 @@ int mys_alltoallw(
     }
     WLOG(0, "Good");
 
-    void *sendbuf_chk = malloc(sizeof(uint8_t) * sendbuf_len);
-    void *recvbuf_chk = malloc(sizeof(uint8_t) * recvbuf_len);
+    uint8_t *sendbuf_chk = (uint8_t *)calloc(sizeof(uint8_t), sendbuf_len);
+    uint8_t *recvbuf_chk = (uint8_t *)calloc(sizeof(uint8_t), recvbuf_len);
     int ret_chk = MPI_Alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf_chk, recvcounts, rdispls, recvtypes, comm);
     assert(ret_chk == MPI_SUCCESS);
     int badat = -1;
@@ -425,5 +379,6 @@ int mys_alltoallw(
     free(recvbuf_chk);
 #endif
 
+    GPTLstop("mys_alltoallw");
     return 0;
 }
