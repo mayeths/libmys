@@ -8,6 +8,13 @@
  * For detailed copyright and licensing information, please refer to the
  * copyright file COPYRIGHT in the top level OMB directory.
  */
+#ifdef USE_MYS_A2A
+#define MYS_IMPL
+#include <mys.h>
+#include "mys_alltoall.h"
+#define MPI_Alltoall mys_alltoall
+#endif
+
 #include <osu_util_mpi.h>
 #include <osu_util_graph.c>
 #include <osu_util_mpi.c>
@@ -22,15 +29,6 @@
 #define GPTLfinalize(...)
 #define GPTLstart(...)
 #define GPTLstop(...)
-#endif
-
-#ifdef USE_MYS_A2A
-#define MYS_IMPL
-#include <mys.h>
-#include "mys_alltoall.h"
-#include "topo_alltoall.h"
-// #define MPI_Alltoall mys_alltoall
-#define MPI_Alltoall topo_alltoall
 #endif
 
 int main (int argc, char *argv[])
