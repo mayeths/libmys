@@ -95,19 +95,28 @@
 #define _MYS_UNUSED
 #endif
 
-// Defining _MYS_API_IMPORT, _MYS_API_EXPORT and _MYS_API_LOCAL
+// Defining _MYS_SYMBOL_IMPORT, _MYS_SYMBOL_EXPORT and _MYS_SYMBOL_LOCAL
 #if defined(OS_WINDOWS) || defined(COMPILER_CYGWIN)
-#define _MYS_API_IMPORT __declspec(dllimport)
-#define _MYS_API_EXPORT __declspec(dllexport)
-#define _MYS_API_LOCAL
+#define _MYS_SYMBOL_IMPORT __declspec(dllimport)
+#define _MYS_SYMBOL_EXPORT __declspec(dllexport)
+#define _MYS_SYMBOL_LOCAL
 #elif defined(COMPILER_GCC)
-#define _MYS_API_IMPORT __attribute__((visibility("default")))
-#define _MYS_API_EXPORT __attribute__((visibility("default")))
-#define _MYS_API_LOCAL  __attribute__((visibility("hidden")))
+#define _MYS_SYMBOL_IMPORT __attribute__((visibility("default")))
+#define _MYS_SYMBOL_EXPORT __attribute__((visibility("default")))
+#define _MYS_SYMBOL_LOCAL  __attribute__((visibility("hidden")))
 #else
-#define _MYS_API_IMPORT
-#define _MYS_API_EXPORT
-#define _MYS_API_LOCAL
+#define _MYS_SYMBOL_IMPORT
+#define _MYS_SYMBOL_EXPORT
+#define _MYS_SYMBOL_LOCAL
+#endif
+
+// Defining MYS_API
+#if defined(MYS_IMPL)         // Make libmys with public visibility.
+#define MYS_API _MYS_SYMBOL_EXPORT _MYS_UNUSED
+#elif defined(MYS_IMPL_LOCAL) // Make libmys with private visibility.
+#define MYS_API _MYS_SYMBOL_LOCAL  _MYS_UNUSED
+#else // Don't make libmys and use the one made by the EXE or other DSO who define MYS_IMPL.
+#define MYS_API _MYS_SYMBOL_IMPORT _MYS_UNUSED
 #endif
 
 /**
@@ -176,10 +185,3 @@
     [D::000 test-api-liba.c:008] Hello from a (level 1)!
     [D::000 test-api-libb.c:008] Hello from b (level 0)!
  */
-#if defined(MYS_IMPL)         // Make libmys with public visibility.
-#define MYS_API _MYS_API_EXPORT _MYS_UNUSED
-#elif defined(MYS_IMPL_LOCAL) // Make libmys with private visibility.
-#define MYS_API _MYS_API_LOCAL  _MYS_UNUSED
-#else // Don't make libmys and use the one made by the EXE or other DSO who define MYS_IMPL.
-#define MYS_API _MYS_API_IMPORT _MYS_UNUSED
-#endif
