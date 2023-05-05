@@ -25,12 +25,13 @@ MYS_API int mys_checkpoint_dump(const char *file_format, ...);
 
 int main()
 {
+    mys_sync();
     mys_checkpoint_reset();
     CHECKPOINT("zzz-%06d", 1);
     CHECKPOINT("zzz-%06d", 2);
     CHECKPOINT("zzz-%06d", 3);
     CHECKPOINT("zzz-%06d", 4);
-    int ret = mys_checkpoint_dump("checkpoint.%06d", MYRANK());
+    mys_checkpoint_dump("./CHK/checkpoint.%06d.csv", MYRANK());
     return 0;
 }
 

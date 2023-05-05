@@ -11,6 +11,10 @@
 #ifndef __MYS_C__
 #define __MYS_C__
 
+#if !defined(MYS_NO_MPI)
+#include <mpi.h>
+#endif
+
 /*********************************************/
 // C definition
 /*********************************************/
@@ -89,6 +93,13 @@ MYS_API void mys_barrier()
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }
+
+MYS_API void mys_sync()
+{
+    // At this point we use simple barrier for sync
+    mys_barrier();
+}
+
 
 
 mys_thread_local _mys_rand_G_t _mys_rand_G = {
@@ -1733,7 +1744,8 @@ MYS_API void mys_checkpoint(const char *name_format, ...)
 
     if (_mys_chk_G.size == _mys_chk_G.capacity) {
         _mys_chk_G.capacity = (_mys_chk_G.capacity == 0) ? 128 : _mys_chk_G.capacity * 2;
-        _mys_chk_G.arr = realloc(_mys_chk_G.arr, sizeof(_mys_chk_t) * _mys_chk_G.capacity);
+        size_t bytes = sizeof(_mys_chk_t) * _mys_chk_G.capacity;
+        _mys_chk_G.arr = (_mys_chk_t *)realloc(_mys_chk_G.arr, bytes);
     }
 
     double current = mys_hrtime() - _mys_chk_G.offset;
@@ -1764,7 +1776,7 @@ MYS_API int mys_checkpoint_dump(const char *file_format, ...)
         fprintf(fd, "%s,%.17e\n", checkpoint_name, time);
     }
     fclose(fd);
-    ILOG(MYRANK(), "Checkpoints Wrote to %s", file);
+    ILOG(0, "Checkpoints Wrote to %s", file);
     mys_mutex_unlock(&_mys_chk_G.lock);
 
     return 0;

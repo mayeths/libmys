@@ -39,6 +39,7 @@ extern "C" {
 #endif
 #include "./mys/assert.h"
 #include "./mys/base64.h"
+#include "./mys/checkpoint.h"
 #include "./mys/env.h"
 #include "./mys/hashfunction.h"
 #include "./mys/hrtime.h"

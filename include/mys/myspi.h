@@ -1,9 +1,6 @@
 #pragma once
 
 #include <stdbool.h>
-#if !defined(MYS_NO_MPI)
-#include <mpi.h>
-#endif
 
 #include "config.h"
 #include "macro.h"
@@ -21,6 +18,7 @@ extern _mys_myspi_G_t _mys_myspi_G;
 MYS_API int mys_myrank();
 MYS_API int mys_nranks();
 MYS_API void mys_barrier();
+MYS_API void mys_sync();
 
 #define MYRANK() mys_myrank()
 #define NRANKS() mys_nranks()
