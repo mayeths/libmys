@@ -1,6 +1,9 @@
 #pragma once
 
 #include <stdbool.h>
+#if !defined(MYS_NO_MPI)
+#include <mpi.h>
+#endif
 
 #include "config.h"
 #include "macro.h"
