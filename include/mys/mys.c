@@ -1757,6 +1757,7 @@ MYS_API int mys_checkpoint_dump(const char *file_format, ...)
     FILE *fd = fopen(file, "w");
     if (fd == NULL)
         return 1;
+    fprintf(fd, "name,time\n");
     for (size_t i = 0; i < _mys_chk_G.size; i++) {
         const char *checkpoint_name = _mys_chk_G.arr[i].name;
         double time = _mys_chk_G.arr[i].time;
