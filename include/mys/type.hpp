@@ -49,19 +49,19 @@ static inline const char * TYPENAME() noexcept {
   }
 }
 
-template <typename T> const char *_fmtspec = "<unsupported type>";
-template <> const char *_fmtspec<char> = "%c";
-template <> const char *_fmtspec<char *> = "%s";
-template <> const char *_fmtspec<int> = "%d";
-template <> const char *_fmtspec<long> = "%ld";
-template <> const char *_fmtspec<long long> = "%lld";
-template <> const char *_fmtspec<unsigned int> = "%u";
-template <> const char *_fmtspec<unsigned long> = "%lu";
-template <> const char *_fmtspec<unsigned long long> = "%llu";
-template <> const char *_fmtspec<float> = "%f";
-template <> const char *_fmtspec<double> = "%lf";
-
-// template <typename UIntValue> void printHex (UIntValue value) {
-//     printf(hexFormat<UIntValue>, value);
-//     printf("\n");
-// }
+template <typename T>
+static inline const char *_fmtspec() noexcept
+{
+  using std::is_same;
+  if (is_same<T, char>::value) return "%c";
+  if (is_same<T, char *>::value) return "%s";
+  if (is_same<T, int>::value) return "%d";
+  if (is_same<T, long>::value) return "%ld";
+  if (is_same<T, long long>::value) return "%lld";
+  if (is_same<T, unsigned int>::value) return "%u";
+  if (is_same<T, unsigned long>::value) return "%lu";
+  if (is_same<T, unsigned long long>::value) return "%llu";
+  if (is_same<T, float>::value) return "%f";
+  if (is_same<T, double>::value) return "%lf";
+  return "<unsupported type>";
+}

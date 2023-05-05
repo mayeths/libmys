@@ -404,7 +404,7 @@ static void readtxt(const char *fname, int *narrs_, T **Va_) {
 
     while (!feof(f)) {
         T tmp;
-        fscanf(f, _fmtspec<T>, &tmp);
+        fscanf(f, _fmtspec<T>(), &tmp);
         fscanf(f, "\n");
         tmparr.push_back(tmp);
     }
