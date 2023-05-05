@@ -7,11 +7,12 @@
 enum class TypeNameType: int {
     C, /* unsigned long long int (typename in C) */
     Rust, /* u64 (typename in Rust) */
-    CPP, /* uint64_t (typename in ) */
+    CPP, /* uint64_t (typename in CPP) */
 };
 
 template <typename T, TypeNameType type = TypeNameType::C>
-static inline const char * TYPENAME() noexcept {
+static inline const char * TYPENAME() noexcept
+{
   using std::is_same;
   if (type == TypeNameType::C) {
     if (is_same<T, char>::value) return "char";
@@ -38,9 +39,9 @@ static inline const char * TYPENAME() noexcept {
     if (is_same<T, std::uint32_t>::value) return "std::uint32_t";
     if (is_same<T, std::uint64_t>::value) return "std::uint64_t";
     if (is_same<T, bool>::value) return "bool";
-    if (is_same<T, std::complex<float>>::value) return "std::complex<float";
-    if (is_same<T, std::complex<double>>::value) return "std::complex<double";
-    if (is_same<T, std::complex<long double>>::value) return "std::complex<long double";
+    if (is_same<T, std::complex<float>>::value) return "std::complex<float>";
+    if (is_same<T, std::complex<double>>::value) return "std::complex<double>";
+    if (is_same<T, std::complex<long double>>::value) return "std::complex<long double>";
     #if defined(__x86_64__) || defined(__i386__)
     if (is_same<T, __float128>::value) return "__float128";
     #endif
