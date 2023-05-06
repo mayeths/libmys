@@ -35,13 +35,6 @@ enum {
     MYS_LOG_LEVEL_COUNT
 };
 
-#define TLOG(who, fmt, ...) mys_log(who, MYS_LOG_TRACE, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define DLOG(who, fmt, ...) mys_log(who, MYS_LOG_DEBUG, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define ILOG(who, fmt, ...) mys_log(who, MYS_LOG_INFO,  MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define WLOG(who, fmt, ...) mys_log(who, MYS_LOG_WARN,  MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define ELOG(who, fmt, ...) mys_log(who, MYS_LOG_ERROR, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define FLOG(who, fmt, ...) mys_log(who, MYS_LOG_FATAL, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define RLOG(who, fmt, ...) mys_log(who, MYS_LOG_RAW, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define __LOG_ORDERED(LOG, fmt, ...) do { \
     int nranks = mys_nranks();            \
     for (int i = 0; i < nranks; i++) {    \
@@ -49,12 +42,48 @@ enum {
         mys_barrier();                    \
     }                                     \
 } while (0)
+
+/**
+ * Print log message with 'TRACE' level ( [less important->] TDIWEFR [->most important] )
+ */
+#define TLOG(who, fmt, ...) mys_log(who, MYS_LOG_TRACE, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define TLOG_SELF(fmt, ...) mys_log(mys_myrank(), MYS_LOG_TRACE, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define TLOG_ORDERED(fmt, ...) __LOG_ORDERED(TLOG, fmt, ##__VA_ARGS__)
+/**
+ * Print log message with 'DEBUG' level ( [less important->] TDIWEFR [->most important] )
+ */
+#define DLOG(who, fmt, ...) mys_log(who, MYS_LOG_DEBUG, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define DLOG_SELF(fmt, ...) mys_log(mys_myrank(), MYS_LOG_DEBUG, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define DLOG_ORDERED(fmt, ...) __LOG_ORDERED(DLOG, fmt, ##__VA_ARGS__)
+/**
+ * Print log message with 'INFO' level ( [less important->] TDIWEFR [->most important] )
+ */
+#define ILOG(who, fmt, ...) mys_log(who, MYS_LOG_INFO, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define ILOG_SELF(fmt, ...) mys_log(mys_myrank(), MYS_LOG_INFO, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define ILOG_ORDERED(fmt, ...) __LOG_ORDERED(ILOG, fmt, ##__VA_ARGS__)
+/**
+ * Print log message with 'WARN' level ( [less important->] TDIWEFR [->most important] )
+ */
+#define WLOG(who, fmt, ...) mys_log(who, MYS_LOG_WARN, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define WLOG_SELF(fmt, ...) mys_log(mys_myrank(), MYS_LOG_WARN,  MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define WLOG_ORDERED(fmt, ...) __LOG_ORDERED(WLOG, fmt, ##__VA_ARGS__)
+/**
+ * Print log message with 'ERROR' level ( [less important->] TDIWEFR [->most important] )
+ */
+#define ELOG(who, fmt, ...) mys_log(who, MYS_LOG_ERROR, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define ELOG_SELF(fmt, ...) mys_log(mys_myrank(), MYS_LOG_ERROR, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define ELOG_ORDERED(fmt, ...) __LOG_ORDERED(ELOG, fmt, ##__VA_ARGS__)
+/**
+ * Print log message with 'FATAL' level ( [less important->] TDIWEFR [->most important] )
+ */
+#define FLOG(who, fmt, ...) mys_log(who, MYS_LOG_FATAL, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define FLOG_SELF(fmt, ...) mys_log(mys_myrank(), MYS_LOG_FATAL, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define FLOG_ORDERED(fmt, ...) __LOG_ORDERED(FLOG, fmt, ##__VA_ARGS__)
+/**
+ * Print log message with 'RAW' level ( [less important->] TDIWEFR [->most important] )
+ */
+#define RLOG(who, fmt, ...) mys_log(who, MYS_LOG_RAW, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define RLOG_SELF(fmt, ...) mys_log(mys_myrank(), MYS_LOG_RAW, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define RLOG_ORDERED(fmt, ...) __LOG_ORDERED(RLOG, fmt, ##__VA_ARGS__)
 
 #define THROW_NOT_IMPL() FLOG(MYRANK(), "Not implemented.")
