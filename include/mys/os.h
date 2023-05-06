@@ -97,6 +97,12 @@ MYS_API int mys_ensure_dir(const char *path, mode_t mode);
  * 
  * @param path The path where all parent directories will be ensured to exist.
  * @param mode The mode to create parent directories
+ * 
+ * @note
+ * Algorithm takes the pessimistic view and works top-down to ensure
+ * each directory in path exists, rather than optimistically creating
+ * the last element and working backwards.
+ * mys_ensure_parent("/a/b/c/d/e.txt", 0777)
  */
 MYS_API int mys_ensure_parent(const char *path, mode_t mode);
 MYS_API int mys_busysleep(double seconds);
