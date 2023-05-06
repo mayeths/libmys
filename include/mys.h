@@ -11,7 +11,7 @@
 
 /* Indicate we have include libmys */
 #ifndef MYS_VERSION
-#define MYS_VERSION 230201L
+#define MYS_VERSION 20230506L
 #endif
 
 #ifndef _XOPEN_SOURCE
