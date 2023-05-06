@@ -1,3 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+#include <vector>
+#include <map>
+#include <algorithm>
+
+#include <mpi.h>
+
 // Dont include mpi.h before mys.hpp because
 // struct timespec in GCC 5.2 require _POSIX_C_SOURCE
 // which is just defined in mys.h

@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
 #define MYS_IMPL
 #define MYS_NO_MPI
 #include "mys.h"
