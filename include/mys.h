@@ -1,7 +1,7 @@
 /**
  * @file mys.h
  * @author mayeths (wow@mayeths.com)
- * @brief Include all libmys C headers into one header (Require C99)
+ * @brief Include all libmys C headers into one header (Require GNU99)
  * 
  */
 

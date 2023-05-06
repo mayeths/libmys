@@ -5,7 +5,7 @@ MPICXX = mpicxx # mpicxx is defined in both Intel/Open MPI
 
 MYS_DIR ?= ..
 
-CFLAGS = -std=c99 -I$(MYS_DIR)/include -Wall -Wextra -Werror
+CFLAGS = -I$(MYS_DIR)/include -Wall -Wextra -Werror
 CXXFLAGS = -std=c++11 -I$(MYS_DIR)/include -Wall -Wextra -Werror
 LFLAGS = -lm
 
