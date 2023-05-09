@@ -11,7 +11,12 @@
 #include "mys.hpp"
 
 int main() {
+	TLOG_ORDERED("Test TLOG_ORDERED function");
 	DLOG(0, "Test DLOG function");
-	RLOG_ORDERED("Test RLOG_ORDERED function");
+	ILOG(0, "Test ILOG function");
+	WLOG(0, "Test WLOG function");
+	ELOG(0, "Test ELOG function");
+	FLOG(0, "Test FLOG function");
+	RLOG(0, "Test RLOG function");
 	return 0;
 }

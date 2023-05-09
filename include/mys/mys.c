@@ -45,6 +45,9 @@ _mys_myspi_G_t _mys_myspi_G = {
     .lock = MYS_MUTEX_INITIALIZER,
     .myrank = -1,
     .nranks = -1,
+#ifndef MYS_NO_MPI
+    .comm = MPI_COMM_WORLD,
+#endif
 };
 
 MYS_API void mys_myspi_init()
@@ -65,8 +68,8 @@ MYS_API void mys_myspi_init()
         fprintf(stdout, ">>>>> ===================================== <<<<<\n");
         fflush(stdout);
     }
-    MPI_Comm_size(MPI_COMM_WORLD, &_mys_myspi_G.nranks);
-    MPI_Comm_rank(MPI_COMM_WORLD, &_mys_myspi_G.myrank);
+    MPI_Comm_size(_mys_myspi_G.comm, &_mys_myspi_G.nranks);
+    MPI_Comm_rank(_mys_myspi_G.comm, &_mys_myspi_G.myrank);
 #endif
     _mys_myspi_G.inited = true;
     mys_mutex_unlock(&_mys_myspi_G.lock);
@@ -84,13 +87,21 @@ MYS_API int mys_nranks()
     return _mys_myspi_G.nranks;
 }
 
+#ifndef MYS_NO_MPI
+MPI_Comm mys_comm()
+{
+    mys_myspi_init();
+    return _mys_myspi_G.comm;
+}
+#endif
+
 MYS_API void mys_barrier()
 {
     mys_myspi_init();
 #if defined(MYS_NO_MPI)
     return;
 #else
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(_mys_myspi_G.comm);
 #endif
 }
 
@@ -262,7 +273,7 @@ MYS_API const char *mys_randname()
 }
 
 
-static void _mys_log_stdio_handler(mys_log_event_t *event);
+static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata);
 
 _mys_log_G_t _mys_log_G = {
     .inited = false,
@@ -291,21 +302,81 @@ MYS_API void mys_log(int who, int level, const char *file, int line, const char 
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
     int myrank = mys_myrank();
+    int nranks = mys_nranks();
     if (who == myrank && (int)level >= (int)_mys_log_G.level) {
-        for (int i = 0; i < 128; i++) {
-            if (_mys_log_G.handlers[i].fn == NULL)
-                break;
-            mys_log_event_t event;
-            event.level = level;
-            event.file = file;
-            event.line = line;
-            event.fmt = fmt;
-            event.udata = _mys_log_G.handlers[i].udata;
-            va_start(event.vargs, fmt);
-            _mys_log_G.handlers[i].fn(&event);
-            va_end(event.vargs);
-        }
+        mys_log_event_t event;
+        event.myrank = myrank;
+        event.nranks = nranks;
+        event.level = level;
+        event.file = file;
+        event.line = line;
+        event.fmt = fmt;
+        event.no_vargs = false;
+        va_start(event.vargs, fmt);
+        mys_log_invoke_handlers(&event);
+        va_end(event.vargs);
     }
+    mys_mutex_unlock(&_mys_log_G.lock);
+}
+
+MYS_API void mys_log_ordered(int level, const char *file, int line, const char *fmt, ...)
+{
+    mys_log_init();
+    mys_mutex_lock(&_mys_log_G.lock);
+    int myrank = mys_myrank();
+    int nranks = mys_nranks();
+#ifndef MYS_NO_MPI
+    MPI_Comm comm = mys_comm();
+#endif
+
+    if (myrank == 0) {
+        mys_log_event_t event;
+        event.myrank = myrank;
+        event.nranks = nranks;
+        event.level = level;
+        event.file = file;
+        event.line = line;
+        event.fmt = fmt;
+        event.no_vargs = false;
+        va_start(event.vargs, fmt);
+        mys_log_invoke_handlers(&event);
+        va_end(event.vargs);
+#ifndef MYS_NO_MPI
+        char buffer[4096];
+        for (int rank = 1; rank < nranks; rank++) {
+            MPI_Status status;
+            int needed;
+            PMPI_Probe(rank, 100000007, comm, &status);
+            PMPI_Get_count(&status, MPI_CHAR, &needed);
+            char *ptr = (needed > 4096) ? (char *)malloc(needed) : buffer;
+            PMPI_Recv(ptr, needed, MPI_CHAR, rank, 100000007, comm, MPI_STATUS_IGNORE);
+
+            event.myrank = rank;
+            event.fmt = ptr;
+            event.no_vargs = true;
+            mys_log_invoke_handlers(&event);
+            if (ptr != buffer)
+                free(ptr);
+        }
+        MPI_Barrier(comm);
+    } else {
+        char buffer[4096];
+        va_list vargs, vargs_test;
+        va_start(vargs, fmt);
+        va_copy(vargs_test, vargs);
+        int needed = vsnprintf(NULL, 0, fmt, vargs_test) + 1;
+        va_end(vargs_test);
+        char *ptr = (needed > 4096) ? (char *)malloc(needed) : buffer;
+        vsnprintf(ptr, needed, fmt, vargs);
+        // Use PMPI_* to prevent from polluting count of calls in MPI profiler like GPTL
+        PMPI_Send(ptr, needed, MPI_CHAR, 0, 100000007, comm);
+        if (ptr != buffer)
+            free(ptr);
+        va_end(vargs);
+        MPI_Barrier(comm); // We don't expect logging increase processes' nondeterministic
+#endif
+    }
+
     mys_mutex_unlock(&_mys_log_G.lock);
 }
 
@@ -355,6 +426,15 @@ MYS_API void mys_log_remove_handler(int handler_id)
     mys_mutex_unlock(&_mys_log_G.lock);
 }
 
+MYS_API void mys_log_invoke_handlers(mys_log_event_t *event)
+{
+    for (int i = 0; i < 128; i++) {
+        if (_mys_log_G.handlers[i].fn == NULL)
+            break;
+        _mys_log_G.handlers[i].fn(event, _mys_log_G.handlers[i].udata);
+    }
+}
+
 MYS_API int mys_log_get_level()
 {
     mys_log_init();
@@ -380,17 +460,15 @@ MYS_API const char* mys_log_level_string(int level)
     return level_strings[(int)level];
 }
 
-static void _mys_log_stdio_handler(mys_log_event_t *event) {
-    FILE *file = event->udata != NULL ? (FILE *)event->udata : stdout;
+static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata) {
+    FILE *file = udata != NULL ? (FILE *)udata : stdout;
 
     char base_label[256] = {'\0'};
 
     char *label = base_label;
     int label_size = sizeof(base_label);
 
-    int myrank = mys_myrank();
-    int nranks = mys_nranks();
-    int rank_digits = trunc(log10(nranks)) + 1;
+    int rank_digits = trunc(log10(event->nranks)) + 1;
     int line_digits = trunc(log10(event->line)) + 1;
     rank_digits = rank_digits > 3 ? rank_digits : 3;
     line_digits = line_digits > 3 ? line_digits : 3;
@@ -399,12 +477,13 @@ static void _mys_log_stdio_handler(mys_log_event_t *event) {
         const char *lstr = mys_log_level_string(event->level);
         const char level_shortname = lstr[0];
         snprintf(label, label_size, "[%c::%0*d %s:%0*d]",
-            level_shortname, rank_digits, myrank,
+            level_shortname, rank_digits, event->myrank,
             event->file, line_digits, event->line
         );
 #ifndef MYS_LOG_NO_COLOR
         const char *level_colors[] = {
-            "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"
+            MCOLOR_GREEN, MCOLOR_PURPLE, MCOLOR_CYAN,
+            MCOLOR_YELLO, MCOLOR_RED, MCOLOR_B_RED,
         };
         char colorized_label[sizeof(base_label) + 128];
         if (isatty(fileno(file))) {
@@ -418,7 +497,11 @@ static void _mys_log_stdio_handler(mys_log_event_t *event) {
         fprintf(file, "%s ", label);
     }
 
-    vfprintf(file, event->fmt, event->vargs);
+    if (event->no_vargs) {
+        fprintf(file, "%s", event->fmt);
+    } else {
+        vfprintf(file, event->fmt, event->vargs);
+    }
     fprintf(file, "\n");
     fflush(file);
 }
