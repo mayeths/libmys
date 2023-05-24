@@ -35,14 +35,6 @@ enum {
     MYS_LOG_LEVEL_COUNT
 };
 
-#define __LOG_ORDERED(LOG, fmt, ...) do { \
-    int nranks = mys_nranks();            \
-    for (int i = 0; i < nranks; i++) {    \
-        LOG(i, fmt, ##__VA_ARGS__);       \
-        mys_barrier();                    \
-    }                                     \
-} while (0)
-
 /**
  * Print log message with 'TRACE' level ( [less important->] TDIWEFR [->most important] )
  */

@@ -1168,14 +1168,10 @@ MYS_API int ensureparent(const char *path, mode_t mode)
 }
 #endif
 
-#if 0
+#ifdef MYS_ENABLE_AFFINITY
+#include <sched.h>
 mys_thread_local char _mys_affinity_buffer[256];
 MYS_API const char *mys_get_affinity() {
-    int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
-#ifndef CPU_ISSET
-    int  CPU_ISSET(int cpu, cpu_set_t *set);
-#endif
-
     int ncores = (int)sysconf(_SC_NPROCESSORS_ONLN);
     if ((int)ncores > (int)sizeof(_mys_affinity_buffer))
         return NULL;
@@ -1186,7 +1182,7 @@ MYS_API const char *mys_get_affinity() {
 
     for (int i = 0; i < ncores; i++) {
         _mys_affinity_buffer[i] = CPU_ISSET(i, &cpu_set) ? '1' : '0';
-}
+    }
     _mys_affinity_buffer[ncores] = '\0';
     return _mys_affinity_buffer;
 }
@@ -1229,13 +1225,6 @@ MYS_API void mys_print_affinity(FILE *fd)
 
 MYS_API void mys_stick_affinity()
 {
-    int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
-#ifndef CPU_ZERO
-    void CPU_ZERO(cpu_set_t *set);
-#endif
-#ifndef CPU_SET
-    void CPU_SET(int cpu, cpu_set_t *set);
-#endif
 #ifdef _OPENMP
     #pragma omp parallel
 #endif
