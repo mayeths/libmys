@@ -280,7 +280,7 @@ _mys_log_G_t _mys_log_G = {
     .inited = false,
     .lock = MYS_MUTEX_INITIALIZER,
     .level = MYS_LOG_TRACE,
-    .last_level = MYS_LOG_TRACE,
+    .silent = false,
     .handlers = {
 #ifndef MYS_LOG_DISABLE_STDOUT_HANDLER
         { .fn = _mys_log_stdio_handler, .udata = NULL, .id = 10000 },
@@ -302,6 +302,10 @@ MYS_API void mys_log(int who, int level, const char *file, int line, const char 
 {
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
+    if (_mys_log_G.silent == true) {
+        mys_mutex_unlock(&_mys_log_G.lock);
+        return;
+    }
     int myrank = mys_myrank();
     int nranks = mys_nranks();
     if (who == myrank && (int)level >= (int)_mys_log_G.level) {
@@ -313,6 +317,11 @@ MYS_API void mys_log(int who, int level, const char *file, int line, const char 
         event.line = line;
         event.fmt = fmt;
         event.no_vargs = false;
+        if (fmt == NULL) {
+            event.level = MYS_LOG_FATAL;
+            event.fmt = "Calling mys_log with NULL format string. Do you call LOG_SELF(0, \"...\") or LOG(rank, NULL)?";
+            event.no_vargs = true;
+        }
         va_start(event.vargs, fmt);
         mys_log_invoke_handlers(&event);
         va_end(event.vargs);
@@ -324,6 +333,10 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
 {
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
+    if (_mys_log_G.silent == true) {
+        mys_mutex_unlock(&_mys_log_G.lock);
+        return;
+    }
     int myrank = mys_myrank();
     int nranks = mys_nranks();
 #ifndef MYS_NO_MPI
@@ -339,6 +352,11 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
         event.line = line;
         event.fmt = fmt;
         event.no_vargs = false;
+        if (fmt == NULL) {
+            event.level = MYS_LOG_FATAL;
+            event.fmt = "Calling mys_log with NULL format string. Do you call LOG_SELF(0, \"...\") or LOG(rank, NULL)?";
+            event.no_vargs = true;
+        }
         va_start(event.vargs, fmt);
         mys_log_invoke_handlers(&event);
         va_end(event.vargs);
@@ -450,6 +468,14 @@ MYS_API void mys_log_set_level(int level)
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
     _mys_log_G.level = level;
+    mys_mutex_unlock(&_mys_log_G.lock);
+}
+
+MYS_API void mys_log_silent(bool silent)
+{
+    mys_log_init();
+    mys_mutex_lock(&_mys_log_G.lock);
+    _mys_log_G.silent = silent;
     mys_mutex_unlock(&_mys_log_G.lock);
 }
 

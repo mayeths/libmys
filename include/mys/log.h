@@ -78,6 +78,9 @@ enum {
 #define RLOG_SELF(fmt, ...) mys_log(mys_myrank(), MYS_LOG_RAW, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 #define RLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_RAW, MYS_LOG_FNAME, __LINE__, fmt, ##__VA_ARGS__)
 
+#define LOG_SILENT() mys_log_silent(true)
+#define LOG_UNSILENT() mys_log_silent(false)
+
 #define THROW_NOT_IMPL() FLOG(MYRANK(), "Not implemented.")
 
 typedef struct {
@@ -102,6 +105,7 @@ MYS_API void mys_log_remove_handler(int handler_id);
 MYS_API void mys_log_invoke_handlers(mys_log_event_t *event);
 MYS_API int mys_log_get_level();
 MYS_API void mys_log_set_level(int level);
+MYS_API void mys_log_silent(bool silent);
 MYS_API const char* mys_log_level_string(int level);
 
 #define MCOLOR_BLACK     "\x1b[30m"
@@ -156,7 +160,7 @@ typedef struct {
     bool inited;
     mys_mutex_t lock;
     int level;
-    int last_level;
+    bool silent;
     struct {
         mys_log_handler_fn fn;
         void *udata;
