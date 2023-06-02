@@ -5,13 +5,13 @@ def parse_readable_size(size: str):
     # based on https://stackoverflow.com/a/42865957/2002471
     units = {
         "B": 1,
-        "KB": 2**10,
-        "MB": 2**20,
-        "GB": 2**30,
-        "TB": 2**40,
-        "PB": 2**50,
-        "EB": 2**60,
-        "ZB": 2**70
+        "KB": 2**10, "K": 2**10,
+        "MB": 2**20, "M": 2**20,
+        "GB": 2**30, "G": 2**30,
+        "TB": 2**40, "T": 2**40,
+        "PB": 2**50, "P": 2**50,
+        "EB": 2**60, "E": 2**60,
+        "ZB": 2**70, "Z": 2**70,
     }
     try:
         if not re.match(r' ', size):
