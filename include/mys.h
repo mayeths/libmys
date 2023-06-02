@@ -11,7 +11,7 @@
 
 /* Indicate we have include libmys */
 #ifndef MYS_VERSION
-#define MYS_VERSION 20230506L
+#define MYS_VERSION 20230602L
 #endif
 
 #ifndef _XOPEN_SOURCE
@@ -32,11 +32,11 @@
 #include <mpi.h>
 #endif
 
-
-/* Primary Library (mys) */
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Primary Library (mys) */
 #include "./mys/assert.h"
 #include "./mys/base64.h"
 #include "./mys/checkpoint.h"
@@ -52,9 +52,6 @@ extern "C" {
 #include "./mys/thread.h"
 #ifdef CUDA_ARCH
 #include "./mys/cuda.cuh"
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 
@@ -79,4 +76,8 @@ extern "C" {
 #if defined(MYS_ENABLE_STB)
 #include "./mys3/stb/stb_image.impl.h"
 #endif
+#endif
+
+#ifdef __cplusplus
+}
 #endif
