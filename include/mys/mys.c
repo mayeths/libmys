@@ -19,6 +19,7 @@
 // C definition
 /*********************************************/
 #include "_hashtable.h"
+#include "_mpi.h"
 #include "assert.h"
 #include "base64.h"
 #include "checkpoint.h"
