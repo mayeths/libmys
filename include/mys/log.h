@@ -10,7 +10,7 @@
 #include <math.h>
 #include <unistd.h>
 
-#include "config.h"
+#include "_config.h"
 #include "macro.h"
 #include "thread.h"
 #include "myspi.h"

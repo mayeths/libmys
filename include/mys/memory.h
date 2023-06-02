@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <limits.h>
 
-#include "config.h"
+#include "_config.h"
 #include "macro.h"
 // We can't import any header include "thread.h" here to prevent compiler complaining
 

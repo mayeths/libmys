@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <float.h>
 
-#include "config.h"
+#include "_config.h"
 #include "macro.h"
 
 

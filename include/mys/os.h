@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "config.h"
+#include "_config.h"
 #include "macro.h"
 #include "myspi.h"
 #include "thread.h"

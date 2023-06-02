@@ -5,7 +5,7 @@
 #include <mpi.h>
 #endif
 
-#include "config.h"
+#include "_config.h"
 #include "macro.h"
 #include "thread.h"
 

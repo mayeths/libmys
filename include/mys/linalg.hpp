@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <typeinfo>
 #include <cmath>
-#include "config.h"
+#include "_config.h"
 #include "macro.h"
 #include "type.hpp"
 

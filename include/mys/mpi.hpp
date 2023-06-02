@@ -6,10 +6,11 @@
 #include <map>
 #include <string>
 
-#include "config.h"
-#include "macro.h"
-#include "mpi.h"
+#include <mpi.h>
+
+#include "_config.h"
 #include "_mpi.h"
+#include "macro.h"
 
 /**
  * @brief Return corresponding MPI_Datatype of given type

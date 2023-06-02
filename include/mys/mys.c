@@ -18,12 +18,12 @@
 /*********************************************/
 // C definition
 /*********************************************/
+#include "_config.h"
 #include "_hashtable.h"
 #include "_mpi.h"
 #include "assert.h"
 #include "base64.h"
 #include "checkpoint.h"
-#include "config.h"
 #include "env.h"
 #include "errno.h"
 #include "hashfunction.h"

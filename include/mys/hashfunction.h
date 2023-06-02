@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "_config.h"
 #include "macro.h"
 #include "base64.h"
 

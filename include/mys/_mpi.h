@@ -1,5 +1,9 @@
 #pragma once
 
+#if !defined(MYS_NO_MPI)
+#include <mpi.h>
+#endif
+
 #define ID_MPI_Init	0
 #define ID_MPI_Init_thread	1
 #define ID_MPI_Initialized	2
