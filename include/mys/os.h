@@ -83,7 +83,7 @@ MYS_API int mys_do_mkdir(const char *path, mode_t mode);
  * @brief Ensure all directories in path exist
  * 
  * @param path The path where all parent directories will be ensured to exist.
- * @param mode The mode to create parent directories.
+ * @param mode The mode to create parent directories (usually 0777).
  * 
  * @note mys_ensure_dir("/a/b/c/d/", 0777)
  * @note Algorithm takes the pessimistic view and works top-down to ensure

@@ -20,9 +20,20 @@
 #define mys_memory_smp_rmb() mys_memory_barrier()
 #define mys_memory_smp_wmb() mys_memory_barrier()
 #elif defined(ARCH_AARCH64)
+/* https://developer.arm.com/documentation/dui0489/c/arm-and-thumb-instructions/miscellaneous-instructions/dmb--dsb--and-isb */
+/* https://developer.arm.com/documentation/den0024/a/Memory-Ordering/Memory-attributes/Cacheable-and-shareable-memory-attributes */
+// (SY) Full system DMB operation. Wait for all actions before this instruction to be completed.
 #define mys_memory_barrier() __asm__ __volatile__("dmb" ::: "memory")
+// Inner shareble domain DMB operation that wait all
+// memory access before this instruction to be observable
+// by all sockets (for example, write all data to main
+// memory and observable by cores on another socket).
 #define mys_memory_smp_mb()  __asm__ __volatile__("dmb ish" ::: "memory")
 #define mys_memory_smp_rmb() __asm__ __volatile__("dmb ishld" ::: "memory")
+// Inner shareable domain DMB operation that waits
+// only for stores to be observable by all sockets
+// (for example, write all data to main memory and
+// observable by cores on another socket).
 #define mys_memory_smp_wmb() __asm__ __volatile__("dmb ishst" ::: "memory")
 #else
 #error No supprted CPU model
