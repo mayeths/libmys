@@ -514,7 +514,7 @@ static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata) {
         };
         char colorized_label[sizeof(base_label) + 128];
         if (isatty(fileno(file))) {
-            snprintf(colorized_label, sizeof(colorized_label), "%s%s\x1b[0m",
+            snprintf(colorized_label, sizeof(colorized_label), "%s%s" MCOLOR_NO,
                 level_colors[(int)event->level], label
             );
             label = colorized_label;
