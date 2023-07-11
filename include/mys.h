@@ -41,6 +41,9 @@ extern "C" {
 #include "./mys/log.h"
 #include "./mys/macro.h"
 #include "./mys/myspi.h"
+#ifndef MYS_NO_MPI
+#include "mys/mpiz.h"
+#endif
 #include "./mys/os.h"
 #include "./mys/partition.h"
 #include "./mys/rand.h"
