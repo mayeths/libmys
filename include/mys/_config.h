@@ -78,21 +78,28 @@
 /*                         Defining MYS_API                         */
 /*------------------------------------------------------------------*/
 
-// Defining _MYS_UNUSED
+// Defining common attribute
 #if defined(COMPILER_GCC)
 #define _MYS_UNUSED __attribute__((unused))
+#define _MYS_NO_INSTRUMENT __attribute__((no_instrument_function))
 #elif defined(COMPILER_CLANG)
 #define _MYS_UNUSED __attribute__((unused))
+#define _MYS_NO_INSTRUMENT __attribute__((no_instrument_function))
 #elif defined(COMPILER_ICC)
 #define _MYS_UNUSED __attribute__((unused))
+#define _MYS_NO_INSTRUMENT
 #elif defined(COMPILER_NVCC)
 #define _MYS_UNUSED __attribute__((unused))
+#define _MYS_NO_INSTRUMENT
 #elif defined(COMPILER_SWCC)
 #define _MYS_UNUSED __attribute__((unused))
+#define _MYS_NO_INSTRUMENT
 #elif defined(COMPILER_MSVC)
 #define _MYS_UNUSED
+#define _MYS_NO_INSTRUMENT
 #else
 #define _MYS_UNUSED
+#define _MYS_NO_INSTRUMENT
 #endif
 
 // Defining _MYS_SYMBOL_IMPORT, _MYS_SYMBOL_EXPORT and _MYS_SYMBOL_LOCAL
@@ -112,12 +119,18 @@
 
 // Defining MYS_API
 #if defined(MYS_IMPL)         // Make libmys with public visibility.
-#define MYS_API _MYS_SYMBOL_EXPORT _MYS_UNUSED
+#define MYS_API    _MYS_UNUSED _MYS_SYMBOL_EXPORT
+#define MYS_PUBLIC _MYS_UNUSED _MYS_SYMBOL_EXPORT
 #elif defined(MYS_IMPL_LOCAL) // Make libmys with private visibility.
-#define MYS_API _MYS_SYMBOL_LOCAL  _MYS_UNUSED
+#define MYS_API    _MYS_UNUSED _MYS_SYMBOL_LOCAL
+#define MYS_PUBLIC _MYS_UNUSED _MYS_SYMBOL_LOCAL
 #else // Don't make libmys and use the one made by the EXE or other DSO who define MYS_IMPL.
-#define MYS_API _MYS_SYMBOL_IMPORT _MYS_UNUSED
+#define MYS_API    _MYS_UNUSED _MYS_SYMBOL_IMPORT
+#define MYS_PUBLIC _MYS_UNUSED _MYS_SYMBOL_IMPORT
 #endif
+
+#define MYS_INTERNAL _MYS_UNUSED _MYS_SYMBOL_LOCAL
+#define MYS_STATIC   _MYS_UNUSED static
 
 /**
  * @brief Use MYS_IMPL and MYS_IMPL_LOCAL to control the visibility of libmys.
