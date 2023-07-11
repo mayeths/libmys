@@ -1344,6 +1344,32 @@ MYS_API double mys_standard_deviation(double *arr, int n)
     return sqrt(denom / nom);
 }
 
+MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
+{
+    mys_aggregate_t result;
+    result.mine = value;
+#ifdef MYS_NO_MPI
+    result.max = value;
+    result.min = value;
+    result.avg = value;
+    result.sum = value;
+    result.std = 0;
+    result.var = 0;
+#else
+    mys_myspi_init();
+    MPI_Allreduce(&value, &result.max, 1, MPI_DOUBLE, MPI_MAX, _mys_myspi_G.comm);
+    MPI_Allreduce(&value, &result.min, 1, MPI_DOUBLE, MPI_MIN, _mys_myspi_G.comm);
+    MPI_Allreduce(&value, &result.sum, 1, MPI_DOUBLE, MPI_SUM, _mys_myspi_G.comm);
+    result.avg = result.sum / (double)_mys_myspi_G.nranks;
+    double tmp = (value - result.avg) * (value - result.avg);
+    MPI_Allreduce(&tmp, &result.var, 1, MPI_DOUBLE, MPI_SUM, _mys_myspi_G.comm);
+    result.var = result.var / (double)_mys_myspi_G.nranks;
+    result.std = sqrt(result.var);
+#endif
+    return result;
+}
+
+
 #if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_STATISTIC)
 MYS_API double arthimetic_mean(double *arr, int n)
 {
@@ -1652,6 +1678,71 @@ MYS_API void mys_sha256_update(mys_sha256_ctx_t *ctx, const void *data, size_t l
     }
 }
 
+MYS_API void mys_sha256_update_i8(mys_sha256_ctx_t *ctx, const int8_t data)
+{
+    mys_sha256_update(ctx, &data, sizeof(int8_t));
+}
+MYS_API void mys_sha256_update_i16(mys_sha256_ctx_t *ctx, const int16_t data)
+{
+    mys_sha256_update(ctx, &data, sizeof(int16_t));
+}
+MYS_API void mys_sha256_update_i32(mys_sha256_ctx_t *ctx, const int32_t data)
+{
+    mys_sha256_update(ctx, &data, sizeof(int32_t));
+}
+MYS_API void mys_sha256_update_i64(mys_sha256_ctx_t *ctx, const int64_t data)
+{
+    mys_sha256_update(ctx, &data, sizeof(int64_t));
+}
+MYS_API void mys_sha256_update_u8(mys_sha256_ctx_t *ctx, const uint8_t data)
+{
+    mys_sha256_update(ctx, &data, sizeof(uint8_t));
+}
+MYS_API void mys_sha256_update_u16(mys_sha256_ctx_t *ctx, const uint16_t data)
+{
+    mys_sha256_update(ctx, &data, sizeof(uint16_t));
+}
+MYS_API void mys_sha256_update_u32(mys_sha256_ctx_t *ctx, const uint32_t data)
+{
+    mys_sha256_update(ctx, &data, sizeof(uint32_t));
+}
+MYS_API void mys_sha256_update_u64(mys_sha256_ctx_t *ctx, const uint64_t data)
+{
+    mys_sha256_update(ctx, &data, sizeof(uint64_t));
+}
+MYS_API void mys_sha256_update_f32(mys_sha256_ctx_t *ctx, const float data)
+{
+    mys_sha256_update(ctx, &data, sizeof(float));
+}
+MYS_API void mys_sha256_update_f64(mys_sha256_ctx_t *ctx, const double data)
+{
+    mys_sha256_update(ctx, &data, sizeof(double));
+}
+MYS_API void mys_sha256_update_int(mys_sha256_ctx_t *ctx, const int data)
+{
+    mys_sha256_update(ctx, &data, sizeof(int));
+}
+MYS_API void mys_sha256_update_float(mys_sha256_ctx_t *ctx, const float data)
+{
+    mys_sha256_update(ctx, &data, sizeof(float));
+}
+MYS_API void mys_sha256_update_double(mys_sha256_ctx_t *ctx, const double data)
+{
+    mys_sha256_update(ctx, &data, sizeof(double));
+}
+MYS_API void mys_sha256_update_char(mys_sha256_ctx_t *ctx, const char data)
+{
+    mys_sha256_update(ctx, &data, sizeof(char));
+}
+MYS_API void mys_sha256_update_ptr(mys_sha256_ctx_t *ctx, const void *data)
+{
+    mys_sha256_update(ctx, &data, sizeof(void *));
+}
+MYS_API void mys_sha256_update_arr(mys_sha256_ctx_t *ctx, const void *data, size_t size)
+{
+    mys_sha256_update(ctx, &data, size);
+}
+
 MYS_API void mys_sha256_dump_bin(mys_sha256_ctx_t *ctx, void *outbin)
 {
     mys_sha256_ctx_t ictx;
@@ -1727,28 +1818,28 @@ MYS_API void mys_sha256_dump_base64(mys_sha256_ctx_t *ctx, void *outbase64)
     mys_base64_encode((char *)outbase64, MYS_SHA256_BASE64_SIZE, outbin, MYS_SHA256_BIN_SIZE);
 }
 
-MYS_API void mys_sha256_bin(const void *text, size_t size, void *outbin)
+MYS_API void mys_sha256_bin(const void *text, size_t size, uint8_t output[MYS_SHA256_BIN_SIZE])
 {
     mys_sha256_ctx_t ctx;
     mys_sha256_init(&ctx);
     mys_sha256_update(&ctx, text, size);
-    mys_sha256_dump_bin(&ctx, outbin);
+    mys_sha256_dump_bin(&ctx, (void *)output);
 }
 
-MYS_API void mys_sha256_hex(const void *text, size_t size, void *outhex)
+MYS_API void mys_sha256_base64(const void *text, size_t size, char output[MYS_SHA256_BASE64_SIZE])
 {
     mys_sha256_ctx_t ctx;
     mys_sha256_init(&ctx);
     mys_sha256_update(&ctx, text, size);
-    mys_sha256_dump_hex(&ctx, outhex);
+    mys_sha256_dump_base64(&ctx, (void *)output);
 }
 
-MYS_API void mys_sha256_base64(const void *text, size_t size, void *outbase64)
+MYS_API void mys_sha256_hex(const void *text, size_t size, char output[MYS_SHA256_HEX_SIZE])
 {
     mys_sha256_ctx_t ctx;
     mys_sha256_init(&ctx);
     mys_sha256_update(&ctx, text, size);
-    mys_sha256_dump_base64(&ctx, outbase64);
+    mys_sha256_dump_hex(&ctx, (void *)output);
 }
 
 // https://troydhanson.github.io/uthash/userguide.html#_string_keys
