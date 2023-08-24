@@ -44,6 +44,7 @@ extern "C" {
 #ifndef MYS_NO_MPI
 #include "mys/mpiz.h"
 #endif
+#include "./mys/numa.h"
 #include "./mys/os.h"
 #include "./mys/partition.h"
 #include "./mys/rand.h"
