@@ -7,7 +7,7 @@ MYS_DIR ?= ..
 
 CFLAGS = -I$(MYS_DIR)/include -Wall -Wextra -Werror
 CXXFLAGS = -std=c++11 -I$(MYS_DIR)/include -Wall -Wextra -Werror
-LFLAGS = -lm
+LFLAGS = 
 
 basic: basic-gcc.c
 	$(CC) $(CFLAGS) $(LFLAGS) basic-gcc.c

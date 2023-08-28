@@ -7,7 +7,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
-#include <math.h>
 #include <unistd.h>
 
 #include "_config.h"

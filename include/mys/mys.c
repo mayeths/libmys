@@ -20,7 +20,7 @@
 /*********************************************/
 #include "_config.h"
 #include "_hashtable.h"
-#include "_mpi.h"
+#include "_math/math.h"
 #include "assert.h"
 #include "base64.h"
 #include "checkpoint.h"
@@ -495,8 +495,8 @@ static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata) {
     char *label = base_label;
     int label_size = sizeof(base_label);
 
-    int rank_digits = trunc(log10(event->nranks)) + 1;
-    int line_digits = trunc(log10(event->line)) + 1;
+    int rank_digits = _mys_math_trunc(_mys_math_log10(event->nranks)) + 1;
+    int line_digits = _mys_math_trunc(_mys_math_log10(event->line)) + 1;
     rank_digits = rank_digits > 3 ? rank_digits : 3;
     line_digits = line_digits > 3 ? line_digits : 3;
 
@@ -1129,7 +1129,7 @@ MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
 {
     int myrank = mys_myrank();
     int nranks = mys_nranks();
-    int digits = trunc(log10(nranks)) + 1;
+    int digits = _mys_math_trunc(_mys_math_log10(nranks)) + 1;
     digits = digits > 3 ? digits : 3;
     if (myrank == 0) {
         fprintf(stdout, "[WAIT::%0*d %s:%03d] Use \"touch %s\" to continue... ",
@@ -1236,8 +1236,8 @@ MYS_API void mys_print_affinity(FILE *fd)
                 #pragma omp ordered
 #endif
                 {
-                    int rank_digits = trunc(log10(nranks)) + 1;
-                    int thread_digits = trunc(log10(nthreads)) + 1;
+                    int rank_digits = _mys_math_trunc(_mys_math_log10(nranks)) + 1;
+                    int thread_digits = _mys_math_trunc(_mys_math_log10(nthreads)) + 1;
                     rank_digits = rank_digits > 3 ? rank_digits : 3;
                     thread_digits = thread_digits > 1 ? thread_digits : 1;
                     const char *affinity = mys_get_affinity();
@@ -1329,7 +1329,7 @@ MYS_API double mys_geometric_mean(double *arr, int n)
     for (int i = 0; i < n; i++) {
         product *= arr[i];
     }
-    return pow(product, 1 / (double)n);
+    return _mys_math_pow(product, 1 / (double)n);
 }
 
 MYS_API double mys_standard_deviation(double *arr, int n)
@@ -1341,7 +1341,7 @@ MYS_API double mys_standard_deviation(double *arr, int n)
         double diff = arr[i] - xbar;
         denom += diff * diff;
     }
-    return sqrt(denom / nom);
+    return _mys_math_sqrt(denom / nom);
 }
 
 MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
@@ -1364,7 +1364,7 @@ MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
     double tmp = (value - result.avg) * (value - result.avg);
     MPI_Allreduce(&tmp, &result.var, 1, MPI_DOUBLE, MPI_SUM, _mys_myspi_G.comm);
     result.var = result.var / (double)_mys_myspi_G.nranks;
-    result.std = sqrt(result.var);
+    result.std = _mys_math_sqrt(result.var);
 #endif
     return result;
 }
