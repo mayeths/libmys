@@ -28,7 +28,7 @@
 
 #define ASSERT(exp, fmt, ...) do {     \
     if (!(exp)) {                      \
-        int myrank = mys_myrank();     \
+        int myrank = mys_mpi_myrank(); \
         mys_log(myrank, MYS_LOG_FATAL, \
           MYS_LOG_FNAME, __LINE__,     \
           (fmt), ##__VA_ARGS__);       \

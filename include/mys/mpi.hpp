@@ -9,7 +9,7 @@
 #include <mpi.h>
 
 #include "_config.h"
-#include "_mpi.h"
+#include "_mpi/mpi.h"
 #include "macro.h"
 
 /**

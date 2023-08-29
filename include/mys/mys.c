@@ -11,15 +11,17 @@
 #ifndef __MYS_C__
 #define __MYS_C__
 
-#if !defined(MYS_NO_MPI)
-#include <mpi.h>
-#endif
-
 /*********************************************/
 // C definition
 /*********************************************/
 #include "_config.h"
 #include "_hashtable.h"
+#include "_mpi/mpi.h"
+#if defined(MYS_NO_MPI)
+#include "_mpi/seq.c"
+#else
+#include "_mpi/par.c"
+#endif
 #include "_math/math.h"
 #include "assert.h"
 #include "base64.h"
@@ -31,7 +33,6 @@
 #include "log.h"
 #include "macro.h"
 #include "memory.h"
-#include "myspi.h"
 #include "os.h"
 #include "partition.h"
 #include "rand.h"
@@ -40,78 +41,70 @@
 
 mys_thread_local int mys_errno = 0;
 
+typedef struct _mys_mpi_G_t {
+    bool inited;
+    mys_mutex_t lock;
+    int myrank;
+    int nranks;
+    _mys_MPI_Comm comm;
+} _mys_mpi_G_t;
 
-_mys_myspi_G_t _mys_myspi_G = {
+MYS_STATIC _mys_mpi_G_t _mys_mpi_G = {
     .inited = false,
     .lock = MYS_MUTEX_INITIALIZER,
     .myrank = -1,
     .nranks = -1,
-#ifndef MYS_NO_MPI
-    .comm = MPI_COMM_WORLD,
-#endif
+    .comm = _mys_MPI_COMM_WORLD,
 };
 
-MYS_API void mys_myspi_init()
+MYS_API void mys_mpi_init()
 {
-    if (_mys_myspi_G.inited == true)
+    if (_mys_mpi_G.inited == true)
         return;
-    mys_mutex_lock(&_mys_myspi_G.lock);
-#if defined(MYS_NO_MPI)
-    _mys_myspi_G.myrank = 0;
-    _mys_myspi_G.nranks = 1;
-#else
+    mys_mutex_lock(&_mys_mpi_G.lock);
     int inited;
-    MPI_Initialized(&inited);
+    _mys_MPI_Initialized(&inited);
     if (!inited) {
-        MPI_Init_thread(NULL, NULL, MPI_THREAD_SINGLE, &inited);
+        _mys_MPI_Init_thread(NULL, NULL, _mys_MPI_THREAD_SINGLE, &inited);
         fprintf(stdout, ">>>>> ===================================== <<<<<\n");
         fprintf(stdout, ">>>>> Nevel let libmys init MPI you dumbass <<<<<\n");
         fprintf(stdout, ">>>>> ===================================== <<<<<\n");
         fflush(stdout);
     }
-    MPI_Comm_size(_mys_myspi_G.comm, &_mys_myspi_G.nranks);
-    MPI_Comm_rank(_mys_myspi_G.comm, &_mys_myspi_G.myrank);
-#endif
-    _mys_myspi_G.inited = true;
-    mys_mutex_unlock(&_mys_myspi_G.lock);
+    _mys_MPI_Comm_rank(_mys_mpi_G.comm, &_mys_mpi_G.myrank);
+    _mys_MPI_Comm_size(_mys_mpi_G.comm, &_mys_mpi_G.nranks);
+    _mys_mpi_G.inited = true;
+    mys_mutex_unlock(&_mys_mpi_G.lock);
 }
 
-MYS_API int mys_myrank()
+MYS_API int mys_mpi_myrank()
 {
-    mys_myspi_init();
-    return _mys_myspi_G.myrank;
+    mys_mpi_init();
+    return _mys_mpi_G.myrank;
 }
 
-MYS_API int mys_nranks()
+MYS_API int mys_mpi_nranks()
 {
-    mys_myspi_init();
-    return _mys_myspi_G.nranks;
+    mys_mpi_init();
+    return _mys_mpi_G.nranks;
 }
 
-#ifndef MYS_NO_MPI
-MPI_Comm mys_comm()
+MYS_API int mys_mpi_barrier()
 {
-    mys_myspi_init();
-    return _mys_myspi_G.comm;
-}
-#endif
-
-MYS_API void mys_barrier()
-{
-    mys_myspi_init();
-#if defined(MYS_NO_MPI)
-    return;
-#else
-    MPI_Barrier(_mys_myspi_G.comm);
-#endif
+    mys_mpi_init();
+    return _mys_MPI_Barrier(_mys_mpi_G.comm);
 }
 
-MYS_API void mys_sync()
+MYS_API int mys_mpi_sync()
 {
     // At this point we use simple barrier for sync
-    mys_barrier();
+    return mys_mpi_barrier();
 }
 
+MYS_API _mys_MPI_Comm mys_mpi_comm()
+{
+    return _mys_mpi_G.comm;
+}
 
 
 mys_thread_local _mys_rand_G_t _mys_rand_G = {
@@ -306,8 +299,8 @@ MYS_API void mys_log(int who, int level, const char *file, int line, const char 
         mys_mutex_unlock(&_mys_log_G.lock);
         return;
     }
-    int myrank = mys_myrank();
-    int nranks = mys_nranks();
+    int myrank = mys_mpi_myrank();
+    int nranks = mys_mpi_nranks();
     if (who == myrank && (int)level >= (int)_mys_log_G.level) {
         mys_log_event_t event;
         event.myrank = myrank;
@@ -337,11 +330,9 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
         mys_mutex_unlock(&_mys_log_G.lock);
         return;
     }
-    int myrank = mys_myrank();
-    int nranks = mys_nranks();
-#ifndef MYS_NO_MPI
-    MPI_Comm comm = mys_comm();
-#endif
+    int myrank = mys_mpi_myrank();
+    int nranks = mys_mpi_nranks();
+    _mys_MPI_Comm comm = mys_mpi_comm();
 
     if (myrank == 0) {
         mys_log_event_t event;
@@ -360,15 +351,14 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
         va_start(event.vargs, fmt);
         mys_log_invoke_handlers(&event);
         va_end(event.vargs);
-#ifndef MYS_NO_MPI
         char buffer[4096];
         for (int rank = 1; rank < nranks; rank++) {
-            MPI_Status status;
+            _mys_MPI_Status status;
             int needed;
-            PMPI_Probe(rank, 100000007, comm, &status);
-            PMPI_Get_count(&status, MPI_CHAR, &needed);
+            _mys_MPI_Probe(rank, 100000007, comm, &status);
+            _mys_MPI_Get_count(&status, _mys_MPI_CHAR, &needed);
             char *ptr = (needed > 4096) ? (char *)malloc(needed) : buffer;
-            PMPI_Recv(ptr, needed, MPI_CHAR, rank, 100000007, comm, MPI_STATUS_IGNORE);
+            _mys_MPI_Recv(ptr, needed, _mys_MPI_CHAR, rank, 100000007, comm, _mys_MPI_STATUS_IGNORE);
 
             event.myrank = rank;
             event.fmt = ptr;
@@ -377,7 +367,7 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
             if (ptr != buffer)
                 free(ptr);
         }
-        MPI_Barrier(comm);
+        _mys_MPI_Barrier(comm);
     } else {
         char buffer[4096];
         va_list vargs, vargs_test;
@@ -388,12 +378,11 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
         char *ptr = (needed > 4096) ? (char *)malloc(needed) : buffer;
         vsnprintf(ptr, needed, fmt, vargs);
         // Use PMPI_* to prevent from polluting count of calls in MPI profiler like GPTL
-        PMPI_Send(ptr, needed, MPI_CHAR, 0, 100000007, comm);
+        _mys_MPI_Send(ptr, needed, _mys_MPI_CHAR, 0, 100000007, comm);
         if (ptr != buffer)
             free(ptr);
         va_end(vargs);
-        MPI_Barrier(comm); // We don't expect logging increase processes' nondeterministic
-#endif
+        _mys_MPI_Barrier(comm); // We don't expect logging increase processes' nondeterministic
     }
 
     mys_mutex_unlock(&_mys_log_G.lock);
@@ -758,8 +747,6 @@ MYS_API double mys_hrtime_windows() {
 }
 #endif
 
-#if !defined(MYS_NO_MPI)
-#include <mpi.h>
 typedef struct _mys_hrtime_mpi_G_t {
     bool inited;
     double start;
@@ -773,10 +760,10 @@ MYS_API const char *mys_hrname_mpi() {
 }
 MYS_API uint64_t mys_hrtick_mpi() {
     if (_mys_hrtime_mpi_G.inited == false) {
-        _mys_hrtime_mpi_G.start = MPI_Wtime();
+        _mys_hrtime_mpi_G.start = _mys_MPI_Wtime();
         _mys_hrtime_mpi_G.inited = true;
     }
-    double current = MPI_Wtime() - _mys_hrtime_mpi_G.start;
+    double current = _mys_MPI_Wtime() - _mys_hrtime_mpi_G.start;
     return (uint64_t)(current * 1e9); // in nano second
 }
 MYS_API uint64_t mys_hrfreq_mpi() {
@@ -785,7 +772,6 @@ MYS_API uint64_t mys_hrfreq_mpi() {
 MYS_API double mys_hrtime_mpi() {
     return (double)mys_hrtick_mpi() / (double)mys_hrfreq_mpi();
 }
-#endif
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -1127,8 +1113,8 @@ MYS_API const char *mys_procname()
 
 MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
 {
-    int myrank = mys_myrank();
-    int nranks = mys_nranks();
+    int myrank = mys_mpi_myrank();
+    int nranks = mys_mpi_nranks();
     int digits = _mys_math_trunc(_mys_math_log10(nranks)) + 1;
     digits = digits > 3 ? digits : 3;
     if (myrank == 0) {
@@ -1141,7 +1127,7 @@ MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
     while (stat(flagfile, &fstat) == 0 && fstat.st_mtime <= last_modified)
         sleep(1);
 
-    mys_barrier();
+    mys_mpi_barrier();
     if (myrank == 0) {
         fprintf(stdout, "OK\n");
         fflush(stdout);
@@ -1216,8 +1202,8 @@ MYS_API const char *mys_get_affinity() {
 
 MYS_API void mys_print_affinity(FILE *fd)
 {
-    int myrank = mys_myrank();
-    int nranks = mys_nranks();
+    int myrank = mys_mpi_myrank();
+    int nranks = mys_mpi_nranks();
     for (int rank = 0; rank < nranks; rank++) {
 #ifdef _OPENMP
         #pragma omp parallel
@@ -1348,24 +1334,21 @@ MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
 {
     mys_aggregate_t result;
     result.mine = value;
-#ifdef MYS_NO_MPI
-    result.max = value;
-    result.min = value;
-    result.avg = value;
-    result.sum = value;
-    result.std = 0;
-    result.var = 0;
-#else
-    mys_myspi_init();
-    MPI_Allreduce(&value, &result.max, 1, MPI_DOUBLE, MPI_MAX, _mys_myspi_G.comm);
-    MPI_Allreduce(&value, &result.min, 1, MPI_DOUBLE, MPI_MIN, _mys_myspi_G.comm);
-    MPI_Allreduce(&value, &result.sum, 1, MPI_DOUBLE, MPI_SUM, _mys_myspi_G.comm);
-    result.avg = result.sum / (double)_mys_myspi_G.nranks;
+    // result.max = value;
+    // result.min = value;
+    // result.avg = value;
+    // result.sum = value;
+    // result.std = 0;
+    // result.var = 0;
+    mys_mpi_init();
+    _mys_MPI_Allreduce(&value, &result.max, 1, _mys_MPI_DOUBLE, _mys_MPI_MAX, _mys_mpi_G.comm);
+    _mys_MPI_Allreduce(&value, &result.min, 1, _mys_MPI_DOUBLE, _mys_MPI_MIN, _mys_mpi_G.comm);
+    _mys_MPI_Allreduce(&value, &result.sum, 1, _mys_MPI_DOUBLE, _mys_MPI_SUM, _mys_mpi_G.comm);
+    result.avg = result.sum / (double)_mys_mpi_G.nranks;
     double tmp = (value - result.avg) * (value - result.avg);
-    MPI_Allreduce(&tmp, &result.var, 1, MPI_DOUBLE, MPI_SUM, _mys_myspi_G.comm);
-    result.var = result.var / (double)_mys_myspi_G.nranks;
+    _mys_MPI_Allreduce(&tmp, &result.var, 1, _mys_MPI_DOUBLE, _mys_MPI_SUM, _mys_mpi_G.comm);
+    result.var = result.var / (double)_mys_mpi_G.nranks;
     result.std = _mys_math_sqrt(result.var);
-#endif
     return result;
 }
 

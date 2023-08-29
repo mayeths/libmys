@@ -8,8 +8,8 @@
 #include <time.h>
 
 #include "_config.h"
+#include "_mpi/mpi.h"
 #include "macro.h"
-#include "myspi.h"
 #include "thread.h"
 
 #if defined(POSIX_COMPLIANCE)
