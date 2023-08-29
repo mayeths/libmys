@@ -16,13 +16,22 @@
 /*********************************************/
 #include "_config.h"
 #include "_hashtable.h"
-#include "_mpi/mpi.h"
+// _mpi
 #if defined(MYS_NO_MPI)
 #include "_mpi/seq.c"
 #else
 #include "_mpi/par.c"
 #endif
-#include "_math/math.h"
+// _math
+#include "_math/fdlibm_copysign.c"
+#include "_math/fdlibm_fabs.c"
+#include "_math/fdlibm_log.c"
+#include "_math/fdlibm_log10.c"
+#include "_math/fdlibm_sqrt.c"
+#include "_math/fdlibm_scalbn.c"
+#include "_math/fdlibm_pow.c"
+#include "_math/musl_trunc.c"
+
 #include "assert.h"
 #include "base64.h"
 #include "checkpoint.h"

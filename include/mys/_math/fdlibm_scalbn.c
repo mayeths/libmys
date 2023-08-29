@@ -1,8 +1,7 @@
 // from netlib-math/s_scalbn.c
 #pragma once
 
-#include "../_config.h"
-#include "fdlibm.h"
+#include "_fdlibm.h"
 
 //-----------------------------
 

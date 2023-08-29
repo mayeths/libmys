@@ -6,27 +6,9 @@
 
 //-----------------------------
 
-MYS_STATIC inline void __musl_fp_force_evalf(float x)
-{
-	volatile float y;
-	y = x;
-	(void)y;
-}
-
-MYS_STATIC inline void __musl_fp_force_eval(double x)
-{
-	volatile double y;
-	y = x;
-	(void)y;
-}
-
-MYS_STATIC inline void __musl_fp_force_evall(long double x)
-{
-	volatile long double y;
-	y = x;
-	(void)y;
-}
-
+#define __musl_fp_force_evalf(x) do { volatile float y; y = x; (void)y; } while (0)
+#define __musl_fp_force_eval(x) do { volatile double y; y = x; (void)y; } while (0)
+#define __musl_fp_force_evall(x) do { volatile long double y; y = x; (void)y; } while (0)
 #define _MUSL_FORCE_EVAL(x) do {              \
 	if (sizeof(x) == sizeof(float)) {         \
 		__musl_fp_force_evalf(x);             \

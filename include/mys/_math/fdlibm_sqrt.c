@@ -1,8 +1,7 @@
 // from netlib-math/e_sqrt.c
 #pragma once
 
-#include "../_config.h"
-#include "fdlibm.h"
+#include "_fdlibm.h"
 
 //-----------------------------
 
