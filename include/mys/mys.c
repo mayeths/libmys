@@ -343,6 +343,8 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
     int nranks = mys_mpi_nranks();
     _mys_MPI_Comm comm = mys_mpi_comm();
 
+    const int tag = 65521; /*100000007 OpenMPI 4.1.0 on AArch64 throw invalid tag on large number*/
+
     if (myrank == 0) {
         mys_log_event_t event;
         event.myrank = myrank;
@@ -364,10 +366,10 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
         for (int rank = 1; rank < nranks; rank++) {
             _mys_MPI_Status status;
             int needed;
-            _mys_MPI_Probe(rank, 100000007, comm, &status);
+            _mys_MPI_Probe(rank, tag, comm, &status);
             _mys_MPI_Get_count(&status, _mys_MPI_CHAR, &needed);
             char *ptr = (needed > 4096) ? (char *)malloc(needed) : buffer;
-            _mys_MPI_Recv(ptr, needed, _mys_MPI_CHAR, rank, 100000007, comm, _mys_MPI_STATUS_IGNORE);
+            _mys_MPI_Recv(ptr, needed, _mys_MPI_CHAR, rank, tag, comm, _mys_MPI_STATUS_IGNORE);
 
             event.myrank = rank;
             event.fmt = ptr;
@@ -386,8 +388,7 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
         va_end(vargs_test);
         char *ptr = (needed > 4096) ? (char *)malloc(needed) : buffer;
         vsnprintf(ptr, needed, fmt, vargs);
-        // Use PMPI_* to prevent from polluting count of calls in MPI profiler like GPTL
-        _mys_MPI_Send(ptr, needed, _mys_MPI_CHAR, 0, 100000007, comm);
+        _mys_MPI_Send(ptr, needed, _mys_MPI_CHAR, 0, tag, comm);
         if (ptr != buffer)
             free(ptr);
         va_end(vargs);
