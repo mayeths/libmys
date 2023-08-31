@@ -1241,7 +1241,7 @@ MYS_API void mys_print_affinity(FILE *fd)
                 }
             }
         }
-        mys_barrier();
+        mys_mpi_barrier();
     }
 }
 

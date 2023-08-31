@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) && defined(MYS_ENABLE_NUMA)
 #include <unistd.h>
 #include <numa.h>
 
