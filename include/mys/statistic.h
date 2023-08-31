@@ -11,18 +11,22 @@ MYS_API double mys_standard_deviation(double *arr, int n);
 typedef struct mys_aggregate_t {
     /* my value */
     double mine;
-    /* maximum value */
-    double max;
-    /* minimum value */
-    double min;
     /* average value */
     double avg;
     /* sum of values */
     double sum;
-    /* standard deviation */
-    double std;
     /* variance */
     double var;
+    /* standard deviation */
+    double std;
+    /* maximum value */
+    double max;
+    /* minimum value */
+    double min;
+    /* rank containing maximum value */
+    int loc_max;
+    /* rank containing minimum value */
+    int loc_min;
 } mys_aggregate_t;
 MYS_API mys_aggregate_t mys_aggregate_analysis(double value);
 

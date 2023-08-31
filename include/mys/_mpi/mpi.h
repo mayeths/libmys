@@ -24,13 +24,14 @@ typedef int _mys_MPI_Datatype;
 #define _mys_MPI_LONG          5
 #define _mys_MPI_BYTE          6
 #define _mys_MPI_LONG_LONG_INT 9
+#define _mys_MPI_DOUBLE_INT    10
 /////// MPI_Op
 typedef int _mys_MPI_Op;
 #define _mys_MPI_SUM           0
 #define _mys_MPI_MIN           1
 #define _mys_MPI_MAX           2
-#define _mys_MPI_LOR           3
-#define _mys_MPI_LAND          4
+#define _mys_MPI_MAXLOC        5
+#define _mys_MPI_MINLOC        6
 /////// MPI_Status
 typedef int _mys_MPI_Status;
 #define _mys_MPI_STATUS_IGNORE   ((_mys_MPI_Status *) 0) // Follow <mpi.h>
@@ -59,11 +60,14 @@ typedef MPI_Datatype _mys_MPI_Datatype;
 #define _mys_MPI_BYTE              MPI_BYTE
 #define _mys_MPI_REAL              MPI_REAL
 #define _mys_MPI_COMPLEX           MPI_COMPLEX
+#define _mys_MPI_DOUBLE_INT        MPI_DOUBLE_INT
 /////// MPI_Op
 typedef MPI_Op _mys_MPI_Op;
 #define _mys_MPI_MAX               MPI_MAX
 #define _mys_MPI_MIN               MPI_MIN
 #define _mys_MPI_SUM               MPI_SUM
+#define _mys_MPI_MAXLOC            MPI_MAXLOC
+#define _mys_MPI_MINLOC            MPI_MINLOC
 /////// MPI_Status
 typedef MPI_Status _mys_MPI_Status;
 #define _mys_MPI_STATUS_IGNORE     MPI_STATUS_IGNORE

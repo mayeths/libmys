@@ -178,6 +178,18 @@ MYS_STATIC int _mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, _mys_
         }
         break;
 
+        case _mys_MPI_DOUBLE_INT:
+        {
+            struct _double_int_t { double d; int i; };
+            struct _double_int_t *crecvbuf = (struct _double_int_t *)recvbuf;
+            struct _double_int_t *csendbuf = (struct _double_int_t *)sendbuf;
+            for (i = 0; i < count; i++)
+            {
+                crecvbuf[i] = csendbuf[i];
+            }
+        }
+        break;
+
     }
     return _mys_MPI_SUCCESS;
 }

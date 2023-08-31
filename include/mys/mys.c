@@ -1342,23 +1342,32 @@ MYS_API double mys_standard_deviation(double *arr, int n)
 
 MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
 {
-    mys_aggregate_t result;
-    result.mine = value;
-    // result.max = value;
-    // result.min = value;
-    // result.avg = value;
-    // result.sum = value;
-    // result.std = 0;
-    // result.var = 0;
     mys_mpi_init();
-    _mys_MPI_Allreduce(&value, &result.max, 1, _mys_MPI_DOUBLE, _mys_MPI_MAX, _mys_mpi_G.comm);
-    _mys_MPI_Allreduce(&value, &result.min, 1, _mys_MPI_DOUBLE, _mys_MPI_MIN, _mys_mpi_G.comm);
-    _mys_MPI_Allreduce(&value, &result.sum, 1, _mys_MPI_DOUBLE, _mys_MPI_SUM, _mys_mpi_G.comm);
-    result.avg = result.sum / (double)_mys_mpi_G.nranks;
-    double tmp = (value - result.avg) * (value - result.avg);
-    _mys_MPI_Allreduce(&tmp, &result.var, 1, _mys_MPI_DOUBLE, _mys_MPI_SUM, _mys_mpi_G.comm);
-    result.var = result.var / (double)_mys_mpi_G.nranks;
-    result.std = _mys_math_sqrt(result.var);
+    mys_aggregate_t result;
+    {// my local value
+        result.mine = value;
+    }
+    {// sum and avg
+        _mys_MPI_Allreduce(&value, &result.sum, 1, _mys_MPI_DOUBLE, _mys_MPI_SUM, _mys_mpi_G.comm);
+        result.avg = result.sum / (double)mys_mpi_nranks();
+    }
+    {// var and std
+        double tmp = (value - result.avg) * (value - result.avg);
+        _mys_MPI_Allreduce(&tmp, &result.var, 1, _mys_MPI_DOUBLE, _mys_MPI_SUM, _mys_mpi_G.comm);
+        result.var = result.var / (double)mys_mpi_nranks();
+        result.std = _mys_math_sqrt(result.var);
+    }
+    {// max and min
+        struct _double_int_t { double d; int i; } l, gmax, gmin;
+        l.d = value;
+        l.i = mys_mpi_myrank();
+        _mys_MPI_Allreduce(&l, &gmax, 1, _mys_MPI_DOUBLE_INT, _mys_MPI_MAXLOC, _mys_mpi_G.comm);
+        _mys_MPI_Allreduce(&l, &gmin, 1, _mys_MPI_DOUBLE_INT, _mys_MPI_MINLOC, _mys_mpi_G.comm);
+        result.max = gmax.d;
+        result.min = gmin.d;
+        result.loc_max = gmax.i;
+        result.loc_min = gmin.i;
+    }
     return result;
 }
 
