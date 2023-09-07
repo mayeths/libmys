@@ -39,8 +39,41 @@
 #error No supprted CPU model
 #endif
 
+
+typedef struct _mys_bits_t {
+    char bits[64 + 1];
+} mys_bits_t;
+
+MYS_STATIC mys_bits_t _mys_bits_kernel(const void *data, size_t size)
+{
+    mys_bits_t res;
+    memset(&res, 0, sizeof(mys_bits_t));
+    const uint8_t *bytes = (const uint8_t *)data;
+    int count = 0;
+    for (int i = size - 1; i >= 0; --i) { // begin from high bytes
+        for (int j = 7; j >= 0; --j) { // begin from high bits
+            unsigned int bit = (bytes[i] >> j) & 1;
+            res.bits[count++] = bit ? '1' : '0';
+        }
+    }
+    return res;
+}
+/* printf("%s\n", mys_bits_u64(1).bits); */
+MYS_STATIC mys_bits_t mys_bits_u64(uint64_t data) { return _mys_bits_kernel(&data, sizeof(uint64_t)); }
+/* printf("%s\n", mys_bits_u32(1).bits); */
+MYS_STATIC mys_bits_t mys_bits_u32(uint32_t data) { return _mys_bits_kernel(&data, sizeof(uint32_t)); }
+/* printf("%s\n", mys_bits_i64(1).bits); */
+MYS_STATIC mys_bits_t mys_bits_i64(int64_t  data) { return _mys_bits_kernel(&data, sizeof(int64_t )); }
+/* printf("%s\n", mys_bits_i32(1).bits); */
+MYS_STATIC mys_bits_t mys_bits_i32(int32_t  data) { return _mys_bits_kernel(&data, sizeof(int32_t )); }
+/* printf("%s\n", mys_bits_f64(1).bits); */
+MYS_STATIC mys_bits_t mys_bits_f64(double   data) { return _mys_bits_kernel(&data, sizeof(double  )); }
+/* printf("%s\n", mys_bits_f32(1).bits); */
+MYS_STATIC mys_bits_t mys_bits_f32(float    data) { return _mys_bits_kernel(&data, sizeof(float   )); }
+
+
 /* Cache clean */
-_MYS_UNUSED static void cachebrush(size_t nbytes) /* = 10 * 1024 * 1024 */
+MYS_STATIC void cachebrush(size_t nbytes) /* = 10 * 1024 * 1024 */
 {
     char * volatile arr = (char *)malloc(nbytes * sizeof(char));
     memset(arr, 0, nbytes);
@@ -53,7 +86,7 @@ _MYS_UNUSED static void cachebrush(size_t nbytes) /* = 10 * 1024 * 1024 */
     free(arr);
 }
 
-_MYS_UNUSED static ssize_t mys_parse_readable_size(const char *text)
+MYS_STATIC ssize_t mys_parse_readable_size(const char *text)
 {
     static const double Bbase = 1.0;
     static const double Kbase = 1024.0 * Bbase;
@@ -122,7 +155,7 @@ _MYS_UNUSED static ssize_t mys_parse_readable_size(const char *text)
     return -1;
 }
 
-_MYS_UNUSED static void mys_readable_size(char **ptr, size_t bytes, size_t precision)
+MYS_STATIC void mys_readable_size(char **ptr, size_t bytes, size_t precision)
 {
     int i = 0;
     const char* units[] = {"Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
