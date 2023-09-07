@@ -44,7 +44,7 @@ typedef struct _mys_bits_t {
     char bits[64 + 1];
 } mys_bits_t;
 
-MYS_STATIC mys_bits_t _mys_bits_kernel(const void *data, size_t size)
+MYS_STATIC mys_bits_t _mys_bits(const void *data, size_t size)
 {
     mys_bits_t res;
     memset(&res, 0, sizeof(mys_bits_t));
@@ -58,18 +58,12 @@ MYS_STATIC mys_bits_t _mys_bits_kernel(const void *data, size_t size)
     }
     return res;
 }
-/* printf("%s\n", mys_bits_u64(1).bits); */
-MYS_STATIC mys_bits_t mys_bits_u64(uint64_t data) { return _mys_bits_kernel(&data, sizeof(uint64_t)); }
-/* printf("%s\n", mys_bits_u32(1).bits); */
-MYS_STATIC mys_bits_t mys_bits_u32(uint32_t data) { return _mys_bits_kernel(&data, sizeof(uint32_t)); }
-/* printf("%s\n", mys_bits_i64(1).bits); */
-MYS_STATIC mys_bits_t mys_bits_i64(int64_t  data) { return _mys_bits_kernel(&data, sizeof(int64_t )); }
-/* printf("%s\n", mys_bits_i32(1).bits); */
-MYS_STATIC mys_bits_t mys_bits_i32(int32_t  data) { return _mys_bits_kernel(&data, sizeof(int32_t )); }
-/* printf("%s\n", mys_bits_f64(1).bits); */
-MYS_STATIC mys_bits_t mys_bits_f64(double   data) { return _mys_bits_kernel(&data, sizeof(double  )); }
-/* printf("%s\n", mys_bits_f32(1).bits); */
-MYS_STATIC mys_bits_t mys_bits_f32(float    data) { return _mys_bits_kernel(&data, sizeof(float   )); }
+MYS_STATIC mys_bits_t mys_bits_u64(uint64_t n) { return _mys_bits(&n, sizeof(uint64_t)); } /* printf("%s\n", mys_bits_u64(1).bits); */
+MYS_STATIC mys_bits_t mys_bits_u32(uint32_t n) { return _mys_bits(&n, sizeof(uint32_t)); } /* printf("%s\n", mys_bits_u32(1).bits); */
+MYS_STATIC mys_bits_t mys_bits_i64(int64_t  n) { return _mys_bits(&n, sizeof(int64_t )); } /* printf("%s\n", mys_bits_i64(1).bits); */
+MYS_STATIC mys_bits_t mys_bits_i32(int32_t  n) { return _mys_bits(&n, sizeof(int32_t )); } /* printf("%s\n", mys_bits_i32(1).bits); */
+MYS_STATIC mys_bits_t mys_bits_f64(double   n) { return _mys_bits(&n, sizeof(double  )); } /* printf("%s\n", mys_bits_f64(1).bits); */
+MYS_STATIC mys_bits_t mys_bits_f32(float    n) { return _mys_bits(&n, sizeof(float   )); } /* printf("%s\n", mys_bits_f32(1).bits); */
 
 
 /* Cache clean */
