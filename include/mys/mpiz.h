@@ -25,9 +25,9 @@ typedef struct commloc_t {
     int local_nranks;
     int global_myrank;
     int global_nranks;
-    int *rows;
-    int *cols;
-    int *brothers;
+    int *rows; // size=nranks. rows[rank] is the node id this rank on
+    int *cols; // size=nranks. cols[rank] is the local id this rank in node
+    int *brothers; // size=local_nranks. the rank on the same node (including self)
 } commloc_t;
 
 typedef struct predef_locality_t {
