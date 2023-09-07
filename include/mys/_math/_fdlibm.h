@@ -15,8 +15,15 @@
 #define _FDLIBM_LO(x) (uint32_t)(_FDLIBM_D2U(x))
 #define _FDLIBM_FORM_DOUBLE(h, l) _FDLIBM_U2D(((int64_t)(h) << 32) | (uint64_t)(l))
 #else
-static uint64_t _FDLIBM_D2U(double x)   { return *(uint64_t *)(&x); }
-static double   _FDLIBM_U2D(uint64_t x) { return *(double *)(&x); }
+union _fdlibm_num_t {
+    double f64;
+    uint64_t u64;
+    struct {          int l;          int h; } i32; // Do not change order of l and h
+    struct { unsigned int l; unsigned int h; } u32; // Do not change order of l and h
+    struct {        float l;        float h; } f32; // Do not change order of l and h
+};
+static uint64_t _FDLIBM_D2U(double x)   { union _fdlibm_num_t a; a.f64 = x; return a.u64; }
+static double   _FDLIBM_U2D(uint64_t x) { union _fdlibm_num_t a; a.u64 = x; return a.f64; }
 static int32_t  _FDLIBM_HI(double x)    { return (int32_t)(_FDLIBM_D2U(x) >> 32); }
 static uint32_t _FDLIBM_LO(double x)    { return (uint32_t)(_FDLIBM_D2U(x)); }
 static double   _FDLIBM_FORM_DOUBLE(int32_t h, uint32_t l) { return _FDLIBM_U2D(((int64_t)(h) << 32) | (uint64_t)(l)); }

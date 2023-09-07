@@ -14,7 +14,9 @@ MYS_STATIC double _mys_math_pow(double x, double y)
 	unsigned lx,ly;
 
 	(void)i1;
-	i0 = ((*(int*)&__fdlibm_one)>>29)^1; i1=1-i0;
+	union _fdlibm_num_t num;
+	num.f64 = __fdlibm_one;
+	i0 = (num.i32.l>>29)^1; i1=1-i0;
 	hx = _FDLIBM_HI(x); lx = _FDLIBM_LO(x);
 	hy = _FDLIBM_HI(y); ly = _FDLIBM_LO(y);
 	ix = hx&0x7fffffff;  iy = hy&0x7fffffff;
