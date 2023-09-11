@@ -16,7 +16,8 @@
 /* https://support.huaweicloud.com/codeprtr-kunpenggrf/kunpengtaishanporting_12_0048.html */
 #if defined(ARCH_X64)
 #define mys_memory_barrier() __asm__ __volatile__("": : :"memory")
-#define mys_memory_smp_mb() __asm__ __volatile__("lock; addl $0,-132(%%rsp)" ::: "memory", "cc")
+// #define mys_memory_smp_mb() __asm__ __volatile__("lock; addl $0,-132(%%rsp)" ::: "memory", "cc")
+#define mys_memory_smp_mb() mys_memory_barrier()
 #define mys_memory_smp_rmb() mys_memory_barrier()
 #define mys_memory_smp_wmb() mys_memory_barrier()
 #elif defined(ARCH_AARCH64)
