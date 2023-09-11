@@ -194,6 +194,16 @@ MYS_STATIC int _mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, _mys_
     return _mys_MPI_SUCCESS;
 }
 
+MYS_STATIC int _mys_MPI_Bcast(void *buffer, int count, _mys_MPI_Datatype datatype, int root, _mys_MPI_Comm comm)
+{
+    (void)buffer;
+    (void)count;
+    (void)datatype;
+    (void)root;
+    (void)comm;
+    return _mys_MPI_SUCCESS;
+}
+
 #ifdef POSIX_COMPLIANCE
 #include <time.h>
 #include <sys/time.h>

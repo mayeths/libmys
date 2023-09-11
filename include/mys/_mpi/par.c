@@ -59,6 +59,11 @@ MYS_STATIC int _mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, _mys_
     return PMPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
 }
 
+MYS_STATIC int _mys_MPI_Bcast(void *buffer, int count, _mys_MPI_Datatype datatype, int root, _mys_MPI_Comm comm)
+{
+   return PMPI_Bcast(buffer, count, datatype, root, comm);
+}
+
 MYS_STATIC double _mys_MPI_Wtime()
 {
     return PMPI_Wtime();
