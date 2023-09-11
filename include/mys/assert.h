@@ -40,17 +40,17 @@
         "Expect %s was %s but %s. " fmt,                           \
         #exp, expect, actual, ##__VA_ARGS__                        \
     )
-#define __ASSERTX_ONE_OP__(exp1, op, exp2, spec, fmt, ...) ASSERT(     \
-        (exp1) op (exp2),                                              \
-        "Expect (%s %s %s) but (" spec " %s " spec ") is false. " fmt, \
-        #exp1, #op, #exp2,                                             \
-        (exp1), #op, (exp2), ##__VA_ARGS__                             \
+#define __ASSERTX_ONE_OP__(exp1, op, exp2, spec, fmt, ...) ASSERT(   \
+        (exp1) op (exp2),                                            \
+        "Expect (%s %s %s) but (" spec " %s " spec ") failed. " fmt, \
+        #exp1, #op, #exp2,                                           \
+        (exp1), #op, (exp2), ##__VA_ARGS__                           \
     )
-#define __ASSERTX_TWO_OP__(exp1, op1, exp2, op2, exp3, spec, fmt, ...) ASSERT(           \
-        ((exp1) op1 (exp2)) && ((exp2) op2 (exp3)),                                      \
-        "Expect (%s %s %s %s %s) but (" spec " %s " spec " %s " spec ") is false. " fmt, \
-        #exp1, #op1, #exp2, #op2, #exp3,                                                 \
-        (exp1), #op1, (exp2), #op2, (exp3), ##__VA_ARGS__                                \
+#define __ASSERTX_TWO_OP__(exp1, op1, exp2, op2, exp3, spec, fmt, ...) ASSERT(         \
+        ((exp1) op1 (exp2)) && ((exp2) op2 (exp3)),                                    \
+        "Expect (%s %s %s %s %s) but (" spec " %s " spec " %s " spec ") failed. " fmt, \
+        #exp1, #op1, #exp2, #op2, #exp3,                                               \
+        (exp1), #op1, (exp2), #op2, (exp3), ##__VA_ARGS__                              \
     )
 #define ASSERT_TRUE(exp)                  __ASSERTX_ZERO_OP__(exp, "true", "false", "")
 #define ASSERT_FALSE(exp)                 __ASSERTX_ZERO_OP__(exp, "false", "true", "")
