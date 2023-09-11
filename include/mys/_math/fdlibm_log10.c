@@ -10,6 +10,7 @@ MYS_STATIC double _mys_math_log10(double x)
 	double y,z;
 	int i,k,hx;
 	unsigned lx;
+    static double zero = 0.0;
 
 	hx = _FDLIBM_HI(x);	/* high word of x */
 	lx = _FDLIBM_LO(x);	/* low word of x */
@@ -17,8 +18,8 @@ MYS_STATIC double _mys_math_log10(double x)
         k=0;
         if (hx < 0x00100000) {                  /* x < 2**-1022  */
             if (((hx&0x7fffffff)|lx)==0)
-                return -__fdlibm_two54/__fdlibm_zero;             /* log(+-0)=-inf */
-            if (hx<0) return (x-x)/__fdlibm_zero;        /* log(-#) = NaN */
+                return -__fdlibm_two54/zero;             /* log(+-0)=-inf */
+            if (hx<0) return (x-x)/zero;        /* log(-#) = NaN */
             k -= 54; x *= __fdlibm_two54; /* subnormal number, scale up x */
             hx = _FDLIBM_HI(x);                /* high word of x */
         }
