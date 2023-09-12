@@ -11,7 +11,7 @@
 
 typedef struct
 {
-    int group_id;
+    int group_id; // nonnegative counting sequence (0,1,2,3,...,group_num-1)
     int group_num;
     MPI_Comm global_comm;
     int global_myrank;
@@ -19,9 +19,11 @@ typedef struct
     MPI_Comm local_comm;
     int local_myrank;
     int local_nranks;
+    MPI_Comm inter_comm; // communicator across group (significant only at group root)
     int *_rows; // size=global_nranks. _rows[global_rank] is the group to which the rank belongs
     int *_cols; // size=global_nranks. _cols[global_rank] is the local_rank in group
     int *_brothers; // size=local_nranks. _brothers[local_rank] is the global_rank on the same group
+    int *_roots; // size=group_num. _roots[group_id] is the global rank of each group root
 } _commgroup_struct_t;
 
 typedef _commgroup_struct_t* commgroup_t; // handle
@@ -33,19 +35,20 @@ static int _MPIz_commgroup_rank_sortfn(const void* a, const void* b);
  * @brief Create communication group information based on group id
  * 
  * @param comm The parent communicator of the group
- * @param group_color The group assignment (can be discontinuous).
+ * @param group_color Control of group assignment (nonnegative integer, can be discontinuous).
+ * @param group_key Control of rank in group assignment (integer, can be discontinuous).
  * @return The group handle
  * 
  * @note Use MPIz_commgroup_create_node(comm) to construct node based group
  */
-MYS_STATIC commgroup_t MPIz_commgroup_create(MPI_Comm global_comm, int group_color)
+MYS_STATIC commgroup_t MPIz_commgroup_create(MPI_Comm global_comm, int group_color, int group_key)
 {
     _commgroup_struct_t *group = (_commgroup_struct_t *)malloc(sizeof(_commgroup_struct_t));
     MPI_Comm_dup(global_comm, &group->global_comm);
     MPI_Comm_size(group->global_comm, &group->global_nranks);
     MPI_Comm_rank(group->global_comm, &group->global_myrank);
 
-    MPI_Comm_split(group->global_comm, group_color, group->global_myrank, &group->local_comm);
+    MPI_Comm_split(group->global_comm, group_color, group_key, &group->local_comm);
     MPI_Comm_size(group->local_comm, &group->local_nranks);
     MPI_Comm_rank(group->local_comm, &group->local_myrank);
 
@@ -97,6 +100,17 @@ MYS_STATIC commgroup_t MPIz_commgroup_create(MPI_Comm global_comm, int group_col
     group->_brothers[group->local_myrank] = group->global_myrank;
     MPI_Allgather(MPI_IN_PLACE, 1, MPI_INT, group->_brothers, 1, MPI_INT, group->local_comm);
 
+    MPI_Comm_split(group->global_comm, group->local_myrank == 0, group->group_id, &group->inter_comm);
+    if (group->local_myrank != 0) {
+        MPI_Comm_free(&group->inter_comm);
+    }
+    group->_roots = (int *)malloc(sizeof(int) * group->group_num);
+    if (group->local_myrank == 0) {
+        group->_roots[group->group_id] = group->global_myrank;
+        MPI_Allgather(MPI_IN_PLACE, 1, MPI_INT, group->_roots, 1, MPI_INT, group->inter_comm);
+    }
+    MPI_Bcast(group->_roots, group->group_num, MPI_INT, 0, group->local_comm);
+
     free(requests);
     free(roots);
     return (commgroup_t)group;
@@ -112,9 +126,12 @@ MYS_STATIC void MPIz_commgroup_release(commgroup_t group)
     if (group == COMMGROUP_NULL) return;
     MPI_Comm_free(&group->global_comm);
     MPI_Comm_free(&group->local_comm);
+    if (group->local_myrank == 0)
+        MPI_Comm_free(&group->inter_comm);
     free(group->_rows);
     free(group->_cols);
     free(group->_brothers);
+    free(group->_roots);
 }
 
 /**
@@ -134,11 +151,12 @@ MYS_STATIC commgroup_t MPIz_commgroup_create_node(MPI_Comm global_comm)
     MPI_Bcast(&node_root, 1, MPI_INT, 0, local_comm);
     MPI_Comm_free(&local_comm);
 
-    return MPIz_commgroup_create(global_comm, node_root);
+    return MPIz_commgroup_create(global_comm, node_root, global_myrank);
 }
 
 /**
  * @brief Query the group to which the rank belongs (Support querying for rank on differnt group)
+ * @param global_rank The global rank to be query
  * @return The group id
  */
 MYS_STATIC int MPIz_query_group_id(commgroup_t group, int global_rank)
@@ -148,6 +166,7 @@ MYS_STATIC int MPIz_query_group_id(commgroup_t group, int global_rank)
 
 /**
  * @brief Query the local rank of the global rank (Support querying for rank on differnt group)
+ * @param global_rank The global rank to be query
  * @return The local rank
  */
 MYS_STATIC int MPIz_query_local_rank(commgroup_t group, int global_rank)
@@ -157,11 +176,22 @@ MYS_STATIC int MPIz_query_local_rank(commgroup_t group, int global_rank)
 
 /**
  * @brief Query the global rank of the local rank (ONLY support querying for rank on the same group)
+ * @param local_rank The local rank to be query
  * @return The global rank
  */
 MYS_STATIC int MPIz_query_global_rank(commgroup_t group, int local_rank)
 {
     return group->_brothers[local_rank];
+}
+
+/**
+ * @brief Query the global rank of group root (Support querying for root on differnt group)
+ * @param group_id The groud id to be query
+ * @return The global rank of group root
+ */
+MYS_STATIC int MPIz_query_group_root(commgroup_t group, int group_id)
+{
+    return group->_roots[group_id];
 }
 
 
@@ -197,11 +227,11 @@ int main(int argc, char **argv)
 
     commgroup_t commgroup = COMMGROUP_NULL;
     // commgroup = MPIz_commgroup_create_node(MPI_COMM_WORLD);
-    // commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, myrank);
+    // commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, myrank, myrank);
     if (myrank == 0) {
-        commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, 0);
+        commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, 0, myrank);
     } else {
-        commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, 1);
+        commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, 1, myrank);
     }
 
     if (commgroup->global_myrank == who) {
@@ -212,6 +242,10 @@ int main(int argc, char **argv)
             printf(" %d", group_id);
         }
         printf("\n");
+        for (int group_id = 0; group_id < commgroup->group_num; group_id++) {
+            int root = MPIz_query_group_root(commgroup, group_id);
+            printf("Group %d root is %d\n", group_id, root);
+        }
     }
     MPI_Barrier(MPI_COMM_WORLD);
     MPIz_commgroup_release(commgroup);
