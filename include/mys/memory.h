@@ -45,7 +45,7 @@
 #error No supprted CPU model
 #endif
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) && defined(MYS_ENABLE_SHM)
 typedef struct mys_shm_t {
     void *mem;
     size_t _size;

@@ -2102,7 +2102,7 @@ MYS_API int mys_checkpoint_dump(const char *file_format, ...)
     return 0;
 }
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) && defined(MYS_ENABLE_SHM)
 struct _mys_shm_G_t {
     bool inited;
     mys_mutex_t lock;
