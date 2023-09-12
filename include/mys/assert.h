@@ -25,6 +25,8 @@
 #endif
 
 /* Runtime Assertion */
+// FIXME: We have to make sure exp1 and exp2, exp3 don't change in multi-threading environment.
+// For example, We should force evaluate a data-race variable first, instead of simply use array[i] multiple times
 
 #define ASSERT(exp, fmt, ...) do {     \
     if (!(exp)) {                      \

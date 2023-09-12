@@ -5,6 +5,11 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#ifdef OS_LINUX
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 
 #include "_config.h"
 #include "macro.h"
@@ -38,6 +43,18 @@
 #define mys_memory_smp_wmb() __asm__ __volatile__("dmb ishst" ::: "memory")
 #else
 #error No supprted CPU model
+#endif
+
+#ifdef OS_LINUX
+typedef struct mys_shm_t {
+    void *mem;
+    size_t _size;
+    int _fd;
+    char _name[NAME_MAX];
+} mys_shm_t;
+
+MYS_API mys_shm_t mys_alloc_shared_memory(int owner_rank, size_t size);
+MYS_API void mys_free_shared_memory(mys_shm_t *shm);
 #endif
 
 
