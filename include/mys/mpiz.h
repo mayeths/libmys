@@ -22,9 +22,9 @@ typedef struct
     int *_rows; // size=global_nranks. _rows[global_rank] is the group to which the rank belongs
     int *_cols; // size=global_nranks. _cols[global_rank] is the local_rank in group
     int *_brothers; // size=local_nranks. _brothers[local_rank] is the global_rank on the same group
-} commgroup_struct_t;
+} _commgroup_struct_t;
 
-typedef commgroup_struct_t* commgroup_t; // handle
+typedef _commgroup_struct_t* commgroup_t; // handle
 #define COMMGROUP_NULL ((commgroup_t) -1)
 
 /**
@@ -38,7 +38,7 @@ typedef commgroup_struct_t* commgroup_t; // handle
  */
 MYS_STATIC commgroup_t MPIz_commgroup_create(MPI_Comm global_comm, int group_id)
 {
-    commgroup_struct_t *group = (commgroup_struct_t *)malloc(sizeof(commgroup_struct_t));
+    _commgroup_struct_t *group = (_commgroup_struct_t *)malloc(sizeof(_commgroup_struct_t));
     MPI_Comm_dup(global_comm, &group->global_comm);
     group->group_id = group_id;
     MPI_Comm_size(group->global_comm, &group->global_nranks);
