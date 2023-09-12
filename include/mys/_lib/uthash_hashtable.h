@@ -6,6 +6,8 @@
 // [Part 1] Define UTHASH
 /************************************************/
 /************************************************/
+#ifdef _UTHASH_DEFINE
+#undef _UTHASH_DEFINE
 #ifndef _UTHASH_H
 #define _UTHASH_H
 
@@ -1050,6 +1052,7 @@ for(((el)=(head)), ((tmp)=_DECLTYPE(el)((head!=NULL)?(head)->hh.next:NULL));    
 #define _HASH_BLOOM_SIGNATURE 0xb12220f2u
 
 #endif /* _UTHASH_H */
+#endif /*_UTHASH_DEFINE*/
 
 
 

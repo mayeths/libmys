@@ -364,7 +364,7 @@
 #define ID_MPI_Finalized	361
 #define ID_COUNT	(ID_MPI_Finalized)+1
 
-_MYS_UNUSED static const char *MPI_NAMES[] = {
+static const char *MPI_NAMES[] = {
     "MPI_Init",
     "MPI_Init_thread",
     "MPI_Initialized",

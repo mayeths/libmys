@@ -15,23 +15,8 @@
 // C definition
 /*********************************************/
 #include "_config.h"
-#include "_hashtable.h"
-// _mpi
-#if defined(MYS_NO_MPI)
-#include "_mpi/seq.c"
-#else
-#include "_mpi/par.c"
-#endif
-// _math
-#include "_math/fdlibm_copysign.c"
-#include "_math/fdlibm_fabs.c"
-#include "_math/fdlibm_log.c"
-#include "_math/fdlibm_log10.c"
-#include "_math/fdlibm_sqrt.c"
-#include "_math/fdlibm_scalbn.c"
-#include "_math/fdlibm_pow.c"
-#include "_math/musl_trunc.c"
-
+#define _UTHASH_DEFINE
+#include "_lib/index.h"
 #include "assert.h"
 #include "base64.h"
 #include "checkpoint.h"
@@ -2117,7 +2102,75 @@ MYS_API int mys_checkpoint_dump(const char *file_format, ...)
     return 0;
 }
 
+#ifdef OS_LINUX
+struct _mys_shm_G_t {
+    bool inited;
+    mys_mutex_t lock;
+    int program_id;
+    size_t counter;
+};
+
+static struct _mys_shm_G_t _mys_shm_G = {
+    .inited = false,
+    .lock = MYS_MUTEX_INITIALIZER,
+    .program_id = 0,
+    .counter = 0,
+};
+
+static void _mys_shm_G_init()
+{
+    if (_mys_shm_G.inited == true)
+        return;
+    mys_mutex_lock(&_mys_shm_G.lock);
+    {
+        if (mys_mpi_myrank() == 0)
+            _mys_shm_G.program_id = getpid();
+        _mys_MPI_Bcast(&_mys_shm_G.program_id, 1, _mys_MPI_INT, 0, _mys_MPI_COMM_WORLD);
+    }
+    _mys_shm_G.inited = true;
+    mys_mutex_unlock(&_mys_shm_G.lock);
+}
+
+MYS_API mys_shm_t mys_alloc_shared_memory(int owner_rank, size_t size)
+{
+    _mys_shm_G_init();
+    mys_mutex_lock(&_mys_shm_G.lock);
+    mys_shm_t shm;
+    snprintf(shm._name, sizeof(shm._name), "/mys_%d_%zu", _mys_shm_G.program_id, _mys_shm_G.counter);
+    _mys_shm_G.counter += 1;
+    if (mys_mpi_myrank() == owner_rank) {
+        shm._fd = shm_open(shm._name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+        shm._size = size;
+        ftruncate(shm._fd, shm._size);
+        shm.mem = mmap(NULL, shm._size, PROT_READ | PROT_WRITE, MAP_SHARED, shm._fd, 0);
+        memset(shm.mem, 0, shm._size);
+        mys_memory_smp_mb();
+        _mys_MPI_Barrier(_mys_MPI_COMM_WORLD);
+    } else {
+        _mys_MPI_Barrier(_mys_MPI_COMM_WORLD);
+        shm._fd = shm_open(shm._name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+        shm.mem = mmap(NULL, shm._size, PROT_READ | PROT_WRITE, MAP_SHARED, shm._fd, 0);
+    }
+    mys_mutex_unlock(&_mys_shm_G.lock);
+    return shm;
+}
+
+MYS_API void mys_free_shared_memory(mys_shm_t *shm)
+{
+    _mys_shm_G_init();
+    mys_mutex_lock(&_mys_shm_G.lock);
+    {
+        munmap(shm->mem, shm->_size);
+        close(shm->_fd);
+        shm_unlink(shm->_name);
+        shm->mem = NULL;
+    }
+    mys_mutex_unlock(&_mys_shm_G.lock);
+}
+
+#endif
+
 #define _UTHASH_UNDEF
-#include "_hashtable.h"
+#include "_lib/index.h"
 
 #endif /*__MYS_C__*/

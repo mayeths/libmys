@@ -1,7 +1,7 @@
 // from netlib-math/e_log10.c
 #pragma once
 
-#include "_fdlibm.h"
+#include "fdlibm.h"
 
 //-----------------------------
 

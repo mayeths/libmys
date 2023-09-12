@@ -1,7 +1,7 @@
 // from netlib-math/s_fabs.c
 #pragma once
 
-#include "_fdlibm.h"
+#include "fdlibm.h"
 
 //-----------------------------
 

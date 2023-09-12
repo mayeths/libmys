@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #include "_config.h"
-#include "_mpi/mpi.h"
+#include "_lib/mpi.h"
 #include "macro.h"
 #include "thread.h"
 

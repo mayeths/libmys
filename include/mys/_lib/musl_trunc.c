@@ -1,7 +1,7 @@
 // from musl-1.2.4/src/math/trunc.c
 #pragma once
 
-#include "_musl.h"
+#include "musl.h"
 
 //-----------------------------
 

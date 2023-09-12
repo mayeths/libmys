@@ -7,9 +7,7 @@
 
 #include <string.h>
 #include <time.h>
-
 #include "mpi.h"
-#include "id.h"
 
 //-------------------- Elementary low-level MPI functions --------------------//
 

@@ -2,8 +2,6 @@
 #pragma once
 
 #include <stdio.h>
-#include "../_config.h"
-#include "id.h"
 #include "mpi.h"
 
 
