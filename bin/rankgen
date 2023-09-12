@@ -12,6 +12,23 @@ import hashlib
 from collections import OrderedDict
 from typing import Union, List
 
+PREDEFS = {
+    "YC": {
+        "desc": "Yancheng AMD EPYC 7H12",
+        "nodelist": "bn[001-400]",
+        "sockets_per_node": 2,
+        "numas_per_socket": 1,
+        "cores_per_numa": 64,
+    },
+    "KP": {
+        "desc": "Kunpeng ARM 6426",
+        "nodelist": "kunpeng-node[101-108]",
+        "sockets_per_node": 2,
+        "numas_per_socket": 2,
+        "cores_per_numa": 32,
+    },
+}
+
 QUIET = False
 def eprint(text, end='\n', force=False):
     global QUIET
@@ -400,6 +417,11 @@ class ExtendedUsageAction(argparse.Action):
         print('----------------------------')
         parser.exit()
 
+class NonDefaultAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, values)
+        setattr(namespace, self.dest+'_nondefault', True)
+
 def main():
     global QUIET
     terminal_width = shutil.get_terminal_size((80, 20))[0]
@@ -416,6 +438,16 @@ def main():
     parser.add_argument('threads_per_rank', type=int, default=1, help=f"Number of threads per rank")
     # metavar='' for removing dest variable from help text
     hwinfoArgs = parser.add_argument_group('hardware information arguments')
+    for k, v in PREDEFS.items():
+        opt = f"-{k}"
+        dest = f"predef_{k}"
+        desc = v['desc']
+        s = v['sockets_per_node']
+        n = v['numas_per_socket']
+        c = v['cores_per_numa']
+        w = v['nodelist']
+        h = f'{desc} [-S {s} -N {n} -C {c} -w "{w}"]'
+        hwinfoArgs.add_argument(opt, dest=dest, action='store_const', const=True, default=False, help=h, metavar='')
     hwinfoArgs.add_argument('-S', '--sockets-per-node', dest='sockets_per_node', default=2, type=int, help=f"Sockets per node", metavar='')
     hwinfoArgs.add_argument('-N', '--numas-per-socket', dest='numas_per_socket', default=2, type=int, help=f"Numas per socket", metavar='')
     hwinfoArgs.add_argument('-C', '--cores-per-numa', dest='cores_per_numa', default=8, type=int, help=f"Cores per numa", metavar='') # TODO: Support hwthread
@@ -452,6 +484,17 @@ def main():
     fingerprint = args.fingerprint
     QUIET = args.quiet
 
+    used_predef = None
+    for k, v in PREDEFS.items():
+        if getattr(args, f"predef_{k}"):
+            used_predef = k
+            nodelist = v['nodelist']
+            args.sockets_per_node = v['sockets_per_node']
+            args.numas_per_socket = v['numas_per_socket']
+            args.cores_per_numa = v['cores_per_numa']
+            hwinfo = HardwareInfo(args.sockets_per_node, args.numas_per_socket, args.cores_per_numa)
+            break
+
     if num_node <= 0:
         eexit(1, f"Invalid number of node: {num_node}")
     if num_rank <= 0:
@@ -470,6 +513,8 @@ def main():
 
     eprint(f"{parser.prog}: {parser.description}")
     eprint(f"=== Platform Summary")
+    if used_predef:
+        eprint(f"Used predefined platform: {PREDEFS[used_predef]['desc']}")
     eprint(f"Node list: {nodelist} ({len(nodes)} nodes)")
     eprint(f"Sockets per node: {hwinfo.sockets_per_node}")
     eprint(f"Numas per node: {hwinfo.numas_per_node}")
