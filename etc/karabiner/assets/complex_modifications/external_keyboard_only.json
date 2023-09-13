@@ -1,0 +1,80 @@
+{
+    "title": "EXTERNAL KEYBOARD ONLY Modifications",
+    "rules": [
+        {
+            "description": "[EXT][Escape Control+ESC to Grave_Accent] Left_Control + Escape => Grave_Accent",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "conditions": [
+                        {
+                            "type": "device_unless",
+                            "description": "WHEN IS External Keyboard",
+                            "identifiers": [
+                                {
+                                    "vendor_id": 1452,
+                                    "product_id": 833,
+                                    "location_id": 39,
+                                    "is_keyboard": true
+                                }
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ]
+                        },
+                        "key_code": "escape"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "grave_accent_and_tilde"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[EXT][Toggle Terminal] Easy + Escape => Right_Command + Grave_Accent",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "conditions": [
+                        {
+                            "type": "device_unless",
+                            "description": "WHEN IS External Keyboard",
+                            "identifiers": [
+                                {
+                                    "vendor_id": 1452,
+                                    "product_id": 833,
+                                    "location_id": 39,
+                                    "is_keyboard": true
+                                }
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_command"
+                            ]
+                        },
+                        "key_code": "escape"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "grave_accent_and_tilde",
+                            "modifiers": [
+                                "right_command"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

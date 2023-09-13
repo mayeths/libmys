@@ -1,0 +1,38 @@
+{
+    "title": "TEST Modifications",
+    "rules": [
+        {
+            "description": "[TYPE][Description] Long Discription: Modifier + Key1 => Modifier + NewKey1, Modifier + Key2 => Modifier + NewKey2",
+            "manipulators": [
+                {}
+            ]
+        },
+        {
+            "description": "[TEST][For Debug] TestingMapper => TestingMappee",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ],
+                            "optional": [
+                                "left_shift",
+                                "left_option",
+                                "left_command"
+                            ]
+                        },
+                        "key_code": "open_bracket"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "f13"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

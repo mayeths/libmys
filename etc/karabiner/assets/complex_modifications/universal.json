@@ -1,0 +1,1526 @@
+{
+    "title": "UNIVERSAL Modifications",
+    "rules": [
+        {
+            "description": "[UNI][Super Arrow Keys] Super + H => Left, Super + J => Down, Super + K => Up, Super + L => Right",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ],
+                            "optional": [
+                                "any"
+                            ]
+                        },
+                        "key_code": "h"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "left_arrow"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ],
+                            "optional": [
+                                "any"
+                            ]
+                        },
+                        "key_code": "j"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "down_arrow"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ],
+                            "optional": [
+                                "any"
+                            ]
+                        },
+                        "key_code": "k"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "up_arrow"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ],
+                            "optional": [
+                                "any"
+                            ]
+                        },
+                        "key_code": "l"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "right_arrow"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Super Home/End and Far-Arrow Keys] Super + N => Home, Super + M => Left_Option + Left, Super + Comma => Left_Option + Right, Super + Priod => End",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ],
+                            "optional": [
+                                "left_shift",
+                                "left_command"
+                            ]
+                        },
+                        "key_code": "n"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "left_arrow",
+                            "modifiers": [
+                                "left_command"
+                            ]
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "type": "frontmost_application_unless",
+                            "description": "WHEN IS NOT Terminal",
+                            "bundle_identifiers": [
+                                "^com\\.apple\\.Terminal$"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ],
+                            "optional": [
+                                "left_shift",
+                                "left_command"
+                            ]
+                        },
+                        "key_code": "n"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "a",
+                            "modifiers": [
+                                "left_control"
+                            ]
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "type": "frontmost_application_if",
+                            "description": "WHEN IS Terminal",
+                            "bundle_identifiers": [
+                                "^com\\.apple\\.Terminal$"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ],
+                            "optional": [
+                                "left_shift",
+                                "left_command"
+                            ]
+                        },
+                        "key_code": "period"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "right_arrow",
+                            "modifiers": [
+                                "left_command"
+                            ]
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "type": "frontmost_application_unless",
+                            "description": "WHEN IS NOT Terminal",
+                            "bundle_identifiers": [
+                                "^com\\.apple\\.Terminal$"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ],
+                            "optional": [
+                                "left_shift",
+                                "left_command"
+                            ]
+                        },
+                        "key_code": "period"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "e",
+                            "modifiers": [
+                                "left_control"
+                            ]
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "type": "frontmost_application_if",
+                            "description": "WHEN IS Terminal",
+                            "bundle_identifiers": [
+                                "^com\\.apple\\.Terminal$"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ],
+                            "optional": [
+                                "left_shift",
+                                "left_command"
+                            ]
+                        },
+                        "key_code": "m"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "left_arrow",
+                            "modifiers": [
+                                "left_option"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ],
+                            "optional": [
+                                "left_shift",
+                                "left_command"
+                            ]
+                        },
+                        "key_code": "comma"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "right_arrow",
+                            "modifiers": [
+                                "left_option"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Disable Macos' Home/End ShortCuts] DISABLE Left_Control + N => Home, Left_Control + Priod => End",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "key_code": "home"
+                    },
+                    "to": [
+                        {}
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "key_code": "end"
+                    },
+                    "to": [
+                        {}
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Super Backspace and Delete] Super + U => Backspace, Super + I => Delete",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ]
+                        },
+                        "key_code": "u"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "delete_or_backspace"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ]
+                        },
+                        "key_code": "i"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "delete_or_backspace",
+                            "modifiers": [
+                                "fn"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control",
+                                "right_command"
+                            ]
+                        },
+                        "key_code": "u"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "delete_or_backspace",
+                            "modifiers": [
+                                "left_option"
+                            ]
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "type": "frontmost_application_unless",
+                            "description": "WHEN IS NOT Terminal",
+                            "bundle_identifiers": [
+                                "^com\\.apple\\.Terminal$"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control",
+                                "right_command"
+                            ]
+                        },
+                        "key_code": "i"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "delete_or_backspace",
+                            "modifiers": [
+                                "fn",
+                                "left_option"
+                            ]
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "type": "frontmost_application_unless",
+                            "description": "WHEN IS NOT Terminal",
+                            "bundle_identifiers": [
+                                "^com\\.apple\\.Terminal$"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control",
+                                "right_command"
+                            ]
+                        },
+                        "key_code": "u"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "w",
+                            "modifiers": [
+                                "left_control"
+                            ]
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "type": "frontmost_application_if",
+                            "description": "WHEN IS Terminal",
+                            "bundle_identifiers": [
+                                "^com\\.apple\\.Terminal$"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control",
+                                "right_command"
+                            ]
+                        },
+                        "key_code": "i"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "d",
+                            "modifiers": [
+                                "left_option"
+                            ]
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "type": "frontmost_application_if",
+                            "description": "WHEN IS Terminal",
+                            "bundle_identifiers": [
+                                "^com\\.apple\\.Terminal$"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Switch Tab] Easy + Tab => Left_Control + Tab",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_command"
+                            ],
+                            "optional": [
+                                "left_shift"
+                            ]
+                        },
+                        "key_code": "tab"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "tab",
+                            "modifiers": [
+                                "left_control"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Mission Control] Option + Tab => Mission_Control",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_option"
+                            ]
+                        },
+                        "key_code": "tab"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "mission_control"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Change Input Source] Super(INT)/Left_Command(EXT) + Left_Shift => Left_Control + Space_Bar",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "conditions": [
+                        {
+                            "type": "device_if",
+                            "description": "WHEN IS Internal Keyboard",
+                            "identifiers": [
+                                {
+                                    "vendor_id": 1452,
+                                    "product_id": 833,
+                                    "location_id": 39,
+                                    "is_keyboard": true
+                                }
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_shift"
+                            ]
+                        },
+                        "key_code": "left_control"
+                    },
+                    "to_if_alone": [
+                        {
+                            "repeat": true,
+                            "key_code": "spacebar",
+                            "modifiers": [
+                                "left_control"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "conditions": [
+                        {
+                            "type": "device_unless",
+                            "description": "WHEN IS External Keyboard",
+                            "identifiers": [
+                                {
+                                    "vendor_id": 1452,
+                                    "product_id": 833,
+                                    "location_id": 39,
+                                    "is_keyboard": true
+                                }
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_shift"
+                            ]
+                        },
+                        "key_code": "left_command"
+                    },
+                    "to_if_alone": [
+                        {
+                            "repeat": true,
+                            "key_code": "spacebar",
+                            "modifiers": [
+                                "left_control"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Quick Symbol (Enter and Tilde)] Quick + Space_Bar => Enter, Quick + Grave_Accent_And_Tilde => ~",
+            "manipulators": [
+                {
+                    "from": {
+                        "key_code": "spacebar",
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        }
+                    },
+                    "to": [
+                        {
+                            "key_code": "return_or_enter",
+                            "repeat": true
+                        }
+                    ],
+                    "type": "basic"
+                },
+                {
+                    "conditions": [
+                        {
+                            "type": "device_if",
+                            "description": "WHEN IS Internal Keyboard",
+                            "identifiers": [
+                                {
+                                    "vendor_id": 1452,
+                                    "product_id": 833,
+                                    "location_id": 39,
+                                    "is_keyboard": true
+                                }
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "key_code": "grave_accent_and_tilde",
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        }
+                    },
+                    "to": [
+                        {
+                            "key_code": "grave_accent_and_tilde",
+                            "modifiers": [
+                                "left_shift"
+                            ],
+                            "repeat": true
+                        }
+                    ],
+                    "type": "basic"
+                },
+                {
+                    "conditions": [
+                        {
+                            "type": "device_unless",
+                            "description": "WHEN IS External Keyboard",
+                            "identifiers": [
+                                {
+                                    "vendor_id": 1452,
+                                    "product_id": 833,
+                                    "location_id": 39,
+                                    "is_keyboard": true
+                                }
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "key_code": "escape",
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        }
+                    },
+                    "to": [
+                        {
+                            "key_code": "grave_accent_and_tilde",
+                            "modifiers": [
+                                "left_shift"
+                            ],
+                            "repeat": true
+                        }
+                    ],
+                    "type": "basic"
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Super 67890] Super + 1 => 6, Super + 2 => 7, Super + 3 => 8, Super + 4 => 9, Super + 5 => 0",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ]
+                        },
+                        "key_code": "1"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "6"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ]
+                        },
+                        "key_code": "2"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "7"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ]
+                        },
+                        "key_code": "3"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "8"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ]
+                        },
+                        "key_code": "4"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "9"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ]
+                        },
+                        "key_code": "5"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "0"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Quick Symbol (Left Region)] Quick + QWERASDF => <>()[]{}, Quick + TGB => ^=:, Quick + ZXCV => +-*/",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "q"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "comma",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "w"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "period",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "e"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "9",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "r"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "0",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "a"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "open_bracket"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "s"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "close_bracket"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "d"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "open_bracket",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "f"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "close_bracket",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "t"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "6",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "g"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "equal_sign"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "b"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "semicolon",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "z"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "equal_sign",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "x"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "hyphen"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "c"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "8",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "v"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "slash"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Quick Symbol (Right Region)] Quick + IO => ?\\, Quick + JKL => \"'_, Quick + NM => &|",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "i"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "slash",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "o"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "backslash"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "j"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "quote",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "k"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "quote"
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "l"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "hyphen",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "n"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "7",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "m"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "backslash",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Quick Symbol (Number Region / Shift 12345)] Quick + 1 => !, Quick + 2 => @, Quick + 3 => #, Quick + 4 => $, Quick + 5 => %",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "1"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "1",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "2"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "2",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "3"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "3",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "4"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "4",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_control"
+                            ]
+                        },
+                        "key_code": "5"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "5",
+                            "modifiers": [
+                                "left_shift"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Snipaste] Super(INT)/Left_Command(EXT) + A => Left Command + Left Option + P",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "conditions": [
+                        {
+                            "type": "device_unless",
+                            "description": "WHEN IS External Keyboard",
+                            "identifiers": [
+                                {
+                                    "vendor_id": 1452,
+                                    "product_id": 833,
+                                    "location_id": 39,
+                                    "is_keyboard": true
+                                }
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_command"
+                            ]
+                        },
+                        "key_code": "a"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "p",
+                            "modifiers": [
+                                "left_command",
+                                "left_option"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "conditions": [
+                        {
+                            "type": "device_if",
+                            "description": "WHEN IS Internal Keyboard",
+                            "identifiers": [
+                                {
+                                    "vendor_id": 1452,
+                                    "product_id": 833,
+                                    "location_id": 39,
+                                    "is_keyboard": true
+                                }
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ]
+                        },
+                        "key_code": "a"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "p",
+                            "modifiers": [
+                                "left_command",
+                                "left_option"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][Chrome History & Download] Easy + H => Left Command + Y, Easy + J => Left Command + Left Option + L",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "conditions": [
+                        {
+                            "type": "frontmost_application_if",
+                            "description": "WHEN IS Chrome",
+                            "bundle_identifiers": [
+                                "^com\\.google\\.Chrome$"
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_command"
+                            ]
+                        },
+                        "key_code": "h"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "y",
+                            "modifiers": [
+                                "left_command"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "conditions": [
+                        {
+                            "type": "frontmost_application_if",
+                            "description": "WHEN IS Chrome",
+                            "bundle_identifiers": [
+                                "^com\\.google\\.Chrome$"
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "right_command"
+                            ]
+                        },
+                        "key_code": "j"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "l",
+                            "modifiers": [
+                                "left_command",
+                                "left_option"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "description": "[UNI][AltTab Switch Application] Super(INT)/Left_Command(EXT) + Tab => Left_Control/Left_Command + quote",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "conditions": [
+                        {
+                            "type": "device_unless",
+                            "description": "WHEN IS External Keyboard",
+                            "identifiers": [
+                                {
+                                    "vendor_id": 1452,
+                                    "product_id": 833,
+                                    "location_id": 39,
+                                    "is_keyboard": true
+                                }
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_command"
+                            ]
+                        },
+                        "key_code": "tab"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "quote",
+                            "modifiers": [
+                                "left_command"
+                            ]
+                        }
+                    ],
+                    "to_after_key_up": [
+                        {
+                            "key_code": "left_control",
+                            "modifiers": [
+                                "left_command"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "basic",
+                    "conditions": [
+                        {
+                            "type": "device_if",
+                            "description": "WHEN IS Internal Keyboard",
+                            "identifiers": [
+                                {
+                                    "vendor_id": 1452,
+                                    "product_id": 833,
+                                    "location_id": 39,
+                                    "is_keyboard": true
+                                }
+                            ]
+                        }
+                    ],
+                    "from": {
+                        "modifiers": {
+                            "mandatory": [
+                                "left_control"
+                            ]
+                        },
+                        "key_code": "tab"
+                    },
+                    "to": [
+                        {
+                            "repeat": true,
+                            "key_code": "quote",
+                            "modifiers": [
+                                "left_control"
+                            ]
+                        }
+                    ],
+                    "to_after_key_up": [
+                        {
+                            "key_code": "left_command",
+                            "modifiers": [
+                                "left_control"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
