@@ -425,6 +425,36 @@
                                     }
                                 ],
                                 "from": {
+                                    "key_code": "i",
+                                    "modifiers": {
+                                        "mandatory": [
+                                            "left_control",
+                                            "right_command"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                      "key_code": "escape",
+                                      "repeat": true
+                                    },
+                                    {
+                                      "key_code": "d",
+                                      "repeat": true
+                                    }
+                                ],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.apple\\.Terminal$"
+                                        ],
+                                        "type": "frontmost_application_if"
+                                    }
+                                ],
+                                "from": {
                                     "key_code": "u",
                                     "modifiers": {
                                         "mandatory": [
