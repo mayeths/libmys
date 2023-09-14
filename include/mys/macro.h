@@ -29,3 +29,5 @@
 
 #define MYS_MACRO2STR_HELPER(x) #x
 #define MYS_MACRO2STR(x) MYS_MACRO2STR_HELPER(x)
+
+#define MYS_FNAME (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
