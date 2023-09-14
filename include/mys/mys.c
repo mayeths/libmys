@@ -2312,8 +2312,8 @@ MYS_API void mys_guard_end(const char *type_name, size_t type_size, void *variab
 }
 
 
-#define _UTHASH_DEFINE_HASH
-#define _UTHASH_DEFINE_LIST
+#define _UTHASH_UNDEF_HASH
+#define _UTHASH_UNDEF_LIST
 #include "_lib/index.h"
 
 #endif /*__MYS_C__*/
