@@ -1,7 +1,8 @@
 // Do not add pragma once here because we have to support re-enterable uthash
 
 // [container] based on uthash
-#include "uthash_hashtable.h"
+#include "uthash_hash.h"
+#include "uthash_list.h"
 
 // [math] based on fdlibm & musl
 #include "fdlibm_copysign.c"

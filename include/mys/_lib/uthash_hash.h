@@ -1,13 +1,13 @@
 // https://troydhanson.github.io/uthash/
-// Use #define _UTHASH_UNDEF to undef all these things
+// Use #define _UTHASH_UNDEF_HASH to undef all these things
 
 /************************************************/
 /************************************************/
 // [Part 1] Define UTHASH
 /************************************************/
 /************************************************/
-#ifdef _UTHASH_DEFINE
-#undef _UTHASH_DEFINE
+#ifdef _UTHASH_DEFINE_HASH
+#undef _UTHASH_DEFINE_HASH
 #ifndef _UTHASH_H
 #define _UTHASH_H
 
@@ -1052,7 +1052,7 @@ for(((el)=(head)), ((tmp)=_DECLTYPE(el)((head!=NULL)?(head)->hh.next:NULL));    
 #define _HASH_BLOOM_SIGNATURE 0xb12220f2u
 
 #endif /* _UTHASH_H */
-#endif /*_UTHASH_DEFINE*/
+#endif /*_UTHASH_DEFINE_HASH*/
 
 
 
@@ -1136,8 +1136,8 @@ typedef struct _mys_UT_hash_handle {
 // [Part 3] Undef all these things if you want
 /************************************************/
 /************************************************/
-#ifdef _UTHASH_UNDEF
-#undef _UTHASH_UNDEF
+#ifdef _UTHASH_UNDEF_HASH
+#undef _UTHASH_UNDEF_HASH
 #undef _UTHASH_H
 #undef _UTHASH_VERSION
 #undef _DECLTYPE
@@ -1245,4 +1245,4 @@ typedef struct _mys_UT_hash_handle {
 #undef _HASH_CNT
 #undef _HASH_SIGNATURE
 #undef _HASH_BLOOM_SIGNATURE 
-#endif /* _UTHASH_UNDEF */
+#endif /* _UTHASH_UNDEF_HASH */
