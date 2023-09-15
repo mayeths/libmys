@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-VERSION="2023.03.03"
+VERSION="2023.09.15"
 
 import sys
 import argparse
@@ -12,22 +12,36 @@ import hashlib
 from collections import OrderedDict
 from typing import Union, List
 
-PREDEFS = {
-    "YC": {
-        "desc": "Yancheng AMD EPYC 7H12",
-        "nodelist": "bn[001-400]",
-        "sockets_per_node": 2,
-        "numas_per_socket": 1,
-        "cores_per_numa": 64,
-    },
-    "KP": {
-        "desc": "Kunpeng ARM 6426",
-        "nodelist": "kunpeng-node[101-108]",
-        "sockets_per_node": 2,
-        "numas_per_socket": 2,
-        "cores_per_numa": 32,
-    },
-}
+class DefaultConfig:
+    def __init__(self):
+        self.nodelist = "cn[001-008]"
+        self.sockets_per_node = 2
+        self.numas_per_socket = 2
+        self.cores_per_numa = 8
+
+class YanchengConfig(DefaultConfig):
+    def __init__(self):
+        super().__init__()
+        self.nodelist = "bn[001-400]"
+        self.sockets_per_node = 2
+        self.numas_per_socket = 1
+        self.cores_per_numa = 64
+        #
+        self.key = "YC"
+        self.desc = "Yancheng AMD EPYC 7H12"
+
+class Kunpeng920Config(DefaultConfig):
+    def __init__(self):
+        super().__init__()
+        self.nodelist = "kunpeng-node[101-108]"
+        self.sockets_per_node = 2
+        self.numas_per_socket = 2
+        self.cores_per_numa = 32
+        #
+        self.key = "KP"
+        self.desc = "Kunpeng ARM 6426"
+
+CONFIGS = [YanchengConfig(), Kunpeng920Config()]
 
 QUIET = False
 def eprint(text, end='\n', force=False):
@@ -340,10 +354,12 @@ def fill_ranks(hwinfo: HardwareInfo, nodes: List[str], region: str,
 
     slots.sort()
     ranks = []
+    used_nodes = set()
 
     for i in range(num_rank):
         slot = slots[i]
         node_name = nodes[slot.node_index]
+        used_nodes.add(node_name)
         core_list = [i for i in range(slot.start, slot.stop+1)]
         rank = Rank(i, node_name, core_list)
         region_ok = slot.region_index >= 0 and slot.region_index < regions_per_node
@@ -374,9 +390,32 @@ def sha512_encode(text: str):
     return hashlib.sha512(text.encode()).hexdigest()
 
 
-class ExtendedUsageAction(argparse.Action):
+class StoreAction(argparse._StoreAction):
+    def __call__(self, parser, namespace, values, option_string=None):
+        super(StoreAction, self).__call__(parser, namespace, values, option_string)
+        setattr(namespace, self.dest+'_provided', True)
+
+class StoreConstAction(argparse._StoreConstAction):
+    def __call__(self, parser, namespace, values, option_string=None):
+        super(StoreConstAction, self).__call__(parser, namespace, values, option_string)
+        setattr(namespace, self.dest+'_provided', True)
+
+class HelpAction(argparse._HelpAction):
+    def __call__(self, parser, namespace, values, option_string=None):
+        super(HelpAction, self).__call__(parser, namespace, values, option_string)
+        setattr(namespace, self.dest+'_provided', True)
+
+class VersionAction(argparse._VersionAction):
+    def __call__(self, parser, namespace, values, option_string=None):
+        super(VersionAction, self).__call__(parser, namespace, values, option_string)
+        setattr(namespace, self.dest+'_provided', True)
+
+def provided(namespace: argparse.Namespace, option: str):
+    return True if getattr(namespace, f"{option}_provided", None) else False
+
+class UsageAction(argparse.Action):
     def __init__(self, option_strings, dest=argparse.SUPPRESS, default=argparse.SUPPRESS, **kwargs):
-        super(ExtendedUsageAction, self).__init__(option_strings, dest, nargs=0, default=default, **kwargs)
+        super(UsageAction, self).__init__(option_strings, dest, nargs=0, default=default, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         print('----------------------------')
@@ -417,11 +456,6 @@ class ExtendedUsageAction(argparse.Action):
         print('----------------------------')
         parser.exit()
 
-class NonDefaultAction(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, values)
-        setattr(namespace, self.dest+'_nondefault', True)
-
 def main():
     global QUIET
     terminal_width = shutil.get_terminal_size((80, 20))[0]
@@ -437,45 +471,65 @@ def main():
     parser.add_argument('num_rank', type=int, help=f"Number of ranks")
     parser.add_argument('threads_per_rank', type=int, default=1, help=f"Number of threads per rank")
     # metavar='' for removing dest variable from help text
-    hwinfoArgs = parser.add_argument_group('hardware information arguments')
-    for k, v in PREDEFS.items():
-        opt = f"-{k}"
-        dest = f"predef_{k}"
-        desc = v['desc']
-        s = v['sockets_per_node']
-        n = v['numas_per_socket']
-        c = v['cores_per_numa']
-        w = v['nodelist']
-        h = f'{desc} [-S {s} -N {n} -C {c} -w "{w}"]'
-        hwinfoArgs.add_argument(opt, dest=dest, action='store_const', const=True, default=False, help=h, metavar='')
-    hwinfoArgs.add_argument('-S', '--sockets-per-node', dest='sockets_per_node', default=2, type=int, help=f"Sockets per node", metavar='')
-    hwinfoArgs.add_argument('-N', '--numas-per-socket', dest='numas_per_socket', default=2, type=int, help=f"Numas per socket", metavar='')
-    hwinfoArgs.add_argument('-C', '--cores-per-numa', dest='cores_per_numa', default=8, type=int, help=f"Cores per numa", metavar='') # TODO: Support hwthread
+
+    cfg = DefaultConfig()
+
+    hargs = parser.add_argument_group('hardware information arguments')
+    for v in CONFIGS:
+        flag = f"-{v.key}"
+        help = f'{v.desc} [-w "{v.nodelist}" -S {v.sockets_per_node} -N {v.numas_per_socket} -C {v.cores_per_numa}]'
+        hargs.add_argument(flag, dest=v.key, action=StoreConstAction, const=True, default=False, help=help, metavar='')
+    hargs.add_argument('-S', '--sockets-per-node', action=StoreAction, dest='sockets_per_node', default=cfg.sockets_per_node, type=int, help=f"Sockets per node", metavar='')
+    hargs.add_argument('-N', '--numas-per-socket', action=StoreAction, dest='numas_per_socket', default=cfg.numas_per_socket, type=int, help=f"Numas per socket", metavar='')
+    hargs.add_argument('-C', '--cores-per-numa', action=StoreAction, dest='cores_per_numa', default=cfg.cores_per_numa, type=int, help=f"Cores per numa", metavar='') # TODO: Support hwthread
     # cat /sys/devices/system/cpu/cpu0/topology/thread_siblings_list for hwthread list
-    generatorArgs = parser.add_argument_group('generator arguments')
-    generatorArgs.add_argument('-o', dest='outfile', default="<stdout>", type=str, help=f"Output to file", metavar='')
-    generatorArgs.add_argument('-t', dest='use_tempfile', action='store_const', const=True, default=False, help="Output to tempfile and print its path to <stdout>", metavar='')
-    generatorArgs.add_argument('-w', '--nodelist', dest='nodelist', default='cn[001-008]', type=str, help="The list of nodes in SLURM's nodelist syntax", metavar='')
-    generatorArgs.add_argument('-a', '--align', dest='region', default='numa', choices=['numa', 'socket', 'node'], help="Align ranks to the numa/socket/node region", metavar='')
-    generatorArgs.add_argument('-l', '--left', dest='left_most_cores', action='store_const', const=True, default=False, help="Use left-most slots in the region", metavar='')
-    generatorArgs.add_argument('-i', '--imbalance', dest='imbalance', action='store_const', const=True, default=False, help="Allow imbalancing over regions", metavar='')
-    generatorArgs.add_argument('-f', '--finger', dest='fingerprint', default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
+    gargs = parser.add_argument_group('generator arguments')
+    gargs.add_argument('-o', dest='outfile', action=StoreAction, default="<stdout>", type=str, help=f"Output to file", metavar='')
+    gargs.add_argument('-t', dest='use_tempfile', action=StoreConstAction, const=True, default=False, help="Output to tempfile and print its path to <stdout>", metavar='')
+    gargs.add_argument('-w', '--nodelist', dest='nodelist', action=StoreAction, default=cfg.nodelist, type=str, help="The list of nodes in SLURM's nodelist syntax", metavar='')
+    gargs.add_argument('-a', '--align', dest='region', action=StoreAction, default='numa', choices=['numa', 'socket', 'node'], help="Align ranks to the numa/socket/node region", metavar='')
+    gargs.add_argument('-l', '--left', dest='left_most_cores', action=StoreConstAction, const=True, default=False, help="Use left-most slots in the region", metavar='')
+    gargs.add_argument('-i', '--imbalance', dest='imbalance', action=StoreConstAction, const=True, default=False, help="Allow imbalancing over regions", metavar='')
+    gargs.add_argument('-f', '--finger', dest='fingerprint', action=StoreAction, default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
     # Please note that modify name of tempfile bellow every time add critical arugments influencing the result of generator, for example hwthread
-    parser.add_argument('-q', '--quiet', dest='quiet', action='store_const', const=True, default=False, help="Don't print summary to <stderr>", metavar='')
-    parser.add_argument('-u', '--usage', action=ExtendedUsageAction, help="Show extended usages and exit", metavar='')
-    parser.add_argument('-v', '--version', action='version', version=f'{VERSION}', help="Show version number and exit")
-    parser.add_argument('-h', '--help', action='help', help=f"Show this help message and exit")
+    parser.add_argument('-q', '--quiet', dest='quiet', action=StoreConstAction, const=True, default=False, help="Don't print summary to <stderr>", metavar='')
+    parser.add_argument('-u', '--usage', action=UsageAction, help="Show extended usages and exit", metavar='')
+    parser.add_argument('-v', '--version', action=VersionAction, version=f'{VERSION}', help="Show version number and exit")
+    parser.add_argument('-h', '--help', action=HelpAction, help=f"Show this help message and exit")
+
+    # Try to parse arguments
     try:
         args = parser.parse_args()
     except SystemExit as e:
         if e.code != 0:
             eprint(' ' * len(parser.prog) + f'  run "{parser.prog} -h" for more information')
         exit(e.code)
+
+    # Required arguments
     num_node = args.num_node
     num_rank = args.num_rank
     threads_per_rank = args.threads_per_rank
-    hwinfo = HardwareInfo(args.sockets_per_node, args.numas_per_socket, args.cores_per_numa)
-    nodelist = args.nodelist
+    # Check predef options
+    for predef in CONFIGS:
+        if provided(args, predef.key):
+            cfg = predef
+            break
+    # Machine Config
+    modified_config = False
+    if provided(args, f"nodelist"):
+        cfg.nodelist = args.nodelist
+        modified_config = True
+    if provided(args, f"sockets_per_node"):
+        cfg.sockets_per_node = args.sockets_per_node
+        modified_config = True
+    if provided(args, f"numas_per_socket"):
+        cfg.numas_per_socket = args.numas_per_socket
+        modified_config = True
+    if provided(args, f"cores_per_numa"):
+        cfg.cores_per_numa = args.cores_per_numa
+        modified_config = True
+    hwinfo = HardwareInfo(cfg.sockets_per_node, cfg.numas_per_socket, cfg.cores_per_numa)
+    # Optional arguments
     outfile = args.outfile
     use_tempfile = args.use_tempfile
     left_most_cores = args.left_most_cores
@@ -484,43 +538,35 @@ def main():
     fingerprint = args.fingerprint
     QUIET = args.quiet
 
-    used_predef = None
-    for k, v in PREDEFS.items():
-        if getattr(args, f"predef_{k}"):
-            used_predef = k
-            nodelist = v['nodelist']
-            args.sockets_per_node = v['sockets_per_node']
-            args.numas_per_socket = v['numas_per_socket']
-            args.cores_per_numa = v['cores_per_numa']
-            hwinfo = HardwareInfo(args.sockets_per_node, args.numas_per_socket, args.cores_per_numa)
-            break
-
     if num_node <= 0:
         eexit(1, f"Invalid number of node: {num_node}")
     if num_rank <= 0:
         eexit(1, f"Invalid number of rank: {num_rank}")
     if threads_per_rank <= 0:
         eexit(1, f"Invalid threads per rank: {threads_per_rank}")
-    if args.sockets_per_node <= 0:
-        eexit(1, f"Invalid sockets per node: {args.sockets_per_node}")
-    if args.numas_per_socket <= 0:
-        eexit(1, f"Invalid numas per socket: {args.numas_per_socket}")
-    if args.cores_per_numa <= 0:
-        eexit(1, f"Invalid cores per numa: {args.cores_per_numa}")
+    if cfg.sockets_per_node <= 0:
+        eexit(1, f"Invalid sockets per node: {cfg.sockets_per_node}")
+    if cfg.numas_per_socket <= 0:
+        eexit(1, f"Invalid numas per socket: {cfg.numas_per_socket}")
+    if cfg.cores_per_numa <= 0:
+        eexit(1, f"Invalid cores per numa: {cfg.cores_per_numa}")
 
-    nodes = expand_nodelist(nodelist)
+    nodes = expand_nodelist(cfg.nodelist)
     ranks, imbalanced = fill_ranks(hwinfo, nodes, region, left_most_cores, imbalance, num_node, num_rank, threads_per_rank)
 
     eprint(f"{parser.prog}: {parser.description}")
-    eprint(f"=== Platform Summary")
-    if used_predef:
-        eprint(f"Used predefined platform: {PREDEFS[used_predef]['desc']}")
-    eprint(f"Node list: {nodelist} ({len(nodes)} nodes)")
+    eprint(f"\x1b[1;32m=== Platform Summary\x1b[0m")
+    if getattr(cfg, "desc", None):
+        if modified_config:
+            eprint(f"Based on platform config: [{cfg.key}] {cfg.desc}")
+        else:
+            eprint(f"Used platform config without modification: [{cfg.key}] {cfg.desc}")
+    eprint(f"Node list: {cfg.nodelist} (total {len(nodes)} nodes)")
     eprint(f"Sockets per node: {hwinfo.sockets_per_node}")
-    eprint(f"Numas per node: {hwinfo.numas_per_node}")
-    eprint(f"Cores per node: {hwinfo.cores_per_node}")
+    eprint(f"Numas per socket: {hwinfo.numas_per_socket} (total {hwinfo.numas_per_node} numas per node)")
+    eprint(f"Cores per numa: {hwinfo.cores_per_numa} (total {hwinfo.cores_per_node} cores per node)")
     eprint(f"")
-    eprint(f"=== Generator Summary")
+    eprint(f"\x1b[1;32m=== Generator Summary\x1b[0m")
     eprint(f"Number of node: {num_node}")
     eprint(f"Number of rank: {num_rank}")
     eprint(f"Number of thread: {threads_per_rank} (per rank)")
@@ -532,9 +578,9 @@ def main():
     content = "\n".join([str(rank) for rank in ranks])
     if use_tempfile:
         # Prevent collision of number with '-', for example 1125 can be treat as 1-12-5 or 11-2-5
-        sign1 = f'{args.sockets_per_node}-{args.numas_per_socket}-{args.cores_per_numa}'
+        sign1 = f'{cfg.sockets_per_node}-{cfg.numas_per_socket}-{cfg.cores_per_numa}'
         sign2 = f'{num_node}-{num_rank}-{threads_per_rank}-{region}-{"L" if left_most_cores else "R"}-{"I" if imbalance else "B"}'
-        sign3 = args.nodelist
+        sign3 = cfg.nodelist
         bign1 = base64_encode(sign1) # bign1 = sign1
         bign2 = base64_encode(sign2) # bign2 = sign2
         hashed = base64_encode(sign3)
@@ -555,10 +601,10 @@ def main():
             path.parent.mkdir(parents=True, exist_ok=True)
             with open(file, "w") as tmp:
                 tmp.write(content)
-        eprint(f"=== Temporary file used to write output:")
+        eprint(f"\x1b[1;32m=== Temporary file used to write output:\x1b[0m")
         print(tmp.name)
     elif outfile == "<stdout>":
-        eprint(f"=== Content generated to <stdout>:")
+        eprint(f"\x1b[1;32m=== Content generated to <stdout>:\x1b[0m")
         print(content)
         eprint(f"")
     else:
@@ -569,10 +615,10 @@ def main():
         except:
             eprint(f"Cannot open {outfile} to write output.")
     if fingerprint == "first":
-        eprint(f"=== Fingerprint of first node")
+        eprint(f"\x1b[1;32m=== Fingerprint of first node\x1b[0m")
         print_fingerprint(hwinfo, ranks, region, nodes[0])
     elif fingerprint == "all":
-        eprint(f"=== Fingerprint of all {num_node} nodes")
+        eprint(f"\x1b[1;32m=== Fingerprint of all {num_node} nodes\x1b[0m")
         for i in range(num_node):
             print_fingerprint(hwinfo, ranks, region, nodes[i])
 
