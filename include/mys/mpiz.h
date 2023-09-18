@@ -145,9 +145,8 @@ MYS_STATIC commgroup_t MPIz_commgroup_create_node(MPI_Comm global_comm)
     MPI_Comm_rank(global_comm, &global_myrank);
 
     MPI_Comm local_comm = MPI_COMM_NULL;
-    int node_root;
+    int node_root = global_myrank;
     MPI_Comm_split_type(global_comm, MPI_COMM_TYPE_SHARED, global_myrank, MPI_INFO_NULL, &local_comm);
-    MPI_Comm_rank(local_comm, &node_root);
     MPI_Bcast(&node_root, 1, MPI_INT, 0, local_comm);
     MPI_Comm_free(&local_comm);
 
