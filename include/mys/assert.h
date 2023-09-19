@@ -298,6 +298,14 @@
 #define ASX_GE_PTR(exp1, exp2, fmt, ...)             __ASSERTX_ONE_OP__(exp1,>=,exp2,"%p",fmt,##__VA_ARGS__) // Assert exp1 >= exp2 (void *)
 #define ASX_BETWEEN_IE_PTR(low, exp, high, fmt, ...) __ASSERTX_TWO_OP__(low,<=,exp,< ,high,"%p",fmt,##__VA_ARGS__) // Assert low <= exp < high (void *)
 #define ASX_BETWEEN_II_PTR(low, exp, high, fmt, ...) __ASSERTX_TWO_OP__(low,<=,exp,<=,high,"%p",fmt,##__VA_ARGS__) // Assert low <= exp <= high (void *)
+#define ASX_EQ_CHAR(exp1, exp2, fmt, ...)             __ASSERTX_ONE_OP__(exp1,==,exp2,"%c",fmt,##__VA_ARGS__) // Assert exp1 == exp2 (char)
+#define ASX_NE_CHAR(exp1, exp2, fmt, ...)             __ASSERTX_ONE_OP__(exp1,!=,exp2,"%c",fmt,##__VA_ARGS__) // Assert exp1 != exp2 (char)
+#define ASX_LT_CHAR(exp1, exp2, fmt, ...)             __ASSERTX_ONE_OP__(exp1,< ,exp2,"%c",fmt,##__VA_ARGS__) // Assert exp1 < exp2 (char)
+#define ASX_LE_CHAR(exp1, exp2, fmt, ...)             __ASSERTX_ONE_OP__(exp1,<=,exp2,"%c",fmt,##__VA_ARGS__) // Assert exp1 <= exp2 (char)
+#define ASX_GT_CHAR(exp1, exp2, fmt, ...)             __ASSERTX_ONE_OP__(exp1,> ,exp2,"%c",fmt,##__VA_ARGS__) // Assert exp1 > exp2 (char)
+#define ASX_GE_CHAR(exp1, exp2, fmt, ...)             __ASSERTX_ONE_OP__(exp1,>=,exp2,"%c",fmt,##__VA_ARGS__) // Assert exp1 >= exp2 (char)
+#define ASX_BETWEEN_IE_CHAR(low, exp, high, fmt, ...) __ASSERTX_TWO_OP__(low,<=,exp,< ,high,"%c",fmt,##__VA_ARGS__) // Assert low <= exp < high (char)
+#define ASX_BETWEEN_II_CHAR(low, exp, high, fmt, ...) __ASSERTX_TWO_OP__(low,<=,exp,<=,high,"%c",fmt,##__VA_ARGS__) // Assert low <= exp <= high (char)
 #define ASX_EQ_SIZET(exp1, exp2, fmt, ...)             __ASSERTX_ONE_OP__(exp1,==,exp2,"%zu",fmt,##__VA_ARGS__) // Assert exp1 == exp2 (size_t)
 #define ASX_NE_SIZET(exp1, exp2, fmt, ...)             __ASSERTX_ONE_OP__(exp1,!=,exp2,"%zu",fmt,##__VA_ARGS__) // Assert exp1 != exp2 (size_t)
 #define ASX_LT_SIZET(exp1, exp2, fmt, ...)             __ASSERTX_ONE_OP__(exp1,< ,exp2,"%zu",fmt,##__VA_ARGS__) // Assert exp1 < exp2 (size_t)
@@ -343,6 +351,7 @@ types = [
     ("uint32_t", "U32", "%u"),
     ("uint64_t", "U64", "%llu"),
     ("void *", "PTR", "%p"),
+    ("char", "CHAR", "%c"),
     ("size_t", "SIZET", "%zu"),
     ("ssize_t", "SSIZET", "%zd"),
     ("float", "F32", "%f"),
