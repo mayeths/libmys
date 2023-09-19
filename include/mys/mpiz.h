@@ -19,11 +19,11 @@ typedef struct
     MPI_Comm local_comm;
     int local_myrank;
     int local_nranks;
-    MPI_Comm inter_comm; // communicator across group (significant only at group root)
+    MPI_Comm inter_comm; // communicator for the same local_myrank among groups (ranks are ordered by group_id)
     int *_rows; // size=global_nranks. _rows[global_rank] is the group to which the rank belongs
     int *_cols; // size=global_nranks. _cols[global_rank] is the local_rank in group
-    int *_brothers; // size=local_nranks. _brothers[local_rank] is the global_rank on the same group
-    int *_roots; // size=group_num. _roots[group_id] is the global rank of each group root
+    int *_brothers; // size=local_nranks. _brothers[local_rank] is the global_rank of each group_member in the same group
+    int *_neighbors; // size=group_num. _neighbors[group_id] is the global_rank of each group member that has the same local_myrank to me
 } _commgroup_struct_t;
 
 typedef _commgroup_struct_t* commgroup_t; // handle
@@ -32,14 +32,14 @@ typedef _commgroup_struct_t* commgroup_t; // handle
 static int _MPIz_commgroup_rank_sortfn(const void* a, const void* b);
 
 /**
- * @brief Create communication group information based on group id
+ * @brief Create communication group information based on group color assignment
  * 
  * @param comm The parent communicator of the group
- * @param group_color Control of group assignment (nonnegative integer, can be discontinuous).
+ * @param group_color Control of group assignment (nonnegative integer, can be discontinuous. `group_id` will follow the order of color).
  * @param group_key Control of rank in group assignment (integer, can be discontinuous).
  * @return The group handle
  * 
- * @note Use MPIz_commgroup_create_node(comm) to construct node based group
+ * @note Use MPIz_commgroup_create_node(comm) to construct node based group.
  */
 MYS_STATIC commgroup_t MPIz_commgroup_create(MPI_Comm global_comm, int group_color, int group_key)
 {
@@ -100,16 +100,12 @@ MYS_STATIC commgroup_t MPIz_commgroup_create(MPI_Comm global_comm, int group_col
     group->_brothers[group->local_myrank] = group->global_myrank;
     MPI_Allgather(MPI_IN_PLACE, 1, MPI_INT, group->_brothers, 1, MPI_INT, group->local_comm);
 
-    MPI_Comm_split(group->global_comm, group->local_myrank == 0, group->group_id, &group->inter_comm);
-    if (group->local_myrank != 0) {
-        MPI_Comm_free(&group->inter_comm);
-    }
-    group->_roots = (int *)malloc(sizeof(int) * group->group_num);
-    if (group->local_myrank == 0) {
-        group->_roots[group->group_id] = group->global_myrank;
-        MPI_Allgather(MPI_IN_PLACE, 1, MPI_INT, group->_roots, 1, MPI_INT, group->inter_comm);
-    }
-    MPI_Bcast(group->_roots, group->group_num, MPI_INT, 0, group->local_comm);
+    MPI_Comm_split(group->global_comm, group->local_myrank, group->group_id, &group->inter_comm);
+    group->_neighbors = (int *)malloc(sizeof(int) * group->group_num);
+    for (int i = 0; i < group->group_num; i++)
+        group->_neighbors[i] = -1;
+    group->_neighbors[group->group_id] = group->global_myrank;
+    MPI_Allgather(MPI_IN_PLACE, 1, MPI_INT, group->_neighbors, 1, MPI_INT, group->inter_comm);
 
     free(requests);
     free(roots);
@@ -126,12 +122,11 @@ MYS_STATIC void MPIz_commgroup_release(commgroup_t group)
     if (group == COMMGROUP_NULL) return;
     MPI_Comm_free(&group->global_comm);
     MPI_Comm_free(&group->local_comm);
-    if (group->local_myrank == 0)
-        MPI_Comm_free(&group->inter_comm);
+    MPI_Comm_free(&group->inter_comm);
     free(group->_rows);
     free(group->_cols);
     free(group->_brothers);
-    free(group->_roots);
+    free(group->_neighbors);
 }
 
 /**
@@ -154,43 +149,56 @@ MYS_STATIC commgroup_t MPIz_commgroup_create_node(MPI_Comm global_comm)
 }
 
 /**
- * @brief Query the group to which the rank belongs (Support querying for rank on differnt group)
+ * @brief Query the group to which the rank belongs (Support querying rank in other group)
  * @param global_rank The global rank to be query
- * @return The group id
+ * @return The group id. -1 if provided invalid global_rank
  */
 MYS_STATIC int MPIz_query_group_id(commgroup_t group, int global_rank)
 {
-    return group->_rows[global_rank];
+    if (global_rank < 0 || global_rank >= group->global_nranks)
+        return -1;
+    else
+        return group->_rows[global_rank];
 }
 
 /**
- * @brief Query the local rank of the global rank (Support querying for rank on differnt group)
+ * @brief Query the local rank of the global rank (Support querying rank in other group)
  * @param global_rank The global rank to be query
- * @return The local rank
+ * @return The local rank. -1 if provided invalid global_rank
  */
 MYS_STATIC int MPIz_query_local_rank(commgroup_t group, int global_rank)
 {
-    return group->_cols[global_rank];
+    if (global_rank < 0 || global_rank >= group->global_nranks)
+        return -1;
+    else
+        return group->_cols[global_rank];
 }
 
 /**
- * @brief Query the global rank of the local rank (ONLY support querying for rank on the same group)
+ * @brief Query the global rank of the local rank (ONLY support querying rank in the same group)
  * @param local_rank The local rank to be query
- * @return The global rank
+ * @return The global rank. -1 if provided invalid local_rank
  */
-MYS_STATIC int MPIz_query_global_rank(commgroup_t group, int local_rank)
+MYS_STATIC int MPIz_query_brother(commgroup_t group, int local_rank)
 {
-    return group->_brothers[local_rank];
+    if (local_rank < 0 || local_rank >= group->local_nranks)
+        return -1;
+    else
+        return group->_brothers[local_rank];
 }
 
 /**
- * @brief Query the global rank of group root (Support querying for root on differnt group)
+ * @brief Query the global rank of each group member that has the same `local_myrank` (Support querying rank in other group)
  * @param group_id The groud id to be query
- * @return The global rank of group root
+ * @return The global rank of group member. -1 if provided invalid local_rank,
+ *      or that group doesn't has corresponding neighbor that has the same `local_myrank`
  */
-MYS_STATIC int MPIz_query_group_root(commgroup_t group, int group_id)
+MYS_STATIC int MPIz_query_neighbor(commgroup_t group, int group_id)
 {
-    return group->_roots[group_id];
+    if (group_id < 0 || group_id >= group->group_num)
+        return -1;
+    else
+        return group->_neighbors[group_id];
 }
 
 
@@ -206,7 +214,7 @@ static int _MPIz_commgroup_rank_sortfn(const void* a, const void* b)
     else return 0;
 }
 
-/* mpicc -I${MYS_DIR}/include a.c && mpirun -n 4 ./a.out 1
+/* mpicc -I${MYS_DIR}/include a.c && mpirun -n 5 ./a.out 3
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -227,11 +235,12 @@ int main(int argc, char **argv)
     commgroup_t commgroup = COMMGROUP_NULL;
     // commgroup = MPIz_commgroup_create_node(MPI_COMM_WORLD);
     // commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, myrank, myrank);
-    if (myrank == 0) {
-        commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, 0, myrank);
-    } else {
-        commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, 1, myrank);
-    }
+    // if (myrank == 0) {
+    //     commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, 0, myrank);
+    // } else {
+    //     commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, 1, myrank);
+    // }
+    commgroup = MPIz_commgroup_create(MPI_COMM_WORLD, myrank < nranks / 2, myrank);
 
     if (commgroup->global_myrank == who) {
         printf("Rank %d has %d friends\n", commgroup->global_myrank, commgroup->local_nranks);
@@ -242,8 +251,8 @@ int main(int argc, char **argv)
         }
         printf("\n");
         for (int group_id = 0; group_id < commgroup->group_num; group_id++) {
-            int root = MPIz_query_group_root(commgroup, group_id);
-            printf("Group %d root is %d\n", group_id, root);
+            int neighbor = MPIz_query_neighbor(commgroup, group_id);
+            printf("Group %d neighbor is %d\n", group_id, neighbor);
         }
     }
     MPI_Barrier(MPI_COMM_WORLD);
