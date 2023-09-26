@@ -1432,34 +1432,61 @@ MYS_API double mys_standard_deviation(double *arr, int n)
     return _mys_math_sqrt(denom / nom);
 }
 
-MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
+MYS_API void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregate_t *results)
 {
     mys_mpi_init();
-    mys_aggregate_t result;
-    {// my local value
-        result.mine = value;
-    }
-    {// sum and avg
-        _mys_MPI_Allreduce(&value, &result.sum, 1, _mys_MPI_DOUBLE, _mys_MPI_SUM, _mys_mpi_G.comm);
-        result.avg = result.sum / (double)mys_mpi_nranks();
+    int myrank = mys_mpi_myrank();
+    int nranks = mys_mpi_nranks();
+    struct di_t { double d; int i; };
+    struct di_t *dibuf = (struct di_t *)malloc(sizeof(struct di_t) * n);
+    double *dbuf = (double *)((void *)dibuf);
+
+    {// mine, sum, avg
+        _mys_MPI_Allreduce(values, dbuf, n, _mys_MPI_DOUBLE, _mys_MPI_SUM, _mys_mpi_G.comm);
+        for (size_t i = 0; i < n; i++) {
+            results[i].mine = values[i];
+            results[i].sum = dbuf[i];
+            results[i].avg = dbuf[i] / (double)nranks;
+        }
     }
     {// var and std
-        double tmp = (value - result.avg) * (value - result.avg);
-        _mys_MPI_Allreduce(&tmp, &result.var, 1, _mys_MPI_DOUBLE, _mys_MPI_SUM, _mys_mpi_G.comm);
-        result.var = result.var / (double)mys_mpi_nranks();
-        result.std = _mys_math_sqrt(result.var);
+        for (size_t i = 0; i < n; i++) {
+            dbuf[i] = (values[i] - results[i].avg) * (values[i] - results[i].avg);
+        }
+        _mys_MPI_Allreduce(_mys_MPI_IN_PLACE, dbuf, n, _mys_MPI_DOUBLE, _mys_MPI_SUM, _mys_mpi_G.comm);
+        for (size_t i = 0; i < n; i++) {
+            results[i].var = dbuf[i] / (double)nranks;
+            results[i].std = _mys_math_sqrt(results[i].var);
+        }
     }
     {// max and min
-        struct _double_int_t { double d; int i; } l, gmax, gmin;
-        l.d = value;
-        l.i = mys_mpi_myrank();
-        _mys_MPI_Allreduce(&l, &gmax, 1, _mys_MPI_DOUBLE_INT, _mys_MPI_MAXLOC, _mys_mpi_G.comm);
-        _mys_MPI_Allreduce(&l, &gmin, 1, _mys_MPI_DOUBLE_INT, _mys_MPI_MINLOC, _mys_mpi_G.comm);
-        result.max = gmax.d;
-        result.min = gmin.d;
-        result.loc_max = gmax.i;
-        result.loc_min = gmin.i;
+        for (size_t i = 0; i < n; i++) {
+            dibuf[i].d = values[i];
+            dibuf[i].i = myrank;
+        }
+        _mys_MPI_Allreduce(_mys_MPI_IN_PLACE, dibuf, n, _mys_MPI_DOUBLE_INT, _mys_MPI_MAXLOC, _mys_mpi_G.comm);
+        for (size_t i = 0; i < n; i++) {
+            results[i].max = dibuf[i].d;
+            results[i].loc_max = dibuf[i].i;
+        }
+
+        for (size_t i = 0; i < n; i++) {
+            dibuf[i].d = values[i];
+            dibuf[i].i = myrank;
+        }
+        _mys_MPI_Allreduce(_mys_MPI_IN_PLACE, dibuf, n, _mys_MPI_DOUBLE_INT, _mys_MPI_MINLOC, _mys_mpi_G.comm);
+        for (size_t i = 0; i < n; i++) {
+            results[i].min = dibuf[i].d;
+            results[i].loc_min = dibuf[i].i;
+        }
     }
+    free(dibuf);
+}
+
+MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
+{
+    mys_aggregate_t result;
+    mys_aggregate_analysis_array(1, &value, &result);
     return result;
 }
 

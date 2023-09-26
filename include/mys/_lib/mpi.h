@@ -42,6 +42,7 @@ typedef int _mys_MPI_Status;
 #define _mys_MPI_THREAD_FUNNELED   2
 #define _mys_MPI_THREAD_SERIALIZED 3
 #define _mys_MPI_THREAD_MULTIPLE   4
+#define _mys_MPI_IN_PLACE          5
 #else
 #include <mpi.h>
 /////// MPI_Comm
@@ -78,6 +79,7 @@ typedef MPI_Status _mys_MPI_Status;
 #define _mys_MPI_THREAD_FUNNELED   MPI_THREAD_FUNNELED
 #define _mys_MPI_THREAD_SERIALIZED MPI_THREAD_SERIALIZED
 #define _mys_MPI_THREAD_MULTIPLE   MPI_THREAD_MULTIPLE
+#define _mys_MPI_IN_PLACE          MPI_IN_PLACE
 #endif
 
 

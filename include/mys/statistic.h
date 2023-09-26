@@ -28,7 +28,18 @@ typedef struct mys_aggregate_t {
     /* rank containing minimum value */
     int loc_min;
 } mys_aggregate_t;
+
+/**
+ * @brief Do aggregate analysis among all MPI ranks
+ * 
+ * @param value The value to be analysis
+ * @return `mys_aggregate_t` containing all infomations about value of all MPI ranks
+ */
 MYS_API mys_aggregate_t mys_aggregate_analysis(double value);
+/**
+ * @brief See `mys_aggregate_analysis()`
+ */
+MYS_API void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregate_t *results);
 
 ////// Legacy
 #if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_STATISTIC)
