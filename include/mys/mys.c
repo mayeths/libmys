@@ -28,6 +28,9 @@
 #include "log.h"
 #include "macro.h"
 #include "memory.h"
+#ifndef MYS_NO_MPI
+#include "mys/mpiz.h"
+#endif
 #include "os.h"
 #include "partition.h"
 #include "rand.h"
@@ -2312,6 +2315,7 @@ MYS_API void mys_guard_end(const char *type_name, size_t type_size, void *variab
 }
 
 
+#ifndef MYS_NO_MPI
 static int _commgroup_rank_sortfn(const void* a, const void* b)
 {
     const int *intA = (const int *)a;
@@ -2320,7 +2324,6 @@ static int _commgroup_rank_sortfn(const void* a, const void* b)
     else if (*intA > *intB) return 1;
     else return 0;
 }
-
 
 MYS_API mys_commgroup_t mys_commgroup_create(MPI_Comm global_comm, int group_color, int group_key)
 {
@@ -2395,7 +2398,6 @@ MYS_API mys_commgroup_t mys_commgroup_create(MPI_Comm global_comm, int group_col
     return (mys_commgroup_t)group;
 }
 
-
 MYS_API void mys_commgroup_release(mys_commgroup_t group)
 {
     assert(group != NULL);
@@ -2408,7 +2410,6 @@ MYS_API void mys_commgroup_release(mys_commgroup_t group)
     free(group->_brothers);
     free(group->_neighbors);
 }
-
 
 MYS_API mys_commgroup_t mys_commgroup_create_node(MPI_Comm global_comm)
 {
@@ -2425,7 +2426,6 @@ MYS_API mys_commgroup_t mys_commgroup_create_node(MPI_Comm global_comm)
     return mys_commgroup_create(global_comm, node_root, global_myrank);
 }
 
-
 MYS_API int mys_query_group_id(mys_commgroup_t group, int global_rank)
 {
     if (global_rank < 0 || global_rank >= group->global_nranks)
@@ -2433,7 +2433,6 @@ MYS_API int mys_query_group_id(mys_commgroup_t group, int global_rank)
     else
         return group->_rows[global_rank];
 }
-
 
 MYS_API int mys_query_local_rank(mys_commgroup_t group, int global_rank)
 {
@@ -2443,7 +2442,6 @@ MYS_API int mys_query_local_rank(mys_commgroup_t group, int global_rank)
         return group->_cols[global_rank];
 }
 
-
 MYS_API int mys_query_brother(mys_commgroup_t group, int local_rank)
 {
     if (local_rank < 0 || local_rank >= group->local_nranks)
@@ -2452,7 +2450,6 @@ MYS_API int mys_query_brother(mys_commgroup_t group, int local_rank)
         return group->_brothers[local_rank];
 }
 
-
 MYS_API int mys_query_neighbor(mys_commgroup_t group, int group_id)
 {
     if (group_id < 0 || group_id >= group->group_num)
@@ -2460,6 +2457,7 @@ MYS_API int mys_query_neighbor(mys_commgroup_t group, int group_id)
     else
         return group->_neighbors[group_id];
 }
+#endif
 
 
 ////////////
