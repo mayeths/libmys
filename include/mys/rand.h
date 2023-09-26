@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "thread.h"
+#include "_config.h"
 
 /**
  * @brief Set the seed for a new sequence to be returned by mys_rand_xoroshiro128ss().
