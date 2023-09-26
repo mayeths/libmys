@@ -37,7 +37,11 @@ typedef struct mys_aggregate_t {
  */
 MYS_API mys_aggregate_t mys_aggregate_analysis(double value);
 /**
- * @brief See `mys_aggregate_analysis()`
+ * @brief Do aggregate analysis among all MPI ranks
+ * 
+ * @param n size of values and results array
+ * @param values the data to be analysis
+ * @param results resulting array to containing all infomations about values of all MPI ranks
  */
 MYS_API void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregate_t *results);
 
