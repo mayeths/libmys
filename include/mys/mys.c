@@ -35,6 +35,7 @@
 #include "partition.h"
 #include "rand.h"
 #include "statistic.h"
+#include "string.h"
 #include "thread.h"
 
 mys_thread_local int mys_errno = 0;
@@ -2311,6 +2312,64 @@ MYS_API void mys_guard_end(const char *type_name, size_t type_size, void *variab
     if (type_node->num_record == 0) {
         _mys_guard_map_remove(&_mys_guard_G.map, type_node);
     }
+}
+
+
+// https://stackoverflow.com/a/466242/11702338
+static size_t _mys_round_ceil_2_power(size_t num)
+{
+    --num;
+    num |= num >> 1;
+    num |= num >> 2;
+    num |= num >> 4;
+    num |= num >> 8;
+    num |= num >> 16;
+#if SIZE_MAX == UINT64_MAX
+    num |= num >> 32;
+#endif
+    return ++num;
+}
+
+MYS_API mys_string_t mys_string_create()
+{
+    mys_string_t str = (mys_string_t)malloc(sizeof(struct mys_string_struct));
+    str->text = NULL;
+    str->size = 0;
+    str->capacity = 0;
+    return str;
+}
+
+MYS_API void mys_string_destroy(mys_string_t str)
+{
+    if (str != NULL) {
+        if (str->text != NULL)
+            free(str->text);
+        free(str);
+    }
+}
+
+MYS_API void mys_string_fmt(mys_string_t str, const char *format, ...)
+{
+    va_list vargs, vargs_copy;
+    va_start(vargs, format);
+
+    va_copy(vargs_copy, vargs);
+    int needed = vsnprintf(NULL, 0, format, vargs_copy) + 1; // Extra space for '\0'
+    va_end(vargs_copy);
+    if (needed <= 0)
+        goto finish;
+
+    if (str->capacity - str->size < (size_t)needed) {
+        size_t new_capacity = _mys_round_ceil_2_power(str->capacity + (size_t)needed);
+        char *new_text = (char *)realloc(str->text, new_capacity);
+        if (new_text == NULL)
+            goto finish;
+        str->text = new_text;
+        str->capacity = new_capacity;
+    }
+    str->size += vsnprintf(str->text + str->size, str->capacity - str->size, format, vargs);
+finish:
+    va_end(vargs);
 }
 
 

@@ -49,6 +49,7 @@ extern "C" {
 #include "./mys/partition.h"
 #include "./mys/rand.h"
 #include "./mys/statistic.h"
+#include "./mys/string.h"
 #include "./mys/thread.h"
 #ifdef CUDA_ARCH
 #include "./mys/cuda.cuh"
