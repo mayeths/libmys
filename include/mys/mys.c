@@ -495,22 +495,25 @@ static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata) {
 }
 
 
+#define _MYS_FNAME_MAX 256
+#define _MYS_RANK_LOG_DEST_NUM 32
+
 typedef struct {
     bool inited;
     mys_mutex_t lock;
-    int ndest;
+    int max_used;
     struct {
-        char *folder;
         FILE *file;
-    } dests[128];
+        char folder[_MYS_FNAME_MAX];
+    } dests[_MYS_RANK_LOG_DEST_NUM];
 } _mys_rank_log_G_t;
 
 _mys_rank_log_G_t _mys_rank_log_G = {
     .inited = false,
     .lock = MYS_MUTEX_INITIALIZER,
-    .ndest = 0,
+    .max_used = 0,
     .dests = {
-        { .folder = NULL, .file = NULL, },
+        { .file = NULL, },
     },
 };
 
@@ -523,13 +526,12 @@ MYS_STATIC void _mys_rank_log_init()
     mys_mutex_unlock(&_mys_rank_log_G.lock);
 }
 
-MYS_STATIC int _mys_rank_log_find_dest(const char *folder)
+MYS_STATIC int _mys_rank_log_find_dest(const char *folder, size_t len)
 {
     int index = -1;
     _mys_rank_log_init();
     mys_mutex_lock(&_mys_rank_log_G.lock);
-    size_t len = strnlen(folder, 1024);
-    for (int i = 0; i < _mys_rank_log_G.ndest; i++) {
+    for (int i = 0; i < _mys_rank_log_G.max_used; i++) {
         if (strncmp(_mys_rank_log_G.dests[i].folder, folder, len) == 0) {
             index = i;
             break;
@@ -542,13 +544,14 @@ MYS_STATIC int _mys_rank_log_find_dest(const char *folder)
 MYS_API void mys_rank_log(const char *callsite_file, int callsite_line, const char *folder, const char *fmt, ...)
 {
     _mys_rank_log_init();
-    int index = _mys_rank_log_find_dest(folder);
+    size_t len = strnlen(folder, _MYS_FNAME_MAX);
+    int index = _mys_rank_log_find_dest(folder, len);
     mys_mutex_lock(&_mys_rank_log_G.lock);
     if (index == -1) {
         mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callsite_file, callsite_line, "Invoked mys_rank_log() with invalid folder: %s", folder);
         goto _finished;
     }
-    if (_mys_rank_log_G.dests[index].file != NULL) {
+    if (_mys_rank_log_G.dests[index].file == NULL) {
         mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callsite_file, callsite_line, "Invoked mys_rank_log() with closed folder: %s", folder);
         goto _finished;
     }
@@ -561,6 +564,7 @@ MYS_API void mys_rank_log(const char *callsite_file, int callsite_line, const ch
     va_start(vargs, fmt);
     vfprintf(_mys_rank_log_G.dests[index].file, fmt, vargs);
     va_end(vargs);
+    fprintf(_mys_rank_log_G.dests[index].file, "\n");
 
 _finished:
     mys_mutex_unlock(&_mys_rank_log_G.lock);
@@ -569,13 +573,18 @@ _finished:
 MYS_API void mys_rank_log_open(const char *callsite_file, int callsite_line, const char *folder)
 {
     _mys_rank_log_init();
-    int index = _mys_rank_log_find_dest(folder);
+    size_t len = strnlen(folder, _MYS_FNAME_MAX);
+    int index = _mys_rank_log_find_dest(folder, len);
     mys_mutex_lock(&_mys_rank_log_G.lock);
     if (index != -1 && _mys_rank_log_G.dests[index].file != NULL) {
         mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callsite_file, callsite_line, "Reopen an activating rank log folder: %s", folder);
         goto _finished;
     }
 
+    if (_mys_rank_log_G.max_used == _MYS_RANK_LOG_DEST_NUM) {
+        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callsite_file, callsite_line, "Cannot open %s because too many folder opened (%d)", folder, _mys_rank_log_G.max_used);
+        goto _finished;
+    }
     char name[4096];
     snprintf(name, sizeof(name), "%s/%06d.log", folder, mys_mpi_myrank());
     mys_ensure_dir(folder, 0777);
@@ -586,10 +595,9 @@ MYS_API void mys_rank_log_open(const char *callsite_file, int callsite_line, con
             mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callsite_file, callsite_line, "Error on opening rank log folder: %s", folder);
             goto _finished;
         }
-        index = _mys_rank_log_G.ndest;
+        index = _mys_rank_log_G.max_used++;
         _mys_rank_log_G.dests[index].file = file;
-        _mys_rank_log_G.ndest += 1;
-        mys_log(mys_mpi_myrank(), MYS_LOG_INFO, callsite_file, callsite_line, "Opened rank log folder: %s", folder);
+        strncpy(_mys_rank_log_G.dests[index].folder, folder, len);
     } else { // _mys_rank_log_G.dests[index].file == NULL
         // Open with append mode
         FILE *file = fopen(name, "a");
@@ -598,9 +606,10 @@ MYS_API void mys_rank_log_open(const char *callsite_file, int callsite_line, con
             goto _finished;
         }
         _mys_rank_log_G.dests[index].file = file;
-        mys_log(mys_mpi_myrank(), MYS_LOG_INFO, callsite_file, callsite_line, "Reopened rank log folder: %s", folder);
     }
 
+    mys_log(0, MYS_LOG_INFO, callsite_file, callsite_line, "Opened rank log folder: %s", folder);
+    mys_mpi_barrier();
 _finished:
     mys_mutex_unlock(&_mys_rank_log_G.lock);
 }
@@ -608,20 +617,23 @@ _finished:
 MYS_API void mys_rank_log_close(const char *callsite_file, int callsite_line, const char *folder)
 {
     _mys_rank_log_init();
-    int index = _mys_rank_log_find_dest(folder);
+    size_t len = strnlen(folder, _MYS_FNAME_MAX);
+    int index = _mys_rank_log_find_dest(folder, len);
     mys_mutex_lock(&_mys_rank_log_G.lock);
 
     if (index == -1) {
         mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callsite_file, callsite_line, "Can not close invalid folder: %s", folder);
         goto _finished;
     }
-    if (_mys_rank_log_G.dests[index].file != NULL) {
+    if (_mys_rank_log_G.dests[index].file == NULL) {
         mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callsite_file, callsite_line, "Can not close closed folder: %s", folder);
         goto _finished;
     }
     fclose(_mys_rank_log_G.dests[index].file);
     _mys_rank_log_G.dests[index].file = NULL;
 
+    mys_log(0, MYS_LOG_INFO, callsite_file, callsite_line, "Closed rank log folder: %s", folder);
+    mys_mpi_barrier();
 _finished:
     mys_mutex_unlock(&_mys_rank_log_G.lock);
 }

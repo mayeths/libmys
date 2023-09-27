@@ -77,16 +77,10 @@ enum {
  * Upon the first time opening, print a info log to stdout to indicate using this facility.
  * XLOG will flush message to last opening target, which we store the folder name internally.
  * In our design, such a function may be high-overhead, so it should be striking enough to prevent accident outputing.
- * This function won't add newline '\n' automatically
  */
 #define RANKLOG(folder, fmt, ...) mys_rank_log(MYS_FNAME, __LINE__, folder, fmt, ##__VA_ARGS__)
-#define RANKLOG_OPEN(folder) mys_rank_log_open(MYS_FNAME, __LINE__, folder)
-#define RANKLOG_CLOSE(folder) mys_rank_log_close(MYS_FNAME, __LINE__, folder)
-// Convenient predefined rank log
-#define MYS_RANK_LOG_DEFAULT_FOLDER "./LOG"
-#define XLOG(fmt, ...) RANKLOG(MYS_RANK_LOG_DEFAULT_FOLDER, fmt, ##__VA_ARGS__)
-#define XLOG_OPEN() RANKLOG_OPEN(MYS_RANK_LOG_DEFAULT_FOLDER)
-#define XLOG_CLOSE() RANKLOG_CLOSE(MYS_RANK_LOG_DEFAULT_FOLDER)
+#define RANKLOG_OPEN(folder) mys_rank_log_open(MYS_FNAME, __LINE__, folder) // Collective call
+#define RANKLOG_CLOSE(folder) mys_rank_log_close(MYS_FNAME, __LINE__, folder) // Collective call
 
 __attribute__((format(printf, 4, 5)))
 MYS_API void mys_rank_log(const char *callsite_file, int callsite_line, const char *folder, const char *fmt, ...);
