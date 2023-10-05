@@ -939,11 +939,8 @@ MYS_API double hrtime()
 }
 #endif
 
-static void _mys_close_fd(int fd)
-{
-    if (fcntl(fd, F_GETFL) != -1 || errno != EBADF)
-        close(fd);
-}
+
+#define _MYS_CLOSE_FD(fd) do { if (fcntl(fd, F_GETFL) != -1 || errno != EBADF) close(fd); } while (0)
 
 /**
  * @brief Create stdin/stdout/stderr pipe to subprocess opened with command
@@ -969,22 +966,22 @@ static int _mys_popen_rwe(int *ipipe, int *opipe, int *epipe, const char *comman
 
     pid = fork();
     if (pid > 0) { /* parent */
-        _mys_close_fd(in[0]);
-        _mys_close_fd(out[1]);
-        _mys_close_fd(err[1]);
+        _MYS_CLOSE_FD(in[0]);
+        _MYS_CLOSE_FD(out[1]);
+        _MYS_CLOSE_FD(err[1]);
         *ipipe = in[1];
         *opipe = out[0];
         *epipe = err[0];
         return pid;
     } else if (pid == 0) { /* child */
-        _mys_close_fd(in[1]);
-        _mys_close_fd(out[0]);
-        _mys_close_fd(err[0]);
-        _mys_close_fd(0);
+        _MYS_CLOSE_FD(in[1]);
+        _MYS_CLOSE_FD(out[0]);
+        _MYS_CLOSE_FD(err[0]);
+        _MYS_CLOSE_FD(0);
         dup(in[0]);
-        _mys_close_fd(1);
+        _MYS_CLOSE_FD(1);
         dup(out[1]);
-        _mys_close_fd(2);
+        _MYS_CLOSE_FD(2);
         dup(err[1]);
         execl( "/bin/sh", "sh", "-c", command, NULL );
         _exit(1);
@@ -994,23 +991,23 @@ static int _mys_popen_rwe(int *ipipe, int *opipe, int *epipe, const char *comman
     return pid;
 
 error_fork:
-    _mys_close_fd(err[0]);
-    _mys_close_fd(err[1]);
+    _MYS_CLOSE_FD(err[0]);
+    _MYS_CLOSE_FD(err[1]);
 error_err:
-    _mys_close_fd(out[0]);
-    _mys_close_fd(out[1]);
+    _MYS_CLOSE_FD(out[0]);
+    _MYS_CLOSE_FD(out[1]);
 error_out:
-    _mys_close_fd(in[0]);
-    _mys_close_fd(in[1]);
+    _MYS_CLOSE_FD(in[0]);
+    _MYS_CLOSE_FD(in[1]);
 error_in:
     return -1;
 }
 
 static int _mys_pclose_rwe(int pid, int ipipe, int opipe, int epipe)
 {
-    _mys_close_fd(ipipe);
-    _mys_close_fd(opipe);
-    _mys_close_fd(epipe);
+    _MYS_CLOSE_FD(ipipe);
+    _MYS_CLOSE_FD(opipe);
+    _MYS_CLOSE_FD(epipe);
     int status = -1;
     if (waitpid(pid, &status, 0) == pid)
         status = WEXITSTATUS(status);
@@ -1018,6 +1015,8 @@ static int _mys_pclose_rwe(int pid, int ipipe, int opipe, int epipe)
         status = -1;
     return status;
 }
+
+#undef _MYS_CLOSE_FD
 
 MYS_API mys_popen_t mys_popen_create(const char *argv)
 {
@@ -1029,15 +1028,15 @@ MYS_API mys_popen_t mys_popen_create(const char *argv)
     return result;
 }
 
-MYS_API int mys_popen_destroy(mys_popen_t *pd)
+MYS_API int mys_popen_destroy(mys_popen_t *p)
 {
-    if (pd == NULL)
+    if (p == NULL)
         return 0;
-    int result = _mys_pclose_rwe(pd->pid, pd->ifd, pd->ofd, pd->efd);
-    pd->pid = -1;
-    pd->ifd = -1;
-    pd->ofd = -1;
-    pd->efd = -1;
+    int result = _mys_pclose_rwe(p->pid, p->ifd, p->ofd, p->efd);
+    p->pid = -1;
+    p->ifd = -1;
+    p->ofd = -1;
+    p->efd = -1;
     return result;
 }
 
@@ -1074,45 +1073,95 @@ static size_t _mys_readfd(char **buffer, FILE *fd)
     return total_size;
 }
 
+
+// FIXME: Align to mys_prun_create_s. Like removing suffix \\n
 MYS_API mys_prun_t mys_prun_create(const char *argv)
 {
     mys_prun_t result;
     result.retval = -1;
     result.out = NULL;
     result.err = NULL;
+    result._by_safe = false;
 
     mys_popen_t pd = mys_popen_create(argv);
 
     FILE *outfd = fdopen(pd.ofd, "r");
     if (outfd) {
-        _mys_readfd(&result.out, outfd);
+        result.len_out = _mys_readfd(&result.out, outfd);
+        printf("alaala %zd %s\n", result.len_out, argv);
         fclose(outfd);
     } else {
         result.out = (char *)malloc(0);
+        result.len_out = 0;
     }
     FILE *errfd = fdopen(pd.efd, "r");
     if (errfd) {
-        _mys_readfd(&result.err, errfd);
+        result.len_err = _mys_readfd(&result.err, errfd);
         fclose(errfd);
     } else {
         result.err = (char *)malloc(0);
+        result.len_err = 0;
     }
     result.retval = mys_popen_destroy(&pd);
     return result;
 }
 
-MYS_API int mys_prun_destroy(mys_prun_t *pd)
+MYS_API mys_prun_t mys_prun_create_s(const char *argv, char *buf_out, size_t size_out, char *buf_err, size_t size_err)
 {
-    if (pd == NULL)
-        return 0;
-    if (pd->out != NULL)
-        free((char *)pd->out);
-    if (pd->err != NULL)
-        free((char *)pd->err);
-    pd->out = NULL;
-    pd->err = NULL;
-    pd->retval = -1;
-    return 0;
+    mys_prun_t result;
+    result.out = NULL;
+    result.err = NULL;
+    result.len_out = 0;
+    result.len_err = 0;
+    result._by_safe = true;
+    mys_popen_t pd = mys_popen_create(argv);
+
+    // Read data from the file descriptor
+    if (buf_out != NULL) {
+        while (size_out - result.len_out > 0) {
+            ssize_t ret = read(pd.ofd, buf_out, size_out - result.len_out);
+            if (ret <= 0) {
+                break; // cannot read more or no more message
+            } else {
+                result.len_out += (size_t)ret;
+            }
+        }
+        while (result.len_out > 0 && buf_out[result.len_out - 1] == '\n')
+            result.len_out -= 1;
+        buf_out[result.len_out] = '\0';
+    }
+
+    if (buf_err != NULL) {
+        while (size_err - result.len_err > 0) {
+            ssize_t ret = read(pd.efd, buf_err, size_err - result.len_err);
+            if (ret <= 0) {
+                break; // cannot read more or no more message
+            } else {
+                result.len_err += (size_t)ret;
+            }
+        }
+        while (result.len_err > 0 && buf_err[result.len_err - 1] == '\n')
+            result.len_err -= 1;
+        buf_err[result.len_err] = '\0';
+    }
+
+    result.retval = mys_popen_destroy(&pd);
+    return result;
+}
+
+MYS_API void mys_prun_destroy(mys_prun_t *p)
+{
+    if (p == NULL)
+        return;
+    if (p->_by_safe == false) {
+        if (p->out != NULL) free((char *)p->out);
+        if (p->err != NULL) free((char *)p->err);
+    }
+    p->out = NULL;
+    p->err = NULL;
+    p->len_out = 0;
+    p->len_err = 0;
+    p->retval = -1;
 }
 
 MYS_API void mys_bfilename(const char *path, char **basename)
@@ -1199,31 +1248,22 @@ MYS_API int mys_busysleep(double seconds)
 
 MYS_API const char *mys_procname()
 {
-    static char *name = NULL;
-    if (name != NULL)
-        return name;
-
-    char exe[1024];
-    int pid = (int)getpid();
-    snprintf(exe, sizeof(exe), "/proc/%d/exe", pid);
-    size_t capacity = 128;
-    char *buffer = (char *)malloc(sizeof(char) * capacity);
-    ssize_t len = readlink(exe, buffer, capacity);
-    while ((size_t)len >= (capacity - 1)) {
-        capacity += 128;
-        buffer = (char *)realloc(buffer, capacity);
-        len = readlink(exe, buffer, capacity);
+#ifdef __linux__
+    static char exe[512] = { '\0' };
+    if (exe[0] == '\0') {
+        int ret = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
+        if (ret > 0) {
+            exe[ret] = '\0';
+        } else {
+            char *reason = strerror(errno);
+            int pid = (int)getpid();
+            snprintf(exe, sizeof(exe), "<error_exe.pid=%d (%s)>", pid, reason);
+        }
     }
-    if (len <= 0) {
-        char *reason = strerror(errno);
-        int size = snprintf(NULL, 0, "<error_exe.pid=%d (%s)>", pid, reason);
-        name = (char *)malloc(sizeof(char) * size);
-        snprintf(name, size, "<error_exe.pid=%d (%s)>", pid, reason);
-    } else {
-        buffer[len] = '\0';
-        mys_bfilename(buffer, &name);
-    }
-    return name;
+    return exe;
+#elif __APPLE__
+    return getprogname();
+#endif
 }
 
 MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
@@ -1260,9 +1300,9 @@ MYS_API prun_t prun_create(const char *argv)
     return mys_prun_create(argv);
 }
 
-MYS_API int prun_destroy(prun_t *pd)
+MYS_API void prun_destroy(prun_t *pd)
 {
-    return mys_prun_destroy(pd);
+    mys_prun_destroy(pd);
 }
 
 MYS_API int busysleep(double sec)

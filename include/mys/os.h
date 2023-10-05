@@ -27,12 +27,6 @@
 #include <sched.h>
 #endif
 
-typedef struct mys_prun_t {
-    int retval;
-    char *out;
-    char *err;
-} mys_prun_t;
-
 typedef struct mys_popen_t {
     int pid;
     int ifd;
@@ -40,27 +34,68 @@ typedef struct mys_popen_t {
     int efd;
 } mys_popen_t;
 
+typedef struct mys_prun_t {
+    int retval;
+    char *out;
+    char *err;
+    size_t len_out;
+    size_t len_err;
+    bool _by_safe;
+} mys_prun_t;
+
 /**
  * @brief Open a subprocess using system shell
  * 
  * @param argv The subprocess command line
  * @return The pid and stdin/stdout/stderr file descriptor
+ * 
+ * @note This subroutine is async-signal-safe. See signal-safety concept in POSIX standard.
  */
 MYS_API mys_popen_t mys_popen_create(const char *argv);
-MYS_API int mys_popen_destroy(mys_popen_t *popend);
+/**
+ * @brief Close a subprocess created by mys_popen_create().
+ * 
+ * @param p The handler
+ * @return MYS_API 
+ * 
+ * @note This subroutine is async-signal-safe.
+ */
+MYS_API int mys_popen_destroy(mys_popen_t *p);
 /**
  * @brief Run a subprocess using system shell,
  * capture the exit code and stdout/stderr messages.
  * 
  * @param argv The subprocess command line
+ * 
+ * @note This subroutine is NOT async-signal-safe.
  */
 MYS_API mys_prun_t mys_prun_create(const char *argv);
 /**
+ * @brief Run a subprocess using system shell,
+ * capture the exit code and stdout/stderr messages.
+ * 
+ * @param argv Subprocess command line
+ * @param buf_out Buffer to hold stdout of sub-process
+ * @param size_out Maximum bytes of `buf_out` can hold
+ * @param buf_err Buffer to hold stderr of sub-process
+ * @param size_err Maximum bytes of `buf_err` can hold
+ * 
+ * @note This subroutine is async-signal-safe version of `mys_prun_create()`.
+ * @note On return, `mys_prun_t::out` and `mys_prun_t::err` is set to `NULL`.
+ */
+MYS_API mys_prun_t mys_prun_create_s(const char *argv, char *buf_out, size_t size_out, char *buf_err, size_t size_err);
+/**
  * @brief Destroy the captured results from mys_prun_create.
  * 
- * @param s The subprocess command line
+ * @param p The handler
+ * 
+ * @note This subroutine is async-signal-safe depends on argument `p`.
+ * @note If `p` is created by calling `mys_prun_create()`, then this subroutine will call `free()`
+ * to delete `p->out` and `p->err`, thus volatile async-signal-safe..
+ * @note If `p` is created by calling `mys_prun_create_s()` where `p->out` and `p->err` are set to `NULL`
+ * then this subroutine will not call `free()`, thus async-signal-safe.
  */
-MYS_API int mys_prun_destroy(mys_prun_t *pd);
+MYS_API void mys_prun_destroy(mys_prun_t *p);
 /**
  * @brief
  * 
@@ -119,7 +154,7 @@ typedef mys_popen_t popen_t;
 typedef mys_prun_t prun_t;
 MYS_API popen_t popen_create(const char *argv);
 MYS_API prun_t prun_create(const char *argv);
-MYS_API int prun_destroy(prun_t *pd);
+MYS_API void prun_destroy(prun_t *pd);
 MYS_API int busysleep(double sec);
 MYS_API char *bfilename(const char *path);
 MYS_API const char *procname();
