@@ -2564,6 +2564,7 @@ static struct _mys_debug_G_t _mys_debug_G = {
     .old_actions = {},
     .post_action = POST_ACTION_EXIT,
     .stack = { NULL, 0, 0 },
+    .stack_memory = { '\0' },
 };
 
 static const char *_mys_sigcause(int signo, int sigcode)
