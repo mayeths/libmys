@@ -22,7 +22,6 @@
 #include <execinfo.h>
 
 
-// TODO: 要是有一个 mys_debug_set_last_msg("Current iter %d level %d", iter, level)
 #define MYS_SIGNAL_LAST_MESSAGE_MAX 1024
 
 /**

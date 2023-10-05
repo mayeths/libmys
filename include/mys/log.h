@@ -82,11 +82,6 @@ enum {
 #define RANKLOG_OPEN(folder) mys_rank_log_open(MYS_FNAME, __LINE__, folder) // Collective call
 #define RANKLOG_CLOSE(folder) mys_rank_log_close(MYS_FNAME, __LINE__, folder) // Collective call
 
-__attribute__((format(printf, 4, 5)))
-MYS_API void mys_rank_log(const char *callsite_file, int callsite_line, const char *folder, const char *fmt, ...);
-MYS_API void mys_rank_log_open(const char *callsite_file, int callsite_line, const char *folder);
-MYS_API void mys_rank_log_close(const char *callsite_file, int callsite_line, const char *folder);
-
 #define LOG_SILENT() mys_log_silent(true)
 #define LOG_UNSILENT() mys_log_silent(false)
 
@@ -105,6 +100,7 @@ typedef struct {
 
 typedef void (*mys_log_handler_fn)(mys_log_event_t *event, void *udata);
 
+/////// log
 __attribute__((format(printf, 5, 6)))
 MYS_API void mys_log(int who, int level, const char *file, int line, const char *fmt, ...);
 __attribute__((format(printf, 4, 5)))
@@ -116,6 +112,12 @@ MYS_API int mys_log_get_level();
 MYS_API void mys_log_set_level(int level);
 MYS_API void mys_log_silent(bool silent);
 MYS_API const char* mys_log_level_string(int level);
+/////// rank log
+__attribute__((format(printf, 4, 5)))
+MYS_API void mys_rank_log(const char *callfile, int callline, const char *folder, const char *fmt, ...);
+MYS_API void mys_rank_log_open(const char *callfile, int callline, const char *folder);
+MYS_API void mys_rank_log_close(const char *callfile, int callline, const char *folder);
+
 
 #define MCOLOR_NO        "\x1b[0m"
 #define MCOLOR_BOLD      "\x1b[1m"
@@ -135,34 +137,6 @@ MYS_API const char* mys_log_level_string(int level);
 #define MCOLOR_B_MAGENTA "\x1b[45m"
 #define MCOLOR_B_CYAN    "\x1b[46m"
 #define MCOLOR_B_WHITE   "\x1b[47m"
-
-////// Legacy
-// We disable legacy log DEBUG() macro by default.
-// Some applications use their own DEBUG macro and
-// the following code often comes with surprise.
-#define MYS_NO_LEGACY_LOG
-#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_LOG)
-
-#ifndef DEBUG
-#define DEBUG(who, fmt, ...) DLOG(who, fmt, ##__VA_ARGS__)
-#else
-#warning legacy DEBUG was predefined before libmys
-#endif /*DEBUG*/
-
-#ifndef DEBUG_ORDERED
-#define DEBUG_ORDERED(fmt, ...) DLOG_ORDERED(fmt, ##__VA_ARGS__)
-#else
-#warning legacy DEBUG_ORDERED was predefined before libmys
-#endif /*DEBUG_ORDERED*/
-
-
-#ifndef FAILED
-#define FAILED(fmt, ...) FLOG(MYRANK(), fmt, ##__VA_ARGS__)
-#else
-#warning legacy FAILED was predefined before libmys
-#endif /*FAILED*/
-
-#endif /*MYS_NO_LEGACY*/
 
 
 ////// Internal
