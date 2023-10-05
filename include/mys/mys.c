@@ -514,7 +514,7 @@ _mys_rank_log_G_t _mys_rank_log_G = {
     .lock = MYS_MUTEX_INITIALIZER,
     .max_used = 0,
     .dests = {
-        { .file = NULL, },
+        { .file = NULL, .folder = { '\0' } },
     },
 };
 
@@ -1263,7 +1263,7 @@ MYS_API const char *mys_procname()
     }
     return exe;
 #elif __APPLE__
-    const char *getprogname();
+    const char *getprogname(void);
     return getprogname();
 #endif
 }
