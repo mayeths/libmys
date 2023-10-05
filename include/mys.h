@@ -35,6 +35,7 @@ extern "C" {
 #include "./mys/assert.h"
 #include "./mys/base64.h"
 #include "./mys/checkpoint.h"
+#include "./mys/debug.h"
 #include "./mys/env.h"
 #include "./mys/guard.h"
 #include "./mys/hashfunction.h"

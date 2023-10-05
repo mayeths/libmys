@@ -118,6 +118,7 @@ MYS_API void mys_log_silent(bool silent);
 MYS_API const char* mys_log_level_string(int level);
 
 #define MCOLOR_NO        "\x1b[0m"
+#define MCOLOR_BOLD      "\x1b[1m"
 #define MCOLOR_BLACK     "\x1b[30m"
 #define MCOLOR_RED       "\x1b[31m"
 #define MCOLOR_GREEN     "\x1b[32m"

@@ -21,6 +21,7 @@
 #include "assert.h"
 #include "base64.h"
 #include "checkpoint.h"
+#include "debug.h"
 #include "env.h"
 #include "errno.h"
 #include "hashfunction.h"
@@ -1262,6 +1263,7 @@ MYS_API const char *mys_procname()
     }
     return exe;
 #elif __APPLE__
+    const char *getprogname();
     return getprogname();
 #endif
 }
@@ -2568,6 +2570,303 @@ MYS_API int mys_query_neighbor(mys_commgroup_t group, int group_id)
         return group->_neighbors[group_id];
 }
 #endif
+
+// TODO: Use malloc to alloc a large preserved memory on init, instead of large static array. All memory you use should come from there
+
+#define _STRIP_DEPTH 3 // _mys_debug_print, _mys_debug_handler, +1 stack base
+#define _HANDLE_MAX 32 // maximum signal to handle
+#define _BACKTRACE_MAX 32ULL // maximum stack backtrace
+#define _LOG_BUF_SIZE 65536ULL // for holding the entire backtrace
+#define _MSG_BUF_SIZE 256ULL // for holding small message
+#define _MSG_BUF_NUM  3 // one for addr2line bufcmd, one for addr2line stdout, one for print signal message
+#define _FAULT_TOLERANT_SIZE (128ULL * 1024) // for holding small message
+#define _STACK_SIZE ( \
+    (SIGSTKSZ) + \
+    (_BACKTRACE_MAX * sizeof(void*)) + \
+    (_LOG_BUF_SIZE) + \
+    (_MSG_BUF_SIZE * _MSG_BUF_NUM) + \
+    (_FAULT_TOLERANT_SIZE) \
+)
+
+#define POST_ACTION_NONE     (0U) // no post action
+#define POST_ACTION_EXIT     (1U) // directly exit program
+#define POST_ACTION_RAISE    (2U) // re-rase signo to old handler
+#define POST_ACTION_FREEZE   (3U) // freeze program by while(1) loop
+
+mys_thread_local char _mys_debug_last_message[MYS_SIGNAL_LAST_MESSAGE_MAX] = { '\0' };
+struct _mys_debug_G_t {
+    mys_mutex_t lock;
+    bool inited;
+    int signals[_HANDLE_MAX];
+    struct sigaction old_actions[_HANDLE_MAX];
+    uint32_t post_action;
+    stack_t stack;
+    uint8_t stack_memory[_STACK_SIZE];
+};
+
+static struct _mys_debug_G_t _mys_debug_G = {
+    .lock = MYS_MUTEX_INITIALIZER,
+    .inited = false,
+    .signals = { SIGINT, SIGILL, SIGTRAP, SIGBUS, SIGFPE, SIGSEGV, SIGTERM, SIGCHLD, 0 }, // 0 to stop
+    .old_actions = {},
+    .post_action = POST_ACTION_EXIT,
+    .stack = { NULL, 0, 0 },
+};
+
+static const char *_mys_sigcause(int signo, int sigcode)
+{
+    if (signo == SIGILL) {
+        switch (sigcode) {
+            case ILL_ILLOPC : return "illegal opcode";
+            case ILL_ILLOPN : return "illegal operand";
+            case ILL_ILLADR : return "illegal addressing mode";
+            case ILL_ILLTRP : return "illegal trap";
+            case ILL_PRVOPC : return "privileged opcode";
+            case ILL_PRVREG : return "privileged register";
+            case ILL_COPROC : return "coprocessor error";
+            case ILL_BADSTK : return "internal stack error";
+        }
+    } else if (signo == SIGTRAP) {
+        switch (sigcode) {
+            case TRAP_BRKPT : return "process breakpoint";
+            case TRAP_TRACE : return "process trace trap";
+        }
+    } else if (signo == SIGBUS) {
+        switch (sigcode) {
+            case BUS_ADRALN : return "invalid address alignment";
+            case BUS_ADRERR : return "nonexistent physical address";
+            case BUS_OBJERR : return "object-specific hardware error";
+        }
+    } else if (signo == SIGFPE) {
+        switch (sigcode) {
+            case FPE_INTDIV : return "integer divide by zero";
+            case FPE_INTOVF : return "integer overflow";
+            case FPE_FLTDIV : return "floating-point divide by zero";
+            case FPE_FLTOVF : return "floating-point overflow";
+            case FPE_FLTUND : return "floating-point underflow";
+            case FPE_FLTRES : return "floating-point inexact result";
+            case FPE_FLTINV : return "floating-point invalid operation";
+            case FPE_FLTSUB : return "subscript bufout of range";
+        }
+    } else if (signo == SIGSEGV) {
+        switch (sigcode) {
+            case SEGV_MAPERR : return "address not mapped to object";
+            case SEGV_ACCERR : return "invalid permissions for mapped object";
+        }
+    } else if (signo == SIGCHLD) {
+        switch (sigcode) {
+            case CLD_EXITED    : return "child has exited";
+            case CLD_KILLED    : return "child was killed";
+            case CLD_DUMPED    : return "child terminated abnormally";
+            case CLD_TRAPPED   : return "traced child has trapped";
+            case CLD_STOPPED   : return "child has stopped";
+            case CLD_CONTINUED : return "stopped child has continued";
+        }
+    } else { // common
+        switch (sigcode) {
+            case SI_USER    : return "sent by kill(2) or raise(3)";
+#ifdef __linux__
+            case SI_KERNEL  : return "sent by kernel";
+#endif
+            case SI_QUEUE   : return "sent by sigqueue(2)";
+            case SI_TIMER   : return "sent by POSIX timer expiration";
+            case SI_MESGQ   : return "sent by POSIX message queue state change";
+            case SI_ASYNCIO : return "sent by AIO completion";
+#ifdef SI_SIGIO
+            case SI_SIGIO   : return "sent by queued SIGIO";
+#endif
+#ifdef SI_TKILL
+            case SI_TKILL   : return "sent by tkill(2) or tgkill(2)";
+#endif
+        }
+    }
+    return "<unknown reason>";
+}
+
+static void _mys_debug_revert()
+{
+    mys_mutex_lock(&_mys_debug_G.lock);
+    {
+        char msg[256];
+        for (int i = 0; i < _HANDLE_MAX; ++i) {
+            int sig = _mys_debug_G.signals[i];
+            if (sig == 0)
+                break;
+            struct sigaction action;
+            int ret = sigaction(sig, &_mys_debug_G.old_actions[i], &action);
+            if (ret != 0) {
+                snprintf(msg, sizeof(msg), "failed to revert signal handler for sig %d : %s\n",
+                    sig, strerror(errno));
+                write(STDERR_FILENO, msg, strnlen(msg, sizeof(msg)));
+            }
+        }
+    }
+    mys_mutex_unlock(&_mys_debug_G.lock);
+}
+
+__attribute__((noinline))
+static void _mys_debug_print(int signo, const char *fmt, ...)
+{
+    char cause[_MSG_BUF_SIZE];
+    char buflog[_LOG_BUF_SIZE];
+    char bufcmd[_MSG_BUF_SIZE];
+    char bufout[_MSG_BUF_SIZE];
+    void *baddrs[_BACKTRACE_MAX];
+    int myrank = mys_mpi_myrank();
+    int nranks = mys_mpi_nranks();
+    int digits = _mys_math_trunc(_mys_math_log10(nranks)) + 1;
+    digits = digits > 3 ? digits : 3;
+    size_t lenlog = 0;
+
+    {
+        va_list args;
+        va_start(args, fmt);
+        vsnprintf(cause, sizeof(cause), fmt, args);
+        va_end(args);
+    }
+#define _DOFMT(f, ...) lenlog += snprintf(buflog + lenlog, sizeof(buflog) - lenlog, f, ##__VA_ARGS__);
+    {
+        const char *self_exe = mys_procname();
+        int bsize = backtrace(baddrs, _BACKTRACE_MAX);
+        char **bsyms = backtrace_symbols(baddrs, bsize);
+        _DOFMT(MCOLOR_RED "[F::%0*d CRASH] -------------------------------\n", digits, myrank);
+        _DOFMT("[F::%0*d CRASH] | " MCOLOR_BOLD "Caught signal %d. %s: %s " MCOLOR_NO MCOLOR_RED "\n",
+            digits, myrank, signo, strsignal(signo), cause);
+        if (_mys_debug_last_message[0] != '\0') {
+            _DOFMT("[F::%0*d CRASH] | " MCOLOR_BOLD "%s" MCOLOR_NO MCOLOR_RED "\n",
+                digits, myrank, _mys_debug_last_message);
+        }
+        if (bsize == 0) {
+            _DOFMT("[F::%0*d CRASH] | " MCOLOR_BOLD "No backtrace stack available"
+                MCOLOR_NO MCOLOR_RED "\n", digits, myrank);
+        }
+        for (int i = _STRIP_DEPTH; i < bsize; ++i) {
+            snprintf(bufcmd, sizeof(bufcmd), "addr2line -e %s %p", self_exe, baddrs[i]);
+            mys_prun_t run = mys_prun_create_s(bufcmd, bufout, sizeof(bufout), NULL, 0);
+            _DOFMT("[F::%0*d CRASH] | %d   %s at %s\n",
+                digits, myrank, i - _STRIP_DEPTH, bsyms[i], bufout);
+            mys_prun_destroy(&run);
+        }
+        free(bsyms);
+        _DOFMT("[F::%0*d CRASH] -------------------------------" MCOLOR_NO "\n", digits, myrank);
+    }
+#undef _DOFMT
+    write(STDERR_FILENO, buflog, lenlog);
+}
+
+__attribute__((noinline))
+static void _mys_debug_handler(int signo, siginfo_t *info, void *context)
+{
+    (void)context;
+    uint32_t post_action;
+    mys_mutex_lock(&_mys_debug_G.lock);
+    {
+        post_action = _mys_debug_G.post_action;
+    }
+    mys_mutex_unlock(&_mys_debug_G.lock);
+    _mys_debug_revert(); // let old handler to clean up if our handler crash.
+
+    // Code below shouldn't access _mys_debug_G anymore.
+    int sigcode = info->si_code;
+    void *addr = info->si_addr;
+    switch (signo) {
+    case SIGILL:
+        _mys_debug_print(signo, "%s", _mys_sigcause(signo, sigcode));
+        break;
+    case SIGTRAP:
+        _mys_debug_print(signo, "%s", _mys_sigcause(signo, sigcode));
+        break;
+    case SIGBUS:
+        _mys_debug_print(signo, "%s", _mys_sigcause(signo, sigcode));
+        break;
+    case SIGFPE:
+        _mys_debug_print(signo, "%s", _mys_sigcause(signo, sigcode));
+        break;
+    case SIGSEGV:
+        _mys_debug_print(signo, "%s at %p", _mys_sigcause(signo, sigcode), addr);
+        break;
+    case SIGCHLD:
+        _mys_debug_print(signo, "%s at %p", _mys_sigcause(signo, sigcode), addr);
+        break;
+    case SIGINT:
+    case SIGTERM:
+        break;
+    default:
+        _mys_debug_print(signo, "%s", _mys_sigcause(signo, sigcode));
+        break;
+    }
+    if (post_action == POST_ACTION_EXIT) {
+        _exit(signo);
+    } else if (post_action == POST_ACTION_RAISE) {
+        raise(signo);
+    } else if (post_action == POST_ACTION_FREEZE) {
+        do {} while (1);
+    }
+}
+
+MYS_API void mys_debug_init()
+{
+    // https://stackoverflow.com/a/61860187/11702338
+    // Make sure that backtrace(libgcc) is loaded before any signals are generated
+    void* dummy = NULL;
+    backtrace(&dummy, 1);
+    mys_mpi_init();
+    memset(_mys_debug_last_message, 0, MYS_SIGNAL_LAST_MESSAGE_MAX);
+
+    mys_mutex_lock(&_mys_debug_G.lock);
+    {
+        struct sigaction new_action, old_action;
+        unsigned int i;
+        int ret;
+
+        memset(_mys_debug_G.stack_memory, 0, _STACK_SIZE);
+        _mys_debug_G.stack.ss_sp = _mys_debug_G.stack_memory;
+        _mys_debug_G.stack.ss_size = _STACK_SIZE;
+        _mys_debug_G.stack.ss_flags = 0;
+        ret = sigaltstack(&_mys_debug_G.stack, NULL);
+        if (ret) {
+            printf("sigaltstack failed: %s\n", strerror(errno));
+            return;
+        }
+
+        new_action.sa_sigaction = _mys_debug_handler;
+        new_action.sa_flags = SA_SIGINFO | SA_ONSTACK;
+        sigemptyset(&new_action.sa_mask);
+        for (i = 0; i < _HANDLE_MAX; ++i) {
+            int sig = _mys_debug_G.signals[i];
+            if (sig == 0)
+                break;
+            ret = sigaction(sig, &new_action, &old_action);
+            if (ret == 0) {
+                _mys_debug_G.old_actions[i] = old_action;
+            } else {
+                printf("failed to set signal handler for sig %d : %s\n", sig, strerror(errno));
+                _mys_debug_G.old_actions[i].sa_sigaction = NULL;
+            }
+        }
+        _mys_debug_G.inited = true;
+    }
+    mys_mutex_unlock(&_mys_debug_G.lock);
+}
+
+MYS_API void mys_debug_fini()
+{
+    _mys_debug_revert();
+    mys_mutex_lock(&_mys_debug_G.lock);
+    {
+        _mys_debug_G.inited = false;
+    }
+    mys_mutex_unlock(&_mys_debug_G.lock);
+}
+
+MYS_API const char *mys_debug_last_message(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(_mys_debug_last_message, MYS_SIGNAL_LAST_MESSAGE_MAX, fmt, args);
+    va_end(args);
+    return _mys_debug_last_message;
+}
 
 
 ////////////
