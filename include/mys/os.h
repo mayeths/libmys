@@ -147,29 +147,6 @@ MYS_API void mys_print_affinity(FILE *fd);
 MYS_API void mys_stick_affinity();
 #endif
 
-
-////// Legacy
-#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_OS)
-typedef mys_popen_t popen_t;
-typedef mys_prun_t prun_t;
-MYS_API popen_t popen_create(const char *argv);
-MYS_API prun_t prun_create(const char *argv);
-MYS_API void prun_destroy(prun_t *pd);
-MYS_API int busysleep(double sec);
-MYS_API char *bfilename(const char *path);
-MYS_API const char *procname();
-MYS_API int do_mkdir(const char *path, mode_t mode);
-MYS_API int ensuredir(const char *path, mode_t mode);
-MYS_API int ensureparent(const char *path, mode_t mode);
-
-#ifndef WAIT_FLAG
-#define WAIT_FLAG(flagfile) mys_wait_flag(__FILE__, __LINE__, flagfile)
-#else
-#warning legacy WAIT_FLAG was predefined before libmys
-#endif /*WAIT_FLAG*/
-
-#endif /*MYS_NO_LEGACY*/
-
 ////// Internal
 
 typedef struct _mys_hrtime_G_t {

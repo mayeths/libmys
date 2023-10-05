@@ -1291,53 +1291,6 @@ MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
     }
 }
 
-#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_OS)
-MYS_API popen_t popen_create(const char *argv)
-{
-    return mys_popen_create(argv);
-}
-
-MYS_API prun_t prun_create(const char *argv)
-{
-    return mys_prun_create(argv);
-}
-
-MYS_API void prun_destroy(prun_t *pd)
-{
-    mys_prun_destroy(pd);
-}
-
-MYS_API int busysleep(double sec)
-{
-    return mys_busysleep(sec);
-}
-
-MYS_API char *bfilename(const char *path)
-{
-    char *r; mys_bfilename(path, &r); return r;
-}
-
-MYS_API const char *procname()
-{
-    return mys_procname();
-}
-
-MYS_API int do_mkdir(const char *path, mode_t mode)
-{
-    return mys_do_mkdir(path, mode);
-}
-
-MYS_API int ensuredir(const char *path, mode_t mode)
-{
-    return mys_ensure_dir(path, mode);
-}
-
-MYS_API int ensureparent(const char *path, mode_t mode)
-{
-    return mys_ensure_parent(path, mode);
-}
-#endif
-
 #ifdef MYS_ENABLE_AFFINITY
 #include <sched.h>
 mys_thread_local char _mys_affinity_buffer[256];
