@@ -1462,7 +1462,7 @@ MYS_API void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregat
     {// mine, sum, avg
         _mys_MPI_Allreduce(values, dbuf, n, _mys_MPI_DOUBLE, _mys_MPI_SUM, _mys_mpi_G.comm);
         for (size_t i = 0; i < n; i++) {
-            results[i].mine = values[i];
+            results[i].self = values[i];
             results[i].sum = dbuf[i];
             results[i].avg = dbuf[i] / (double)nranks;
         }

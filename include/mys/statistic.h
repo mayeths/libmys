@@ -9,8 +9,8 @@ MYS_API double mys_geometric_mean(double *arr, int n);
 MYS_API double mys_standard_deviation(double *arr, int n);
 
 typedef struct mys_aggregate_t {
-    /* my value */
-    double mine;
+    /* self value */
+    double self;
     /* average value */
     double avg;
     /* sum of values */
@@ -34,6 +34,12 @@ typedef struct mys_aggregate_t {
  * 
  * @param value The value to be analysis
  * @return `mys_aggregate_t` containing all infomations about value of all MPI ranks
+ * 
+ * @note Comment usage
+ * @note
+ * `mys_aggregate_t agg = mys_aggregate_analysis(time);`
+ * @note
+ * `DLOG(0, "time | self %6.3f | avg %6.3f | min %6.3f (%4d) | max %6.3f (%4d)", agg.self, agg.avg, agg.min, agg.loc_min, agg.max, agg.loc_max);`
  */
 MYS_API mys_aggregate_t mys_aggregate_analysis(double value);
 /**
