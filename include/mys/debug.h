@@ -43,7 +43,23 @@ MYS_API void mys_debug_fini();
  */
 MYS_API const char *mys_debug_last_message(const char *fmt, ...);
 
-
+/*
+ * Kill with code `SIGABRT` if exp is true
+ * #### Example usage
+ * ```
+ * int shm_flag = 0;
+ * mys_debug_init();
+ * while (shm_flag != 100) {
+ *     KILL_IF(mys_hrtime() - last_time > 2, "flag=%d", shm_flag);
+ * }
+ * ```
+ */
+#define KILL_IF(exp, fmt, ...) do {                   \
+    if (exp) {                                        \
+        mys_debug_last_message((fmt), ##__VA_ARGS__); \
+        kill(getpid(), SIGABRT);                      \
+    }                                                 \
+} while (0)
 
 /* gcc -Wall -Wextra -I${MYS_DIR}/include -g test-debug.c && valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./a.out
 =======================

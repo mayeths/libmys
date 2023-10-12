@@ -1260,7 +1260,7 @@ MYS_API int mys_busysleep(double seconds)
 MYS_API const char *mys_procname()
 {
 #ifdef __linux__
-    static char exe[512] = { '\0' };
+    static char exe[128] = { '\0' };
     if (exe[0] == '\0') {
         int ret = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
         if (ret > 0) {
@@ -2295,7 +2295,7 @@ static struct _mys_guard_G_t _mys_guard_G = {
 MYS_API void mys_guard_begin(const char *type_name, size_t type_size, void *variable_ptr, const char *file, int line)
 {
     if (type_name == NULL) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Invalid type name (%s).", type_name);
+        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Invalid type name (nil).");
         exit(1);
     }
     _mys_guard_map_t *type_node = _mys_guard_map_find(_mys_guard_G.map, type_name);
@@ -2313,7 +2313,7 @@ MYS_API void mys_guard_begin(const char *type_name, size_t type_size, void *vari
 MYS_API void mys_guard_end(const char *type_name, size_t type_size, void *variable_ptr, const char *file, int line)
 {
     if (type_name == NULL) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Invalid type name (%s).", type_name);
+        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Invalid type name (nil).");
         exit(1);
     }
     _mys_guard_map_t *type_node = _mys_guard_map_find(_mys_guard_G.map, type_name);
@@ -2560,6 +2560,8 @@ mys_thread_local char _mys_debug_last_message[MYS_SIGNAL_LAST_MESSAGE_MAX] = { '
 struct _mys_debug_G_t {
     mys_mutex_t lock;
     bool inited;
+    int outfd;
+    int outfd_isatty;
     int signals[_HANDLE_MAX];
     struct sigaction old_actions[_HANDLE_MAX];
     uint32_t post_action;
@@ -2570,7 +2572,9 @@ struct _mys_debug_G_t {
 static struct _mys_debug_G_t _mys_debug_G = {
     .lock = MYS_MUTEX_INITIALIZER,
     .inited = false,
-    .signals = { SIGINT, SIGILL, SIGTRAP, SIGBUS, SIGFPE, SIGSEGV, SIGTERM, SIGCHLD, 0 }, // 0 to stop
+    .outfd = STDERR_FILENO,
+    .outfd_isatty = 0,
+    .signals = { SIGINT, SIGILL, SIGTRAP, SIGBUS, SIGFPE, SIGSEGV, SIGTERM, SIGCHLD, SIGABRT, 0 }, // 0 to stop
     .old_actions = {},
     .post_action = POST_ACTION_EXIT,
     .stack = { NULL, 0, 0 },
@@ -2661,7 +2665,7 @@ static void _mys_debug_revert()
             if (ret != 0) {
                 snprintf(msg, sizeof(msg), "failed to revert signal handler for sig %d : %s\n",
                     sig, strerror(errno));
-                write(STDERR_FILENO, msg, strnlen(msg, sizeof(msg)));
+                write(_mys_debug_G.outfd, msg, strnlen(msg, sizeof(msg)));
             }
         }
     }
@@ -2688,22 +2692,32 @@ static void _mys_debug_print(int signo, const char *fmt, ...)
         vsnprintf(cause, sizeof(cause), fmt, args);
         va_end(args);
     }
-#define _DOFMT(f, ...) lenlog += snprintf(buflog + lenlog, sizeof(buflog) - lenlog, f, ##__VA_ARGS__);
+#define _DOFMT(f, ...) do {                                                             \
+    if (lenlog < sizeof(buflog))                                                        \
+        lenlog += snprintf(buflog + lenlog, sizeof(buflog) - lenlog, f, ##__VA_ARGS__); \
+} while (0)
+#define _NFMT1 "[F::%0*d CRASH] -------------------------------\n"
+#define _NFMT2 "[F::%0*d CRASH] | Caught signal %d. %s: %s\n"
+#define _NFMT3 "[F::%0*d CRASH] | %s\n"
+#define _NFMT4 "[F::%0*d CRASH] | No backtrace stack available\n"
+#define _NFMT5 "[F::%0*d CRASH] -------------------------------\n"
+#define _YFMT1 MCOLOR_RED "[F::%0*d CRASH] -------------------------------\n"
+#define _YFMT2 "[F::%0*d CRASH] |" MCOLOR_BOLD " Caught signal %d. %s: %s " MCOLOR_NO MCOLOR_RED "\n"
+#define _YFMT3 "[F::%0*d CRASH] |" MCOLOR_BOLD " %s " MCOLOR_NO MCOLOR_RED "\n"
+#define _YFMT4 "[F::%0*d CRASH] |" MCOLOR_BOLD " No backtrace stack available " MCOLOR_NO MCOLOR_RED "\n"
+#define _YFMT5 "[F::%0*d CRASH] -------------------------------" MCOLOR_NO "\n"
     {
         const char *self_exe = mys_procname();
         int bsize = backtrace(baddrs, _BACKTRACE_MAX);
         char **bsyms = backtrace_symbols(baddrs, bsize);
-        _DOFMT(MCOLOR_RED "[F::%0*d CRASH] -------------------------------\n", digits, myrank);
-        _DOFMT("[F::%0*d CRASH] | " MCOLOR_BOLD "Caught signal %d. %s: %s " MCOLOR_NO MCOLOR_RED "\n",
-            digits, myrank, signo, strsignal(signo), cause);
-        if (_mys_debug_last_message[0] != '\0') {
-            _DOFMT("[F::%0*d CRASH] | " MCOLOR_BOLD "%s" MCOLOR_NO MCOLOR_RED "\n",
-                digits, myrank, _mys_debug_last_message);
-        }
-        if (bsize == 0) {
-            _DOFMT("[F::%0*d CRASH] | " MCOLOR_BOLD "No backtrace stack available"
-                MCOLOR_NO MCOLOR_RED "\n", digits, myrank);
-        }
+
+        _DOFMT(_mys_debug_G.outfd_isatty ? _YFMT1 : _NFMT1, digits, myrank);
+        _DOFMT(_mys_debug_G.outfd_isatty ? _YFMT2 : _NFMT2, digits, myrank, signo, strsignal(signo), cause);
+        if (_mys_debug_last_message[0] != '\0')
+            _DOFMT(_mys_debug_G.outfd_isatty ? _YFMT3 : _NFMT3, digits, myrank, _mys_debug_last_message);
+        if (bsize == 0)
+            _DOFMT(_mys_debug_G.outfd_isatty ? _YFMT4 : _NFMT4, digits, myrank);
+
         for (int i = _STRIP_DEPTH; i < bsize; ++i) {
             snprintf(bufcmd, sizeof(bufcmd), "addr2line -e %s %p", self_exe, baddrs[i]);
             mys_prun_t run = mys_prun_create_s(bufcmd, bufout, sizeof(bufout), NULL, 0);
@@ -2712,10 +2726,20 @@ static void _mys_debug_print(int signo, const char *fmt, ...)
             mys_prun_destroy(&run);
         }
         free(bsyms);
-        _DOFMT("[F::%0*d CRASH] -------------------------------" MCOLOR_NO "\n", digits, myrank);
+        _DOFMT(_mys_debug_G.outfd_isatty ? _YFMT5 : _NFMT5, digits, myrank);
     }
 #undef _DOFMT
-    write(STDERR_FILENO, buflog, lenlog);
+#undef _NFMT1
+#undef _NFMT2
+#undef _NFMT3
+#undef _NFMT4
+#undef _NFMT5
+#undef _YFMT1
+#undef _YFMT2
+#undef _YFMT3
+#undef _YFMT4
+#undef _YFMT5
+    write(_mys_debug_G.outfd, buflog, lenlog);
 }
 
 __attribute__((noinline))
@@ -2808,6 +2832,8 @@ MYS_API void mys_debug_init()
                 _mys_debug_G.old_actions[i].sa_sigaction = NULL;
             }
         }
+
+        _mys_debug_G.outfd_isatty = isatty(_mys_debug_G.outfd);
         _mys_debug_G.inited = true;
     }
     mys_mutex_unlock(&_mys_debug_G.lock);
