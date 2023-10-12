@@ -19,6 +19,7 @@
 #define _UTHASH_DEFINE_LIST
 #include "_lib/index.h"
 #include "assert.h"
+#include "atomic.h"
 #include "base64.h"
 #include "checkpoint.h"
 #include "debug.h"
@@ -1531,52 +1532,91 @@ MYS_API double standard_deviation(double *arr, int n)
 }
 #endif
 
+#ifdef _OPENMP
+#include <omp.h>
+#else
+mys_thread_local int __mys_thread_id = -1;
+static int __mys_thread_count = 0;
+#endif
+
+MYS_API int mys_thread_id()
+{
+#ifdef _OPENMP
+    return omp_get_thread_num();
+#else
+    if (__mys_thread_id == -1) {
+        __mys_thread_id = mys_atomic_fetch_add(&__mys_thread_count, 1, MYS_ATOMIC_RELAXED);
+    }
+    return __mys_thread_id;
+#endif
+}
+
+
 #ifdef MYS_USE_POSIX_MUTEX
-MYS_API void mys_mutex_init(mys_mutex_t *lock)
+MYS_API int mys_mutex_init(mys_mutex_t *lock)
 {
-    pthread_mutex_init(lock, NULL);
+    return pthread_mutex_init(lock, NULL);
 }
 
-MYS_API void mys_mutex_destroy(mys_mutex_t *lock)
+MYS_API int mys_mutex_destroy(mys_mutex_t *lock)
 {
-    pthread_mutex_destroy(lock);
+    return pthread_mutex_destroy(lock);
 }
 
-MYS_API void mys_mutex_lock(mys_mutex_t *lock)
+MYS_API int mys_mutex_lock(mys_mutex_t *lock)
 {
-    pthread_mutex_lock(lock);
+    return pthread_mutex_lock(lock);
 }
 
-MYS_API void mys_mutex_unlock(mys_mutex_t *lock)
+MYS_API int mys_mutex_unlock(mys_mutex_t *lock)
 {
-    pthread_mutex_unlock(lock);
+    return pthread_mutex_unlock(lock);
 }
 #else
-MYS_API void mys_mutex_init(mys_mutex_t *lock)
+MYS_API int mys_mutex_init(mys_mutex_t *lock)
 {
-    __MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_UNINITIALIZE, __MYS_MUTEX_IDLE);
-    mys_memory_smp_mb();
+    mys_atomic_store_n(&lock->tid, __MYS_MUTEX_IDLE, MYS_ATOMIC_RELAXED);
+    return 0;
 }
 
-MYS_API void mys_mutex_destroy(mys_mutex_t *lock)
+MYS_API int mys_mutex_destroy(mys_mutex_t *lock)
 {
-    mys_mutex_lock(lock);
-    lock->guard = __MYS_MUTEX_UNINITIALIZE;
-    mys_mutex_unlock(lock);
+    int oval = __MYS_MUTEX_IDLE;
+    int nval = __MYS_MUTEX_INVALID;
+    bool ok = mys_atomic_compare_exchange(&lock->tid, &oval, &nval, MYS_ATOMIC_RELAXED, MYS_ATOMIC_RELAXED);
+    return (ok == true) ? 0 : (oval == __MYS_MUTEX_INVALID) ? EINVAL : EBUSY;
 }
 
-MYS_API void mys_mutex_lock(mys_mutex_t *lock)
+MYS_API int mys_mutex_lock(mys_mutex_t *lock)
 {
-    while(__MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_IDLE, __MYS_MUTEX_BUSY) != __MYS_MUTEX_IDLE)
-        continue;
-    mys_memory_smp_mb();
+    int tid = mys_thread_id();
+    int oval = __MYS_MUTEX_IDLE;
+    int nval = tid;
+    while (!mys_atomic_compare_exchange(&lock->tid, &oval, &nval, MYS_ATOMIC_ACQUIRE, MYS_ATOMIC_RELAXED)) {
+        if (oval == tid)
+            return EDEADLK;
+        if (oval == __MYS_MUTEX_INVALID)
+            return EINVAL;
+        oval = __MYS_MUTEX_IDLE;
+    }
+    return 0;
 }
 
-MYS_API void mys_mutex_unlock(mys_mutex_t *lock)
+MYS_API int mys_mutex_unlock(mys_mutex_t *lock)
 {
-    while(__MYS_COMPARE_AND_SWAP(&lock->guard, __MYS_MUTEX_BUSY, __MYS_MUTEX_IDLE) != __MYS_MUTEX_BUSY)
-        continue;
-    mys_memory_smp_mb();
+    int tid = mys_thread_id();
+    int oval = tid;
+    int nval = __MYS_MUTEX_IDLE;
+    while (!mys_atomic_compare_exchange(&lock->tid, &oval, &nval, MYS_ATOMIC_RELEASE, MYS_ATOMIC_RELAXED)) {
+        if (oval != tid)
+            return EPERM;
+        if (oval == __MYS_MUTEX_INVALID)
+            return EINVAL;
+        if (oval == __MYS_MUTEX_IDLE)
+            return 0;
+        oval = tid;
+    }
+    return 0;
 }
 #endif /*MYS_USE_POSIX_MUTEX*/
 
@@ -2191,6 +2231,117 @@ MYS_API void mys_free_shared_memory(mys_shm_t *shm)
 
 #endif
 
+MYS_API mys_bits_t mys_bits(const void *data, size_t size)
+{
+    mys_bits_t res;
+    memset(&res, 0, sizeof(mys_bits_t));
+    const uint8_t *bytes = (const uint8_t *)data;
+    int count = 0;
+    for (int i = size - 1; i >= 0; --i) { // begin from high bytes
+        for (int j = 7; j >= 0; --j) { // begin from high bits
+            unsigned int bit = (bytes[i] >> j) & 1;
+            res.bits[count++] = bit ? '1' : '0';
+        }
+    }
+    return res;
+}
+
+MYS_API void mys_cache_flush(size_t nbytes)
+{
+    char * volatile arr = (char *)malloc(nbytes * sizeof(char));
+    memset(arr, 0, nbytes);
+    for (size_t i = 1; i < nbytes; i++) {
+        arr[i] = i | (arr[i - 1]);
+    }
+    volatile char result;
+    result = arr[nbytes - 1];
+    result = (char)(uint64_t)(&arr[(uint64_t)result]);
+    mys_atomic_fence(MYS_ATOMIC_RELEASE);
+    free(arr);
+}
+
+MYS_API ssize_t mys_parse_readable_size(const char *text)
+{
+    static const double Bbase = 1.0;
+    static const double Kbase = 1024.0 * Bbase;
+    static const double Mbase = 1024.0 * Kbase;
+    static const double Gbase = 1024.0 * Mbase;
+    static const double Tbase = 1024.0 * Gbase;
+    static const double Pbase = 1024.0 * Tbase;
+    static const double Ebase = 1024.0 * Pbase;
+    static const double Zbase = 1024.0 * Ebase;
+    struct unit_t {
+        const char *suffix;
+        double base;
+    };
+    struct unit_t units[] = {
+        { .suffix = "Bytes",  .base = Bbase },
+        { .suffix = "Byte",   .base = Bbase },
+        { .suffix = "B",      .base = Bbase },
+        { .suffix = "KBytes", .base = Kbase },
+        { .suffix = "KB",     .base = Kbase },
+        { .suffix = "K",      .base = Kbase },
+        { .suffix = "MBytes", .base = Mbase },
+        { .suffix = "MB",     .base = Mbase },
+        { .suffix = "M",      .base = Mbase },
+        { .suffix = "GBytes", .base = Gbase },
+        { .suffix = "GB",     .base = Gbase },
+        { .suffix = "G",      .base = Gbase },
+        { .suffix = "TBytes", .base = Tbase },
+        { .suffix = "TB",     .base = Tbase },
+        { .suffix = "T",      .base = Tbase },
+        { .suffix = "PBytes", .base = Pbase },
+        { .suffix = "PB",     .base = Pbase },
+        { .suffix = "P",      .base = Pbase },
+        { .suffix = "EBytes", .base = Ebase },
+        { .suffix = "EB",     .base = Ebase },
+        { .suffix = "E",      .base = Ebase },
+        { .suffix = "ZBytes", .base = Zbase },
+        { .suffix = "ZB",     .base = Zbase },
+        { .suffix = "Z",      .base = Zbase },
+    };
+
+    char *endptr = NULL;
+    errno = 0;
+    double dnum = strtod(text, &endptr);
+    int error = errno;
+    errno = 0;
+
+    if (endptr == text)
+        return -1; /* contains with non-number */
+    if (error == ERANGE)
+        return -1; /* number out of range for double */
+    if (dnum != dnum)
+        return -1; /* not a number */
+
+    while (*endptr == ' ')
+        endptr++;
+    if (*endptr == '\0')
+        return (ssize_t)dnum; /* no suffix */
+
+    for (size_t i = 0; i < sizeof(units) / sizeof(struct unit_t); i++) {
+        struct unit_t *unit = &units[i];
+        int matched = strncmp(endptr, unit->suffix, 32) == 0;
+        if (matched)
+            return (ssize_t)(dnum * unit->base);
+    }
+
+    return -1;
+}
+
+MYS_API void mys_readable_size(char **ptr, size_t bytes, size_t precision)
+{
+    int i = 0;
+    const char* units[] = {"Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+    double size = bytes;
+    while (size > 1024) {
+        size /= 1024;
+        i++;
+    }
+    int len = snprintf(NULL, 0, "%.*f %s", (int)precision, size, units[i]) + 1; /*%.*f*/
+    *ptr = (char *)malloc(sizeof(char) * len);
+    snprintf(*ptr, len, "%.*f %s", (int)precision, size, units[i]);
+}
 
 // https://troydhanson.github.io/uthash/utlist.html
 typedef struct _mys_guard_record_t {

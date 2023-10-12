@@ -137,26 +137,20 @@
 #define mys_atomic_exchange(ptr, val, outptr, memorder) __atomic_exchange (ptr, val, outptr, memorder)
 #define mys_atomic_exchange_n(ptr, val, memorder)         __atomic_exchange_n (ptr, val, memorder)
 /*
-  - Compares the contents of *ptr with the contents of *ptr_expected.
-    If equal, the operation is a read-modify-write operation that
-    writes *ptr_desired into *ptr. If they are not equal, the operation
-    is a read and the current contents of *ptr are written into *ptr_expected.
-    weak is true for weak compare_exchange, which may fail spuriously,
-    and false for the strong variation, which never fails spuriously.
-    Many targets only offer the strong variation and ignore the parameter.
-    When in doubt, use the strong variation.
-  - If *ptr_desired is written into *ptr then true is returned and memory
-    is affected according to the memory order specified by success_memorder.
-    There are no restrictions on what memory order can be used here.
-  - Otherwise, false is returned and memory is affected according to
-    failure_memorder. This memory order cannot be __ATOMIC_RELEASE nor
-    __ATOMIC_ACQ_REL. It also cannot be a stronger order than that
-    specified by success_memorder.
+  #### if (*ptr == *ptr_old)
+  `{ *ptr = *ptr_new; return true; }`
+  - memory is affected according to success_memorder.
+  - when in doubt, use `MYS_ATOMIC_ACQ_REL`.
+  #### else
+  `{ *ptr_old = *ptr; return false; }`
+  - memory is affected according to failure_memorder.
+  - failure_memorder must be relax, acquire, or seq_cst, cannot stronger than success_memorder.
+  - when in doubt, use `MYS_ATOMIC_RELAXED`.
 */
-#define mys_atomic_compare_exchange(ptr, ptr_expected, ptr_desired, weak, success_memorder, failure_memorder) \
-     __atomic_compare_exchange (ptr, ptr_expected, ptr_desired, weak, success_memorder, failure_memorder)
-#define mys_atomic_compare_exchange_n(ptr, expected, desired, weak, success_memorder, failure_memorder) \
-    __atomic_compare_exchange_n (ptr, expected, desired, weak, success_memorder, failure_memorder)
+#define mys_atomic_compare_exchange(ptr, ptr_old, ptr_new, success_memorder, failure_memorder) \
+     __atomic_compare_exchange (ptr, ptr_old, ptr_new, 0, success_memorder, failure_memorder)
+#define mys_atomic_compare_exchange_n(ptr, ptr_old, val_new, success_memorder, failure_memorder) \
+    __atomic_compare_exchange_n (ptr, ptr_old, val_new, 0, success_memorder, failure_memorder)
 
 
 /**************************************************/
@@ -247,6 +241,8 @@ int main() {
 - acq_rel: dmb ish
 - seq_cst: dmb ish
 ----------- ARM Cacheable and shareable memory attributes
+https://developer.arm.com/documentation/dui0489/c/arm-and-thumb-instructions/miscellaneous-instructions/dmb--dsb--and-isb
+https://developer.arm.com/documentation/den0024/a/Memory-Ordering/Memory-attributes/Cacheable-and-shareable-memory-attributes
     +----------------------------------------------------------------------------------+
     | Hyprevisor (Outer Shareable Domain)                                              |
     |                                                                                  |

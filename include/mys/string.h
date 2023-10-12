@@ -41,3 +41,7 @@ MYS_API void mys_string_destroy(mys_string_t str);
  * @note this routine will automatically extend the size of string if necessary.
  */
 MYS_API void mys_string_fmt(mys_string_t str, const char *format, ...);
+
+
+MYS_API ssize_t mys_parse_readable_size(const char *text);
+MYS_API void mys_readable_size(char **ptr, size_t bytes, size_t precision);
