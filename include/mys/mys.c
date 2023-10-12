@@ -24,14 +24,13 @@
 #include "checkpoint.h"
 #include "debug.h"
 #include "env.h"
-#include "errno.h"
 #include "hashfunction.h"
 #include "hrtime.h"
 #include "log.h"
 #include "macro.h"
 #include "memory.h"
 #ifndef MYS_NO_MPI
-#include "mys/mpiz.h"
+#include "mpiz.h"
 #endif
 #include "os.h"
 #include "partition.h"
@@ -39,8 +38,6 @@
 #include "statistic.h"
 #include "string.h"
 #include "thread.h"
-
-mys_thread_local int mys_errno = 0;
 
 typedef struct _mys_mpi_G_t {
     bool inited;
