@@ -33,6 +33,7 @@ extern "C" {
 
 /* Primary Library (mys) */
 #include "./mys/assert.h"
+#include "./mys/atomic.h"
 #include "./mys/base64.h"
 #include "./mys/checkpoint.h"
 #include "./mys/debug.h"
