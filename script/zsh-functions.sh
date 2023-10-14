@@ -29,6 +29,7 @@ env_prepend() {
     done
     auxArr=( "$fieldVal" "${auxArr[@]}" )
     printf -v "$varName" '%s' "${(@j.:.)auxArr:#}" # https://unix.stackexchange.com/a/590047
+    export "$varName"
 }
 
 # SYNOPSIS: env_append varName fieldVal [sep]
@@ -45,6 +46,7 @@ env_append() {
     done
     auxArr=( "${auxArr[@]}" "$fieldVal" )
     printf -v "$varName" '%s' "${(@j.:.)auxArr:#}"
+    export "$varName"
 }
 
 # SYNOPSIS: env_remove varName fieldVal [sep]
@@ -61,5 +63,6 @@ env_remove() {
     done
     auxArr=( "${auxArr[@]}" )
     printf -v "$varName" '%s' "${(@j.:.)auxArr:#}"
+    export "$varName"
 }
 
