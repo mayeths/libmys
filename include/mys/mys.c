@@ -2953,11 +2953,13 @@ MYS_STATIC void _mys_debug_print(int signo, char *buflog, size_t buflen, const c
         if (bsize == 0)
             _DOFMT(_mys_debug_G.outfd_isatty ? _YFMT4 : _NFMT4, digits, myrank);
 
+        int bdigits = _mys_math_trunc(_mys_math_log10(bsize)) + 1;
+        bdigits = bdigits > 3 ? bdigits : 3;
         for (int i = _STRIP_DEPTH; i < bsize; ++i) {
             snprintf(bufcmd, sizeof(bufcmd), "addr2line -e %s %p", self_exe, baddrs[i]);
-            mys_prun_t run = mys_prun_create(bufcmd, bufout, sizeof(bufout), NULL, 0);
-            _DOFMT("[F::%0*d CRASH] | %d   %s at %s\n",
-                digits, myrank, i - _STRIP_DEPTH, bsyms[i], bufout);
+            mys_prun_t run = mys_prun_create_s(bufcmd, bufout, sizeof(bufout), NULL, 0);
+            _DOFMT("[F::%0*d CRASH] | %*d %s at %s\n",
+                digits, myrank, bdigits, i - _STRIP_DEPTH, bsyms[i], bufout);
             mys_prun_destroy(&run);
         }
         free(bsyms);
