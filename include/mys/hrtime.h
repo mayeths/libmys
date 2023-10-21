@@ -1,5 +1,6 @@
 #pragma once
 /* Please check https://github.com/nclack/tictoc for platform-timer (Windows/Linux/MacOS) */
+/* See OpenMPI Wiki https://github.com/open-mpi/ompi/wiki/Timers for how they think and implement timer */
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
