@@ -18,6 +18,7 @@
 #include <sys/syscall.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <sys/epoll.h>
 #include <signal.h>
 #include <execinfo.h>
 
@@ -33,33 +34,26 @@ MYS_API void mys_debug_init();
  */
 MYS_API void mys_debug_fini();
 /**
- * @brief Set a (thread local) message for signal handlers to print.
+ * @brief Set the (thread local) message for signal handlers to print.
  * 
  * @param fmt Formatter
  * @param ... Format arguments
- * @return Constructed last message
  * 
  * @note This message length should not exceed `MYS_SIGNAL_LAST_MESSAGE_MAX`
  */
-MYS_API const char *mys_debug_last_message(const char *fmt, ...);
-
-/*
- * Kill with code `SIGABRT` if exp is true
- * #### Example usage
- * ```
- * int shm_flag = 0;
- * mys_debug_init();
- * while (shm_flag != 100) {
- *     KILL_IF(mys_hrtime() - last_time > 2, "flag=%d", shm_flag);
- * }
- * ```
+MYS_API void mys_debug_set_message(const char *fmt, ...);
+/**
+ * @brief Get the (thread local) message for signal handlers to print.
+ * @return Constructed last message
  */
-#define KILL_IF(exp, fmt, ...) do {                   \
-    if (exp) {                                        \
-        mys_debug_last_message((fmt), ##__VA_ARGS__); \
-        kill(getpid(), SIGABRT);                      \
-    }                                                 \
-} while (0)
+MYS_API const char *mys_debug_get_message();
+MYS_API void mys_debug_clear_message();
+
+MYS_API void mys_debug_set_style(int style);
+MYS_API int mys_debug_get_style();
+
+MYS_API void mys_debug_set_kill_timer(double timeout);
+MYS_API void mys_debug_clear_kill_timer();
 
 /* gcc -Wall -Wextra -I${MYS_DIR}/include -g test-debug.c && valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./a.out
 =======================
@@ -79,7 +73,7 @@ void emit_signal(int signal)
 int main() {
     // MPI_Init(NULL, NULL);
     mys_debug_init();
-    mys_debug_last_message("HAHA %p", emit_signal);
+    mys_debug_set_message("HAHA %p", emit_signal);
     emit_signal(SIGSEGV);
     mys_debug_fini();
     // MPI_Finalize();

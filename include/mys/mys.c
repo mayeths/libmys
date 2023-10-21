@@ -2684,7 +2684,7 @@ MYS_API int mys_query_neighbor(mys_commgroup_t group, int group_id)
 
 // TODO: Use malloc to alloc a large preserved memory on init, instead of large static array. All memory you use should come from there
 
-#define _STRIP_DEPTH 3 // _mys_debug_print, _mys_debug_handler, +1 stack base
+#define _STRIP_DEPTH 2 // _mys_debug_print, _mys_debug_handler, +1 stack base
 #define _HANDLE_MAX 32 // maximum signal to handle
 #define _BACKTRACE_MAX 32ULL // maximum stack backtrace
 #define _LOG_BUF_SIZE 65536ULL // for holding the entire backtrace
@@ -2699,12 +2699,37 @@ MYS_API int mys_query_neighbor(mys_commgroup_t group, int group_id)
     (_FAULT_TOLERANT_SIZE) \
 )
 
-#define POST_ACTION_NONE     (0U) // no post action
-#define POST_ACTION_EXIT     (1U) // directly exit program
-#define POST_ACTION_RAISE    (2U) // re-rase signo to old handler
-#define POST_ACTION_FREEZE   (3U) // freeze program by while(1) loop
+#define MYS_DEBUG_STYLE_FULL 0 // show full backtrace stack and user message set by ``
+#define MYS_DEBUG_STYLE_LEAN 1 // only show the last backtrace stack
 
-mys_thread_local char _mys_debug_last_message[MYS_SIGNAL_LAST_MESSAGE_MAX] = { '\0' };
+#define MYS_DEBUG_ACTION_NONE   0 // no post action
+#define MYS_DEBUG_ACTION_EXIT   1 // directly exit program
+#define MYS_DEBUG_ACTION_RAISE  2 // re-rase signo to old handler
+#define MYS_DEBUG_ACTION_FREEZE 3 // freeze program by while(1) loop
+
+static size_t _mys_page_aligned(const size_t size)
+{
+    const size_t  page = sysconf(_SC_PAGESIZE);
+    if (size <= page)
+        return page;
+    else
+        return page * (size_t)(size / page + !!(size % page));
+    /* !!(size % page) is 0 if size is a multiple of page, 1 otherwise. */
+}
+
+struct _MPId_shm_G_t {
+    mys_mutex_t lock;
+    int myrank;
+    int nranks;
+    int enabled;
+    int do_kill;
+    double t_start;
+    double timeout;
+    int post_action;
+    int style;
+    char message[MYS_SIGNAL_LAST_MESSAGE_MAX];
+};
+
 struct _mys_debug_G_t {
     mys_mutex_t lock;
     bool inited;
@@ -2712,9 +2737,17 @@ struct _mys_debug_G_t {
     int outfd_isatty;
     int signals[_HANDLE_MAX];
     struct sigaction old_actions[_HANDLE_MAX];
-    uint32_t post_action;
     stack_t stack;
-    uint8_t stack_memory[_STACK_SIZE];
+    uint8_t *stack_memory;
+    // ahahha
+    pid_t process_pid;
+    struct epoll_event event;
+    sigset_t sigmask;
+    int epoll_fd;
+    int pipe_fd[2];
+    int shm_fd;
+    char shm_name[128];
+    struct _MPId_shm_G_t *shm_ptr;
 };
 
 static struct _mys_debug_G_t _mys_debug_G = {
@@ -2724,12 +2757,19 @@ static struct _mys_debug_G_t _mys_debug_G = {
     .outfd_isatty = 0,
     .signals = { SIGINT, SIGILL, SIGTRAP, SIGBUS, SIGFPE, SIGSEGV, SIGTERM, SIGCHLD, SIGABRT, 0 }, // 0 to stop
     .old_actions = {},
-    .post_action = POST_ACTION_EXIT,
     .stack = { NULL, 0, 0 },
-    .stack_memory = { '\0' },
+    .stack_memory = NULL,
+    .process_pid = -1,
+    .event = {},
+    .sigmask = {},
+    .epoll_fd = -1,
+    .pipe_fd = {-1, -1},
+    .shm_fd = -1,
+    .shm_name = { '\0' },
+    .shm_ptr = NULL,
 };
 
-static const char *_mys_sigcause(int signo, int sigcode)
+MYS_STATIC const char *_mys_sigcause(int signo, int sigcode)
 {
     if (signo == SIGILL) {
         switch (sigcode) {
@@ -2799,6 +2839,44 @@ static const char *_mys_sigcause(int signo, int sigcode)
     return "<unknown reason>";
 }
 
+MYS_STATIC const char *_mys_signo_str(int signo)
+{
+    switch (signo) {
+        case SIGHUP    : return "SIGHUP"    ;
+        case SIGINT    : return "SIGINT"    ;
+        case SIGQUIT   : return "SIGQUIT"   ;
+        case SIGILL    : return "SIGILL"    ;
+        case SIGTRAP   : return "SIGTRAP"   ;
+        case SIGABRT   : return "SIGABRT"   ;
+        case SIGBUS    : return "SIGBUS"    ;
+        case SIGFPE    : return "SIGFPE"    ;
+        case SIGKILL   : return "SIGKILL"   ;
+        case SIGUSR1   : return "SIGUSR1"   ;
+        case SIGSEGV   : return "SIGSEGV"   ;
+        case SIGUSR2   : return "SIGUSR2"   ;
+        case SIGPIPE   : return "SIGPIPE"   ;
+        case SIGALRM   : return "SIGALRM"   ;
+        case SIGTERM   : return "SIGTERM"   ;
+        case SIGSTKFLT : return "SIGSTKFLT" ;
+        case SIGCHLD   : return "SIGCHLD"   ;
+        case SIGCONT   : return "SIGCONT"   ;
+        case SIGSTOP   : return "SIGSTOP"   ;
+        case SIGTSTP   : return "SIGTSTP"   ;
+        case SIGTTIN   : return "SIGTTIN"   ;
+        case SIGTTOU   : return "SIGTTOU"   ;
+        case SIGURG    : return "SIGURG"    ;
+        case SIGXCPU   : return "SIGXCPU"   ;
+        case SIGXFSZ   : return "SIGXFSZ"   ;
+        case SIGVTALRM : return "SIGVTALRM" ;
+        case SIGPROF   : return "SIGPROF"   ;
+        case SIGWINCH  : return "SIGWINCH"  ;
+        case SIGIO     : return "SIGIO"     ;
+        case SIGPWR    : return "SIGPWR"    ;
+        case SIGSYS    : return "SIGSYS"    ;
+    }
+    return "SIGUNKNOWN";
+}
+
 static void _mys_debug_revert()
 {
     mys_mutex_lock(&_mys_debug_G.lock);
@@ -2821,10 +2899,9 @@ static void _mys_debug_revert()
 }
 
 __attribute__((noinline))
-static void _mys_debug_print(int signo, const char *fmt, ...)
+MYS_STATIC void _mys_debug_print(int signo, char *buflog, size_t buflen, const char *fmt, ...)
 {
     char cause[_MSG_BUF_SIZE];
-    char buflog[_LOG_BUF_SIZE];
     char bufcmd[_MSG_BUF_SIZE];
     char bufout[_MSG_BUF_SIZE];
     void *baddrs[_BACKTRACE_MAX];
@@ -2832,7 +2909,7 @@ static void _mys_debug_print(int signo, const char *fmt, ...)
     int nranks = mys_mpi_nranks();
     int digits = _mys_math_trunc(_mys_math_log10(nranks)) + 1;
     digits = digits > 3 ? digits : 3;
-    size_t lenlog = 0;
+    size_t loglen = 0;
 
     {
         va_list args;
@@ -2841,8 +2918,8 @@ static void _mys_debug_print(int signo, const char *fmt, ...)
         va_end(args);
     }
 #define _DOFMT(f, ...) do {                                                             \
-    if (lenlog < sizeof(buflog))                                                        \
-        lenlog += snprintf(buflog + lenlog, sizeof(buflog) - lenlog, f, ##__VA_ARGS__); \
+    if (loglen < buflen)                                                        \
+        loglen += snprintf(buflog + loglen, buflen - loglen, f, ##__VA_ARGS__); \
 } while (0)
 #define _NFMT1 "[F::%0*d CRASH] -------------------------------\n"
 #define _NFMT2 "[F::%0*d CRASH] | Caught signal %d. %s: %s\n"
@@ -2861,14 +2938,14 @@ static void _mys_debug_print(int signo, const char *fmt, ...)
 
         _DOFMT(_mys_debug_G.outfd_isatty ? _YFMT1 : _NFMT1, digits, myrank);
         _DOFMT(_mys_debug_G.outfd_isatty ? _YFMT2 : _NFMT2, digits, myrank, signo, strsignal(signo), cause);
-        if (_mys_debug_last_message[0] != '\0')
-            _DOFMT(_mys_debug_G.outfd_isatty ? _YFMT3 : _NFMT3, digits, myrank, _mys_debug_last_message);
+        if (_mys_debug_G.shm_ptr->message[0] != '\0')
+            _DOFMT(_mys_debug_G.outfd_isatty ? _YFMT3 : _NFMT3, digits, myrank, _mys_debug_G.shm_ptr->message);
         if (bsize == 0)
             _DOFMT(_mys_debug_G.outfd_isatty ? _YFMT4 : _NFMT4, digits, myrank);
 
         for (int i = _STRIP_DEPTH; i < bsize; ++i) {
             snprintf(bufcmd, sizeof(bufcmd), "addr2line -e %s %p", self_exe, baddrs[i]);
-            mys_prun_t run = mys_prun_create_s(bufcmd, bufout, sizeof(bufout), NULL, 0);
+            mys_prun_t run = mys_prun_create(bufcmd, bufout, sizeof(bufout), NULL, 0);
             _DOFMT("[F::%0*d CRASH] | %d   %s at %s\n",
                 digits, myrank, i - _STRIP_DEPTH, bsyms[i], bufout);
             mys_prun_destroy(&run);
@@ -2887,55 +2964,229 @@ static void _mys_debug_print(int signo, const char *fmt, ...)
 #undef _YFMT3
 #undef _YFMT4
 #undef _YFMT5
-    write(_mys_debug_G.outfd, buflog, lenlog);
+    // write(_mys_debug_G.outfd, buflog, loglen);
 }
 
 __attribute__((noinline))
 static void _mys_debug_handler(int signo, siginfo_t *info, void *context)
 {
-    (void)context;
-    uint32_t post_action;
-    mys_mutex_lock(&_mys_debug_G.lock);
-    {
-        post_action = _mys_debug_G.post_action;
-    }
-    mys_mutex_unlock(&_mys_debug_G.lock);
     _mys_debug_revert(); // let old handler to clean up if our handler crash.
 
-    // Code below shouldn't access _mys_debug_G anymore.
-    int sigcode = info->si_code;
-    void *addr = info->si_addr;
+    (void)info;
+    (void)context;
+    // FIXME: mys_mutex_lock(&_mys_debug_G.lock);
+    const char *self_exe = mys_procname();
+    char bufcmd[_MSG_BUF_SIZE];
+    char bufout[_MSG_BUF_SIZE];
+    void *baddrs[_BACKTRACE_MAX];
+    int stack_size = backtrace(baddrs, _BACKTRACE_MAX);
+    char **bsyms = backtrace_symbols(baddrs, stack_size);
+    int bsize = stack_size - _STRIP_DEPTH;
+    write(_mys_debug_G.pipe_fd[1], &signo, sizeof(int));
+    write(_mys_debug_G.pipe_fd[1], &info->si_code, sizeof(int));
+    write(_mys_debug_G.pipe_fd[1], &info->si_addr, sizeof(void *));
+    write(_mys_debug_G.pipe_fd[1], &bsize, sizeof(int));
+    for (int i = _STRIP_DEPTH; i < stack_size; i++) {
+        snprintf(bufcmd, sizeof(bufcmd), "addr2line -e %s %p", self_exe, baddrs[i]);
+        mys_prun_t run = mys_prun_create(bufcmd, bufout, sizeof(bufout), NULL, 0);
+        size_t len;
+
+        write(_mys_debug_G.pipe_fd[1], baddrs[i], sizeof(void *));
+        len = strnlen(bsyms[i], _MSG_BUF_SIZE);
+        write(_mys_debug_G.pipe_fd[1], &len, sizeof(size_t));
+        write(_mys_debug_G.pipe_fd[1], bsyms[i], len);
+        write(_mys_debug_G.pipe_fd[1], &run.len_out, sizeof(size_t));
+        write(_mys_debug_G.pipe_fd[1], bufout, run.len_out);
+
+        mys_prun_destroy(&run);
+    }
+    free(bsyms);
+
+    close(_mys_debug_G.pipe_fd[1]);
+    int post_action = mys_atomic_load_n(&_mys_debug_G.shm_ptr->post_action, MYS_ATOMIC_RELAXED);
+    AS_NE_I32(-1, munmap(_mys_debug_G.shm_ptr, _mys_page_aligned(sizeof(struct _MPId_shm_G_t))));
+    if (post_action == MYS_DEBUG_ACTION_EXIT) {
+        _exit(signo);
+    } else if (post_action == MYS_DEBUG_ACTION_RAISE) {
+        raise(signo);
+    } else if (post_action == MYS_DEBUG_ACTION_FREEZE) {
+        do {} while (1);
+    }
+}
+
+// time that sync between processes
+double _mys_system_time() {
+    struct timeval ts;
+    gettimeofday(&ts, NULL);
+    return (double)ts.tv_sec + ((double)ts.tv_usec) * 1e-6;
+}
+
+void _mys_debug_kill_if_timeout()
+{
+    if (mys_atomic_load_n(&_mys_debug_G.shm_ptr->do_kill, MYS_ATOMIC_ACQUIRE)) {
+        double t_now = _mys_system_time();
+        double t_diff = t_now - _mys_debug_G.shm_ptr->t_start;
+        // printf("Now is %f, start is %f. diff %f\n", t_now, shm_ptr->t_start, t_diff);
+        if (t_diff >= _mys_debug_G.shm_ptr->timeout) {
+            kill(_mys_debug_G.process_pid, SIGABRT);
+        }
+    }
+}
+
+void _mys_handle_new_pipe_message()
+{
+    mys_mutex_lock(&_mys_debug_G.shm_ptr->lock);
+    int myrank = _mys_debug_G.shm_ptr->myrank;
+    int nranks = _mys_debug_G.shm_ptr->nranks;
+    mys_mutex_unlock(&_mys_debug_G.shm_ptr->lock);
+    int digits = _mys_math_trunc(_mys_math_log10(nranks)) + 1;
+    digits = digits > 3 ? digits : 3;
+
+    char cause[_MSG_BUF_SIZE];
+    void *baddrs[_BACKTRACE_MAX];
+    char symbol[_MSG_BUF_SIZE];
+    char buflog[_LOG_BUF_SIZE];
+    char bufout[_MSG_BUF_SIZE];
+    int bsize = 0;
+    size_t loglen = 0;
+    size_t buflen = sizeof(buflog);
+    int signo, sigcode;
+    void *addr;
+    read(_mys_debug_G.pipe_fd[0], &signo, sizeof(int));
+    read(_mys_debug_G.pipe_fd[0], &sigcode, sizeof(int));
+    read(_mys_debug_G.pipe_fd[0], &addr, sizeof(void *));
+    read(_mys_debug_G.pipe_fd[0], &bsize, sizeof(int));
+
     switch (signo) {
     case SIGILL:
-        _mys_debug_print(signo, "%s", _mys_sigcause(signo, sigcode));
+        snprintf(cause, sizeof(cause), "%s", _mys_sigcause(signo, sigcode));
         break;
     case SIGTRAP:
-        _mys_debug_print(signo, "%s", _mys_sigcause(signo, sigcode));
+        snprintf(cause, sizeof(cause), "%s", _mys_sigcause(signo, sigcode));
         break;
     case SIGBUS:
-        _mys_debug_print(signo, "%s", _mys_sigcause(signo, sigcode));
+        snprintf(cause, sizeof(cause), "%s", _mys_sigcause(signo, sigcode));
         break;
     case SIGFPE:
-        _mys_debug_print(signo, "%s", _mys_sigcause(signo, sigcode));
+        snprintf(cause, sizeof(cause), "%s", _mys_sigcause(signo, sigcode));
         break;
     case SIGSEGV:
-        _mys_debug_print(signo, "%s at %p", _mys_sigcause(signo, sigcode), addr);
+        snprintf(cause, sizeof(cause), "%s at %p", _mys_sigcause(signo, sigcode), addr);
         break;
     case SIGCHLD:
-        _mys_debug_print(signo, "%s at %p", _mys_sigcause(signo, sigcode), addr);
+        snprintf(cause, sizeof(cause), "%s at %p", _mys_sigcause(signo, sigcode), addr);
         break;
     case SIGINT:
     case SIGTERM:
         break;
     default:
-        _mys_debug_print(signo, "%s", _mys_sigcause(signo, sigcode));
+        snprintf(cause, sizeof(cause), "%s", _mys_sigcause(signo, sigcode));
         break;
     }
-    if (post_action == POST_ACTION_EXIT) {
-        _exit(signo);
-    } else if (post_action == POST_ACTION_RAISE) {
-        raise(signo);
-    } else if (post_action == POST_ACTION_FREEZE) {
+
+#define _DOFMT(f, ...) do {                                                             \
+    if (loglen < buflen)                                                        \
+        loglen += snprintf(buflog + loglen, buflen - loglen, f, ##__VA_ARGS__); \
+} while (0)
+#define _NFMT1 "[F::%0*d CRASH] -------------------------------\n"
+#define _NFMT2 "[F::%0*d CRASH] | Caught signal %d. %s: %s\n"
+#define _NFMT3 "[F::%0*d CRASH] | %s\n"
+#define _NFMT4 "[F::%0*d CRASH] | No backtrace stack available\n"
+#define _NFMT5 "[F::%0*d CRASH] -------------------------------\n"
+
+    if (_mys_debug_G.shm_ptr->style == MYS_DEBUG_STYLE_FULL) {
+
+        _DOFMT(_NFMT1, digits, myrank);
+        _DOFMT(_NFMT2, digits, myrank, signo, strsignal(signo), cause);
+        mys_mutex_lock(&_mys_debug_G.shm_ptr->lock);
+        if (_mys_debug_G.shm_ptr->message[0] != '\0')
+            _DOFMT(_NFMT3, digits, myrank, _mys_debug_G.shm_ptr->message);
+        mys_mutex_unlock(&_mys_debug_G.shm_ptr->lock);
+        if (bsize == 0)
+            _DOFMT(_NFMT4, digits, myrank);
+
+        for (int i = 0; i < bsize; ++i) {
+            size_t symbol_len, symbol_rlen, addr2line_len;
+
+            read(_mys_debug_G.pipe_fd[0], &baddrs[i], sizeof(void *));
+            read(_mys_debug_G.pipe_fd[0], &symbol_len, sizeof(size_t));
+            symbol_rlen = read(_mys_debug_G.pipe_fd[0], symbol, symbol_len);
+            read(_mys_debug_G.pipe_fd[0], &addr2line_len, sizeof(size_t));
+            read(_mys_debug_G.pipe_fd[0], bufout, addr2line_len);
+            symbol[symbol_rlen] = '\0';
+            bufout[addr2line_len] = '\0';
+
+            _DOFMT("[F::%0*d CRASH] | %-3d %s at %s\n", digits, myrank, i, symbol, bufout);
+        }
+        _DOFMT(_NFMT5, digits, myrank);
+    } else if (_mys_debug_G.shm_ptr->style == MYS_DEBUG_STYLE_LEAN) {
+        for (int i = 0; i < bsize; ++i) {
+            size_t symbol_len, symbol_rlen, addr2line_len;
+
+            read(_mys_debug_G.pipe_fd[0], &baddrs[i], sizeof(void *));
+            read(_mys_debug_G.pipe_fd[0], &symbol_len, sizeof(size_t));
+            symbol_rlen = read(_mys_debug_G.pipe_fd[0], symbol, symbol_len);
+            read(_mys_debug_G.pipe_fd[0], &addr2line_len, sizeof(size_t));
+            read(_mys_debug_G.pipe_fd[0], bufout, addr2line_len);
+            symbol[symbol_rlen] = '\0';
+            bufout[addr2line_len] = '\0';
+
+            if (i == 0) {
+                mys_mutex_lock(&_mys_debug_G.shm_ptr->lock);
+                if (_mys_debug_G.shm_ptr->message[0] != '\0') {
+                    _DOFMT("[F::%0*d %s] %s | %s at %s\n", digits, myrank, _mys_signo_str(signo), _mys_debug_G.shm_ptr->message, symbol, bufout);
+                } else {
+                    _DOFMT("[F::%0*d %s] %s at %s\n", digits, myrank, _mys_signo_str(signo), symbol, bufout);
+                }
+                mys_mutex_unlock(&_mys_debug_G.shm_ptr->lock);
+            }
+        }
+    }
+
+#undef _DOFMT
+#undef _NFMT1
+#undef _NFMT2
+#undef _NFMT3
+#undef _NFMT4
+#undef _NFMT5
+    write(_mys_debug_G.outfd, buflog, loglen);
+}
+
+void _mys_debug_wait_next(int epoll_fd, struct epoll_event *event, sigset_t *sigmask, int timeout)
+{
+    int num_events = epoll_pwait(epoll_fd, event, 1, timeout, sigmask);
+    AS_NE_I32(-1, num_events);
+
+    if (num_events > 0 && event->data.fd == _mys_debug_G.pipe_fd[0] && event->events & EPOLLIN) {
+        _mys_handle_new_pipe_message();
+    }
+}
+
+void _mys_debug_watch_forever()
+{
+    pid_t wpid;
+    int status;
+    while (mys_atomic_load_n(&_mys_debug_G.shm_ptr->enabled, MYS_ATOMIC_RELAXED))
+    {
+        _mys_debug_kill_if_timeout();
+        _mys_debug_wait_next(_mys_debug_G.epoll_fd, &_mys_debug_G.event, &_mys_debug_G.sigmask, 50);
+        wpid = waitpid(_mys_debug_G.process_pid, &status, WNOHANG);
+        if ((wpid == _mys_debug_G.process_pid) && (WIFEXITED(status) || WIFSIGNALED(status))) {
+            break;
+        }
+    }
+
+    _mys_debug_wait_next(_mys_debug_G.epoll_fd, &_mys_debug_G.event, &_mys_debug_G.sigmask, 50);
+    int post_action = _mys_debug_G.shm_ptr->post_action;
+    AS_NE_I32(-1, munmap(_mys_debug_G.shm_ptr, _mys_page_aligned(sizeof(struct _MPId_shm_G_t))));
+    close(_mys_debug_G.epoll_fd);
+    // MPI_Finalize(); // FIXME: should we use this
+
+    if (post_action == MYS_DEBUG_ACTION_EXIT) {
+        _exit(0);
+    } else if (post_action == MYS_DEBUG_ACTION_RAISE) {
+        raise(0);
+    } else if (post_action == MYS_DEBUG_ACTION_FREEZE) {
         do {} while (1);
     }
 }
@@ -2946,38 +3197,75 @@ MYS_API void mys_debug_init()
     // Make sure that backtrace(libgcc) is loaded before any signals are generated
     void* dummy = NULL;
     backtrace(&dummy, 1);
-    mys_mpi_init();
-    memset(_mys_debug_last_message, 0, MYS_SIGNAL_LAST_MESSAGE_MAX);
+    // mys_mpi_init();
 
     mys_mutex_lock(&_mys_debug_G.lock);
     {
-        struct sigaction new_action, old_action;
-        unsigned int i;
-        int ret;
+        AS_NE_I32(-1, pipe(_mys_debug_G.pipe_fd));
 
-        memset(_mys_debug_G.stack_memory, 0, _STACK_SIZE);
-        _mys_debug_G.stack.ss_sp = _mys_debug_G.stack_memory;
-        _mys_debug_G.stack.ss_size = _STACK_SIZE;
-        _mys_debug_G.stack.ss_flags = 0;
-        ret = sigaltstack(&_mys_debug_G.stack, NULL);
-        if (ret) {
-            printf("sigaltstack failed: %s\n", strerror(errno));
-            return;
+        _mys_debug_G.shm_ptr = (struct _MPId_shm_G_t *)mmap(NULL, _mys_page_aligned(sizeof(struct _MPId_shm_G_t)), PROT_READ|PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, (off_t)0);
+        AS_NE_PTR(_mys_debug_G.shm_ptr, NULL);
+
+        mys_mutex_lock(&_mys_debug_G.shm_ptr->lock);
+        {
+            _mys_debug_G.shm_ptr->myrank = mys_mpi_myrank();
+            _mys_debug_G.shm_ptr->nranks = mys_mpi_nranks();
+            _mys_debug_G.shm_ptr->enabled = 1;
+            _mys_debug_G.shm_ptr->do_kill = 0;
+            _mys_debug_G.shm_ptr->post_action = MYS_DEBUG_ACTION_EXIT;
+            _mys_debug_G.shm_ptr->style = MYS_DEBUG_STYLE_FULL;
+            memset(_mys_debug_G.shm_ptr->message, 0, MYS_SIGNAL_LAST_MESSAGE_MAX);
         }
+        mys_mutex_unlock(&_mys_debug_G.shm_ptr->lock);
 
-        new_action.sa_sigaction = _mys_debug_handler;
-        new_action.sa_flags = SA_SIGINFO | SA_ONSTACK;
-        sigemptyset(&new_action.sa_mask);
-        for (i = 0; i < _HANDLE_MAX; ++i) {
-            int sig = _mys_debug_G.signals[i];
-            if (sig == 0)
-                break;
-            ret = sigaction(sig, &new_action, &old_action);
-            if (ret == 0) {
-                _mys_debug_G.old_actions[i] = old_action;
-            } else {
-                printf("failed to set signal handler for sig %d : %s\n", sig, strerror(errno));
-                _mys_debug_G.old_actions[i].sa_sigaction = NULL;
+        // Let parent process return to user code, since MPI recorded the pid of that process.
+        // MPI routines like MPI_Allreduce will failed if they communicate with child process.
+        _mys_debug_G.process_pid = (int)getpid();
+        int pid = (int)fork();
+        AS_NE_I32(pid, -1);
+
+        if (pid == 0) {
+            close(_mys_debug_G.pipe_fd[1]);
+
+            AS_NE_I32(-1, _mys_debug_G.epoll_fd = epoll_create1(0));
+            memset(&_mys_debug_G.event, 0, sizeof(_mys_debug_G.event));
+            _mys_debug_G.event.events = EPOLLIN;
+            _mys_debug_G.event.data.fd = _mys_debug_G.pipe_fd[0];
+            AS_NE_I32(-1, epoll_ctl(_mys_debug_G.epoll_fd, EPOLL_CTL_ADD, _mys_debug_G.pipe_fd[0], &_mys_debug_G.event));
+            sigemptyset(&_mys_debug_G.sigmask);
+
+            _mys_debug_watch_forever();
+        } else {
+            close(_mys_debug_G.pipe_fd[0]);
+            struct sigaction new_action, old_action;
+            unsigned int i;
+            int ret;
+
+            _mys_debug_G.stack_memory = (uint8_t *)malloc(_STACK_SIZE);
+            memset(_mys_debug_G.stack_memory, 0, _STACK_SIZE);
+            _mys_debug_G.stack.ss_sp = _mys_debug_G.stack_memory;
+            _mys_debug_G.stack.ss_size = _STACK_SIZE;
+            _mys_debug_G.stack.ss_flags = 0;
+            ret = sigaltstack(&_mys_debug_G.stack, NULL);
+            if (ret) {
+                printf("sigaltstack failed: %s\n", strerror(errno));
+                return;
+            }
+
+            new_action.sa_sigaction = _mys_debug_handler;
+            new_action.sa_flags = SA_SIGINFO | SA_ONSTACK;
+            sigemptyset(&new_action.sa_mask);
+            for (i = 0; i < _HANDLE_MAX; ++i) {
+                int sig = _mys_debug_G.signals[i];
+                if (sig == 0)
+                    break;
+                ret = sigaction(sig, &new_action, &old_action);
+                if (ret == 0) {
+                    _mys_debug_G.old_actions[i] = old_action;
+                } else {
+                    printf("failed to set signal handler for sig %d : %s\n", sig, strerror(errno));
+                    _mys_debug_G.old_actions[i].sa_sigaction = NULL;
+                }
             }
         }
 
@@ -2992,20 +3280,67 @@ MYS_API void mys_debug_fini()
     _mys_debug_revert();
     mys_mutex_lock(&_mys_debug_G.lock);
     {
+        mys_atomic_store_n(&_mys_debug_G.shm_ptr->enabled, 0, MYS_ATOMIC_RELAXED);
+        munmap(_mys_debug_G.shm_ptr, _mys_page_aligned(sizeof(struct _MPId_shm_G_t)));
+        free(_mys_debug_G.stack_memory);
+        _mys_debug_G.stack_memory = NULL;
         _mys_debug_G.inited = false;
     }
     mys_mutex_unlock(&_mys_debug_G.lock);
 }
 
-MYS_API const char *mys_debug_last_message(const char *fmt, ...)
+MYS_API void mys_debug_set_message(const char *fmt, ...)
 {
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(_mys_debug_last_message, MYS_SIGNAL_LAST_MESSAGE_MAX, fmt, args);
-    va_end(args);
-    return _mys_debug_last_message;
+    mys_mutex_lock(&_mys_debug_G.shm_ptr->lock);
+    {
+        va_list args;
+        va_start(args, fmt);
+        vsnprintf(_mys_debug_G.shm_ptr->message, MYS_SIGNAL_LAST_MESSAGE_MAX, fmt, args);
+        va_end(args);
+    }
+    mys_mutex_unlock(&_mys_debug_G.shm_ptr->lock);
 }
 
+MYS_API const char *mys_debug_get_message()
+{
+    // FIXME: lock
+    return _mys_debug_G.shm_ptr->message;
+}
+
+MYS_API void mys_debug_clear_message()
+{
+    mys_mutex_lock(&_mys_debug_G.shm_ptr->lock);
+    {
+        _mys_debug_G.shm_ptr->message[0] = '\0';
+    }
+    mys_mutex_unlock(&_mys_debug_G.shm_ptr->lock);
+}
+
+MYS_API void mys_debug_set_style(int style)
+{
+    // FIXME: lock
+    mys_atomic_store_n(&_mys_debug_G.shm_ptr->style, style, MYS_ATOMIC_RELAXED);
+}
+
+MYS_API int mys_debug_get_style()
+{
+    // FIXME: lock
+    return mys_atomic_load_n(&_mys_debug_G.shm_ptr->style, MYS_ATOMIC_RELAXED);
+}
+
+MYS_API void mys_debug_set_kill_timer(double timeout)
+{
+    // FIXME: lock
+    _mys_debug_G.shm_ptr->t_start = _mys_system_time();
+    _mys_debug_G.shm_ptr->timeout = timeout;
+    mys_atomic_store_n(&_mys_debug_G.shm_ptr->do_kill, 1, MYS_ATOMIC_RELEASE);
+}
+
+MYS_API void mys_debug_clear_kill_timer()
+{
+    // FIXME: lock
+    mys_atomic_store_n(&_mys_debug_G.shm_ptr->do_kill, 0, MYS_ATOMIC_RELAXED);
+}
 
 ////////////
 //////////// End of mys.c
