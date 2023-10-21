@@ -27,6 +27,12 @@
 #define _GNU_SOURCE
 #endif
 
+// Include mpi.h first, for intel mpiicpc will throw error about
+// overloading functions if mpi.h is include in extern "C"
+#ifndef MYS_NO_MPI
+#include <mpi.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
