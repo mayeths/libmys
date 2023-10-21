@@ -948,8 +948,64 @@ MYS_API double hrtime()
 }
 #endif
 
+static size_t _mys_readfd(char **buffer, size_t buffer_size, int fd, bool enable_realloc)
+{
+    size_t read_size = 0;
 
-#define _MYS_CLOSE_FD(fd) do { if (fcntl(fd, F_GETFL) != -1 || errno != EBADF) close(fd); } while (0)
+    if (*buffer == NULL) {
+        if (!enable_realloc)
+            goto finished;
+        else {
+            if (buffer_size == 0)
+                buffer_size = 64;
+            *buffer = (char *)realloc(NULL, buffer_size);
+            if (*buffer == NULL)
+                goto finished;
+        }
+    }
+
+    while (1)
+    {
+        size_t remaining = buffer_size - read_size;
+        if (remaining == 0) {
+            if (!enable_realloc)
+                goto finished;
+            else {
+                // read() will fail if the parameter nbyte exceeds INT_MAX,
+                // and do not attempt a partial read.
+                size_t threshold = 4096; /* size_t threshold = INT_MAX; */
+                if (buffer_size * 2 < threshold)
+                    buffer_size *= 2;
+                else
+                    buffer_size += threshold;
+                *buffer = (char *)realloc(*buffer, buffer_size);
+                if (*buffer == NULL)
+                    goto finished;
+            }
+        }
+
+        ssize_t bytes_read = read(fd, *buffer + read_size, remaining);
+        if (bytes_read < 0) // an error occurred
+            goto finished;
+        read_size += (size_t)bytes_read;
+        if ((size_t)bytes_read < remaining) // EOF reached
+            goto finished;
+    }
+
+finished:
+    return read_size;
+}
+
+static size_t _mys_cut_suffix_space(char *buf, size_t len)
+{
+    if (buf == NULL)
+        return 0;
+
+    while (len != 0 && buf[len - 1] == '\n')
+        len -= 1;
+    buf[len] = '\0';
+    return len;
+}
 
 /**
  * @brief Create stdin/stdout/stderr pipe to subprocess opened with command
@@ -958,269 +1014,223 @@ MYS_API double hrtime()
  * https://github.com/sni/mod_gearman/blob/master/common/popenRWE.c
  * https://github.com/marssaxman/ozette/blob/833b659757/src/console/popenRWE.cpp
  */
-static int _mys_popen_rwe(int *ipipe, int *opipe, int *epipe, const char *command)
+MYS_API mys_popen_t mys_popen_create(const char *command)
 {
-    int in[2] = {-1, -1};
+    mys_popen_t popen;
+    popen.alive = false;
+    popen.pid = -1;
+    popen.ifd = -1;
+    popen.ofd = -1;
+    popen.efd = -1;
+    popen.retval = -1;
+
+    int in[2]  = {-1, -1};
     int out[2] = {-1, -1};
     int err[2] = {-1, -1};
-    int rc = 0;
-    int pid = 0;
+    if (pipe(in)  == -1) goto finished_0;
+    if (pipe(out) == -1) goto finished_1;
+    if (pipe(err) == -1) goto finished_2;
 
-    if ((rc = pipe(in)) < 0)
-        goto error_in;
-    if ((rc = pipe(out)) < 0)
-        goto error_out;
-    if ((rc = pipe(err)) < 0)
-        goto error_err;
-
-    pid = fork();
-    if (pid > 0) { /* parent */
-        _MYS_CLOSE_FD(in[0]);
-        _MYS_CLOSE_FD(out[1]);
-        _MYS_CLOSE_FD(err[1]);
-        *ipipe = in[1];
-        *opipe = out[0];
-        *epipe = err[0];
-        return pid;
-    } else if (pid == 0) { /* child */
-        _MYS_CLOSE_FD(in[1]);
-        _MYS_CLOSE_FD(out[0]);
-        _MYS_CLOSE_FD(err[0]);
-        _MYS_CLOSE_FD(0);
-        dup(in[0]);
-        _MYS_CLOSE_FD(1);
-        dup(out[1]);
-        _MYS_CLOSE_FD(2);
-        dup(err[1]);
-        execl( "/bin/sh", "sh", "-c", command, NULL );
+    popen.pid = fork();
+    
+    if (popen.pid == 0) { // child
+        close(in[1]);  close(0); dup(in[0]);  // pipe to stdin
+        close(out[0]); close(1); dup(out[1]); // pipe to stdout
+        close(err[0]); close(2); dup(err[1]); // pipe to stderr
+        execl("/bin/sh", "sh", "-c", command, NULL);
         _exit(1);
-    } else
-        goto error_fork;
-
-    return pid;
-
-error_fork:
-    _MYS_CLOSE_FD(err[0]);
-    _MYS_CLOSE_FD(err[1]);
-error_err:
-    _MYS_CLOSE_FD(out[0]);
-    _MYS_CLOSE_FD(out[1]);
-error_out:
-    _MYS_CLOSE_FD(in[0]);
-    _MYS_CLOSE_FD(in[1]);
-error_in:
-    return -1;
-}
-
-static int _mys_pclose_rwe(int pid, int ipipe, int opipe, int epipe)
-{
-    _MYS_CLOSE_FD(ipipe);
-    _MYS_CLOSE_FD(opipe);
-    _MYS_CLOSE_FD(epipe);
-    int status = -1;
-    if (waitpid(pid, &status, 0) == pid)
-        status = WEXITSTATUS(status);
-    else
-        status = -1;
-    return status;
-}
-
-#undef _MYS_CLOSE_FD
-
-MYS_API mys_popen_t mys_popen_create(const char *argv)
-{
-    mys_popen_t result;
-    result.ifd = -1;
-    result.ofd = -1;
-    result.efd = -1;
-    result.pid = _mys_popen_rwe(&result.ifd, &result.ofd, &result.efd, argv);
-    return result;
-}
-
-MYS_API int mys_popen_destroy(mys_popen_t *p)
-{
-    if (p == NULL)
-        return 0;
-    int result = _mys_pclose_rwe(p->pid, p->ifd, p->ofd, p->efd);
-    p->pid = -1;
-    p->ifd = -1;
-    p->ofd = -1;
-    p->efd = -1;
-    return result;
-}
-
-static size_t _mys_readfd(char **buffer, FILE *fd)
-{
-    *buffer = NULL;
-    size_t capacity = 0;
-    size_t total_size = 0;
-    char trunk[1024] = {0};
-    while (fgets(trunk, sizeof(trunk) - 1, fd)) {
-        size_t read_size = strnlen(trunk, sizeof(trunk));
-        if (capacity < total_size + read_size) {
-            // increase the buffer's capacity to put the new trunk
-            capacity += read_size < 512 ? 512 : read_size;
-            *buffer = (char *)realloc(*buffer, capacity);
+    } else { // parent
+        if (popen.pid == -1)
+            goto finished_3;
+        else {
+            close(in[0]);  popen.ifd = in[1];
+            close(out[1]); popen.ofd = out[0];
+            close(err[1]); popen.efd = err[0];
+            popen.alive = true;
         }
-        // concat new trunk to buffer
-        strncat(*buffer, trunk, read_size);
-        total_size += read_size;
     }
 
-    // size_t capacity = sizeof(trunk);
-    // size_t total_size = 0;
-    // while (fgets(trunk, sizeof(trunk)-1, fd)) {
-    //     size_t read_size = strlen(trunk);
-    //     if (capacity < total_size + read_size) {
-    //         // increase the capacity to put the new trunk
-    //         capacity += read_size < 512 ? 512 : read_size;
-    //         *buffer = (char *)realloc(*buffer, capacity);
-    //     }
-    //     strncat(*buffer, trunk, capacity - total_size);
-    //     total_size += read_size;
-    // }
-    return total_size;
+finished_3:
+    close(err[0]);
+    close(err[1]);
+finished_2:
+    close(out[0]);
+    close(out[1]);
+finished_1:
+    close(in[0]);
+    close(in[1]);
+finished_0:
+    return popen;
 }
 
-
-// FIXME: Align to mys_prun_create_s. Like removing suffix \\n
-MYS_API mys_prun_t mys_prun_create(const char *argv)
+MYS_API bool mys_popen_test(mys_popen_t *popen)
 {
-    mys_prun_t result;
-    result.retval = -1;
-    result.out = NULL;
-    result.err = NULL;
-    result._by_safe = false;
-
-    mys_popen_t pd = mys_popen_create(argv);
-
-    FILE *outfd = fdopen(pd.ofd, "r");
-    if (outfd) {
-        result.len_out = _mys_readfd(&result.out, outfd);
-        printf("alaala %zd %s\n", result.len_out, argv);
-        fclose(outfd);
+    if (popen == NULL || !popen->alive)
+        return false;
+    int status;
+    pid_t wpid = waitpid(popen->pid, &status, WNOHANG);
+    if (wpid == 0)
+        return true;
+    else if (wpid == popen->pid) {
+        popen->retval = WEXITSTATUS(status);
+        popen->alive = false;
+        return false;
     } else {
-        result.out = (char *)malloc(0);
-        result.len_out = 0;
+        popen->alive = false;
+        return false;
     }
-    FILE *errfd = fdopen(pd.efd, "r");
-    if (errfd) {
-        result.len_err = _mys_readfd(&result.err, errfd);
-        fclose(errfd);
+}
+
+MYS_API bool mys_popen_wait(mys_popen_t *popen)
+{
+    if (popen == NULL || !popen->alive)
+        return false;
+    close(popen->ifd); popen->ifd = -1;
+    close(popen->ofd); popen->ofd = -1;
+    close(popen->efd); popen->efd = -1;
+    int status;
+    pid_t wpid = waitpid(popen->pid, &status, 0);
+    if (wpid == popen->pid) {
+        popen->retval = WEXITSTATUS(status);
+        popen->alive = false;
+        return true;
     } else {
-        result.err = (char *)malloc(0);
-        result.len_err = 0;
+        popen->retval = -1;
+        popen->alive = false;
+        return false;
     }
-    result.retval = mys_popen_destroy(&pd);
-    return result;
 }
 
-MYS_API mys_prun_t mys_prun_create_s(const char *argv, char *buf_out, size_t size_out, char *buf_err, size_t size_err)
+MYS_API bool mys_popen_kill(mys_popen_t *popen, int signo)
 {
-    mys_prun_t result;
-    result.out = NULL;
-    result.err = NULL;
-    result.len_out = 0;
-    result.len_err = 0;
-    result._by_safe = true;
-    mys_popen_t pd = mys_popen_create(argv);
-
-    // Read data from the file descriptor
-    if (buf_out != NULL) {
-        while (size_out - result.len_out > 0) {
-            ssize_t ret = read(pd.ofd, buf_out, size_out - result.len_out);
-            if (ret <= 0) {
-                break; // cannot read more or no more message
-            } else {
-                result.len_out += (size_t)ret;
-            }
-        }
-        while (result.len_out > 0 && buf_out[result.len_out - 1] == '\n')
-            result.len_out -= 1;
-        buf_out[result.len_out] = '\0';
+    if (popen == NULL || !popen->alive)
+        return false;
+    kill(popen->pid, signo);
+    close(popen->ifd); popen->ifd = -1;
+    close(popen->ofd); popen->ofd = -1;
+    close(popen->efd); popen->efd = -1;
+    int status;
+    pid_t wpid = waitpid(popen->pid, &status, 0);
+    if (wpid == popen->pid) {
+        popen->retval = WEXITSTATUS(status);
+        popen->alive = false;
+        return true;
+    } else {
+        popen->retval = -1;
+        popen->alive = false;
+        return false;
     }
-
-    if (buf_err != NULL) {
-        while (size_err - result.len_err > 0) {
-            ssize_t ret = read(pd.efd, buf_err, size_err - result.len_err);
-            if (ret <= 0) {
-                break; // cannot read more or no more message
-            } else {
-                result.len_err += (size_t)ret;
-            }
-        }
-        while (result.len_err > 0 && buf_err[result.len_err - 1] == '\n')
-            result.len_err -= 1;
-        buf_err[result.len_err] = '\0';
-    }
-
-    result.retval = mys_popen_destroy(&pd);
-    return result;
 }
 
-MYS_API void mys_prun_destroy(mys_prun_t *p)
+//// prun
+
+MYS_API mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t max_out, char *buf_err, size_t max_err)
 {
-    if (p == NULL)
+    mys_prun_t prun;
+    prun.success = false;
+    prun.out = buf_out;
+    prun.err = buf_err;
+    prun.len_out = 0;
+    prun.len_err = 0;
+    prun.retval = -1;
+    prun._alloced = false;
+
+    mys_popen_t popen = mys_popen_create(command);
+    if (!popen.alive)
+        return prun;
+
+    prun.len_out = _mys_readfd(&prun.out, max_out, popen.ofd, prun._alloced);
+    prun.len_err = _mys_readfd(&prun.err, max_err, popen.efd, prun._alloced);
+    prun.len_out = _mys_cut_suffix_space(prun.out, prun.len_out);
+    prun.len_err = _mys_cut_suffix_space(prun.err, prun.len_err);
+    mys_popen_wait(&popen);
+    prun.success = true;
+    prun.retval = popen.retval;
+    return prun;
+}
+
+MYS_API mys_prun_t mys_prun_create2(const char *command)
+{
+    mys_prun_t prun;
+    prun.success = false;
+    prun.out = NULL;
+    prun.err = NULL;
+    prun.len_out = 0;
+    prun.len_err = 0;
+    prun.retval = -1;
+    prun._alloced = true;
+
+    mys_popen_t popen = mys_popen_create(command);
+    if (!popen.alive)
+        return prun;
+
+    prun.len_out = _mys_readfd(&prun.out, 0, popen.ofd, prun._alloced);
+    prun.len_err = _mys_readfd(&prun.err, 0, popen.efd, prun._alloced);
+    prun.len_out = _mys_cut_suffix_space(prun.out, prun.len_out);
+    prun.len_err = _mys_cut_suffix_space(prun.err, prun.len_err);
+    mys_popen_wait(&popen);
+    prun.success = true;
+    prun.retval = popen.retval;
+    return prun;
+}
+
+MYS_API void mys_prun_destroy(mys_prun_t *prun)
+{
+    if (prun == NULL || !prun->success)
         return;
-    if (p->_by_safe == false) {
-        if (p->out != NULL) free((char *)p->out);
-        if (p->err != NULL) free((char *)p->err);
+    if (prun->_alloced) {
+        if (prun->out != NULL) free(prun->out);
+        if (prun->err != NULL) free(prun->err);
     }
-    p->out = NULL;
-    p->err = NULL;
-    p->len_out = 0;
-    p->len_err = 0;
-    p->retval = -1;
+    prun->out = NULL;
+    prun->err = NULL;
+    prun->len_out = 0;
+    prun->len_err = 0;
 }
 
-MYS_API void mys_bfilename(const char *path, char **basename)
-{
-    const char *s = strrchr(path, '/');
-    *basename = s ? strdup(s + 1) : strdup(path);
-}
 
-MYS_API int mys_do_mkdir(const char *path, mode_t mode)
+MYS_API bool mys_mkdir(const char *path, mode_t mode)
 {
     struct stat st;
-    int  status = 0;
+    bool success = true;
     if (stat(path, &st) != 0) {
         /* Directory does not exist. EEXIST for race condition */
         if (mkdir(path, mode) != 0 && errno != EEXIST)
-            status = -1;
+            success = false;
     } else if (!S_ISDIR(st.st_mode)) {
         errno = ENOTDIR;
-        status = -1;
+        success = false;
     }
-    return status;
+    return success;
 }
 
-MYS_API int mys_ensure_dir(const char *path, mode_t mode)
+MYS_API bool mys_ensure_dir(const char *path, mode_t mode)
 {
     char *p = strdup(path);
     char *pp = p;
     char *sp = NULL;
-    int status = 0;
-    while (status == 0 && (sp = strchr(pp, '/')) != 0) {
+    bool success = true;
+    while (success && (sp = strchr(pp, '/')) != 0) {
         if (sp != pp) {
             *sp = '\0';
-            status = mys_do_mkdir(p, mode);
+            success = mys_mkdir(p, mode);
             *sp = '/';
         }
         pp = sp + 1;
     }
-    if (status == 0)
-        status = mys_do_mkdir(path, mode);
+    if (success)
+        success = mys_mkdir(path, mode);
     free(p);
-    return status;
+    return success;
 }
 
-MYS_API int mys_ensure_parent(const char *path, mode_t mode)
+MYS_API bool mys_ensure_parent(const char *path, mode_t mode)
 {
     char *pathcopy = strdup(path);
     char *dname = dirname(pathcopy);
-    int status = mys_ensure_dir(dname, mode);
+    bool success = mys_ensure_dir(dname, mode);
     free(pathcopy);
-    return status;
+    return success;
 }
 
 MYS_API int mys_busysleep(double seconds)
