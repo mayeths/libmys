@@ -103,6 +103,7 @@
   Synchronize between threads based on the specified memory order. (All memory orders are valid)
  */
 #define mys_atomic_fence(memorder) __atomic_thread_fence (memorder)
+#define mys_atomic_signal_fence(memorder) __atomic_signal_fence (memorder)
 
 #define mys_atomic_wait_eq(ptr, val, memorder) do {              \
     while (mys_atomic_load_n(ptr, MYS_ATOMIC_RELAXED) != val) {} \
