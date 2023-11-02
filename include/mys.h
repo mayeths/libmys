@@ -26,6 +26,9 @@
 #if defined(OS_LINUX) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
 #endif
+#if defined(OS_MACOS) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE
+#endif
 
 // Include mpi.h first, for intel mpiicpc will throw error about
 // overloading functions if mpi.h is include in extern "C"

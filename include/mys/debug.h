@@ -18,12 +18,11 @@
 #include <sys/syscall.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
-#include <sys/epoll.h>
 #include <signal.h>
 #include <execinfo.h>
 
 
-#define MYS_SIGNAL_LAST_MESSAGE_MAX 1024
+#define MYS_DEBUG_MESSAGE_MAX 1024
 
 /**
  * @brief Initialize libmys' signal handlers for debugging
@@ -34,6 +33,11 @@ MYS_API void mys_debug_init();
  */
 MYS_API void mys_debug_fini();
 /**
+ * @brief Get the (thread local) message for signal handlers to print.
+ * @return Constructed last message
+ */
+MYS_API void mys_debug_get_message(char *buffer);
+/**
  * @brief Set the (thread local) message for signal handlers to print.
  * 
  * @param fmt Formatter
@@ -42,29 +46,28 @@ MYS_API void mys_debug_fini();
  * @note This message length should not exceed `MYS_SIGNAL_LAST_MESSAGE_MAX`
  */
 MYS_API void mys_debug_set_message(const char *fmt, ...);
-/**
- * @brief Get the (thread local) message for signal handlers to print.
- * @return Constructed last message
- */
-MYS_API const char *mys_debug_get_message();
 MYS_API void mys_debug_clear_message();
 
 MYS_API void mys_debug_set_style(int style);
 MYS_API int mys_debug_get_style();
 
-MYS_API void mys_debug_set_kill_timer(double timeout);
-MYS_API void mys_debug_clear_kill_timer();
+#ifdef MYS_ENABLE_DEBUG_TIMEOUT
+// require -lrt for timer_create(), timer_settime(), and timer_delete()
+MYS_API void mys_debug_set_timeout(double timeout);
+MYS_API void mys_debug_clear_timeout();
+#endif
 
-/* gcc -Wall -Wextra -I${MYS_DIR}/include -g test-debug.c && valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./a.out
+/* gcc -rdynamic -funwind-tables -I${MYS_DIR}/include -g -Wall -Wextra test-debug.c -lrt && valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./a.out
 =======================
 #define MYS_IMPL
 #define MYS_NO_MPI
+#define MYS_ENABLE_DEBUG_TIMEOUT
 #include <mys.h>
 
 void emit_signal(int signal)
 {
     if (signal == SIGSEGV) {
-        int *a = NULL;
+        int *a = (int *)0x1234;
         *a = 100;
     } else {
         kill(getpid(), signal);
@@ -73,9 +76,21 @@ void emit_signal(int signal)
 int main() {
     // MPI_Init(NULL, NULL);
     mys_debug_init();
-    mys_debug_set_message("HAHA %p", emit_signal);
-    emit_signal(SIGSEGV);
+    double t_start = mys_hrtime();
+    mys_debug_add_stack_filter("/usr/lib64/libc.so.6");
+    mys_debug_add_stack_filter(":?");
+    // mys_debug_del_stack_filter("/usr/lib64/libc.so.6");
+    // mys_debug_del_stack_filter(":?");
+    mys_debug_set_max_frames(3);
+    mys_debug_set_message("Tstart %.9f", t_start);
+    mys_debug_set_timeout(3);
+    sleep(1);
+    // mys_debug_clear_timeout();
+    sleep(5);
+    // emit_signal(SIGSEGV);
+    // emit_signal(SIGABRT);
     mys_debug_fini();
+    ILOG(0, "HAHAHAH");
     // MPI_Finalize();
 }
 
