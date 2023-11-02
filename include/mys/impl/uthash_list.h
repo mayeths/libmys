@@ -6,8 +6,6 @@
 // [Part 1] Define UTLIST
 /************************************************/
 /************************************************/
-#ifdef _UTHASH_DEFINE_LIST
-#undef _UTHASH_DEFINE_LIST
 #ifndef _UTLIST_H
 #define _UTLIST_H
 
@@ -1061,7 +1059,6 @@ do {                                                                            
 #endif /* _NO_DECLTYPE */
 
 #endif /* _UTLIST_H */
-#endif /*_UTHASH_DEFINE_LIST*/
 
 /************************************************/
 /************************************************/

@@ -1,13 +1,151 @@
 #pragma once
+#include "../mpi.h"
+
+typedef struct _mys_mpi_G_t {
+    bool inited;
+    mys_mutex_t lock;
+    int myrank;
+    int nranks;
+    _mys_MPI_Comm comm;
+} _mys_mpi_G_t;
+
+MYS_STATIC _mys_mpi_G_t _mys_mpi_G = {
+    .inited = false,
+    .lock = MYS_MUTEX_INITIALIZER,
+    .myrank = -1,
+    .nranks = -1,
+    .comm = _mys_MPI_COMM_WORLD,
+};
+
+MYS_API void mys_mpi_init()
+{
+    if (_mys_mpi_G.inited == true)
+        return;
+    mys_mutex_lock(&_mys_mpi_G.lock);
+    int inited;
+    _mys_MPI_Initialized(&inited);
+    if (!inited) {
+        _mys_MPI_Init_thread(NULL, NULL, _mys_MPI_THREAD_SINGLE, &inited);
+        fprintf(stdout, ">>>>> ===================================== <<<<<\n");
+        fprintf(stdout, ">>>>> Nevel let libmys init MPI you dumbass <<<<<\n");
+        fprintf(stdout, ">>>>> ===================================== <<<<<\n");
+        fflush(stdout);
+    }
+    _mys_MPI_Comm_rank(_mys_mpi_G.comm, &_mys_mpi_G.myrank);
+    _mys_MPI_Comm_size(_mys_mpi_G.comm, &_mys_mpi_G.nranks);
+    _mys_mpi_G.inited = true;
+    mys_mutex_unlock(&_mys_mpi_G.lock);
+}
+
+MYS_API int mys_mpi_myrank()
+{
+    mys_mpi_init();
+    return _mys_mpi_G.myrank;
+}
+
+MYS_API int mys_mpi_nranks()
+{
+    mys_mpi_init();
+    return _mys_mpi_G.nranks;
+}
+
+MYS_API int mys_mpi_barrier()
+{
+    mys_mpi_init();
+    return _mys_MPI_Barrier(_mys_mpi_G.comm);
+}
+
+MYS_API int mys_mpi_sync()
+{
+    // At this point we use simple barrier for sync
+    return mys_mpi_barrier();
+}
+
+MYS_API _mys_MPI_Comm mys_mpi_comm()
+{
+    return _mys_mpi_G.comm;
+}
+
+
 
 #ifndef MYS_NO_MPI
-#define MYS_NO_MPI
-#warning You should define MYS_NO_MPI before entering this file.
-#endif
+
+// All functions here should use PMPI routines to provide functionality.
+#pragma once
+
+#include <stdio.h>
+#include "mpi.h"
+
+
+//-------------------- Elementary low-level MPI functions --------------------//
+
+MYS_STATIC int _mys_MPI_Initialized(int *flag)
+{
+    return PMPI_Initialized(flag);
+}
+
+MYS_STATIC int _mys_MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
+{
+    return PMPI_Init_thread(argc, argv, required, provided);
+}
+
+MYS_STATIC int _mys_MPI_Comm_rank(_mys_MPI_Comm comm, int *rank)
+{
+    return PMPI_Comm_rank(comm, rank);
+}
+
+MYS_STATIC int _mys_MPI_Comm_size(_mys_MPI_Comm comm, int *size)
+{
+    return PMPI_Comm_size(comm, size);
+}
+
+MYS_STATIC int _mys_MPI_Probe(int source, int tag, _mys_MPI_Comm comm, _mys_MPI_Status *status)
+{
+    return PMPI_Probe(source, tag, comm, status);
+}
+
+MYS_STATIC int _mys_MPI_Get_count(_mys_MPI_Status *status, _mys_MPI_Datatype datatype, int *count)
+{
+    return PMPI_Get_count(status, datatype, count);
+}
+
+MYS_STATIC int _mys_MPI_Recv(void *buf, int count, _mys_MPI_Datatype datatype, int source, int tag, _mys_MPI_Comm comm, _mys_MPI_Status *status)
+{
+    return PMPI_Recv(buf, count, datatype, source, tag, comm, status);
+}
+
+MYS_STATIC int _mys_MPI_Send(const void *buf, int count, _mys_MPI_Datatype datatype, int dest, int tag, _mys_MPI_Comm comm)
+{
+    return PMPI_Send(buf, count, datatype, dest, tag, comm);
+}
+
+MYS_STATIC int _mys_MPI_Barrier(_mys_MPI_Comm comm)
+{
+    return PMPI_Barrier(comm);
+}
+
+MYS_STATIC int _mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, _mys_MPI_Datatype datatype, _mys_MPI_Op op, _mys_MPI_Comm comm)
+{
+    return PMPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
+}
+
+MYS_STATIC int _mys_MPI_Bcast(void *buffer, int count, _mys_MPI_Datatype datatype, int root, _mys_MPI_Comm comm)
+{
+   return PMPI_Bcast(buffer, count, datatype, root, comm);
+}
+
+MYS_STATIC double _mys_MPI_Wtime()
+{
+    return PMPI_Wtime();
+}
+
+
+
+
+#else
 
 #include <string.h>
 #include <time.h>
-#include "mpi.h"
 
 //-------------------- Elementary low-level MPI functions --------------------//
 
@@ -224,6 +362,8 @@ MYS_STATIC double _mys_MPI_Wtime()
 #endif
 }
 
+
+#endif
 
 ///// hypre/utilities/mpistubs.c
 /******************************************************************************
@@ -1628,3 +1768,6 @@ hypre_MPI_Info_free( hypre_MPI_Info *info )
 
 #endif
 #endif
+
+
+

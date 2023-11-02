@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdbool.h>
-#include "../_config.h"
-#include "../thread.h"
+#include "_config.h"
+#include "thread.h"
 
 //-------------------- MPI types and constants --------------------//
 // Functions of libmys (except _mpi) should use these wrapper types
@@ -95,6 +95,7 @@ MYS_STATIC int _mys_MPI_Barrier(_mys_MPI_Comm comm);
 MYS_STATIC int _mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, _mys_MPI_Datatype datatype, _mys_MPI_Op op, _mys_MPI_Comm comm);
 MYS_STATIC int _mys_MPI_Probe(int source, int tag, _mys_MPI_Comm comm, _mys_MPI_Status *status);
 MYS_STATIC int _mys_MPI_Get_count(_mys_MPI_Status *status, _mys_MPI_Datatype datatype, int *count);
+MYS_STATIC double _mys_MPI_Wtime();
 
 
 //-------------------- Custom high-level MPI functions --------------------//

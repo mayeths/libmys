@@ -1,10 +1,102 @@
+#include "../math.h"
+
+// from netlib-math/s_copysign.c
+MYS_STATIC double _mys_math_copysign(double x, double y)
+{
+    x = _FDLIBM_FORM_DOUBLE((_FDLIBM_HI(x)&0x7fffffff)|(_FDLIBM_HI(y)&0x80000000), _FDLIBM_LO(x));
+        return x;
+}
+
+// from netlib-math/s_fabs.c
+MYS_STATIC double _mys_math_fabs(double x)
+{
+    x = _FDLIBM_FORM_DOUBLE(_FDLIBM_HI(x)&0x7fffffff, _FDLIBM_LO(x));
+        return x;
+}
+
+// from netlib-math/e_log.c
+MYS_STATIC double _mys_math_log(double x)
+{
+	double hfsq,f,s,z,R,w,t1,t2,dk;
+	int k,hx,i,j;
+	unsigned lx;
+    static double zero = 0.0;
+
+	hx = _FDLIBM_HI(x);		/* high word of x */
+	lx = _FDLIBM_LO(x);		/* low  word of x */
+
+	k=0;
+	if (hx < 0x00100000) {			/* x < 2**-1022  */
+	    if (((hx&0x7fffffff)|lx)==0) 
+		return -__fdlibm_two54/zero;		/* log(+-0)=-inf */
+	    if (hx<0) return (x-x)/zero;	/* log(-#) = NaN */
+	    k -= 54; x *= __fdlibm_two54; /* subnormal number, scale up x */
+	    hx = _FDLIBM_HI(x);		/* high word of x */
+	} 
+	if (hx >= 0x7ff00000) return x+x;
+	k += (hx>>20)-1023;
+	hx &= 0x000fffff;
+	i = (hx+0x95f64)&0x100000;
+	x = _FDLIBM_FORM_DOUBLE(hx|(i^0x3ff00000), _FDLIBM_LO(x)); /* normalize x or x/2 */
+	k += (i>>20);
+	f = x-1.0;
+	if((0x000fffff&(2+hx))<3) {	/* |f| < 2**-20 */
+	    if(f==__fdlibm_zero) {if(k==0) return __fdlibm_zero;  else {dk=(double)k;
+				 return dk*__fdlibm_ln2_hi+dk*__fdlibm_ln2_lo;}}
+	    R = f*f*(0.5-0.33333333333333333*f);
+	    if(k==0) return f-R; else {dk=(double)k;
+	    	     return dk*__fdlibm_ln2_hi-((R-dk*__fdlibm_ln2_lo)-f);}
+	}
+ 	s = f/(2.0+f); 
+	dk = (double)k;
+	z = s*s;
+	i = hx-0x6147a;
+	w = z*z;
+	j = 0x6b851-hx;
+	t1= w*(__fdlibm_Lg2+w*(__fdlibm_Lg4+w*__fdlibm_Lg6)); 
+	t2= z*(__fdlibm_Lg1+w*(__fdlibm_Lg3+w*(__fdlibm_Lg5+w*__fdlibm_Lg7))); 
+	i |= j;
+	R = t2+t1;
+	if(i>0) {
+	    hfsq=0.5*f*f;
+	    if(k==0) return f-(hfsq-s*(hfsq+R)); else
+		     return dk*__fdlibm_ln2_hi-((hfsq-(s*(hfsq+R)+dk*__fdlibm_ln2_lo))-f);
+	} else {
+	    if(k==0) return f-s*(f-R); else
+		     return dk*__fdlibm_ln2_hi-((s*(f-R)-dk*__fdlibm_ln2_lo)-f);
+	}
+}
+
+// from netlib-math/e_log10.c
+MYS_STATIC double _mys_math_log10(double x)
+{
+	double y,z;
+	int i,k,hx;
+	unsigned lx;
+    static double zero = 0.0;
+
+	hx = _FDLIBM_HI(x);	/* high word of x */
+	lx = _FDLIBM_LO(x);	/* low word of x */
+
+        k=0;
+        if (hx < 0x00100000) {                  /* x < 2**-1022  */
+            if (((hx&0x7fffffff)|lx)==0)
+                return -__fdlibm_two54/zero;             /* log(+-0)=-inf */
+            if (hx<0) return (x-x)/zero;        /* log(-#) = NaN */
+            k -= 54; x *= __fdlibm_two54; /* subnormal number, scale up x */
+            hx = _FDLIBM_HI(x);                /* high word of x */
+        }
+	if (hx >= 0x7ff00000) return x+x;
+	k += (hx>>20)-1023;
+	i  = ((unsigned)k&0x80000000)>>31;
+        hx = (hx&0x000fffff)|((0x3ff-i)<<20);
+        y  = (double)(k+i);
+        x = _FDLIBM_FORM_DOUBLE(hx, lx);
+	z  = y*__fdlibm_log10_2lo + __fdlibm_ivln10*_mys_math_log(x);
+	return  z+y*__fdlibm_log10_2hi;
+}
+
 // from netlib-math/e_pow.c
-#pragma once
-
-#include "fdlibm.h"
-
-//-----------------------------
-
 MYS_STATIC double _mys_math_pow(double x, double y)
 {
 	double z,ax,z_h,z_l,p_h,p_l;
@@ -212,4 +304,150 @@ MYS_STATIC double _mys_math_pow(double x, double y)
 	if((j>>20)<=0) z = _mys_math_scalbn(z,n);	/* subnormal output */
 	else z = _FDLIBM_FORM_DOUBLE(_FDLIBM_HI(z) + (n<<20), _FDLIBM_LO(z));
 	return s*z;
+}
+
+// from netlib-math/s_scalbn.c
+MYS_STATIC double _mys_math_scalbn (double x, int n)
+{
+	int  k,hx,lx;
+	hx = _FDLIBM_HI(x);
+	lx = _FDLIBM_LO(x);
+        k = (hx&0x7ff00000)>>20;		/* extract exponent */
+        if (k==0) {				/* 0 or subnormal x */
+            if ((lx|(hx&0x7fffffff))==0) return x; /* +-0 */
+	    x *= __fdlibm_two54; 
+	    hx = _FDLIBM_HI(x);
+	    k = ((hx&0x7ff00000)>>20) - 54; 
+            if (n< -50000) return __fdlibm_tiny*x; 	/*underflow*/
+	    }
+        if (k==0x7ff) return x+x;		/* NaN or Inf */
+        k = k+n; 
+        if (k >  0x7fe) return __fdlibm_huge*_mys_math_copysign(__fdlibm_huge,x); /* overflow  */
+        if (k > 0) 				/* normal result */
+	    {x = _FDLIBM_FORM_DOUBLE((hx&0x800fffff)|(k<<20), _FDLIBM_LO(x)); return x;}
+        if (k <= -54) {
+            if (n > 50000) 	/* in case integer overflow in n+k */
+		{return __fdlibm_huge*_mys_math_copysign(__fdlibm_huge,x);	/*overflow*/}
+	    else {return __fdlibm_tiny*_mys_math_copysign(__fdlibm_tiny,x); 	/*underflow*/}
+        }
+        k += 54;				/* subnormal result */
+        x = _FDLIBM_FORM_DOUBLE((hx&0x800fffff)|(k<<20), _FDLIBM_LO(x));
+        return x*__fdlibm_twom54;
+}
+
+// from netlib-math/e_sqrt.c
+MYS_STATIC double _mys_math_sqrt(double x)
+{
+	double z;
+	int 	sign = (int)0x80000000; 
+	unsigned r,t1,s1,ix1,q1;
+	int ix0,s0,q,m,t,i;
+
+	ix0 = _FDLIBM_HI(x);			/* high word of x */
+	ix1 = _FDLIBM_LO(x);		/* low word of x */
+
+    /* take care of Inf and NaN */
+	if((ix0&0x7ff00000)==0x7ff00000) {			
+	    return x*x+x;		/* sqrt(NaN)=NaN, sqrt(+inf)=+inf
+					   sqrt(-inf)=sNaN */
+	} 
+    /* take care of zero */
+	if(ix0<=0) {
+	    if(((ix0&(~sign))|ix1)==0) return x;/* sqrt(+-0) = +-0 */
+	    else if(ix0<0)
+		return (x-x)/(x-x);		/* sqrt(-ve) = sNaN */
+	}
+    /* normalize x */
+	m = (ix0>>20);
+	if(m==0) {				/* subnormal x */
+	    while(ix0==0) {
+		m -= 21;
+		ix0 |= (ix1>>11); ix1 <<= 21;
+	    }
+	    for(i=0;(ix0&0x00100000)==0;i++) ix0<<=1;
+	    m -= i-1;
+	    ix0 |= (ix1>>(32-i));
+	    ix1 <<= i;
+	}
+	m -= 1023;	/* unbias exponent */
+	ix0 = (ix0&0x000fffff)|0x00100000;
+	if(m&1){	/* odd m, double x to make it even */
+	    ix0 += ix0 + ((ix1&sign)>>31);
+	    ix1 += ix1;
+	}
+	m >>= 1;	/* m = [m/2] */
+
+    /* generate sqrt(x) bit by bit */
+	ix0 += ix0 + ((ix1&sign)>>31);
+	ix1 += ix1;
+	q = q1 = s0 = s1 = 0;	/* [q,q1] = sqrt(x) */
+	r = 0x00200000;		/* r = moving bit from right to left */
+
+	while(r!=0) {
+	    t = s0+r; 
+	    if(t<=ix0) { 
+		s0   = t+r; 
+		ix0 -= t; 
+		q   += r; 
+	    } 
+	    ix0 += ix0 + ((ix1&sign)>>31);
+	    ix1 += ix1;
+	    r>>=1;
+	}
+
+	r = sign;
+	while(r!=0) {
+	    t1 = s1+r; 
+	    t  = s0;
+	    if((t<ix0)||((t==ix0)&&(t1<=ix1))) { 
+		s1  = t1+r;
+		if(((t1&sign)==(unsigned)sign)&&(s1&sign)==0) s0 += 1;
+		ix0 -= t;
+		if (ix1 < t1) ix0 -= 1;
+		ix1 -= t1;
+		q1  += r;
+	    }
+	    ix0 += ix0 + ((ix1&sign)>>31);
+	    ix1 += ix1;
+	    r>>=1;
+	}
+
+    /* use floating add to find out rounding direction */
+	if((ix0|ix1)!=0) {
+	    z = __fdlibm_one-__fdlibm_tiny; /* trigger inexact flag */
+	    if (z>=__fdlibm_one) {
+	        z = __fdlibm_one+__fdlibm_tiny;
+	        if (q1==(unsigned)0xffffffff) { q1=0; q += 1;}
+		else if (z>__fdlibm_one) {
+		    if (q1==(unsigned)0xfffffffe) q+=1;
+		    q1+=2; 
+		} else
+	            q1 += (q1&1);
+	    }
+	}
+	ix0 = (q>>1)+0x3fe00000;
+	ix1 =  q1>>1;
+	if ((q&1)==1) ix1 |= sign;
+	ix0 += (m <<20);
+    z = _FDLIBM_FORM_DOUBLE(ix0, ix1);
+	return z;
+}
+
+// from musl-1.2.4/src/math/trunc.c
+MYS_STATIC double _mys_math_trunc(double x)
+{
+	union {double f; uint64_t i;} u = {x};
+	int e = (int)(u.i >> 52 & 0x7ff) - 0x3ff + 12;
+	uint64_t m;
+
+	if (e >= 52 + 12)
+		return x;
+	if (e < 12)
+		e = 1;
+	m = -1ULL >> e;
+	if ((u.i & m) == 0)
+		return x;
+	_MUSL_FORCE_EVAL(x + 0x1p120f);
+	u.i &= ~m;
+	return u.f;
 }

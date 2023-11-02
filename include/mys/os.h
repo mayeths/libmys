@@ -8,7 +8,7 @@
 #include <time.h>
 
 #include "_config.h"
-#include "_lib/mpi.h"
+#include "mpi.h"
 #include "macro.h"
 #include "thread.h"
 

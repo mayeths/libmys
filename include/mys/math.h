@@ -2,19 +2,21 @@
 #pragma once
 
 #include <stdint.h>
-#include "../_config.h"
+#include "_config.h"
 
-//-----------------------------
+#define __musl_fp_force_evalf(x) do { volatile float y; y = x; (void)y; } while (0)
+#define __musl_fp_force_eval(x) do { volatile double y; y = x; (void)y; } while (0)
+#define __musl_fp_force_evall(x) do { volatile long double y; y = x; (void)y; } while (0)
+#define _MUSL_FORCE_EVAL(x) do {              \
+    if (sizeof(x) == sizeof(float)) {         \
+        __musl_fp_force_evalf(x);             \
+    } else if (sizeof(x) == sizeof(double)) { \
+        __musl_fp_force_eval(x);              \
+    } else {                                  \
+        __musl_fp_force_evall(x);             \
+    }                                         \
+} while(0)
 
-// We use static functions instead of macros to satisfy annoying C++11 complaining about union type punning.
-#if 0
-// https://stackoverflow.com/a/4307336/11702338
-#define _FDLIBM_D2U(x) ((union { double _d_; uint64_t _u_; }){ ._d_ = (x) }._u_)
-#define _FDLIBM_U2D(x) ((union { double _d_; uint64_t _u_; }){ ._u_ = (x) }._d_)
-#define _FDLIBM_HI(x) (int32_t)(_FDLIBM_D2U(x) >> 32) // preserve the sign part
-#define _FDLIBM_LO(x) (uint32_t)(_FDLIBM_D2U(x))
-#define _FDLIBM_FORM_DOUBLE(h, l) _FDLIBM_U2D(((int64_t)(h) << 32) | (uint64_t)(l))
-#else
 union _fdlibm_num_t {
     double f64;
     uint64_t u64;
@@ -27,7 +29,6 @@ static double   _FDLIBM_U2D(uint64_t x) { union _fdlibm_num_t a; a.u64 = x; retu
 static int32_t  _FDLIBM_HI(double x)    { return (int32_t)(_FDLIBM_D2U(x) >> 32); }
 static uint32_t _FDLIBM_LO(double x)    { return (uint32_t)(_FDLIBM_D2U(x)); }
 static double   _FDLIBM_FORM_DOUBLE(int32_t h, uint32_t l) { return _FDLIBM_U2D(((int64_t)(h) << 32) | (uint64_t)(l)); }
-#endif
 
 static const double
 __fdlibm_ln2_hi  =  6.93147180369123816490e-01,	/* 3fe62e42 fee00000 */
@@ -82,6 +83,8 @@ MYS_STATIC double _mys_math_log10(double x);
 MYS_STATIC double _mys_math_sqrt(double x);
 MYS_STATIC double _mys_math_scalbn(double x, int n);
 MYS_STATIC double _mys_math_pow(double x, double y);
+MYS_STATIC double _mys_math_trunc(double x);
+
 
 /*
 int main()

@@ -10,8 +10,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <limits.h>
+#include <sys/types.h>
 
 #include "_config.h"
+#include "thread.h"
 
 /**
  * @brief Set the seed for a new sequence to be returned by mys_rand_xoroshiro128ss().
