@@ -18,17 +18,17 @@
 #if !defined(OS_LINUX) && !defined(OS_MACOS)
 #error Port me
 #endif
-#if defined(POSIX_COMPLIANCE) && !defined(_XOPEN_SOURCE)
-#define _XOPEN_SOURCE 700
-#endif
-#if defined(POSIX_COMPLIANCE) && !defined(_POSIX_C_SOURCE)
-#define _POSIX_C_SOURCE 200809L
-#endif
 #if defined(OS_LINUX) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
 #endif
 #if defined(OS_MACOS) && !defined(_DARWIN_C_SOURCE)
 #define _DARWIN_C_SOURCE
+#endif
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 700
 #endif
 
 
@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 ////////////////////////////////////////
-////// Declaration
+////// C Declaration
 ////////////////////////////////////////
 // Primary Library (mys)
 #include "./mys/assert.h"
@@ -56,6 +56,7 @@ extern "C" {
 #include "./mys/hrtime.h"
 #include "./mys/log.h"
 #include "./mys/macro.h"
+#include "./mys/memory.h"
 #ifndef MYS_NO_MPI
 #include "mys/mpiz.h"
 #endif
@@ -66,16 +67,13 @@ extern "C" {
 #include "./mys/statistic.h"
 #include "./mys/string.h"
 #include "./mys/thread.h"
-#ifdef CUDA_ARCH
-#include "./mys/cuda.cuh"
-#endif
 // Third-Party Library (mys3)
 #include "./mys3/cJSON/cJSON.h"
 #include "./mys3/matrixmarket/mmio.h"
 #include "./mys3/stb/stb_image.h"
 
 ////////////////////////////////////////
-////// Definition
+////// C Definition
 ////////////////////////////////////////
 // Primary Library (mys)
 #if (defined(MYS_IMPL) || defined(MYS_IMPL_LOCAL)) && !defined(__MYS_IMPL_ONCE__)
@@ -116,5 +114,27 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
-}
+} // extern "C"
+#endif
+
+
+////////////////////////////////////////
+////// C++
+////////////////////////////////////////
+#ifdef __cplusplus
+#include "mys/linalg.hpp"
+#include "mys/memory.hpp"
+#ifndef MYS_NO_MPI
+#include "mys/mpi.hpp"
+#endif
+#include "mys/raii.hpp"
+#include "mys/string.hpp"
+#include "mys/type.hpp"
+#endif
+
+////////////////////////////////////////
+////// CUDA
+////////////////////////////////////////
+#ifdef CUDA_ARCH
+#include "./mys/cuda.cuh"
 #endif

@@ -8,7 +8,7 @@
 
 #define MYS_IMPL
 #define MYS_NO_MPI
-#include "mys.hpp"
+#include "mys.h"
 
 int main() {
 	TLOG_ORDERED("Test TLOG_ORDERED function");

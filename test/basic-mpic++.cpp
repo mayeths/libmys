@@ -9,7 +9,7 @@
 #include <mpi.h>
 
 #define MYS_IMPL
-#include "mys.hpp"
+#include "mys.h"
 
 int main() {
 	MPI_Init(NULL, NULL);
