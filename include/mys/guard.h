@@ -22,8 +22,8 @@
 MYS_API void mys_guard_begin(const char *type_name, size_t type_size, void *variable_ptr, const char *file, int line);
 MYS_API void mys_guard_end(const char *type_name, size_t type_size, void *variable_ptr, const char *file, int line);
 
-#define G_BEGIN(typ, variable) mys_guard_begin(#typ, sizeof(typ), &variable, MYS_FNAME, __LINE__)
-#define G_END(typ, variable) mys_guard_end(#typ, sizeof(typ), &variable, MYS_FNAME, __LINE__)
+#define G_BEGIN(typ, variable) mys_guard_begin(#typ, sizeof(typ), &variable, __FILE__, __LINE__)
+#define G_END(typ, variable) mys_guard_end(#typ, sizeof(typ), &variable, __FILE__, __LINE__)
 
 /////// General handle
 #define G_BEGIN_INT(variable) G_BEGIN(int, variable)    // Begin a life-cycle of [int] handle

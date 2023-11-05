@@ -33,45 +33,45 @@ enum {
 /**
  * Print log message with 'TRACE' level ( [less important->] TDIWEFR [->most important] )
  */
-#define TLOG(who, fmt, ...) mys_log(who, MYS_LOG_TRACE, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define TLOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_TRACE, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define TLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_TRACE, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define TLOG(who, fmt, ...) mys_log(who, MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TLOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'DEBUG' level ( [less important->] TDIWEFR [->most important] )
  */
-#define DLOG(who, fmt, ...) mys_log(who, MYS_LOG_DEBUG, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define DLOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_DEBUG, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define DLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_DEBUG, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define DLOG(who, fmt, ...) mys_log(who, MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define DLOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define DLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'INFO' level ( [less important->] TDIWEFR [->most important] )
  */
-#define ILOG(who, fmt, ...) mys_log(who, MYS_LOG_INFO, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define ILOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_INFO, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define ILOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_INFO, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define ILOG(who, fmt, ...) mys_log(who, MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define ILOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define ILOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'WARN' level ( [less important->] TDIWEFR [->most important] )
  */
-#define WLOG(who, fmt, ...) mys_log(who, MYS_LOG_WARN, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define WLOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_WARN,  MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define WLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_WARN, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define WLOG(who, fmt, ...) mys_log(who, MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define WLOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_WARN,  __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define WLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'ERROR' level ( [less important->] TDIWEFR [->most important] )
  */
-#define ELOG(who, fmt, ...) mys_log(who, MYS_LOG_ERROR, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define ELOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_ERROR, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define ELOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_ERROR, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define ELOG(who, fmt, ...) mys_log(who, MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define ELOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define ELOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'FATAL' level ( [less important->] TDIWEFR [->most important] )
  */
-#define FLOG(who, fmt, ...) mys_log(who, MYS_LOG_FATAL, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define FLOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define FLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_FATAL, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define FLOG(who, fmt, ...) mys_log(who, MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define FLOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define FLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'RAW' level ( [less important->] TDIWEFR [->most important] )
  */
-#define RLOG(who, fmt, ...) mys_log(who, MYS_LOG_RAW, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define RLOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_RAW, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
-#define RLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_RAW, MYS_FNAME, __LINE__, fmt, ##__VA_ARGS__)
+#define RLOG(who, fmt, ...) mys_log(who, MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define RLOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define RLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * TODO
  * Behavior: Default to stdout to force explicit open and close a folder
@@ -79,9 +79,9 @@ enum {
  * XLOG will flush message to last opening target, which we store the folder name internally.
  * In our design, such a function may be high-overhead, so it should be striking enough to prevent accident outputing.
  */
-#define RANKLOG(folder, fmt, ...) mys_rank_log(MYS_FNAME, __LINE__, folder, fmt, ##__VA_ARGS__)
-#define RANKLOG_OPEN(folder) mys_rank_log_open(MYS_FNAME, __LINE__, folder) // Collective call
-#define RANKLOG_CLOSE(folder) mys_rank_log_close(MYS_FNAME, __LINE__, folder) // Collective call
+#define RANKLOG(folder, fmt, ...) mys_rank_log(__FILE__, __LINE__, folder, fmt, ##__VA_ARGS__)
+#define RANKLOG_OPEN(folder) mys_rank_log_open(__FILE__, __LINE__, folder) // Collective call
+#define RANKLOG_CLOSE(folder) mys_rank_log_close(__FILE__, __LINE__, folder) // Collective call
 
 #define LOG_SILENT() mys_log_silent(true)
 #define LOG_UNSILENT() mys_log_silent(false)

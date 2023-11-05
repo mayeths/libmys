@@ -29,7 +29,7 @@
 #define _ASX(exp, fmt, ...) if (!(exp)) { \
     int myrank = mys_mpi_myrank();        \
     mys_log(myrank, MYS_LOG_FATAL,        \
-        MYS_FNAME, __LINE__,              \
+        __FILE__, __LINE__,               \
         (fmt), ##__VA_ARGS__);            \
     exit(1);                              \
 }

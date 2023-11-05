@@ -39,7 +39,7 @@ MYS_API void mys_log(int who, int level, const char *file, int line, const char 
         event.myrank = myrank;
         event.nranks = nranks;
         event.level = level;
-        event.file = file;
+        event.file = (strrchr(file, '/') ? strrchr(file, '/') + 1 : file);
         event.line = line;
         event.fmt = fmt;
         event.no_vargs = false;
@@ -74,7 +74,7 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
         event.myrank = myrank;
         event.nranks = nranks;
         event.level = level;
-        event.file = file;
+        event.file = (strrchr(file, '/') ? strrchr(file, '/') + 1 : file);
         event.line = line;
         event.fmt = fmt;
         event.no_vargs = false;
@@ -313,6 +313,7 @@ MYS_API void mys_rank_log(const char *callfile, int callline, const char *folder
     size_t len = strnlen(folder, _MYS_FNAME_MAX);
     int index = _mys_rank_log_find_dest(folder, len);
     mys_mutex_lock(&_mys_rank_log_G.lock);
+    callfile = (strrchr(callfile, '/') ? strrchr(callfile, '/') + 1 : callfile);
     if (index == -1) {
         mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Invoked mys_rank_log() with invalid folder: %s", folder);
         goto _finished;
@@ -343,6 +344,7 @@ MYS_API void mys_rank_log_open(const char *callfile, int callline, const char *f
     size_t len = strnlen(folder, _MYS_FNAME_MAX);
     int index = _mys_rank_log_find_dest(folder, len);
     mys_mutex_lock(&_mys_rank_log_G.lock);
+    callfile = (strrchr(callfile, '/') ? strrchr(callfile, '/') + 1 : callfile);
     if (index != -1 && _mys_rank_log_G.dests[index].file != NULL) {
         mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Reopen an activating rank log folder: %s", folder);
         goto _finished;
@@ -392,6 +394,7 @@ MYS_API void mys_rank_log_close(const char *callfile, int callline, const char *
     mys_mutex_lock(&_mys_rank_log_G.lock);
     size_t tot_wrote = _mys_rank_log_G.dests[index].tot_wrote;
     size_t cur_wrote = _mys_rank_log_G.dests[index].cur_wrote;
+    callfile = (strrchr(callfile, '/') ? strrchr(callfile, '/') + 1 : callfile);
 
     if (index == -1) {
         mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Can not close invalid folder: %s", folder);
