@@ -11,6 +11,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zcompdump-$HOST"
 
 zstyle ':omz:update' mode disabled
+GITSTATUS_CACHE_DIR=$MYS_MODDIR/BASE/bin
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 CASE_SENSITIVE="true"
 # ENABLE_CORRECTION="true"

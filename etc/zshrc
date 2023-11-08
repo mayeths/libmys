@@ -5,6 +5,8 @@ if [[ -z $MYS_DIR ]]; then
     return 0
 fi
 
+export fpath=($MYS_MODDIR/BASE/share/zsh/5.9/functions $fpath)
+
 source $MYS_DIR/etc/omz/omz.sh
 source $MYS_DIR/script/zsh-functions.sh
 
