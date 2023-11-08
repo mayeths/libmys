@@ -1,0 +1,63 @@
+#!/bin/sh
+
+mayeths_archive() {
+    DATE=$(date '+%y%m%d')
+    if [[ $# -lt 1 ]]; then
+        OUTFILE="./mayeths.$DATE.run"
+    else
+        OUTFILE="$1"
+    fi
+    echo "Will pack bootstrap things to \"$OUTFILE\""
+
+    if [[ $# -lt 2 ]]; then
+        ARCHIVE_DIR=$(mktemp -d)
+    else
+        ARCHIVE_DIR="$2"
+    fi
+    echo "Now preparing bootstrap things at \"$ARCHIVE_DIR\""
+
+    # Download libmys
+    LIBMYS_DIR="$ARCHIVE_DIR/libmys"
+    LIBMYS_URL="https://github.com/mayeths/libmys.git"
+    git clone $LIBMYS_URL $LIBMYS_DIR
+
+    # Download gitstatus
+    GITSTATUS_DIR="$ARCHIVE_DIR/gitstatus"
+    mkdir -p $GITSTATUS_DIR
+    for target in "darwin-arm64" "darwin-x86_64" "linux-aarch64" "linux-i686" "linux-x86_64"; do
+        name="gitstatusd-$target.tar.gz"
+        url="https://github.com/romkatv/gitstatus/releases/download/v1.5.1/gitstatusd-$target.tar.gz"
+        wget --quiet --show-progress -O "$GITSTATUS_DIR/$name" $url
+        tar -xf "$GITSTATUS_DIR/$name" -C $GITSTATUS_DIR
+        rm -f "$GITSTATUS_DIR/$name"
+    done
+
+    # Download packages like zsh, tmux, make, cmake, python, vim, ...
+    EB_DOWNLOAD_DIR="$ARCHIVE_DIR/sources"
+    mkdir -p $EB_DOWNLOAD_DIR
+    eb tmux-3.3a.eb --fetch --robot --sourcepath $EB_DOWNLOAD_DIR
+    eb zsh-5.9.eb --fetch --robot --sourcepath $EB_DOWNLOAD_DIR
+
+    cp "$0" "$ARCHIVE_DIR/setup.sh"
+    makeself --target "./mayeths.$DATE.dir" "$ARCHIVE_DIR" "$OUTFILE" "Mayeths' develop environment packging" "./setup.sh" --run_install
+}
+
+mayeths_install() {
+    local extract_dir=$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )
+    local libmys_dir="$extract_dir/libmys"
+    echo "aha_extracted at \"$extract_dir\""
+    echo "aha_install at \"$USER_PWD\""
+    # ask what type of environment do you want to setup? 1. Personal Machine 2. Remote Machine with personal account 3. Remote Machine with shared account
+    # ./libmys/bin/eb make-4.4.1.eb --config --force --hooks post_build_and_install_loop_hook.py
+    # ./libmys/bin/eb python-3.11.2.eb --config --force --hooks post_build_and_install_loop_hook.py
+    # ./libmys/bin/eb ...
+    # Building ./libmys/tool/rpath ...
+    # Building ./libmys/tool/mee ...
+    # Everything is ok. Open a new terminal to enjoy mayeths' environment.
+}
+
+if [ $# -ge 1 ] && [ "$1" = "--run_install" ]; then
+    mayeths_install "$@"
+else
+    mayeths_archive "$@"
+fi
