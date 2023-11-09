@@ -4,6 +4,7 @@
 
 #include "_config.h"
 #include "os.h"
+#include "log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,11 +52,11 @@ MYS_API void mys_debug_clear_message();
 MYS_API void mys_debug_set_style(int style);
 MYS_API int mys_debug_get_style();
 
-#ifdef MYS_ENABLE_DEBUG_TIMEOUT
-// require -lrt for timer_create(), timer_settime(), and timer_delete()
+// To enable this functionality, you have to
+// 1) Add `#define MYS_ENABLE_DEBUG_TIMEOUT` before `#include mys.h`
+// 2) Add `-lrt` to compiler for using `timer_create()`, `timer_settime()`, and `timer_delete()`
 MYS_API void mys_debug_set_timeout(double timeout);
 MYS_API void mys_debug_clear_timeout();
-#endif
 
 /* gcc -rdynamic -funwind-tables -I${MYS_DIR}/include -g -Wall -Wextra test-debug.c -lrt && valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./a.out
 =======================

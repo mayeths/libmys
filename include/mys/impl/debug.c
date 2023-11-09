@@ -638,6 +638,8 @@ static void _mys_debug_timeout_handler(union sigval sv)
 {
     (void)sv;
     timer_delete(_mys_debug_G.timeout_id);
+    // FIXME: Seems like sometime we receive the signal instead of parent thread?
+    // Should we clear signal handler first?
     if (kill(_mys_debug_G.process_pid, _mys_debug_G.timeout_signal) == -1) {
         perror("_mys_debug_timeout_handler timeout kill failed");
     }
@@ -646,6 +648,10 @@ static void _mys_debug_timeout_handler(union sigval sv)
 
 MYS_API void mys_debug_set_timeout(double timeout)
 {
+    if (!_mys_debug_G.inited) {
+        printf("call mys_debug_init() before mys_debug_set_timeout()\n");
+        exit(1);
+    }
     if (!_mys_debug_G.timeout_inited) {
         struct sigaction new_action;
         new_action.sa_sigaction = _mys_debug_signal_handler;
