@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
+#include <limits.h>
+#include <float.h>
 
 #include "_config.h"
 #include "mpi.h"
@@ -24,6 +26,9 @@
 #endif
 #if defined(OS_LINUX)
 #include <sched.h>
+#ifdef MYS_ENABLE_NUMA
+#include <numa.h>
+#endif
 #endif
 
 
@@ -183,15 +188,29 @@ MYS_API void mys_print_affinity(FILE *fd);
 MYS_API void mys_stick_affinity();
 #endif
 
-////// Internal
+/**
+ * @brief Get the numa id where each page currently resides
+ * 
+ * @param ptr page pointer that hope to query (not necessary to be page aligned)
+ * @return The numa id where the page resides, otherwise -1 on failed.
+ */
+MYS_API int mys_numa_query(void *ptr);
+/**
+ * @brief Move a page to a specific numa node
+ * 
+ * @param ptr page pointer that hope to move (not necessary to be page aligned)
+ * @param numa_id the numa node id to move to
+ * @return 0 on success, otherwise -1. If positive value is returned, it is the number of nonmigrated pages.
+ */
+MYS_API int mys_numa_move(void *ptr, int numa_id);
 
-typedef struct _mys_hrtime_G_t {
-    bool inited;
-    union {
-        uint64_t u;
-        double d;
-    } start;
-} _mys_hrtime_G_t;
+
+MYS_API const char *mys_env_str(const char *name, const char *default_val);
+MYS_API int64_t mys_env_i64(const char *name, int64_t default_val);
+MYS_API int32_t mys_env_i32(const char *name, int32_t default_val);
+MYS_API double mys_env_f64(const char *name, double default_val);
+MYS_API float mys_env_f32(const char *name, float default_val);
+
 
 /////// check memory leak by valgrind
 /* gcc -I${MYS_DIR}/include -Wall -Wextra ./prun.c && valgrind --leak-check=full --track-fds=yes --track-fds=yes ./a.out

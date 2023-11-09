@@ -446,3 +446,112 @@ MYS_API void mys_stick_affinity()
     }
 }
 #endif
+
+#ifdef MYS_ENABLE_NUMA
+MYS_API int mys_numa_query(void *ptr)
+{
+    long page_size = sysconf(_SC_PAGESIZE);
+    size_t mask = ~((size_t)page_size-1);
+    void *aligned_ptr = (void *)((size_t)ptr & mask);
+    int status[1] = { -1 };
+    int ret = numa_move_pages(0, 1, &aligned_ptr, NULL, status, 0);
+    if (ret != 0) {
+        return -1;
+    }
+    return status[0];
+}
+
+MYS_API int mys_numa_move(void *ptr, int numa_id)
+{
+    long page_size = sysconf(_SC_PAGESIZE);
+    size_t mask = ~((size_t)page_size-1);
+    void *aligned_ptr = (void *)((size_t)ptr & mask);
+    int nodes[1] = { numa_id };
+    int status[1] = { -1 };
+    return numa_move_pages(0, 1, &aligned_ptr, nodes, status, 0);
+}
+#endif
+
+/* Safe string to numeric https://stackoverflow.com/a/18544436 */
+
+MYS_API const char *mys_env_str(const char *name, const char *default_val)
+{
+    const char *val = getenv(name);
+    if (val == NULL)
+        return default_val;
+    return val;
+}
+
+MYS_API int64_t mys_env_i64(const char *name, int64_t default_val)
+{
+    const char *str = getenv(name);
+    if (str == NULL)
+        return default_val;
+
+    char *stop = NULL;
+    errno = 0;
+    int64_t num = strtoll(str, &stop, 10);
+    int error = errno;
+    errno = 0;
+
+    if (stop == str || stop != NULL)
+        return default_val; /* contains with non-number */
+    if ((num == LLONG_MAX || num == LLONG_MIN) && error == ERANGE)
+        return default_val; /* number out of range for LONG */
+    return num;
+}
+
+MYS_API int32_t mys_env_i32(const char *name, int32_t default_val)
+{
+    int64_t num = mys_env_i64(name, (int64_t)default_val);
+    if ((num < INT_MIN) || (num > INT_MAX))
+        return default_val; /* number out of range for INT */
+    return (int32_t)num;
+}
+
+MYS_API double mys_env_f64(const char *name, double default_val)
+{
+    const char *str = getenv(name);
+    if (str == NULL)
+        return default_val;
+
+    char *stop = NULL;
+    errno = 0;
+    double num = strtod(str, &stop);
+    int error = errno;
+    errno = 0;
+
+    if (stop == str || stop != NULL)
+        return default_val; /* contains with non-number */
+    if (error == ERANGE)
+        return default_val; /* number out of range for DOUBLE */
+    if (num != num)
+        return default_val; /* Not A Number */
+    return num;
+}
+
+/*
+ * We don't assume to use IEEE754 arithmetic where
+ * default_val float->double->float is unchanged.
+ * Use strtof instead of mys_env_f64
+ */
+MYS_API float mys_env_f32(const char *name, float default_val)
+{
+    const char *str = getenv(name);
+    if (str == NULL)
+        return default_val;
+
+    char *stop = NULL;
+    errno = 0;
+    float num = strtof(str, &stop);
+    int error = errno;
+    errno = 0;
+
+    if (stop == str || stop != NULL)
+        return default_val; /* contains with non-number */
+    if (error == ERANGE)
+        return default_val; /* number out of range for FLOAT */
+    if (num != num)
+        return default_val; /* Not A Number */
+    return num;
+}
