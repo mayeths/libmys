@@ -129,7 +129,7 @@ echo -e "\033[0;36mMoved $MYS_CONFIG to $MYS_MODDIR/mayeths-config.sh\033[0m"
 
 rm -rf $BOOTSTRAP_DIR
 
-STUB1="shopt -q login_shell && exec -la zsh \"$MYS_MODDIR/BASE/bin/zsh\""
+STUB1="[[ $PS1 && -z "$IN_MYS_ZSH" ]] && IN_MYS_ZSH=1 exec -la zsh \"$MYS_MODDIR/BASE/bin/zsh\""
 echo -e "\033[1;36m---------------\033[0m"
 echo -e "\033[1;36m1> The following stub will start zsh at login:\033[0m"
 echo -e "\033[0;36m   $STUB1\033[0m"
