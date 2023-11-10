@@ -9,14 +9,8 @@ The instructions to install them to `$MYS_MODDIR` are presented in `libmys/ext`.
 ### Scenario 1: Local Machine
 From my own Macbook Pro, no need for driver code. I wrote these lines **at the top** of `~/.zshrc`:
 ```bash
-source /opt/homebrew/opt/lmod/init/profile
-module unuse "/opt/homebrew/Cellar/lmod/8.7.19/modulefiles/Core"
-
-export MYS_DIR=~/project/libmys
-export MYS_MODDIR=~/module
+export MYS_CONFIG=~/.mayeths
 source $MYS_DIR/etc/profile
-
-# ... other commands
 ```
 
 Note that we source Lmod script first so that `$MODULEPATH` prepended in libmys won't be cleared. Then source `profile` before any other command to enable [Powerlevel10k instant prompt](https://github.com/romkatv/powerlevel10k#instant-prompt) as soon as possible.
@@ -24,15 +18,12 @@ Note that we source Lmod script first so that `$MODULEPATH` prepended in libmys 
 ### Scenario 2: Remote Machine with personal account
 I have a personal account in the cluster of my lab. Then I wrote these lines **at the bottom** of `~/.bashrc` as driver codes:
 ```bash
-[[ -f /etc/bashrc ]] && source /etc/bashrc
-export MYS_DIR=~/project/libmys
-export MYS_MODDIR=~/module
-[[ "$PS1" && -f "$MYS_MODDIR/BASE/bin/zsh" ]] && exec -la zsh "$MYS_MODDIR/BASE/bin/zsh"
+export MYS_CONFIG=~/.mayeths
+shopt -q login_shell && exec -la zsh "$MYS_MODDIR/BASE/bin/zsh"
 ```
 and in `~/.zshrc`
 ```bash
-export MYS_DIR=~/project/libmys
-export MYS_MODDIR=~/module
+export MYS_CONFIG=~/.mayeths
 source $MYS_DIR/etc/profile
 
 # ... other commands

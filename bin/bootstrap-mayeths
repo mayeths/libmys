@@ -1,63 +1,172 @@
-#!/bin/sh
+#!/bin/bash
 
-mayeths_archive() {
-    DATE=$(date '+%y%m%d')
-    if [[ $# -lt 1 ]]; then
-        OUTFILE="./mayeths.$DATE.run"
-    else
-        OUTFILE="$1"
-    fi
-    echo "Will pack bootstrap things to \"$OUTFILE\""
-
-    if [[ $# -lt 2 ]]; then
-        ARCHIVE_DIR=$(mktemp -d)
-    else
-        ARCHIVE_DIR="$2"
-    fi
-    echo "Now preparing bootstrap things at \"$ARCHIVE_DIR\""
-
-    # Download libmys
-    LIBMYS_DIR="$ARCHIVE_DIR/libmys"
-    LIBMYS_URL="https://github.com/mayeths/libmys.git"
-    git clone $LIBMYS_URL $LIBMYS_DIR
-
-    # Download gitstatus
-    GITSTATUS_DIR="$ARCHIVE_DIR/gitstatus"
-    mkdir -p $GITSTATUS_DIR
-    for target in "darwin-arm64" "darwin-x86_64" "linux-aarch64" "linux-i686" "linux-x86_64"; do
-        name="gitstatusd-$target.tar.gz"
-        url="https://github.com/romkatv/gitstatus/releases/download/v1.5.1/gitstatusd-$target.tar.gz"
-        wget --quiet --show-progress -O "$GITSTATUS_DIR/$name" $url
-        tar -xf "$GITSTATUS_DIR/$name" -C $GITSTATUS_DIR
-        rm -f "$GITSTATUS_DIR/$name"
-    done
-
-    # Download packages like zsh, tmux, make, cmake, python, vim, ...
-    EB_DOWNLOAD_DIR="$ARCHIVE_DIR/sources"
-    mkdir -p $EB_DOWNLOAD_DIR
-    eb tmux-3.3a.eb --fetch --robot --sourcepath $EB_DOWNLOAD_DIR
-    eb zsh-5.9.eb --fetch --robot --sourcepath $EB_DOWNLOAD_DIR
-
-    cp "$0" "$ARCHIVE_DIR/setup.sh"
-    makeself --target "./mayeths.$DATE.dir" "$ARCHIVE_DIR" "$OUTFILE" "Mayeths' develop environment packging" "./setup.sh" --run_install
-}
-
-mayeths_install() {
-    local extract_dir=$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )
-    local libmys_dir="$extract_dir/libmys"
-    echo "aha_extracted at \"$extract_dir\""
-    echo "aha_install at \"$USER_PWD\""
-    # ask what type of environment do you want to setup? 1. Personal Machine 2. Remote Machine with personal account 3. Remote Machine with shared account
-    # ./libmys/bin/eb make-4.4.1.eb --config --force --hooks post_build_and_install_loop_hook.py
-    # ./libmys/bin/eb python-3.11.2.eb --config --force --hooks post_build_and_install_loop_hook.py
-    # ./libmys/bin/eb ...
-    # Building ./libmys/tool/rpath ...
-    # Building ./libmys/tool/mee ...
-    # Everything is ok. Open a new terminal to enjoy mayeths' environment.
-}
-
-if [ $# -ge 1 ] && [ "$1" = "--run_install" ]; then
-    mayeths_install "$@"
+DATE=$(date '+%y%m%d')
+if [[ $# -lt 1 ]]; then
+    OUTFILE="./mayeths.$DATE.run"
 else
-    mayeths_archive "$@"
+    OUTFILE="$1"
 fi
+echo "Will pack bootstrap things to \"$OUTFILE\""
+
+if [[ $# -lt 2 ]]; then
+    BOOTSTRAP_DIR=$(mktemp -d)
+else
+    BOOTSTRAP_DIR="$2"
+fi
+echo "Now preparing bootstrap things at \"$BOOTSTRAP_DIR\""
+
+# Download libmys
+LIBMYS_DIR="$BOOTSTRAP_DIR/libmys"
+LIBMYS_URL="https://github.com/mayeths/libmys.git"
+git clone $LIBMYS_URL $LIBMYS_DIR
+
+SOURCE_DIR="$BOOTSTRAP_DIR/sources"
+mkdir -p $SOURCE_DIR
+
+fetch() {
+    local NAME=$1
+    local URL=$2
+    local CACHED="$MYS_MODDIR/SOURCES/$NAME"
+    local DEST="$SOURCE_DIR/$NAME"
+    if [[ -f "$CACHED" ]]; then
+        echo "Copy $CACHED $DEST"
+        cp "$CACHED" "$DEST"
+    else
+        wget --quiet --show-progress -O "$DEST" "$URL"
+        mkdir -p "$MYS_MODDIR/SOURCES"
+        cp "$DEST" "$CACHED"
+    fi
+}
+
+# Download gitstatus
+for target in "darwin-arm64" "darwin-x86_64" "linux-aarch64" "linux-i686" "linux-x86_64"; do
+    fetch "gitstatusd-$target.tar.gz" "https://github.com/romkatv/gitstatus/releases/download/v1.5.1/gitstatusd-$target.tar.gz"
+done
+
+# Download packages like zsh, tmux, make, cmake, python, vim, ...
+fetch "libevent-2.1.11-stable.tar.gz" https://github.com/libevent/libevent/releases/download/release-2.1.11-stable/libevent-2.1.11-stable.tar.gz
+fetch "ncurses-6.2.tar.gz" https://mirrors.tuna.tsinghua.edu.cn/gnu/ncurses/ncurses-6.2.tar.gz
+fetch "zsh-5.9.tar.xz" https://jaist.dl.sourceforge.net/project/zsh/zsh/5.9/zsh-5.9.tar.xz
+fetch "tmux-3.3a.tar.gz" https://github.com/tmux/tmux/releases/download/3.3a/tmux-3.3a.tar.gz
+
+sed -e '1,/^################-setup-script-################$/d' "$0" > "$BOOTSTRAP_DIR/setup.sh"
+chmod u+x "$BOOTSTRAP_DIR/setup.sh"
+makeself --target "./mayeths.$DATE.dir" "$BOOTSTRAP_DIR" "$OUTFILE" "Mayeths' develop environment packging" "./setup.sh"
+
+rm -rf "$BOOTSTRAP_DIR"
+
+######## DO NOT MODIFY ANYTHING BELOW ########
+exit # Must exit to prevent execute code below
+################-setup-script-################
+#!/bin/bash
+{
+BOOTSTRAP_DIR=$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )
+LIBMYS_DIR="$BOOTSTRAP_DIR/libmys"
+SOURCE_DIR="$BOOTSTRAP_DIR/sources"
+
+[[ -n "$USER_PWD" ]] || USER_PWD=$PWD
+
+MYS_CONFIG="$USER_PWD/mayeths-config.tmp.sh"
+if [[ ! -f "$MYS_CONFIG" ]]; then
+    cp "$LIBMYS_DIR/script/mayeths-config.template.sh" "$MYS_CONFIG"
+    echo "Fill up mayeths-config.tmp.sh then run this script again"
+    exit 1
+fi
+source "$MYS_CONFIG"
+
+[[ -z "$MYS_DIR" ]] && echo "ERROR: Empty environment variable MYS_DIR" && exit 2
+[[ -z "$MYS_MODDIR" ]] && echo "ERROR: Empty environment variable MYS_MODDIR" && exit 3
+
+[[ -e "$MYS_DIR" ]] && echo "ERROR: Non-empty directory $MYS_DIR" && exit 4
+[[ -e "$MYS_MODDIR" ]] && echo "ERROR: Non-empty directory $MYS_MODDIR" && exit 5
+
+if [[ -e "$MYS_DIR" ]]; then
+    SUFFIX=$(date '+%Y.%m.%d-%H%M%S')
+    mv "$MYS_DIR" "$MYS_DIR.$SUFFIX"
+    echo "Moved $MYS_DIR to $MYS_DIR.$SUFFIX"
+fi
+cp -r "$LIBMYS_DIR" "$MYS_DIR"
+
+mkdir -p "$MYS_MODDIR/BASE/bin"
+for target in "darwin-arm64" "darwin-x86_64" "linux-aarch64" "linux-i686" "linux-x86_64"; do
+    GITSTATUS_FILE="$SOURCE_DIR/gitstatusd-$target.tar.gz"
+    tar -xf "$GITSTATUS_FILE" -C "$MYS_MODDIR/BASE/bin"
+done
+
+mkdir -p "$MYS_MODDIR/CACHE"
+
+tar -xf "$SOURCE_DIR/libevent-2.1.11-stable.tar.gz" -C "$MYS_MODDIR/CACHE"
+cd "$MYS_MODDIR/CACHE/libevent-2.1.11-stable"
+echo -e "\033[0;36mBuilding libevent...\033[0m"
+(./configure --prefix="$MYS_MODDIR/BASE" --disable-shared && make -j && make install) >./stdout.log 2>./stderr.log
+[[ $? -ne 0 ]] && echo -e "\033[0;31mFailed to build libevent at $PWD. See stdout.log and stderr.log there.\033[0m" && exit 1
+cd - >/dev/null
+
+tar -xf "$SOURCE_DIR/ncurses-6.2.tar.gz" -C "$MYS_MODDIR/CACHE"
+cd "$MYS_MODDIR/CACHE/ncurses-6.2"
+echo -e "\033[0;36mBuilding ncurses...\033[0m"
+(./configure --prefix="$MYS_MODDIR/BASE" && make -j && make install) >./stdout.log 2>./stderr.log
+[[ $? -ne 0 ]] && echo -e "\033[0;31mFailed to build ncurses at $PWD. See stdout.log and stderr.log there.\033[0m" && exit 1
+cd - >/dev/null
+
+tar -xf "$SOURCE_DIR/zsh-5.9.tar.xz" -C "$MYS_MODDIR/CACHE"
+cd "$MYS_MODDIR/CACHE/zsh-5.9"
+echo -e "\033[0;36mBuilding zsh...\033[0m"
+(./configure --prefix="$MYS_MODDIR/BASE" CFLAGS="-I$MYS_MODDIR/BASE/include" LDFLAGS="-L$MYS_MODDIR/BASE/lib" && make -j && make install) >./stdout.log 2>./stderr.log
+[[ $? -ne 0 ]] && echo -e "\033[0;31mFailed to build zsh at $PWD. See stdout.log and stderr.log there.\033[0m" && exit 1
+cd - >/dev/null
+
+tar -xf "$SOURCE_DIR/tmux-3.3a.tar.gz" -C "$MYS_MODDIR/CACHE"
+cd "$MYS_MODDIR/CACHE/tmux-3.3a"
+echo -e "\033[0;36mBuilding tmux...\033[0m"
+(./configure --prefix="$MYS_MODDIR/BASE" CFLAGS="-I$MYS_MODDIR/BASE/include" LDFLAGS="-L$MYS_MODDIR/BASE/lib" && make -j && make install) >./stdout.log 2>./stderr.log
+[[ $? -ne 0 ]] && echo -e "\033[0;31mFailed to build tmux at $PWD. See stdout.log and stderr.log there.\033[0m" && exit 1
+cd - >/dev/null
+
+cp -r "$SOURCE_DIR" "$MYS_MODDIR/SOURCE"
+mv "$MYS_CONFIG" "$MYS_MODDIR/mayeths-config.sh"
+echo -e "\033[0;36mMoved $MYS_CONFIG to $MYS_MODDIR/mayeths-config.sh\033[0m"
+
+rm -rf $BOOTSTRAP_DIR
+
+STUB1="shopt -q login_shell && exec -la zsh \"$MYS_MODDIR/BASE/bin/zsh\""
+echo -e "\033[1;36m---------------\033[0m"
+echo -e "\033[1;36m1> The following stub will start zsh at login:\033[0m"
+echo -e "\033[0;36m   $STUB1\033[0m"
+echo -e -n "\033[1;36m1> Do you want to append it to $HOME/.bashrc right now? (y/n) \033[0m"
+read answer
+while true; do
+    if [ "$answer" != "${answer#[y]}" ]; then
+        echo "$STUB1" >> $HOME/.bashrc
+        break
+    elif [ "$answer" != "${answer#[n]}" ]; then
+        break
+    else
+        echo -e -n "\033[1;36m1> Enter y/yes or n/no: \033[0m"
+        read answer
+    fi
+done
+
+STUB1="export MYS_CONFIG=$MYS_MODDIR/mayeths-config.sh"
+STUB2="source \$MYS_DIR/etc/profile"
+echo -e "\033[1;36m---------------\033[0m"
+echo -e "\033[1;36m2> The following stub will init mayeths' environment in zsh\033[0m"
+echo -e "\033[0;36m   $STUB1\033[0m"
+echo -e "\033[0;36m   $STUB2\033[0m"
+echo -e -n "\033[1;36m2> Do you want to append it to $HOME/.zshrc right now? (y/n) \033[0m"
+read answer
+while true; do
+    if [ "$answer" != "${answer#[y]}" ]; then
+        echo "$STUB1" >> $HOME/.zshrc
+        echo "$STUB2" >> $HOME/.zshrc
+        break
+    elif [ "$answer" != "${answer#[n]}" ]; then
+        break
+    else
+        echo -e -n "\033[1;36m2> Enter y/yes or n/no: \033[0m"
+        read  answer
+    fi
+done
+
+echo -e "\033[1;32mBootstrap successfully, enjoy.\033[0m"
+}
