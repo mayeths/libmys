@@ -262,6 +262,7 @@ MYS_API void mys_debug_init()
 
         _mys_debug_G.stack_memory = (uint8_t *)malloc(_MYS_DEBUG_STACK_SIZE);
         memset(_mys_debug_G.stack_memory, 0, _MYS_DEBUG_STACK_SIZE);
+#ifndef OS_MACOS // macos lost backtrace if run signal handler on new stack
         stack_t *stack = &_mys_debug_G.stack;
         stack_t *old_stack = &_mys_debug_G.old_stack;
         stack->ss_sp = _mys_debug_G.stack_memory;
@@ -271,6 +272,7 @@ MYS_API void mys_debug_init()
             printf("sigaltstack failed: %s\n", strerror(errno));
             exit(1);
         }
+#endif
 
         struct sigaction new_action, old_action;
         new_action.sa_sigaction = _mys_debug_signal_handler;
