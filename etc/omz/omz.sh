@@ -20,7 +20,7 @@ CASE_SENSITIVE="true"
 # DISABLE_AUTO_TITLE="true"
 # HIST_STAMPS="mm/dd/yyyy"
 
-plugins=(git zsh-autosuggestions zsh-tab-title compiler-env)
+plugins=(git zsh-autosuggestions zsh-tab-title mpi-env)
 source $ZSH/oh-my-zsh.sh
 
 #-------------------------------------------
