@@ -4,63 +4,65 @@
 # Look for compiler and mpi in $PATH
 
 function get_compiler_type() {
-    if [[ $($1 --version | head -1 | cut -c1-3) == "gcc" ]]; then
+    if [[ $(echo "$1" | head -1 | cut -c1-3) == "gcc" ]]; then
         echo "gcc"
-    elif [[ $($1 --version | head -1 | cut -c1-3) == "icc" ]]; then
+    elif [[ $(echo "$1" | head -1 | cut -c1-3) == "icc" ]]; then
         echo "icc"
-    elif [[ $($1 --version) == *"clang version"* ]]; then
+    elif [[ "$1" == *"clang version"* ]]; then
         echo "clang"
     fi
 }
 
 function get_version_XYZ() {
     if $(grep --version | grep -q "GNU grep"); then # GNU grep
-        echo $($1 --version 2>/dev/null | grep -oP '\d*\.\d*\.\d*' | head -1)
+        echo $(echo "$1" | grep -oP '\d*\.\d*\.\d*' | head -1)
     else # BSD grep
-        echo $($1 --version 2>/dev/null | grep -oe '\d*\.\d*\.\d*' | head -1)
+        echo $(echo "$1" | grep -oe '\d*\.\d*\.\d*' | head -1)
     fi
 }
 
 function get_icc_version() {
     if $(grep --version | grep -q "GNU grep"); then # GNU grep
-        echo 20$($1 --version 2>/dev/null | grep -oP '\d*\.\d*\.\d*\.\d*' | head -1 | cut -d'.' -f1)
+        echo 20$(echo "$1" | grep -oP '\d*\.\d*\.\d*\.\d*' | head -1 | cut -d'.' -f1)
     else # BSD grep
-        echo 20$($1 --version 2>/dev/null | grep -oe '\d*\.\d*\.\d*\.\d*' | head -1 | cut -d'.' -f1)
+        echo 20$(echo "$1" | grep -oe '\d*\.\d*\.\d*\.\d*' | head -1 | cut -d'.' -f1)
     fi
 }
 
 function get_intelmpi_version() {
     if $(grep --version | grep -q "GNU grep"); then # GNU grep
-        echo $(mpirun --version 2>/dev/null | grep -oP 'Version \d*' | awk '{print $2}')
+        echo $(echo "$1" | grep -oP 'Version \d*' | awk '{print $2}')
     else # BSD grep
-        echo $(mpirun --version 2>/dev/null | grep -oe 'Version \d*' | awk '{print $2}')
+        echo $(echo "$1" | grep -oe 'Version \d*' | awk '{print $2}')
     fi
 }
 
 function mpi_env_prompt_info() {
     local array=()
 
-    if [[ $(mpirun --version 2>/dev/null) == *"Intel Corporation"* ]]; then
+    mpirun_version_out=$(mpirun --version 2>/dev/null)
+    if [[ "$mpirun_version_out" == *"Intel Corporation"* ]]; then
         # If use Intel MPI, imply Intel compiler
-        local intelmpi_ver=$(get_intelmpi_version)
+        local intelmpi_ver=$(get_intelmpi_version "$mpirun_version_out")
         array+=("intel-$intelmpi_ver")
-    elif [[ $(mpirun --version 2>/dev/null) == *"Open MPI"* ]]; then
+    elif [[ "$mpirun_version_out" == *"Open MPI"* ]]; then
         # If use Open MPI, show actual compiler.
-        local ompi_ver=$(get_version_XYZ mpirun)
+        local ompi_ver=$(get_version_XYZ "$mpirun_version_out")
         array+=("ompi-$ompi_ver")
     else
         # no mpi is running, print nothing
     fi
 
-    local compiler_type=$(get_compiler_type mpicc)
+    mpicc_version_out=$(mpicc --version 2>/dev/null)
+    local compiler_type=$(get_compiler_type "$mpicc_version_out")
     if [[ "$compiler_type" == "gcc" ]]; then
-        local gcc_ver=$(get_version_XYZ mpicc)
+        local gcc_ver=$(get_version_XYZ "$mpicc_version_out")
         array+=("gcc-$gcc_ver")
     elif [[ "$compiler_type" == "icc" ]]; then
-        local icc_ver=$(get_icc_version mpicc)
+        local icc_ver=$(get_icc_version "$mpicc_version_out")
         array+=("icc-$icc_ver")
     elif [[ "$compiler_type" == "clang" ]]; then
-        local clang_ver=$(get_version_XYZ mpicc)
+        local clang_ver=$(get_version_XYZ "$mpicc_version_out")
         array+=("clang-$clang_ver")
     fi
 
