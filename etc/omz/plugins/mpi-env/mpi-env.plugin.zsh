@@ -38,12 +38,6 @@ function get_intelmpi_version() {
 }
 
 function mpi_env_prompt_info() {
-    local found_gcc found_icc found_clang found_mpi
-    command -v gcc &>/dev/null && found_gcc=1 || found_gcc=0
-    command -v icc &>/dev/null && found_icc=1 || found_icc=0
-    command -v clang &>/dev/null && found_clang=1 || found_clang=0
-    command -v mpirun &>/dev/null && found_mpi=1 || found_mpi=0
-
     local array=()
 
     if [[ $(mpirun --version 2>/dev/null) == *"Intel Corporation"* ]]; then
