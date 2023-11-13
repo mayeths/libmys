@@ -669,9 +669,10 @@ MYS_API void mys_debug_set_timeout(double timeout)
             exit(1);
         }
         struct sigevent sev;
+        memset(&sev, 0, sizeof(struct sigevent));
         sev.sigev_notify = SIGEV_THREAD;
-        sev.sigev_notify_function = _mys_debug_timeout_handler;
-        sev.sigev_value.sival_ptr = NULL;
+        sev.sigev_notify_function = &_mys_debug_timeout_handler;
+        sev.sigev_notify_attributes = NULL;
         if (timer_create(CLOCK_REALTIME, &sev, &_mys_debug_G.timeout_id) == -1) {
             printf("failed to create timeout timer: %s\n", strerror(errno));
             exit(1);
