@@ -166,12 +166,15 @@ struct _mys_debug_G_t {
     struct sigaction old_actions[_MYS_DEBUG_SIGNAL_MAX];
     // timeout
     bool timeout_inited;
+    bool timeout_reached;
     int timeout_signal;
     struct sigaction timeout_old_action;
     timer_t timeout_id;
     double timeout_start;
     double timeout;
     pid_t process_pid;
+    const char *timeout_set_file;
+    int timeout_set_line;
     // filter
     size_t n_filters;
     size_t cap_filters;
@@ -194,12 +197,15 @@ static struct _mys_debug_G_t _mys_debug_G = {
     .old_stack = {},
     .old_actions = {},
     .timeout_inited = false,
+    .timeout_reached = false,
     .timeout_signal = -1,
     .timeout_old_action = {},
     .timeout_id = NULL,
     .timeout_start = 0,
     .timeout = 0,
     .process_pid = -1,
+    .timeout_set_file = NULL,
+    .timeout_set_line = -1,
     .n_filters = 0,
     .cap_filters = 0,
     .filters = NULL,
@@ -474,6 +480,7 @@ static void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context)
     digits = digits > 3 ? digits : 3;
     size_t loglen = 0;
     size_t logmax = sizeof(buflog);
+    bool is_timeout = _mys_debug_G.timeout_inited && signo == _mys_debug_G.timeout_signal && _mys_debug_G.timeout_reached;
 
     switch (signo) {
 #define _MYS_CASE_SIG(s, fmt, ...) s:                       \
@@ -485,8 +492,14 @@ static void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context)
     _MYS_CASE_SIG(case SIGTRAP, "%s", _mys_sigcause(signo, code));
     _MYS_CASE_SIG(case SIGBUS,  "%s", _mys_sigcause(signo, code));
     _MYS_CASE_SIG(case SIGFPE,  "%s", _mys_sigcause(signo, code));
-    _MYS_CASE_SIG(default,      "%s", _mys_sigcause(signo, code));
 #undef _MYS_CASE_SIG
+    default: {
+        if (is_timeout)
+            snprintf(cause, sizeof(cause), "Reached %f seconds timeout (set at %s:%d)", _mys_debug_G.timeout, _mys_debug_G.timeout_set_file, _mys_debug_G.timeout_set_line);
+        else
+            snprintf(cause, sizeof(cause), "%s", _mys_sigcause(signo, code));
+        break;
+    }
     }
 
 #define _DOFMT(f, ...) do {                                                     \
@@ -517,7 +530,11 @@ static void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context)
         int color = _mys_debug_G.use_color;
 
         _DOFMT(color ? _YFMT1 : _NFMT1, digits, myrank);
-        _DOFMT(color ? _YFMT2 : _NFMT2, digits, myrank, signo, strsignal(signo), cause);
+        if (is_timeout) {
+            _DOFMT(color ? _YFMT3 : _NFMT3, digits, myrank, cause);
+        } else {
+            _DOFMT(color ? _YFMT2 : _NFMT2, digits, myrank, signo, strsignal(signo), cause);
+        }
         if (_mys_debug_G.message[0] != '\0')
             _DOFMT(color ? _YFMT3 : _NFMT3, digits, myrank, _mys_debug_G.message);
         if (bsize == 0)
@@ -640,6 +657,7 @@ static void _mys_debug_timeout_handler(union sigval sv)
 {
     (void)sv;
     timer_delete(_mys_debug_G.timeout_id);
+    _mys_debug_G.timeout_reached = true;
     // FIXME: Seems like sometime we receive the signal instead of parent thread?
     // Should we clear signal handler first?
     if (kill(_mys_debug_G.process_pid, _mys_debug_G.timeout_signal) == -1) {
@@ -648,7 +666,7 @@ static void _mys_debug_timeout_handler(union sigval sv)
 }
 
 
-MYS_API void mys_debug_set_timeout(double timeout)
+MYS_API void _mys_debug_set_timeout(double timeout, const char *file, int line)
 {
     if (!_mys_debug_G.inited) {
         printf("call mys_debug_init() before mys_debug_set_timeout()\n");
@@ -677,6 +695,9 @@ MYS_API void mys_debug_set_timeout(double timeout)
             printf("failed to create timeout timer: %s\n", strerror(errno));
             exit(1);
         }
+        _mys_debug_G.timeout_reached = false;
+        _mys_debug_G.timeout_set_file = file;
+        _mys_debug_G.timeout_set_line = line;
         _mys_debug_G.timeout_inited = true;
     }
     struct itimerspec its;
@@ -714,6 +735,7 @@ MYS_API void mys_debug_clear_timeout()
         printf("failed to delete timeout timer: %s\n", strerror(errno));
         exit(1);
     }
+    _mys_debug_G.timeout_reached = false;
     _mys_debug_G.timeout_inited = false;
 }
 #endif /*MYS_ENABLE_DEBUG_TIMEOUT*/

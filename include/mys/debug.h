@@ -55,7 +55,7 @@ MYS_API int mys_debug_get_style();
 // To enable this functionality, you have to
 // 1) Add `#define MYS_ENABLE_DEBUG_TIMEOUT` before `#include mys.h`
 // 2) Add `-lrt` to compiler for using `timer_create()`, `timer_settime()`, and `timer_delete()`
-MYS_API void mys_debug_set_timeout(double timeout);
+#define mys_debug_set_timeout(timeout_sec) _mys_debug_set_timeout(timeout_sec, __FILE__, __LINE__)
 MYS_API void mys_debug_clear_timeout();
 
 /* gcc -rdynamic -funwind-tables -I${MYS_DIR}/include -g -Wall -Wextra test-debug.c -lrt && valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./a.out
