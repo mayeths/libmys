@@ -72,7 +72,7 @@ function mpi_env_prompt_info() {
 # type 'p10k segment help' to see all example or search prompt_example in config/p10k.sh
 function prompt_mpi_env() {
     local text=$(mpi_env_prompt_info)
-    p10k segment -f 4 -t "$text"
+    p10k segment -f 178 -t "$text"
 }
 
 # mpi_env_prompt_info
