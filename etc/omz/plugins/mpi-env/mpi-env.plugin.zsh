@@ -3,41 +3,41 @@
 
 # Look for compiler and mpi in $PATH
 
-function get_compiler_type() {
-    if [[ $(echo "$1" | head -1 | cut -c1-3) == "gcc" ]]; then
-        echo "gcc"
-    elif [[ $(echo "$1" | head -1 | cut -c1-3) == "icc" ]]; then
-        echo "icc"
-    elif [[ "$1" == *"clang version"* ]]; then
-        echo "clang"
-    fi
-}
-
-function get_version_XYZ() {
-    if $(grep --version | grep -q "GNU grep"); then # GNU grep
-        echo $(echo "$1" | grep -oP '\d*\.\d*\.\d*' | head -1)
-    else # BSD grep
-        echo $(echo "$1" | grep -oe '\d*\.\d*\.\d*' | head -1)
-    fi
-}
-
-function get_icc_version() {
-    if $(grep --version | grep -q "GNU grep"); then # GNU grep
-        echo 20$(echo "$1" | grep -oP '\d*\.\d*\.\d*\.\d*' | head -1 | cut -d'.' -f1)
-    else # BSD grep
-        echo 20$(echo "$1" | grep -oe '\d*\.\d*\.\d*\.\d*' | head -1 | cut -d'.' -f1)
-    fi
-}
-
-function get_intelmpi_version() {
-    if $(grep --version | grep -q "GNU grep"); then # GNU grep
-        echo $(echo "$1" | grep -oP 'Version \d*' | awk '{print $2}')
-    else # BSD grep
-        echo $(echo "$1" | grep -oe 'Version \d*' | awk '{print $2}')
-    fi
-}
-
 function mpi_env_prompt_info() {
+    function get_compiler_type() {
+        if [[ $(echo "$1" | head -1 | cut -c1-3) == "gcc" ]]; then
+            echo "gcc"
+        elif [[ $(echo "$1" | head -1 | cut -c1-3) == "icc" ]]; then
+            echo "icc"
+        elif [[ "$1" == *"clang version"* ]]; then
+            echo "clang"
+        fi
+    }
+
+    function get_version_XYZ() {
+        if $(grep --version | grep -q "GNU grep"); then # GNU grep
+            echo $(echo "$1" | grep -oP '\d*\.\d*\.\d*' | head -1)
+        else # BSD grep
+            echo $(echo "$1" | grep -oe '\d*\.\d*\.\d*' | head -1)
+        fi
+    }
+
+    function get_icc_version() {
+        if $(grep --version | grep -q "GNU grep"); then # GNU grep
+            echo 20$(echo "$1" | grep -oP '\d*\.\d*\.\d*\.\d*' | head -1 | cut -d'.' -f1)
+        else # BSD grep
+            echo 20$(echo "$1" | grep -oe '\d*\.\d*\.\d*\.\d*' | head -1 | cut -d'.' -f1)
+        fi
+    }
+
+    function get_intelmpi_version() {
+        if $(grep --version | grep -q "GNU grep"); then # GNU grep
+            echo $(echo "$1" | grep -oP 'Version \d*' | awk '{print $2}')
+        else # BSD grep
+            echo $(echo "$1" | grep -oe 'Version \d*' | awk '{print $2}')
+        fi
+    }
+
     local array=()
 
     mpirun_version_out=$(mpirun --version 2>/dev/null)
