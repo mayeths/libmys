@@ -1,0 +1,263 @@
+#!/bin/bash
+
+function mpi_env_info() {
+    function get_compiler_type() {
+        if [[ $(echo "$1" | head -1 | cut -c1-3) == "gcc" ]]; then
+            echo "gcc"
+        elif [[ $(echo "$1" | head -1 | cut -c1-3) == "g++" ]]; then
+            echo "g++"
+        elif [[ $(echo "$1" | head -1 | cut -c1-11) == "GNU Fortran" ]]; then
+            echo "gfortran"
+        elif [[ $(echo "$1" | head -1 | cut -c1-3) == "icc" ]]; then
+            echo "icc"
+        elif [[ $(echo "$1" | head -1 | cut -c1-4) == "icpc" ]]; then
+            echo "icpc"
+        elif [[ $(echo "$1" | head -1 | cut -c1-5) == "ifort" ]]; then
+            echo "ifort"
+        elif [[ "$1" == *"clang version"* ]]; then
+            echo "llvm"
+        fi
+    }
+
+    function get_xyz_version() {
+        if $(grep --version | grep -q "GNU grep"); then # GNU grep
+            echo $(echo "$1" | grep -oP '\d*\.\d*\.\d*' | head -1)
+        else # BSD grep
+            echo $(echo "$1" | grep -oe '\d*\.\d*\.\d*' | head -1)
+        fi
+    }
+
+    function get_intel_version() {
+        if $(grep --version | grep -q "GNU grep"); then # GNU grep
+            echo $(echo "$1" | grep -oP '\d*\.\d*\.\d*\.\d*' | head -1)
+        else # BSD grep
+            echo $(echo "$1" | grep -oe '\d*\.\d*\.\d*\.\d*' | head -1)
+        fi
+    }
+
+    function get_intelmpi_version() {
+        if $(grep --version | grep -q "GNU grep"); then # GNU grep
+            echo $(echo "$1" | grep -oP 'Version \d*' | awk '{print $2}')
+        else # BSD grep
+            echo $(echo "$1" | grep -oe 'Version \d*' | awk '{print $2}')
+        fi
+    }
+
+    local array=()
+    local BOLDRED="\033[1;31m"
+    local BOLDGREEN="\033[1;32m"
+    local BOLDYELLOW="\033[1;33m"
+    local RED="\033[0;31m"
+    local GREEN="\033[0;32m"
+    local YELLOW="\033[0;33m"
+    local NC="\033[0m"
+    local is_intel_mpi=0
+
+    if command -v mpirun >/dev/null; then
+        mpirun_out=$(mpirun --version 2>/dev/null)
+        if [[ "$mpirun_out" == *"Open MPI"* ]]; then
+            local mpirun_ver=$(get_xyz_version "$mpirun_out")
+            array+=("${BOLDGREEN}mpirun${NC}    openmpi-$mpirun_ver")
+        elif [[ "$mpirun_out" == *"Intel Corporation"* ]]; then
+            local mpirun_ver=$(get_intelmpi_version "$mpirun_out")
+            array+=("${BOLDGREEN}mpirun${NC}    intel-$mpirun_ver")
+            is_intel_mpi=1
+        else
+            array+=("${BOLDYELLOW}mpirun${NC}    Unrecognized")
+        fi
+    else
+        array+=("${BOLDYELLOW}mpirun${NC}    command not found")
+    fi
+
+
+    function get_openmpi_series() {
+        if command -v mpicc >/dev/null; then
+            local COLOR1="$GREEN"
+            local COLOR2="$YELLOW"
+            if [[ $is_intel_mpi -eq 1 ]]; then
+                COLOR1="$YELLOW"
+                COLOR2="$YELLOW"
+            fi
+            mpicc_out=$(mpicc --version 2>/dev/null)
+            local compiler_type=$(get_compiler_type "$mpicc_out")
+            if [[ "$compiler_type" == "gcc" ]]; then
+                local version=$(get_xyz_version "$mpicc_out")
+                array+=("${COLOR1}mpicc${NC}     gcc-$version")
+            elif [[ "$compiler_type" == "icc" ]]; then
+                local version=$(get_intel_version "$mpicc_out")
+                array+=("${COLOR1}mpicc${NC}     icc-$version")
+            elif [[ "$compiler_type" == "llvm" ]]; then
+                local version=$(get_xyz_version "$mpicc_out")
+                array+=("${COLOR1}mpicc${NC}     clang-$version")
+            else
+                local version=$(get_xyz_version "$mpicc_out")
+                array+=("${COLOR2}mpicc${NC}     unknown-$version")
+            fi
+        else
+            array+=("${YELLOW}mpicc${NC}     command not found")
+        fi
+
+        if command -v mpic++ >/dev/null; then
+            mpicxx_out=$(mpic++ --version 2>/dev/null)
+            local compiler_type=$(get_compiler_type "$mpicxx_out")
+            if [[ "$compiler_type" == "g++" ]]; then
+                local version=$(get_xyz_version "$mpicxx_out")
+                array+=("${GREEN}mpic++${NC}    g++-$version")
+            elif [[ "$compiler_type" == "icpc" ]]; then
+                local version=$(get_intel_version "$mpicxx_out")
+                array+=("${GREEN}mpic++${NC}    icpc-$version")
+            elif [[ "$compiler_type" == "llvm" ]]; then
+                local version=$(get_xyz_version "$mpicxx_out")
+                array+=("${GREEN}mpic++${NC}    clang-$version")
+            else
+                local version=$(get_xyz_version "$mpicxx_out")
+                array+=("${YELLOW}mpic++${NC}    unknown-$version")
+            fi
+        else
+            array+=("${YELLOW}mpic++${NC}    command not found")
+        fi
+
+        if command -v mpifort >/dev/null; then
+            mpifort_out=$(mpifort --version 2>/dev/null)
+            local compiler_type=$(get_compiler_type "$mpifort_out")
+            if [[ "$compiler_type" == "gfortran" ]]; then
+                local version=$(get_xyz_version "$mpifort_out")
+                array+=("${GREEN}mpifort${NC}   gfortran-$version")
+            elif [[ "$compiler_type" == "ifort" ]]; then
+                local version=$(get_intel_version "$mpifort_out")
+                array+=("${GREEN}mpifort${NC}   ifort-$version")
+            elif [[ "$compiler_type" == "llvm" ]]; then
+                local version=$(get_xyz_version "$mpifort_out")
+                array+=("${GREEN}mpifort${NC}   flang-$version")
+            else
+                local version=$(get_xyz_version "$mpifort_out")
+                array+=("${YELLOW}mpifort${NC}   unknown-$version")
+            fi
+        else
+            array+=("${YELLOW}mpifort${NC}   command not found")
+        fi
+    }
+
+
+    function get_intelmpi_series() {
+        if command -v mpiicc >/dev/null; then
+            mpicc_out=$(mpiicc --version 2>/dev/null)
+            local compiler_type=$(get_compiler_type "$mpicc_out")
+            if [[ "$compiler_type" == "gcc" ]]; then
+                local version=$(get_xyz_version "$mpicc_out")
+                array+=("${GREEN}mpiicc${NC}    gcc-$version")
+            elif [[ "$compiler_type" == "icc" ]]; then
+                local version=$(get_intel_version "$mpicc_out")
+                array+=("${GREEN}mpiicc${NC}    icc-$version")
+            elif [[ "$compiler_type" == "llvm" ]]; then
+                local version=$(get_xyz_version "$mpicc_out")
+                array+=("${GREEN}mpiicc${NC}    clang-$version")
+            else
+                local version=$(get_xyz_version "$mpicc_out")
+                array+=("${YELLOW}mpiicc${NC}    unknown-$version")
+            fi
+        else
+            array+=("${YELLOW}mpiicc${NC}    command not found")
+        fi
+
+        if command -v mpiicpc >/dev/null; then
+            mpicxx_out=$(mpiicpc --version 2>/dev/null)
+            local compiler_type=$(get_compiler_type "$mpicxx_out")
+            if [[ "$compiler_type" == "g++" ]]; then
+                local version=$(get_xyz_version "$mpicxx_out")
+                array+=("${GREEN}mpiicpc${NC}   g++-$version")
+            elif [[ "$compiler_type" == "icpc" ]]; then
+                local version=$(get_intel_version "$mpicxx_out")
+                array+=("${GREEN}mpiicpc${NC}   icpc-$version")
+            elif [[ "$compiler_type" == "llvm" ]]; then
+                local version=$(get_xyz_version "$mpicxx_out")
+                array+=("${GREEN}mpiicpc${NC}   clang-$version")
+            else
+                local version=$(get_xyz_version "$mpicxx_out")
+                array+=("${YELLOW}mpiicpc${NC}   unknown-$version")
+            fi
+        else
+            array+=("${YELLOW}mpiicpc${NC}   command not found")
+        fi
+
+        if command -v mpiifort >/dev/null; then
+            mpifort_out=$(mpiifort --version 2>/dev/null)
+            local compiler_type=$(get_compiler_type "$mpifort_out")
+            if [[ "$compiler_type" == "gfortran" ]]; then
+                local version=$(get_xyz_version "$mpifort_out")
+                array+=("${GREEN}mpiifort${NC}  gfortran-$version")
+            elif [[ "$compiler_type" == "ifort" ]]; then
+                local version=$(get_intel_version "$mpifort_out")
+                array+=("${GREEN}mpiifort${NC}  ifort-$version")
+            elif [[ "$compiler_type" == "llvm" ]]; then
+                local version=$(get_xyz_version "$mpifort_out")
+                array+=("${GREEN}mpiifort${NC}  flang-$version")
+            else
+                local version=$(get_xyz_version "$mpifort_out")
+                array+=("${YELLOW}mpiifort${NC}  unknown-$version")
+            fi
+        else
+            array+=("${YELLOW}mpiifort${NC}  command not found")
+        fi
+    }
+
+
+    if [[ $is_intel_mpi -eq 1 ]]; then
+        get_intelmpi_series
+        get_openmpi_series
+    else
+        get_openmpi_series
+        get_intelmpi_series
+    fi
+
+    for element in "${array[@]}"; do
+        echo -e "$element"
+    done
+}
+
+mpi_env_info
+
+
+# $ gcc --version
+# gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-44)
+# Copyright (C) 2015 Free Software Foundation, Inc.
+# This is free software; see the source for copying conditions.  There is NO
+# warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+# $ g++ --version
+# g++ (GCC) 4.8.5 20150623 (Red Hat 4.8.5-44)
+# Copyright (C) 2015 Free Software Foundation, Inc.
+# This is free software; see the source for copying conditions.  There is NO
+# warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+# $ gfortran --version
+# GNU Fortran (GCC) 4.8.5 20150623 (Red Hat 4.8.5-44)
+# Copyright (C) 2015 Free Software Foundation, Inc.
+# GNU Fortran comes with NO WARRANTY, to the extent permitted by law.
+# You may redistribute copies of GNU Fortran
+# under the terms of the GNU General Public License.
+# For more information about these matters, see the file named COPYING
+
+# $ icc --version
+# icc (ICC) 2021.5.0 20211109
+# Copyright (C) 1985-2021 Intel Corporation.  All rights reserved.
+
+# $ icpc --version
+# icpc (ICC) 2021.5.0 20211109
+# Copyright (C) 1985-2021 Intel Corporation.  All rights reserved.
+
+# $ ifort --version
+# ifort (IFORT) 2021.5.0 20211109
+# Copyright (C) 1985-2021 Intel Corporation.  All rights reserved.
+
+# $ clang --version
+# Homebrew clang version 15.0.6
+# Target: arm64-apple-darwin22.3.0
+# Thread model: posix
+# InstalledDir: /opt/homebrew/opt/llvm/bin
+
+# $ clang++ --version
+# Homebrew clang version 15.0.6
+# Target: arm64-apple-darwin22.3.0
+# Thread model: posix
+# InstalledDir: /opt/homebrew/opt/llvm/bin
