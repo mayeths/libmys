@@ -1,130 +1,5 @@
 #include "../debug.h"
 
-#ifdef OS_MACOS
-// #include <sys/stdtypes.h>
-#include <dispatch/dispatch.h>
-#include <mach/boolean.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <sys/errno.h>
-#include <time.h>
-
-struct itimerspec {
-    struct timespec it_interval; /* timer period */
-    struct timespec it_value;    /* timer expiration */
-};
-
-struct sigevent;
-
-/* If used a lot, queue should probably be outside of this struct */
-struct macos_timer {
-    dispatch_queue_t tim_queue;
-    dispatch_source_t tim_timer;
-    void (*tim_func)(union sigval);
-    void *tim_arg;
-};
-
-typedef struct macos_timer *timer_t;
-
-static inline void _timer_cancel(void *arg)
-{
-    struct macos_timer *tim = (struct macos_timer *)arg;
-    dispatch_release(tim->tim_timer);
-    dispatch_release(tim->tim_queue);
-    tim->tim_timer = NULL;
-    tim->tim_queue = NULL;
-    free(tim);
-}
-
-static inline void _timer_handler(void *arg)
-{
-    struct macos_timer *tim = (struct macos_timer *)arg;
-    union sigval sv;
-
-    sv.sival_ptr = tim->tim_arg;
-
-    if (tim->tim_func != NULL)
-        tim->tim_func(sv);
-}
-
-static inline int timer_create(clockid_t clockid, struct sigevent *sevp, timer_t *timerid)
-{
-    struct macos_timer *tim;
-
-    *timerid = NULL;
-
-    switch (clockid) {
-        case CLOCK_REALTIME:
-
-            /* What is implemented so far */
-            if (sevp->sigev_notify != SIGEV_THREAD) {
-                errno = ENOTSUP;
-                return (-1);
-            }
-
-            tim = (struct macos_timer *)malloc(sizeof(struct macos_timer));
-            if (tim == NULL) {
-                errno = ENOMEM;
-                return (-1);
-            }
-
-            tim->tim_queue = dispatch_queue_create("com.mayeths.timerqueue", 0);
-            tim->tim_timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, tim->tim_queue);
-
-            tim->tim_func = sevp->sigev_notify_function;
-            tim->tim_arg  = sevp->sigev_value.sival_ptr;
-            *timerid      = tim;
-
-            /* Opting to use pure C instead of Block versions */
-            dispatch_set_context(tim->tim_timer, tim);
-            dispatch_source_set_event_handler_f(tim->tim_timer, _timer_handler);
-            dispatch_source_set_cancel_handler_f(tim->tim_timer, _timer_cancel);
-
-            return (0);
-        default:
-            break;
-    }
-
-    errno = EINVAL;
-    return (-1);
-}
-
-static inline int timer_settime(timer_t tim, int flags, const struct itimerspec *its, struct itimerspec *remainvalue)
-{
-    (void)flags;
-    (void)remainvalue;
-    if (tim != NULL) {
-        /* Both zero, is disarm */
-        if (its->it_value.tv_sec == 0 && its->it_value.tv_nsec == 0) {
-            /* There's a comment about suspend count in Apple docs */
-            dispatch_suspend(tim->tim_timer);
-            return (0);
-        }
-
-        dispatch_time_t start;
-        start = dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * its->it_value.tv_sec + its->it_value.tv_nsec);
-        dispatch_source_set_timer(
-            tim->tim_timer, start, NSEC_PER_SEC * its->it_value.tv_sec + its->it_value.tv_nsec, 0
-        );
-        dispatch_resume(tim->tim_timer);
-    }
-    return (0);
-}
-
-static inline int timer_delete(timer_t tim)
-{
-    /* Calls _timer_cancel() */
-    if (tim != NULL)
-        dispatch_source_cancel(tim->tim_timer);
-
-    return (0);
-}
-
-#endif
-
-
-#define MYS_NOINLINE __attribute__((noinline))
-
 #define _MYS_DEBUG_STRIP_DEPTH 2
 #define _MYS_DEBUG_SIGNAL_MAX 64 // maximum signal to handle
 #define _MYS_DEBUG_BACKTRACE_MAX 64 // maximum stack backtrace
@@ -140,21 +15,12 @@ static inline int timer_delete(timer_t tim)
     (_MYS_DEBUG_ADDITIONAL_SIZE) \
 )
 
-#define MYS_DEBUG_STYLE_FULL 0 // show full backtrace stack and user message set by ``
-#define MYS_DEBUG_STYLE_LEAN 1 // only show the last backtrace stack
-
-#define MYS_DEBUG_ACTION_NONE   0 // no post action
-#define MYS_DEBUG_ACTION_EXIT   1 // directly exit program
-#define MYS_DEBUG_ACTION_RAISE  2 // re-rase signo to old handler
-#define MYS_DEBUG_ACTION_FREEZE 3 // freeze program by while(1) loop
-
 struct _mys_debug_G_t {
     mys_mutex_t lock;
     bool inited;
     int outfd;
     int use_color;
     int post_action;
-    int style;
     int max_frames;
     char message[MYS_DEBUG_MESSAGE_MAX];
     //
@@ -187,7 +53,6 @@ static struct _mys_debug_G_t _mys_debug_G = {
     .outfd = STDERR_FILENO,
     .use_color = 0,
     .post_action = MYS_DEBUG_ACTION_EXIT,
-    .style = MYS_DEBUG_STYLE_FULL,
     .max_frames = _MYS_DEBUG_BACKTRACE_MAX,
     .message = {},
     .nsignals = 0,
@@ -211,8 +76,11 @@ static struct _mys_debug_G_t _mys_debug_G = {
     .filters = NULL,
 };
 
-static void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context);
-static void _mys_debug_revert_signal_handlers();
+MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context);
+MYS_STATIC void _mys_debug_revert_all();
+MYS_STATIC int  _mys_debug_set_signal(int signo, bool is_called_by_user);
+MYS_STATIC const char *_mys_sigcause(int signo, int sigcode);
+MYS_STATIC const char *_mys_signo_str(int signo);
 
 MYS_API void mys_debug_init()
 {
@@ -226,45 +94,43 @@ MYS_API void mys_debug_init()
         _mys_debug_G.use_color = isatty(_mys_debug_G.outfd);
         memset(_mys_debug_G.message, 0, MYS_DEBUG_MESSAGE_MAX);
 
-        int n = 0;
-#define _MYS_ADD_SIG(s) _mys_debug_G.signals[n++] = s
+        _mys_debug_G.nsignals = 0;
+        memset(_mys_debug_G.signals, 0, sizeof(int) * _MYS_DEBUG_SIGNAL_MAX);
         /***** Signal that terminate the process *****/
-        _MYS_ADD_SIG(SIGALRM);   // P1990 | Alarm clock
-        _MYS_ADD_SIG(SIGHUP);    // P1990 | Hangup (when terminal is closed)
-        _MYS_ADD_SIG(SIGINT);    // P1990 | Terminal interrupt signal (Ctrl-C)
-        // _MYS_ADD_SIG(SIGKILL);   // P1990 | Kill immediately <!cannot be caught or ignored>
-        _MYS_ADD_SIG(SIGPIPE);   // P1990 | Write on a pipe with no one to read it
+        _mys_debug_set_signal(SIGALRM, 0);      // P1990 | Alarm clock
+        // _mys_debug_set_signal(SIGHUP, 0);    // P1990 | Hangup (when terminal is closed)
+        // _mys_debug_set_signal(SIGINT, 0);    // P1990 | Terminal interrupt signal (Ctrl-C)
+        // _mys_debug_set_signal(SIGKILL, 0);   // P1990 | Kill immediately <!cannot be caught or ignored>
+        _mys_debug_set_signal(SIGPIPE, 0);      // P1990 | Write on a pipe with no one to read it
 #ifdef SIGPOLL
-        _MYS_ADD_SIG(SIGPOLL);   // P2001 | Pollable event
+        _mys_debug_set_signal(SIGPOLL, 0);      // P2001 | Pollable event
 #endif
-        // _MYS_ADD_SIG(SIGPROF);   // P2001 | Profiling timer expired
-        _MYS_ADD_SIG(SIGTERM);   // P1990 | Termination signal
-        // _MYS_ADD_SIG(SIGUSR1);   // P1990 | User-defined signal 1
-        // _MYS_ADD_SIG(SIGUSR2);   // P1990 | User-defined signal 2
-        // _MYS_ADD_SIG(SIGVTALRM); // P2001 | Virtual timer expired
+        // _mys_debug_set_signal(SIGPROF, 0);   // P2001 | Profiling timer expired
+        _mys_debug_set_signal(SIGTERM, 0);      // P1990 | Termination signal
+        // _mys_debug_set_signal(SIGUSR1, 0);   // P1990 | User-defined signal 1
+        // _mys_debug_set_signal(SIGUSR2, 0);   // P1990 | User-defined signal 2
+        // _mys_debug_set_signal(SIGVTALRM, 0); // P2001 | Virtual timer expired
         /***** Signal that terminate the process with core dump *****/
-        _MYS_ADD_SIG(SIGABRT);   // P1990 | Process abort signal
-        _MYS_ADD_SIG(SIGBUS);    // P2001 | Access to an undefined portion of a memory object
-        _MYS_ADD_SIG(SIGFPE);    // P1990 | Erroneous arithmetic operation
-        _MYS_ADD_SIG(SIGILL);    // P1990 | Illegal instruction
-        _MYS_ADD_SIG(SIGQUIT);   // P1990 | Terminal quit signal (Ctrl-\\)
-        _MYS_ADD_SIG(SIGSEGV);   // P1990 | Invalid memory reference
-        _MYS_ADD_SIG(SIGSYS);    // P2001 | Bad system call
-        // _MYS_ADD_SIG(SIGTRAP);   // P2001 | Trace/breakpoint trap
-        _MYS_ADD_SIG(SIGXCPU);   // P2001 | CPU time limit exceeded
-        _MYS_ADD_SIG(SIGXFSZ);   // P2001 | File size limit exceeded
+        _mys_debug_set_signal(SIGABRT, 0);      // P1990 | Process abort signal
+        _mys_debug_set_signal(SIGBUS, 0);       // P2001 | Access to an undefined portion of a memory object
+        _mys_debug_set_signal(SIGFPE, 0);       // P1990 | Erroneous arithmetic operation
+        _mys_debug_set_signal(SIGILL, 0);       // P1990 | Illegal instruction
+        // _mys_debug_set_signal(SIGQUIT, 0);   // P1990 | Terminal quit signal (Ctrl-\\)
+        _mys_debug_set_signal(SIGSEGV, 0);      // P1990 | Invalid memory reference
+        _mys_debug_set_signal(SIGSYS, 0);       // P2001 | Bad system call
+        // _mys_debug_set_signal(SIGTRAP, 0);   // P2001 | Trace/breakpoint trap
+        _mys_debug_set_signal(SIGXCPU, 0);      // P2001 | CPU time limit exceeded
+        _mys_debug_set_signal(SIGXFSZ, 0);      // P2001 | File size limit exceeded
         /***** Signal that is ignored by default *****/
-        // _MYS_ADD_SIG(SIGCHLD);   // P1990 | Child process terminated, stopped, or continued
-        // _MYS_ADD_SIG(SIGURG);    // P2001 | Out-of-band data is available at a socket
+        // _mys_debug_set_signal(SIGCHLD, 0);   // P1990 | Child process terminated, stopped, or continued
+        // _mys_debug_set_signal(SIGURG, 0);    // P2001 | Out-of-band data is available at a socket
         /***** Signal that suspend the process for later resumption *****/
-        // _MYS_ADD_SIG(SIGSTOP);   // P1990 | System stop sinal <!cannot be caught or ignored>
-        // _MYS_ADD_SIG(SIGTSTP);   // P1990 | Terminal stop signal by user (Ctrl-Z)
-        // _MYS_ADD_SIG(SIGTTIN);   // P1990 | Background process attempting read
-        // _MYS_ADD_SIG(SIGTTOU);   // P1990 | Background process attempting write
+        // _mys_debug_set_signal(SIGSTOP, 0);   // P1990 | System stop sinal <!cannot be caught or ignored>
+        // _mys_debug_set_signal(SIGTSTP, 0);   // P1990 | Terminal stop signal by user (Ctrl-Z)
+        // _mys_debug_set_signal(SIGTTIN, 0);   // P1990 | Background process attempting read
+        // _mys_debug_set_signal(SIGTTOU, 0);   // P1990 | Background process attempting write
         /***** Signal that continue the process if it's stopped *****/
-        // _MYS_ADD_SIG(SIGCONT);   // P1990 | Continue executing
-#undef _MYS_ADD_SIG
-        _mys_debug_G.nsignals = n;
+        // _mys_debug_set_signal(SIGCONT, 0);   // P1990 | Continue executing
 
         _mys_debug_G.stack_memory = (uint8_t *)malloc(_MYS_DEBUG_STACK_SIZE);
         memset(_mys_debug_G.stack_memory, 0, _MYS_DEBUG_STACK_SIZE);
@@ -279,21 +145,6 @@ MYS_API void mys_debug_init()
             exit(1);
         }
 #endif
-
-        struct sigaction new_action, old_action;
-        new_action.sa_sigaction = _mys_debug_signal_handler;
-        new_action.sa_flags = SA_SIGINFO | SA_ONSTACK;
-        sigemptyset(&new_action.sa_mask);
-        for (int i = 0; i < _mys_debug_G.nsignals; i++) {
-            int signo = _mys_debug_G.signals[i];
-            if (signo <= 0)
-                continue;
-            if (-1 == sigaction(signo, &new_action, &old_action)) {
-                printf("failed to set signal handler for signo %d : %s\n", signo, strerror(errno));
-                exit(1);
-            }
-            _mys_debug_G.old_actions[i] = old_action;
-        }
 
         _mys_debug_G.process_pid = getpid();
         _mys_debug_G.timeout_inited = false;
@@ -310,27 +161,116 @@ MYS_API void mys_debug_fini()
 {
     mys_mutex_lock(&_mys_debug_G.lock);
     if (_mys_debug_G.inited) {
-        _mys_debug_revert_signal_handlers();
+        _mys_debug_revert_all();
         free(_mys_debug_G.stack_memory);
         _mys_debug_G.inited = false;
     }
     mys_mutex_unlock(&_mys_debug_G.lock);
 }
 
-MYS_STATIC size_t _mys_down_align(const size_t size, const size_t alignment)
+MYS_API int mys_debug_set_signal(int signo)
 {
-    return (size == 0) ? alignment : alignment * ((size - 1) / alignment);
+    return _mys_debug_set_signal(signo, 1);
 }
 
-MYS_STATIC size_t _mys_up_align(const size_t size, const size_t alignment)
+MYS_API int mys_debug_clear_signal(int signo)
 {
-    return _mys_down_align(size, alignment) + alignment;
+    if (_mys_debug_G.inited) {
+        if (signo <= 0)
+            return 1;
+        int index;
+        for (index = 0; index < _mys_debug_G.nsignals; index++) {
+            if (_mys_debug_G.signals[index] == signo)
+                break;
+        }
+        struct sigaction action;
+        if (-1 == sigaction(signo, &_mys_debug_G.old_actions[index], &action)) {
+            printf("failed to clear signal handler for signal %d : %s\n",
+                _mys_debug_G.signals[index], strerror(errno));
+            exit(1);
+        }
+        for (; index < _mys_debug_G.nsignals - 1; index++) {
+            _mys_debug_G.signals[index] = _mys_debug_G.signals[index + 1];
+        }
+        _mys_debug_G.signals[_mys_debug_G.nsignals - 1] = 0;
+        _mys_debug_G.nsignals -= 1;
+        return 0;
+    }
+    return 1;
 }
 
-MYS_STATIC size_t _mys_page_aligned(const size_t size)
+MYS_API void mys_debug_get_message(char *buffer)
 {
-    const size_t page = sysconf(_SC_PAGESIZE);
-    return _mys_up_align(size, page);
+    mys_mutex_lock(&_mys_debug_G.lock);
+    {
+        memcpy(buffer, _mys_debug_G.message, MYS_DEBUG_MESSAGE_MAX);
+    }
+    mys_mutex_unlock(&_mys_debug_G.lock);
+}
+
+MYS_API void mys_debug_set_message(const char *fmt, ...)
+{
+    mys_mutex_lock(&_mys_debug_G.lock);
+    {
+        va_list args;
+        va_start(args, fmt);
+        vsnprintf(_mys_debug_G.message, MYS_DEBUG_MESSAGE_MAX, fmt, args);
+        va_end(args);
+    }
+    mys_mutex_unlock(&_mys_debug_G.lock);
+}
+
+MYS_API void mys_debug_clear_message()
+{
+    mys_mutex_lock(&_mys_debug_G.lock);
+    {
+        _mys_debug_G.message[0] = '\0';
+    }
+    mys_mutex_unlock(&_mys_debug_G.lock);
+}
+
+MYS_API void mys_debug_set_max_frames(int max_frames)
+{
+    // FIXME: lock
+    _mys_debug_G.max_frames = max_frames;
+}
+
+MYS_API int mys_debug_get_max_frames()
+{
+    // FIXME: lock
+    return _mys_debug_G.max_frames;
+}
+
+
+////////////
+//////////// static functions
+////////////
+
+
+MYS_STATIC int _mys_debug_set_signal(int signo, bool is_called_by_user)
+{
+    if (is_called_by_user && !_mys_debug_G.inited)
+        return 1;
+    if (signo <= 0 || _mys_debug_G.nsignals >= _MYS_DEBUG_SIGNAL_MAX)
+        return 1;
+
+    for (int i = 0; i < _mys_debug_G.nsignals; i++) {
+        if (_mys_debug_G.signals[i] == signo)
+            return 0;
+    }
+
+    struct sigaction new_action, old_action;
+    new_action.sa_sigaction = _mys_debug_signal_handler;
+    new_action.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&new_action.sa_mask);
+    if (-1 == sigaction(signo, &new_action, &old_action)) {
+        printf("failed to set signal handler for signo %d : %s\n", signo, strerror(errno));
+        exit(1);
+    }
+    _mys_debug_G.signals[_mys_debug_G.nsignals] = signo;
+    _mys_debug_G.old_actions[_mys_debug_G.nsignals] = old_action;
+    _mys_debug_G.nsignals += 1;
+    return 0;
 }
 
 MYS_STATIC const char *_mys_sigcause(int signo, int sigcode)
@@ -440,7 +380,7 @@ MYS_STATIC const char *_mys_signo_str(int signo)
     return "SIGUNKNOWN";
 }
 
-static void _mys_debug_revert_signal_handlers()
+MYS_STATIC void _mys_debug_revert_all()
 {
     mys_mutex_lock(&_mys_debug_G.lock);
     {
@@ -462,12 +402,12 @@ static void _mys_debug_revert_signal_handlers()
 }
 
 MYS_NOINLINE
-static void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context)
+MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context)
 {
     (void)context;
     int code = info->si_code;
     void *addr = info->si_addr;
-    _mys_debug_revert_signal_handlers(); // ask old handlers to clean up in case our handler crash.
+    _mys_debug_revert_all(); // ask old handlers to clean up in case our handler crash.
 
     char cause[_MYS_DEBUG_SBUF_SIZE];
     char bufcmd[_MYS_DEBUG_SBUF_SIZE];
@@ -507,19 +447,18 @@ static void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context)
         loglen += snprintf(buflog + loglen, logmax - loglen, f, ##__VA_ARGS__); \
 } while (0)
 #define _NFMT1 "[F::%0*d CRASH] -------------------------------\n"
-#define _NFMT2 "[F::%0*d CRASH] | Caught signal %d. %s: %s\n"
+#define _NFMT2 "[F::%0*d CRASH] | %s (%s)\n"
 #define _NFMT3 "[F::%0*d CRASH] | %s\n"
 #define _NFMT4 "[F::%0*d CRASH] | No backtrace stack available\n"
 #define _NFMT5 "[F::%0*d CRASH] | (Filtered %d frames)\n"
 #define _NFMT6 "[F::%0*d CRASH] -------------------------------\n"
 #define _YFMT1 MCOLOR_RED "[F::%0*d CRASH] -------------------------------\n"
-#define _YFMT2 "[F::%0*d CRASH] |" MCOLOR_BOLD " Caught signal %d. %s: %s" MCOLOR_NO MCOLOR_RED "\n"
+#define _YFMT2 "[F::%0*d CRASH] |" MCOLOR_BOLD " %s (%s)" MCOLOR_NO MCOLOR_RED "\n"
 #define _YFMT3 "[F::%0*d CRASH] |" MCOLOR_BOLD " %s" MCOLOR_NO MCOLOR_RED "\n"
 #define _YFMT4 "[F::%0*d CRASH] |" MCOLOR_BOLD " No backtrace stack available" MCOLOR_NO MCOLOR_RED "\n"
 // #define _YFMT5 "[F::%0*d CRASH] |" MCOLOR_BOLD " Collapsed %d frames for filter settings" MCOLOR_NO MCOLOR_RED "\n"
 #define _YFMT5 "[F::%0*d CRASH] | (Filtered %d frames)\n"
 #define _YFMT6 "[F::%0*d CRASH] -------------------------------" MCOLOR_NO "\n"
-    if (_mys_debug_G.style == MYS_DEBUG_STYLE_FULL)
     {
         const char *self_exe = mys_procname();
         int bsize = backtrace(baddrs, _MYS_DEBUG_STRIP_DEPTH + _mys_debug_G.max_frames);
@@ -533,7 +472,7 @@ static void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context)
         if (is_timeout) {
             _DOFMT(color ? _YFMT3 : _NFMT3, digits, myrank, cause);
         } else {
-            _DOFMT(color ? _YFMT2 : _NFMT2, digits, myrank, signo, strsignal(signo), cause);
+            _DOFMT(color ? _YFMT2 : _NFMT2, digits, myrank, strsignal(signo), cause);
         }
         if (_mys_debug_G.message[0] != '\0')
             _DOFMT(color ? _YFMT3 : _NFMT3, digits, myrank, _mys_debug_G.message);
@@ -568,9 +507,6 @@ static void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context)
         free(bsyms);
         _DOFMT(color ? _YFMT6 : _NFMT6, digits, myrank);
     }
-    else if (_mys_debug_G.style == MYS_DEBUG_STYLE_LEAN)
-    {
-    }
 
 #undef _DOFMT
 #undef _NFMT1
@@ -596,60 +532,6 @@ static void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context)
     }
 }
 
-
-MYS_API void mys_debug_get_message(char *buffer)
-{
-    mys_mutex_lock(&_mys_debug_G.lock);
-    {
-        memcpy(buffer, _mys_debug_G.message, MYS_DEBUG_MESSAGE_MAX);
-    }
-    mys_mutex_unlock(&_mys_debug_G.lock);
-}
-
-MYS_API void mys_debug_set_message(const char *fmt, ...)
-{
-    mys_mutex_lock(&_mys_debug_G.lock);
-    {
-        va_list args;
-        va_start(args, fmt);
-        vsnprintf(_mys_debug_G.message, MYS_DEBUG_MESSAGE_MAX, fmt, args);
-        va_end(args);
-    }
-    mys_mutex_unlock(&_mys_debug_G.lock);
-}
-
-MYS_API void mys_debug_clear_message()
-{
-    mys_mutex_lock(&_mys_debug_G.lock);
-    {
-        _mys_debug_G.message[0] = '\0';
-    }
-    mys_mutex_unlock(&_mys_debug_G.lock);
-}
-
-// MYS_API void mys_debug_set_style(int style)
-// {
-//     // FIXME: lock
-//     mys_atomic_store_n(&_mys_debug_G.style, style, MYS_ATOMIC_RELAXED);
-// }
-
-// MYS_API int mys_debug_get_style()
-// {
-//     // FIXME: lock
-//     return mys_atomic_load_n(&_mys_debug_G.style, MYS_ATOMIC_RELAXED);
-// }
-
-MYS_API void mys_debug_set_max_frames(int max_frames)
-{
-    // FIXME: lock
-    _mys_debug_G.max_frames = max_frames;
-}
-
-MYS_API int mys_debug_get_max_frames()
-{
-    // FIXME: lock
-    return _mys_debug_G.max_frames;
-}
 
 
 #ifdef MYS_ENABLE_DEBUG_TIMEOUT
@@ -770,3 +652,102 @@ MYS_API void mys_debug_del_stack_filter(const char *match_str)
         _mys_debug_G.n_filters -= 1;
     }
 }
+
+
+#ifdef OS_MACOS
+
+static void _timer_cancel(void *arg)
+{
+    struct macos_timer *tim = (struct macos_timer *)arg;
+    dispatch_release(tim->tim_timer);
+    dispatch_release(tim->tim_queue);
+    tim->tim_timer = NULL;
+    tim->tim_queue = NULL;
+    free(tim);
+}
+
+static void _timer_handler(void *arg)
+{
+    struct macos_timer *tim = (struct macos_timer *)arg;
+    union sigval sv;
+
+    sv.sival_ptr = tim->tim_arg;
+
+    if (tim->tim_func != NULL)
+        tim->tim_func(sv);
+}
+
+static int timer_create(clockid_t clockid, struct sigevent *sevp, timer_t *timerid)
+{
+    struct macos_timer *tim;
+
+    *timerid = NULL;
+
+    switch (clockid) {
+        case CLOCK_REALTIME:
+
+            /* What is implemented so far */
+            if (sevp->sigev_notify != SIGEV_THREAD) {
+                errno = ENOTSUP;
+                return (-1);
+            }
+
+            tim = (struct macos_timer *)malloc(sizeof(struct macos_timer));
+            if (tim == NULL) {
+                errno = ENOMEM;
+                return (-1);
+            }
+
+            tim->tim_queue = dispatch_queue_create("com.mayeths.timerqueue", 0);
+            tim->tim_timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, tim->tim_queue);
+
+            tim->tim_func = sevp->sigev_notify_function;
+            tim->tim_arg  = sevp->sigev_value.sival_ptr;
+            *timerid      = tim;
+
+            /* Opting to use pure C instead of Block versions */
+            dispatch_set_context(tim->tim_timer, tim);
+            dispatch_source_set_event_handler_f(tim->tim_timer, _timer_handler);
+            dispatch_source_set_cancel_handler_f(tim->tim_timer, _timer_cancel);
+
+            return (0);
+        default:
+            break;
+    }
+
+    errno = EINVAL;
+    return (-1);
+}
+
+static int timer_settime(timer_t tim, int flags, const struct itimerspec *its, struct itimerspec *remainvalue)
+{
+    (void)flags;
+    (void)remainvalue;
+    if (tim != NULL) {
+        /* Both zero, is disarm */
+        if (its->it_value.tv_sec == 0 && its->it_value.tv_nsec == 0) {
+            /* There's a comment about suspend count in Apple docs */
+            dispatch_suspend(tim->tim_timer);
+            return (0);
+        }
+
+        dispatch_time_t start;
+        start = dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * its->it_value.tv_sec + its->it_value.tv_nsec);
+        dispatch_source_set_timer(
+            tim->tim_timer, start, NSEC_PER_SEC * its->it_value.tv_sec + its->it_value.tv_nsec, 0
+        );
+        dispatch_resume(tim->tim_timer);
+    }
+    return (0);
+}
+
+static int timer_delete(timer_t tim)
+{
+    /* Calls _timer_cancel() */
+    if (tim != NULL)
+        dispatch_source_cancel(tim->tim_timer);
+
+    return (0);
+}
+
+#endif // OS_MACOS

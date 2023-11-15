@@ -25,6 +25,11 @@
 
 #define MYS_DEBUG_MESSAGE_MAX 1024
 
+#define MYS_DEBUG_ACTION_NONE   0 // no post action
+#define MYS_DEBUG_ACTION_EXIT   1 // directly exit program
+#define MYS_DEBUG_ACTION_RAISE  2 // re-rase signo to old handler
+#define MYS_DEBUG_ACTION_FREEZE 3 // freeze program by while(1) loop
+
 /**
  * @brief Initialize libmys' signal handlers for debugging
  */
@@ -39,6 +44,13 @@ MYS_API void mys_debug_fini();
  */
 MYS_API void mys_debug_get_message(char *buffer);
 /**
+ * @brief Enable catch of signal.
+ * 
+ * @param signo Signal number
+ */
+MYS_API int mys_debug_set_signal(int signo);
+MYS_API int mys_debug_clear_signal(int signo);
+/**
  * @brief Set the (thread local) message for signal handlers to print.
  * 
  * @param fmt Formatter
@@ -49,14 +61,46 @@ MYS_API void mys_debug_get_message(char *buffer);
 MYS_API void mys_debug_set_message(const char *fmt, ...);
 MYS_API void mys_debug_clear_message();
 
-MYS_API void mys_debug_set_style(int style);
-MYS_API int mys_debug_get_style();
-
+MYS_API void _mys_debug_set_timeout(double timeout, const char *file, int line);
+MYS_API void mys_debug_clear_timeout();
 // To enable this functionality, you have to
 // 1) Add `#define MYS_ENABLE_DEBUG_TIMEOUT` before `#include mys.h`
 // 2) Add `-lrt` to compiler for using `timer_create()`, `timer_settime()`, and `timer_delete()`
 #define mys_debug_set_timeout(timeout_sec) _mys_debug_set_timeout(timeout_sec, __FILE__, __LINE__)
-MYS_API void mys_debug_clear_timeout();
+
+
+
+
+
+
+
+
+#ifdef OS_MACOS
+#include <dispatch/dispatch.h>
+#include <mach/boolean.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <sys/errno.h>
+#include <time.h>
+struct itimerspec {
+    struct timespec it_interval; /* timer period */
+    struct timespec it_value;    /* timer expiration */
+};
+struct sigevent;
+/* If used a lot, queue should probably be outside of this struct */
+struct macos_timer {
+    dispatch_queue_t tim_queue;
+    dispatch_source_t tim_timer;
+    void (*tim_func)(union sigval);
+    void *tim_arg;
+};
+typedef struct macos_timer *timer_t;
+static void _timer_cancel(void *arg);
+static void _timer_handler(void *arg);
+static int timer_create(clockid_t clockid, struct sigevent *sevp, timer_t *timerid);
+static int timer_settime(timer_t tim, int flags, const struct itimerspec *its, struct itimerspec *remainvalue);
+static int timer_delete(timer_t tim);
+#endif
 
 /* gcc -rdynamic -funwind-tables -I${MYS_DIR}/include -g -Wall -Wextra test-debug.c -lrt && valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./a.out
 =======================

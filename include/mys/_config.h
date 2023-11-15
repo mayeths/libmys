@@ -82,24 +82,31 @@
 #if defined(COMPILER_GCC)
 #define _MYS_UNUSED __attribute__((unused))
 #define _MYS_NO_INSTRUMENT __attribute__((no_instrument_function))
+#define MYS_NOINLINE __attribute__((noinline))
 #elif defined(COMPILER_CLANG)
 #define _MYS_UNUSED __attribute__((unused))
 #define _MYS_NO_INSTRUMENT __attribute__((no_instrument_function))
+#define MYS_NOINLINE __attribute__((noinline))
 #elif defined(COMPILER_ICC)
 #define _MYS_UNUSED __attribute__((unused))
 #define _MYS_NO_INSTRUMENT
+#define MYS_NOINLINE __attribute__((noinline))
 #elif defined(COMPILER_NVCC)
 #define _MYS_UNUSED __attribute__((unused))
 #define _MYS_NO_INSTRUMENT
+#define MYS_NOINLINE
 #elif defined(COMPILER_SWCC)
 #define _MYS_UNUSED __attribute__((unused))
 #define _MYS_NO_INSTRUMENT
+#define MYS_NOINLINE
 #elif defined(COMPILER_MSVC)
 #define _MYS_UNUSED
 #define _MYS_NO_INSTRUMENT
+#define MYS_NOINLINE
 #else
 #define _MYS_UNUSED
 #define _MYS_NO_INSTRUMENT
+#define MYS_NOINLINE
 #endif
 
 // Defining _MYS_SYMBOL_IMPORT, _MYS_SYMBOL_EXPORT and _MYS_SYMBOL_LOCAL
