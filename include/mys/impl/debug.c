@@ -524,6 +524,9 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
     write(_mys_debug_G.outfd, buflog, loglen);
     int post_action = _mys_debug_G.post_action;
     if (post_action == MYS_DEBUG_ACTION_EXIT) {
+        // when there are a lot of ranks, immediately exit will
+        // cause some of them failed to output information.
+        sleep(1);
         _exit(signo);
     } else if (post_action == MYS_DEBUG_ACTION_RAISE) {
         raise(signo);
