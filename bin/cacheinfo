@@ -1,0 +1,48 @@
+#!/bin/bash
+
+if [[ $(uname -s) != "Linux" ]]; then
+    echo "Error: only support linux for now"
+    exit 1
+fi
+
+directory="/sys/devices/system/cpu/cpu0/cache/"
+
+BOLDRED="\033[1;31m"
+BOLDGREEN="\033[1;32m"
+BOLDCYAN="\033[1;36m"
+BOLDPURPLE="\033[1;35m"
+BOLDYELLOW="\033[1;33m"
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+YELLOW="\033[0;33m"
+NC="\033[0m"
+
+files=($(find "$directory" -maxdepth 1 -type d -name "index*" | sort))
+for file in "${files[@]}"; do
+    base=$(basename $file)
+    index=$(expr "$base" : 'index\([0-9]\)')
+    cache_type=$(cat $file/type)
+    if [[ "$cache_type" == "Data" ]]; then
+        echo -e "${BOLDGREEN}Cache $index ($(cat $file/size) Level $(cat $file/level) $(cat $file/type) Cache)${NC}"
+    elif [[ "$cache_type" == "Instruction" ]]; then
+        echo -e "${BOLDCYAN}Cache $index ($(cat $file/size) Level $(cat $file/level) $(cat $file/type) Cache)${NC}"
+    elif [[ "$cache_type" == "Unified" ]]; then
+        echo -e "${BOLDPURPLE}Cache $index ($(cat $file/size) Level $(cat $file/level) $(cat $file/type) Cache)${NC}"
+    fi
+    echo -e "    Config: $(cat $file/coherency_line_size) bytes per line, $(cat $file/ways_of_associativity) ways, $(cat $file/number_of_sets) sets"
+    echo -e "    Policy: $(cat $file/allocation_policy) and $(cat $file/write_policy)"
+    echo -e "    Shared CPU list: $(cat $file/shared_cpu_list)"
+    echo -e ""
+done
+
+
+# cat /sys/devices/system/cpu/cpu0/cache/index0/allocation_policy                 ReadWriteAllocate
+# cat /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size                 64
+# cat /sys/devices/system/cpu/cpu0/cache/index0/level                 1
+# cat /sys/devices/system/cpu/cpu0/cache/index0/number_of_sets                 256
+# cat /sys/devices/system/cpu/cpu0/cache/index0/shared_cpu_list                 0
+# cat /sys/devices/system/cpu/cpu0/cache/index0/shared_cpu_map                 00000000,00000000,00000001
+# cat /sys/devices/system/cpu/cpu0/cache/index0/size                 64K
+# cat /sys/devices/system/cpu/cpu0/cache/index0/type                 Data
+# cat /sys/devices/system/cpu/cpu0/cache/index0/ways_of_associativity                 4
+# cat /sys/devices/system/cpu/cpu0/cache/index0/write_policy                 WriteBack
