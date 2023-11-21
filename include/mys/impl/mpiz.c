@@ -1,11 +1,16 @@
 #include "../mpiz.h"
 
-static int _commgroup_rank_sortfn(const void* a, const void* b)
+struct _commgroup_rc_t {
+    int rank;
+    int color;
+};
+
+static int _commgroup_sortfn(const void* a, const void* b)
 {
-    const int *intA = (const int *)a;
-    const int *intB = (const int *)b;
-    if (*intA < *intB) return -1;
-    else if (*intA > *intB) return 1;
+    const struct _commgroup_rc_t *rc_a = (const struct _commgroup_rc_t *)a;
+    const struct _commgroup_rc_t *rc_b = (const struct _commgroup_rc_t *)b;
+    if (rc_a->color < rc_b->color) return -1;
+    else if (rc_a->color > rc_b->color) return 1;
     else return 0;
 }
 
@@ -26,27 +31,34 @@ MYS_API mys_commgroup_t mys_commgroup_create(MPI_Comm global_comm, int group_col
     group->group_id = -1;
     int im_group_root = group->local_myrank == 0;
     MPI_Allreduce(&im_group_root, &group->group_num, 1, MPI_INT, MPI_SUM, global_comm);
-    int *roots = (int *)malloc(sizeof(int) * group->group_num);
     int nrequests = (group->global_myrank == 0) ? (group->group_num + 1) : (group->local_myrank == 0) ? 1 : 0;
     MPI_Request *requests = (MPI_Request *)malloc(sizeof(MPI_Request) * nrequests);
+    struct _commgroup_rc_t *rank_colors = (struct _commgroup_rc_t *)malloc(
+        sizeof(struct _commgroup_rc_t) * group->group_num
+    );
+    struct _commgroup_rc_t my_rank_color = {
+        .rank = group->global_myrank,
+        .color = group_color
+    };
 
     if (group->global_myrank == 0) {
         for(int i = 0; i < group->group_num; i++)
-            MPI_Irecv(&roots[i], 1, MPI_INT, MPI_ANY_SOURCE, 17749, global_comm, &requests[1 + i]);
+            MPI_Irecv(&rank_colors[i], 1, MPI_2INT, MPI_ANY_SOURCE, 17749, global_comm, &requests[1 + i]);
     }
     if (group->local_myrank == 0) {
-        MPI_Isend(&group->global_myrank, 1, MPI_INT, 0, 17749, global_comm, &requests[0]);
+        MPI_Isend(&my_rank_color, 1, MPI_2INT, 0, 17749, global_comm, &requests[0]);
     }
     if (nrequests > 0) {
         MPI_Waitall(nrequests, requests, MPI_STATUSES_IGNORE);
     }
 
     if (group->global_myrank == 0) {
-        qsort(roots, group->group_num, sizeof(int), _commgroup_rank_sortfn);
-        for(int i = 0; i < group->group_num; i++) {
-            int rank = roots[i];
-            roots[i] = i;
-            MPI_Isend(&roots[i], 1, MPI_INT, rank, 18864, global_comm, &requests[1 + i]);
+        // convert discrete color to continuous group id
+        qsort(rank_colors, group->group_num, sizeof(struct _commgroup_rc_t), _commgroup_sortfn);
+        for(int group_id = 0; group_id < group->group_num; group_id++) {
+            int rank = rank_colors[group_id].rank;
+            rank_colors[group_id].color = group_id;
+            MPI_Isend(&rank_colors[group_id].color, 1, MPI_INT, rank, 18864, global_comm, &requests[1 + group_id]);
         }
     }
     if (group->local_myrank == 0) {
@@ -78,7 +90,7 @@ MYS_API mys_commgroup_t mys_commgroup_create(MPI_Comm global_comm, int group_col
     MPI_Allgather(MPI_IN_PLACE, 1, MPI_INT, group->_neighbors, 1, MPI_INT, group->inter_comm);
 
     free(requests);
-    free(roots);
+    free(rank_colors);
     return (mys_commgroup_t)group;
 }
 
