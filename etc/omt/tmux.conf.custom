@@ -16,7 +16,7 @@ bind | split-window -h
 # Set screen-256color for oh-my-zsh because tmux-256color is broken
 set -g default-terminal "screen-256color"
 # Increase tmux history buffer size
-set -g history-limit 20000
+set -g history-limit 100000
 # Start with mouse mode disabled
 set -g mouse off
 # Refresh window status
