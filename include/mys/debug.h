@@ -95,11 +95,11 @@ struct macos_timer {
     void *tim_arg;
 };
 typedef struct macos_timer *timer_t;
-static void _timer_cancel(void *arg);
-static void _timer_handler(void *arg);
-static int timer_create(clockid_t clockid, struct sigevent *sevp, timer_t *timerid);
-static int timer_settime(timer_t tim, int flags, const struct itimerspec *its, struct itimerspec *remainvalue);
-static int timer_delete(timer_t tim);
+MYS_STATIC void _timer_cancel(void *arg);
+MYS_STATIC void _timer_handler(void *arg);
+MYS_STATIC int timer_create(clockid_t clockid, struct sigevent *sevp, timer_t *timerid);
+MYS_STATIC int timer_settime(timer_t tim, int flags, const struct itimerspec *its, struct itimerspec *remainvalue);
+MYS_STATIC int timer_delete(timer_t tim);
 #endif
 
 /* gcc -rdynamic -funwind-tables -I${MYS_DIR}/include -g -Wall -Wextra test-debug.c -lrt && valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./a.out

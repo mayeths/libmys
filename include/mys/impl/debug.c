@@ -659,7 +659,7 @@ MYS_API void mys_debug_del_stack_filter(const char *match_str)
 
 #ifdef OS_MACOS
 
-static void _timer_cancel(void *arg)
+MYS_STATIC void _timer_cancel(void *arg)
 {
     struct macos_timer *tim = (struct macos_timer *)arg;
     dispatch_release(tim->tim_timer);
@@ -669,7 +669,7 @@ static void _timer_cancel(void *arg)
     free(tim);
 }
 
-static void _timer_handler(void *arg)
+MYS_STATIC void _timer_handler(void *arg)
 {
     struct macos_timer *tim = (struct macos_timer *)arg;
     union sigval sv;
@@ -680,7 +680,7 @@ static void _timer_handler(void *arg)
         tim->tim_func(sv);
 }
 
-static int timer_create(clockid_t clockid, struct sigevent *sevp, timer_t *timerid)
+MYS_STATIC int timer_create(clockid_t clockid, struct sigevent *sevp, timer_t *timerid)
 {
     struct macos_timer *tim;
 
@@ -722,7 +722,7 @@ static int timer_create(clockid_t clockid, struct sigevent *sevp, timer_t *timer
     return (-1);
 }
 
-static int timer_settime(timer_t tim, int flags, const struct itimerspec *its, struct itimerspec *remainvalue)
+MYS_STATIC int timer_settime(timer_t tim, int flags, const struct itimerspec *its, struct itimerspec *remainvalue)
 {
     (void)flags;
     (void)remainvalue;
@@ -744,7 +744,7 @@ static int timer_settime(timer_t tim, int flags, const struct itimerspec *its, s
     return (0);
 }
 
-static int timer_delete(timer_t tim)
+MYS_STATIC int timer_delete(timer_t tim)
 {
     /* Calls _timer_cancel() */
     if (tim != NULL)
