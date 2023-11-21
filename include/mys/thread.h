@@ -3,6 +3,11 @@
 #include "_config.h"
 #include "atomic.h"
 
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <errno.h>
+
 /**********************************/
 // mys_thread_local
 /**********************************/
@@ -27,7 +32,9 @@
 /**********************************/
 // mys_thread
 /**********************************/
-MYS_API int mys_thread_id();
+// intel compiler complains that mys_mutex_lock uses mys_atomic_load_n
+// on int32_t type thread_id. Seems like it only provide uint32_t atomic functions
+MYS_API uint32_t mys_thread_id();
 
 /**********************************/
 // mys_mutex_t
@@ -37,10 +44,10 @@ MYS_API int mys_thread_id();
 typedef pthread_mutex_t mys_mutex_t;
 #define MYS_MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 #else
-struct mys_mutex_t { int tid; };
+struct mys_mutex_t { uint32_t tid; };
 typedef struct mys_mutex_t mys_mutex_t;
-#define __MYS_MUTEX_IDLE (-1) // 0 is a valid tid
-#define __MYS_MUTEX_INVALID (-2)
+#define __MYS_MUTEX_IDLE      (UINT32_MAX - 1)
+#define __MYS_MUTEX_INVALID   (UINT32_MAX - 2)
 #define MYS_MUTEX_INITIALIZER { .tid = __MYS_MUTEX_IDLE }
 #endif /*MYS_USE_POSIX_MUTEX*/
 ///////////
@@ -94,6 +101,7 @@ int main(int argc, const char **argv)
     int nthreads = omp_get_max_threads();
     int *data = (int *)malloc(sizeof(int) * count);
     int *saws = (int *)malloc(sizeof(int) * nthreads);
+    printf("nthreads=%d\n", nthreads);
 
     for (int warm = 0; warm < nwarms; warm++) {
         test_it(data, saws, count, nthreads);
