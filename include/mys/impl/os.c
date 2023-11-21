@@ -494,7 +494,7 @@ MYS_API int64_t mys_env_i64(const char *name, int64_t default_val)
     int error = errno;
     errno = 0;
 
-    if (stop == str || stop != NULL)
+    if (stop == str)
         return default_val; /* contains with non-number */
     if ((num == LLONG_MAX || num == LLONG_MIN) && error == ERANGE)
         return default_val; /* number out of range for LONG */
@@ -521,7 +521,7 @@ MYS_API double mys_env_f64(const char *name, double default_val)
     int error = errno;
     errno = 0;
 
-    if (stop == str || stop != NULL)
+    if (stop == str)
         return default_val; /* contains with non-number */
     if (error == ERANGE)
         return default_val; /* number out of range for DOUBLE */
@@ -547,7 +547,7 @@ MYS_API float mys_env_f32(const char *name, float default_val)
     int error = errno;
     errno = 0;
 
-    if (stop == str || stop != NULL)
+    if (stop == str)
         return default_val; /* contains with non-number */
     if (error == ERANGE)
         return default_val; /* number out of range for FLOAT */
