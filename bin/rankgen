@@ -464,7 +464,7 @@ def main():
         usage='%(prog)s [OPTIONS] <num_node> <num_rank> <threads_per_rank>',
         description=f'OpenMPI rankfile genrator for easy fine-grained process placement (version {VERSION})\n',
         add_help=False,
-        epilog='Example: %(prog)s --finger=all -w "bn000,cn2[0-1][1,0],dn999" --imbalance --align=socket 5 7 3',
+        epilog='Example: %(prog)s -w "bn000,cn2[0-1][1,0],dn999" --imbalance --align=socket 5 7 3',
         formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=terminal_width)
     )
     parser.add_argument('num_node', type=int, help=f"Number of nodes to use")
@@ -490,7 +490,7 @@ def main():
     gargs.add_argument('-a', '--align', dest='region', action=StoreAction, default='numa', choices=['numa', 'socket', 'node'], help="Align ranks to the numa/socket/node region", metavar='')
     gargs.add_argument('-l', '--left', dest='left_most_cores', action=StoreConstAction, const=True, default=False, help="Use left-most slots in the region", metavar='')
     gargs.add_argument('-i', '--imbalance', dest='imbalance', action=StoreConstAction, const=True, default=False, help="Allow imbalancing over regions", metavar='')
-    gargs.add_argument('-f', '--finger', dest='fingerprint', action=StoreAction, default="first", choices=['first', 'all', 'no'], help="Display first/all/no fingerprint of node", metavar='')
+    gargs.add_argument('-f', '--finger', dest='fingerprint', action=StoreAction, default="all", choices=['all', 'first', 'no'], help="Display fingerprint of all/first/no nodes", metavar='')
     # Please note that modify name of tempfile bellow every time add critical arugments influencing the result of generator, for example hwthread
     parser.add_argument('-q', '--quiet', dest='quiet', action=StoreConstAction, const=True, default=False, help="Don't print summary to <stderr>", metavar='')
     parser.add_argument('-u', '--usage', action=UsageAction, help="Show extended usages and exit", metavar='')
