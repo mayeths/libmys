@@ -438,7 +438,7 @@ class UsageAction(argparse.Action):
         print('   Some SLURM_* variables such as SLURM_NODELIST are also set for the environment of command.')
         print('')
         print('   export N=1 P=4 T=2')
-        print('   export rankgen_cmd="\$(rankgen -t -q -w \$SLURM_NODELIST $N $P $T)"')
+        print('   export rankgen_cmd="\\$(rankgen -t -q -w \\$SLURM_NODELIST $N $P $T)"')
         print('   salloc --exclusive -N $N bash -c "mpirun -np $P -rf $rankgen_cmd ./a.out"')
         print('----------------------------')
         print('3. Using rankgen with salloc for a group of fixed nodes')
