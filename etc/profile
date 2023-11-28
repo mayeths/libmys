@@ -6,6 +6,9 @@ MYS_SHELL=$(mys_find_shell)
 [[ "$MYS_SHELL" == "zsh"  ]] && source $MYS_DIR/etc/zshrc
 
 command -v realpath >/dev/null 2>&1 || realpath() { mys_realpath "$@" }
+rpath() {
+    realpath "$@"
+}
 
 env_prepend PATH "$MYS_DIR/bin"
 env_prepend PYTHONPATH "$MYS_DIR/python"
