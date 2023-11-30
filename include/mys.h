@@ -5,8 +5,8 @@
  * 
  */
 #if __STDC_VERSION__ < 199901L && __cplusplus < 201103L
-#error Require at least c99 to parse *.h in libmys
-#endif
+#error Require c99/c++11 or higher to use libmys
+#else
 
 
 #ifndef MYS_VERSION
@@ -130,3 +130,5 @@ extern "C" {
 #ifdef CUDA_ARCH
 #include "mys/cuda.cuh"
 #endif
+
+#endif // __STDC_VERSION__ < 199901L && __cplusplus < 201103L
