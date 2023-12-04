@@ -31,10 +31,19 @@ set_script_path_options() {
 	$TMUX_PROGRAM set-option -gq "$restore_path_option" "$CURRENT_DIR/scripts/restore.sh"
 }
 
+set_auto_run() {
+	local auto_run=$(get_tmux_option "$auto_run_option" "$auto_run_default")
+	if [[ "$auto_run" == "on" ]]; then
+		local interval=$(get_tmux_option "$auto_run_interval_option" "$auto_run_interval_default")
+		$TMUX_PROGRAM run-shell -b "$CURRENT_DIR/scripts/auto.sh $interval"
+	fi
+}
+
 main() {
 	set_save_bindings
 	set_restore_bindings
 	set_default_strategies
 	set_script_path_options
+	set_auto_run
 }
 main

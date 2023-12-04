@@ -49,12 +49,15 @@ color_white="#e4e4e4"   # white
 #--------------------------------------
 # Plugins
 #--------------------------------------
+### We use default $HOME/.local/share/tmux/resurrect
+### Seems like $HOME/.local/ is the convention to put this kind of data
+# set -g @resurrect-dir '/path/to/backup/dir'
 set -g @resurrect-save 'O'
 set -g @resurrect-restore 'P'
 set -g @resurrect-capture-pane-contents 'on'
-# We use default $HOME/.local/share/tmux/resurrect
-# Seems like $HOME/.local/ is the convention to put this kind of data
-# set -g @resurrect-dir ''
+set -g @resurrect-delete-backup-after '15'
+set -g @resurrect-auto-run 'on'
+set -g @resurrect-auto-run-interval '86400'
 run-shell "$TMUX_PLUGIN_DIR/tmux-resurrect/resurrect.tmux"
 
 #--------------------------------------

@@ -50,3 +50,9 @@ hook_prefix="@resurrect-hook-"
 
 delete_backup_after_option="@resurrect-delete-backup-after"
 default_delete_backup_after="30" # days
+
+
+auto_run_option="@resurrect-auto-run"
+auto_run_default="off"
+auto_run_interval_option="@resurrect-auto-run-interval"
+auto_run_interval_default="86400"
