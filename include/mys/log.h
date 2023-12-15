@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "_config.h"
 #include "mpi.h"
