@@ -78,10 +78,12 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
         event.line = line;
         event.fmt = fmt;
         event.no_vargs = false;
+        bool broken = false;
         if (fmt == NULL) {
             event.level = MYS_LOG_FATAL;
             event.fmt = "Calling mys_log with NULL format string. Do you call LOG_SELF(0, \"...\") or LOG(rank, NULL)?";
             event.no_vargs = true;
+            broken = true;
         }
         va_start(event.vargs, fmt);
         mys_log_invoke_handlers(&event);
@@ -95,10 +97,12 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
             char *ptr = (needed > 4096) ? (char *)malloc(needed) : buffer;
             _mys_MPI_Recv(ptr, needed, _mys_MPI_CHAR, rank, tag, comm, _mys_MPI_STATUS_IGNORE);
 
-            event.myrank = rank;
-            event.fmt = ptr;
-            event.no_vargs = true;
-            mys_log_invoke_handlers(&event);
+            if (!broken) {
+                event.myrank = rank;
+                event.fmt = ptr;
+                event.no_vargs = true;
+                mys_log_invoke_handlers(&event);
+            }
             if (ptr != buffer)
                 free(ptr);
         }
