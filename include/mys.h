@@ -4,8 +4,12 @@
  * @brief Include all libmys C headers into one header (Require GNU99)
  * 
  */
-#if __STDC_VERSION__ < 199901L && __cplusplus < 201103L
-#error Require c99/c++11 or higher to use libmys
+#if defined(__cplusplus) && __cplusplus < 201103L
+#error Require C++11 or higher. Consider removing -std or use -std=c++11 in compiler command line arguments
+#elif !defined(__cplusplus) && __STDC_VERSION__ < 199901L
+#error Require GNU C99 or higher. Consider removing -std or use -std=gnu99 in compiler command line arguments
+#elif !defined(__cplusplus) && defined(__STRICT_ANSI__)
+#error Require GNU C instead of ANSI C or ISO C. Consider removing -ansi or change -std=c99 to -std=gnu99 in compiler command line arguments
 #else
 
 
