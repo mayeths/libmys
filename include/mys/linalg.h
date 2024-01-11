@@ -4,13 +4,26 @@
 #include "macro.h"
 
 /**
- * @brief Return balanced partition of i in n
+ * @brief Naive partition of [gs, ge) to <npart> partition
  * 
- * @param gs global start index
- * @param ge global end index
- * @param n number of partition
- * @param i index of local partition
- * @param ls start index of local partition
- * @param le end index of local partition
+ * @param gbegin global begin index (inclusive)
+ * @param gend global end index (exclusive)
+ * @param npart total partition num
+ * @param ipart this partition index
+ * @param lbegin [RETURN] begin index of this partition (inclusive)
+ * @param lend [RETURN] end index of this partition (exclusive)
  */
-MYS_API void mys_partition_naive(const int gs, const int ge, const int n, const int i, int *ls, int *le);
+MYS_API void mys_partition_naive(const int gbegin, const int gend, const int npart, const int ipart, int *lbegin, int *lend);
+
+/**
+ * @brief Naive partition of [gs, ge) to <npart> partition
+ * 
+ * @param gbegin global begin index (inclusive)
+ * @param gend global end index (exclusive)
+ * @param npart total partition num
+ * @param ipart this partition index
+ * @param weights weights of each partition
+ * @param lbegin [RETURN] begin index of this partition (inclusive)
+ * @param lend [RETURN] end index of this partition (exclusive)
+ */
+// MYS_API void mys_partition_weighted(const int gbegin, const int gend, const int npart, const int ipart, const int *weights, int *lbegin, int *lend);
