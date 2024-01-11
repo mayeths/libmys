@@ -29,12 +29,12 @@ void readmm(const char *fname, int *nrows_, int *ncols_, int *nnz_, int **Ia_, i
     (*Ja_) = (int *) malloc((*nnz_) * sizeof(int));
     (*Va_) = (double *) malloc((*nnz_) * sizeof(double));
 
-    double t1 = MPI_Wtime();
+    // double t1 = MPI_Wtime();
     for (int i=0; i<(*nnz_); i++) {
-        if (i % ((*nnz_) / 100) == 0) {
-            double t11 = MPI_Wtime();
+        // if (i % ((*nnz_) / 100) == 0) {
+            // double t11 = MPI_Wtime();
             // DEBUG(0, "progress: %d/%d, time %f", i, (*nnz_), t11 - t1);
-        }
+        // }
         fscanf(f, "%d %d %lg\n", &(*Ia_)[i], &(*Ja_)[i], &(*Va_)[i]);
         (*Ia_)[i]--;
         (*Ja_)[i]--;
@@ -305,6 +305,8 @@ int mm_write_mtx_array_size(FILE *f, int M, int N)
 int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],
         double val[], MM_typecode matcode)
 {
+    (void)M;
+    (void)N;
     int i;
     if (mm_is_complex(matcode))
     {
@@ -370,7 +372,7 @@ int mm_read_mtx_crd_entry(FILE *f, int *I, int *J,
                             (nz pairs of real/imaginary values)
 ************************************************************************/
 
-int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **J, 
+int mm_read_mtx_crd(const char *fname, int *M, int *N, int *nz, int **I, int **J, 
         double **val, MM_typecode *matcode)
 {
     int ret_code;
@@ -497,13 +499,14 @@ char  *mm_typecode_to_str(MM_typecode matcode)
     char buffer[MM_MAX_LINE_LENGTH];
     const char *types[4];
 	char *mm_strdup(const char *);
-    int error =0;
+    // int error =0;
 
     /* check for MTX type */
     if (mm_is_matrix(matcode)) 
         types[0] = MM_MTX_STR;
     else
-        error=1;
+        return NULL;
+        // error=1;
 
     /* check for CRD or ARR matrix */
     if (mm_is_sparse(matcode))
