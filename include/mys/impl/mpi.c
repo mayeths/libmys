@@ -226,6 +226,7 @@ MYS_STATIC int _mys_MPI_Barrier(_mys_MPI_Comm comm)
 
 MYS_STATIC int _mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, _mys_MPI_Datatype datatype, _mys_MPI_Op op, _mys_MPI_Comm comm)
 {
+   // FIXME: support MPI_MAX, MPI_MIN and other op. Throw error if not implemented
     (void)op;
     (void)comm;
     int i;
