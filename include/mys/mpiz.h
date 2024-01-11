@@ -40,6 +40,7 @@ typedef struct _mys_commgroup_t* mys_commgroup_t; // handle
  * @note Use mys_commgroup_create_node(comm) to construct node based group.
  */
 MYS_API mys_commgroup_t mys_commgroup_create(MPI_Comm global_comm, int group_color, int group_key);
+MYS_API mys_commgroup_t mys_commgroup_create2(MPI_Comm global_comm, int group_color, int group_key);
 /**
  * @brief Create communication group information based on node
  * @return The group handle
@@ -83,6 +84,7 @@ MYS_API int mys_query_neighbor(mys_commgroup_t group, int group_id);
 
 #define MYS_IMPL
 #include <mys.h>
+#include <mpi.h>
 
 int main(int argc, char **argv)
 {
