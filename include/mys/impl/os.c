@@ -202,8 +202,10 @@ MYS_API mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t ma
     return prun;
 }
 
-MYS_API mys_prun_t mys_prun_create2(const char *command)
+MYS_API mys_prun_t mys_prun_create2(const char *command, ...)
 {
+    char *command_real = NULL;
+    int needed = 0;
     mys_prun_t prun;
     prun.success = false;
     prun.out = NULL;
@@ -213,7 +215,16 @@ MYS_API mys_prun_t mys_prun_create2(const char *command)
     prun.retval = -1;
     prun._alloced = true;
 
-    mys_popen_t popen = mys_popen_create(command);
+    va_list vargs, vargs_test;
+    va_start(vargs, command);
+    va_copy(vargs_test, vargs);
+    needed = vsnprintf(NULL, 0, command, vargs_test) + 1;
+    command_real = (char *)malloc(needed);
+    vsnprintf(command_real, needed, command, vargs);
+    va_end(vargs);
+
+    mys_popen_t popen = mys_popen_create(command_real);
+    free(command_real);
     if (!popen.alive)
         return prun;
 

@@ -66,11 +66,12 @@ MYS_API mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t ma
  * capture the exit code and stdout/stderr messages in new allcoated buffer.
  * 
  * @param command Subprocess command line
+ * @param ... Format parameters for sprintf(command, ...)
  * @return The `mys_prun_t` handler that containing exit code and associated data
  * 
  * @note This subroutine is NOT async-signal-safe, due to this subroutine will allocate memory.
  */
-MYS_API mys_prun_t mys_prun_create2(const char *command);
+MYS_API mys_prun_t mys_prun_create2(const char *command, ...);
 /**
  * @brief Destroy the handler from `mys_prun_create()` or `mys_prun_create2()`.
  * 
