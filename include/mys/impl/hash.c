@@ -153,7 +153,7 @@ MYS_API void mys_sha256_update_ptr(mys_sha256_ctx_t *ctx, const void *data)
 }
 MYS_API void mys_sha256_update_arr(mys_sha256_ctx_t *ctx, const void *data, size_t size)
 {
-    mys_sha256_update(ctx, &data, size);
+    mys_sha256_update(ctx, data, size);
 }
 
 MYS_API void mys_sha256_dump_bin(mys_sha256_ctx_t *ctx, void *outbin)
