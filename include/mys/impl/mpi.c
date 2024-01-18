@@ -325,6 +325,13 @@ MYS_STATIC int _mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, _mys_
                 crecvbuf[i] = csendbuf[i];
             }
         }
+
+        default:
+        {
+            printf("Not implemented at %s:%d\n", __FILE__, __LINE__);
+            exit(1);
+        }
+
         break;
 
     }
