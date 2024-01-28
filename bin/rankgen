@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-VERSION="2023.09.15"
+VERSION="2024.01.28"
 
 import sys
 import argparse
@@ -289,7 +289,7 @@ def expand_nodelist(nodelist: str) -> List[str]:
 
 
 def fill_ranks(hwinfo: HardwareInfo, nodes: List[str], region: str,
-               left_most_cores: bool, enable_imbalance: bool,
+               right_most_cores: bool, enable_imbalance: bool,
                num_node: int, num_rank: int, threads_per_rank: int):
     if region == "numa":
         regions_per_node = hwinfo.numas_per_node
@@ -343,12 +343,12 @@ def fill_ranks(hwinfo: HardwareInfo, nodes: List[str], region: str,
         region_index = (i % num_region) // num_node # in node
         region_index_g = node_index * regions_per_node + region_index # global
         inner_index = i // num_region # in region
-        if left_most_cores:
-            slot_start = region_index * cores_per_region + inner_index * threads_per_rank
-            slot_stop = slot_start + threads_per_rank - 1
-        else:
+        if right_most_cores:
             slot_stop = (region_index + 1) * cores_per_region - 1 - inner_index * threads_per_rank
             slot_start = slot_stop - threads_per_rank + 1
+        else:
+            slot_start = region_index * cores_per_region + inner_index * threads_per_rank
+            slot_stop = slot_start + threads_per_rank - 1
         slot = Slot(node_index, region_index, slot_start, slot_stop)
         slots.append(slot)
 
@@ -483,12 +483,16 @@ def main():
     hargs.add_argument('-N', '--numas-per-socket', action=StoreAction, dest='numas_per_socket', default=cfg.numas_per_socket, type=int, help=f"Numas per socket", metavar='')
     hargs.add_argument('-C', '--cores-per-numa', action=StoreAction, dest='cores_per_numa', default=cfg.cores_per_numa, type=int, help=f"Cores per numa", metavar='') # TODO: Support hwthread
     # cat /sys/devices/system/cpu/cpu0/topology/thread_siblings_list for hwthread list
+    # example output is 0,28 on a 28 physical cores, 56 logical cores node
+    # TODO: use -T or --threads-per-core to specify hyper-thread
+    # TODO: use --siblings=0,28 to specify thread sibling information, default is 0
+    # If --siblings is not specify, then default action is 0-27 is hyper-thread 0, 28-55 hyper-thread 1
     gargs = parser.add_argument_group('generator arguments')
     gargs.add_argument('-o', dest='outfile', action=StoreAction, default="<stdout>", type=str, help=f"Output to file", metavar='')
     gargs.add_argument('-t', dest='use_tempfile', action=StoreConstAction, const=True, default=False, help="Output to tempfile and print its path to <stdout>", metavar='')
     gargs.add_argument('-w', '--nodelist', dest='nodelist', action=StoreAction, default=cfg.nodelist, type=str, help="The list of nodes in SLURM's nodelist syntax", metavar='')
     gargs.add_argument('-a', '--align', dest='region', action=StoreAction, default='numa', choices=['numa', 'socket', 'node'], help="Align ranks to the numa/socket/node region", metavar='')
-    gargs.add_argument('-l', '--left', dest='left_most_cores', action=StoreConstAction, const=True, default=False, help="Use left-most slots in the region", metavar='')
+    gargs.add_argument('-r', '--right', dest='right_most_cores', action=StoreConstAction, const=True, default=False, help="Use right-most slots in the region", metavar='')
     gargs.add_argument('-i', '--imbalance', dest='imbalance', action=StoreConstAction, const=True, default=False, help="Allow imbalancing over regions", metavar='')
     gargs.add_argument('-f', '--finger', dest='fingerprint', action=StoreAction, default="all", choices=['all', 'first', 'no'], help="Display fingerprint of all/first/no nodes", metavar='')
     # Please note that modify name of tempfile bellow every time add critical arugments influencing the result of generator, for example hwthread
@@ -532,7 +536,7 @@ def main():
     # Optional arguments
     outfile = args.outfile
     use_tempfile = args.use_tempfile
-    left_most_cores = args.left_most_cores
+    right_most_cores = args.right_most_cores
     region = args.region
     imbalance = args.imbalance
     fingerprint = args.fingerprint
@@ -552,7 +556,7 @@ def main():
         eexit(1, f"Invalid cores per numa: {cfg.cores_per_numa}")
 
     nodes = expand_nodelist(cfg.nodelist)
-    ranks, imbalanced = fill_ranks(hwinfo, nodes, region, left_most_cores, imbalance, num_node, num_rank, threads_per_rank)
+    ranks, imbalanced = fill_ranks(hwinfo, nodes, region, right_most_cores, imbalance, num_node, num_rank, threads_per_rank)
 
     eprint(f"{parser.prog}: {parser.description}")
     eprint(f"\x1b[1;32m=== Platform Summary\x1b[0m")
@@ -571,7 +575,7 @@ def main():
     eprint(f"Number of rank: {num_rank}")
     eprint(f"Number of thread: {threads_per_rank} (per rank)")
     eprint(f"* Total [{num_rank * threads_per_rank}] slots are required among [{num_node}] nodes.")
-    eprint(f"* Align to the [{'left' if left_most_cores else 'right'}] boundary of [{region}].")
+    eprint(f"* Align to the [{'right' if right_most_cores else 'left'}] boundary of [{region}].")
     eprint(f"* Ranks are [{'imbalanced' if imbalanced else 'balanced'}] in their distributed among [{region}]s.")
     eprint(f"")
 
@@ -579,7 +583,7 @@ def main():
     if use_tempfile:
         # Prevent collision of number with '-', for example 1125 can be treat as 1-12-5 or 11-2-5
         sign1 = f'{cfg.sockets_per_node}-{cfg.numas_per_socket}-{cfg.cores_per_numa}'
-        sign2 = f'{num_node}-{num_rank}-{threads_per_rank}-{region}-{"L" if left_most_cores else "R"}-{"I" if imbalance else "B"}'
+        sign2 = f'{num_node}-{num_rank}-{threads_per_rank}-{region}-{"R" if right_most_cores else "L"}-{"I" if imbalance else "B"}'
         sign3 = cfg.nodelist
         bign1 = base64_encode(sign1) # bign1 = sign1
         bign2 = base64_encode(sign2) # bign2 = sign2
@@ -601,10 +605,10 @@ def main():
             path.parent.mkdir(parents=True, exist_ok=True)
             with open(file, "w") as tmp:
                 tmp.write(content)
-        eprint(f"\x1b[1;32m=== Temporary file used to write output:\x1b[0m")
+        eprint(f"\x1b[1;32m=== Temporary file used to write output\x1b[0m")
         print(tmp.name)
     elif outfile == "<stdout>":
-        eprint(f"\x1b[1;32m=== Content generated to <stdout>:\x1b[0m")
+        eprint(f"\x1b[1;32m=== Content generated to <stdout>\x1b[0m")
         print(content)
         eprint(f"")
     else:
