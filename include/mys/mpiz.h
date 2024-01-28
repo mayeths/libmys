@@ -9,7 +9,7 @@
 
 #include "_config.h"
 
-struct _mys_commgroup_t
+typedef struct mys_commgroup_t
 {
     int group_id; // nonnegative counting sequence (0,1,2,3,...,group_num-1)
     int group_num;
@@ -24,10 +24,7 @@ struct _mys_commgroup_t
     int *_cols; // size=global_nranks. _cols[global_rank] is the local_rank in group
     int *_brothers; // size=local_nranks. _brothers[local_rank] is the global_rank of each group_member in the same group
     int *_neighbors; // size=group_num. _neighbors[group_id] is the global_rank of each group member that has the same local_myrank to me
-} ;
-
-typedef struct _mys_commgroup_t* mys_commgroup_t; // handle
-#define MYS_COMMGROUP_NULL ((mys_commgroup_t) -1)
+} mys_commgroup_t;
 
 /**
  * @brief Create communication group information based on group color assignment
@@ -39,43 +36,42 @@ typedef struct _mys_commgroup_t* mys_commgroup_t; // handle
  * 
  * @note Use mys_commgroup_create_node(comm) to construct node based group.
  */
-MYS_API mys_commgroup_t mys_commgroup_create(MPI_Comm global_comm, int group_color, int group_key);
-MYS_API mys_commgroup_t mys_commgroup_create2(MPI_Comm global_comm, int group_color, int group_key);
+MYS_API mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group_color, int group_key);
 /**
  * @brief Create communication group information based on node
  * @return The group handle
  */
-MYS_API mys_commgroup_t mys_commgroup_create_node(MPI_Comm global_comm);
+MYS_API mys_commgroup_t *mys_commgroup_create_node(MPI_Comm global_comm);
 /**
  * @brief Release communication group information
  * @param group The group handle
  */
-MYS_API void mys_commgroup_release(mys_commgroup_t group);
+MYS_API void mys_commgroup_release(mys_commgroup_t *group);
 /**
  * @brief Query the group to which the rank belongs (Support querying rank in other group)
  * @param global_rank The global rank to be query
  * @return The group id. -1 if provided invalid global_rank
  */
-MYS_API int mys_query_group_id(mys_commgroup_t group, int global_rank);
+MYS_API int mys_query_group_id(mys_commgroup_t *group, int global_rank);
 /**
  * @brief Query the local rank of the global rank (Support querying rank in other group)
  * @param global_rank The global rank to be query
  * @return The local rank. -1 if provided invalid global_rank
  */
-MYS_API int mys_query_local_rank(mys_commgroup_t group, int global_rank);
+MYS_API int mys_query_local_rank(mys_commgroup_t *group, int global_rank);
 /**
  * @brief Query the global rank of the local rank (ONLY support querying rank in the same group)
  * @param local_rank The local rank to be query
  * @return The global rank. -1 if provided invalid local_rank
  */
-MYS_API int mys_query_brother(mys_commgroup_t group, int local_rank);
+MYS_API int mys_query_brother(mys_commgroup_t *group, int local_rank);
 /**
  * @brief Query the global rank of each group member that has the same `local_myrank` (Support querying rank in other group)
  * @param group_id The groud id to be query
  * @return The global rank of group member. -1 if provided invalid local_rank,
  *      or that group doesn't has corresponding neighbor that has the same `local_myrank`
  */
-MYS_API int mys_query_neighbor(mys_commgroup_t group, int group_id);
+MYS_API int mys_query_neighbor(mys_commgroup_t *group, int group_id);
 
 
 /* mpicc -I${MYS_DIR}/include a.c && mpirun -n 5 ./a.out 3
@@ -97,7 +93,7 @@ int main(int argc, char **argv)
     MPI_Comm_size(MPI_COMM_WORLD, &nranks);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-    mys_commgroup_t commgroup = COMMGROUP_NULL;
+    mys_commgroup_t *commgroup = NULL;
     // commgroup = mys_commgroup_create_node(MPI_COMM_WORLD);
     // commgroup = mys_commgroup_create(MPI_COMM_WORLD, myrank, myrank);
     // if (myrank == 0) {
