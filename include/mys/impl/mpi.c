@@ -325,6 +325,7 @@ MYS_STATIC int _mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, _mys_
                 crecvbuf[i] = csendbuf[i];
             }
         }
+        break;
 
         default:
         {
