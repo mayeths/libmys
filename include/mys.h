@@ -135,4 +135,6 @@ extern "C" {
 #include "mys/cuda.cuh"
 #endif
 
+#include "mys/complex.h"
+
 #endif // __STDC_VERSION__ < 199901L && __cplusplus < 201103L
