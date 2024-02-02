@@ -48,6 +48,7 @@
 extern "C" {
 #endif
 // Primary Library (mys)
+#include "mys/algorithm.h"
 #include "mys/assert.h"
 #include "mys/atomic.h"
 #include "mys/base64.h"
