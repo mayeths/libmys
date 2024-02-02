@@ -10,6 +10,7 @@ build/
 *.log
 *.exe
 *.bk
+*.rf
 Makefile.in
 *.dSYM
 timing.0*
