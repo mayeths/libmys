@@ -324,13 +324,18 @@ int main(int argc, char **argv)
 			}
 		
 			// note that "bytes[j]" is the global array size, so no "numranks" is needed here
-			printf("%-13.13s Best MB/s     Avg time     Min time     Max time\n", test->name);
+			printf("%-13.13s Best MB/s     Avg time     Min time     Max time"
+				"   Rank 0 MB/s  Rank best MB/s  Rank worst MB/s\n", test->name);
 			for (j=0; j<4; j++) {
 				avgtime[j] = avgtime[j]/(double)(NTIMES-1);
 				int len = naive_strnlen(label[j], 10);
-				printf("%s:%*c %11.1f  %11.6f  %11.6f  %11.6f\n",
-				label[j], 10-len, ' ', 1.0E-06 * bytes[j]/mintime[j],
-				avgtime[j], mintime[j], maxtime[j]);
+				printf("%s:%*c %11.1f  %11.6f  %11.6f  %11.6f  %12.1f  %14.1f  %15.1f\n"
+					, label[j], 10-len, ' ', 1.0E-06 * bytes[j]/mintime[j]
+					, avgtime[j], mintime[j], maxtime[j]
+					, 1.0E-06 * (bytes[j] / numranks) / MinTimesByRank[4 * 0 + j]
+					, 1.0E-06 * (bytes[j] / numranks) / mintime[j]
+					, 1.0E-06 * (bytes[j] / numranks) / maxtime[j]
+				);
 			}
 			// printf(HLINE);
 		}

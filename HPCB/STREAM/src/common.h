@@ -11,7 +11,7 @@
 #include <string.h>
 #include <limits.h>
 
-#define MYS_MODIFIED_ON "2023.04.14"
+#define MYS_MODIFIED_ON "2024.02.02"
 
 // Report a warning if time granularity >= "TIMER_THRESHOLD"
 #ifndef TIMER_THRESHOLD
