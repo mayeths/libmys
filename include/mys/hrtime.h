@@ -71,7 +71,7 @@ MYS_API double hrtime();
 #if defined(POSIX_COMPLIANCE)
 #include <stdlib.h>
 #include <unistd.h>
-static inline uint64_t test_freq()
+MYS_STATIC uint64_t test_freq()
 {
     uint64_t raw1 = hrtick();
     sleep(1);
@@ -80,7 +80,7 @@ static inline uint64_t test_freq()
 }
 #endif
 
-static inline double mys_hrfreq_check() {
+MYS_STATIC double mys_hrfreq_check() {
     double ticks[16];
 
     int n = sizeof(ticks) / sizeof(double);
