@@ -101,14 +101,10 @@ MYS_STATIC double _mys_math_pow(double x, double y)
 {
 	double z,ax,z_h,z_l,p_h,p_l;
 	double y1,t1,t2,r,s,t,u,v,w;
-	int i0,i1,i,j,k,yisint,n;
+	int i,j,k,yisint,n;
 	int hx,hy,ix,iy;
 	unsigned lx,ly;
 
-	(void)i1;
-	union _fdlibm_num_t num;
-	num.f64 = __fdlibm_one;
-	i0 = (num.i32.l>>29)^1; i1=1-i0;
 	hx = _FDLIBM_HI(x); lx = _FDLIBM_LO(x);
 	hy = _FDLIBM_HI(y); ly = _FDLIBM_LO(y);
 	ix = hx&0x7fffffff;  iy = hy&0x7fffffff;
