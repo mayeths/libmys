@@ -33,7 +33,7 @@ class YanchengConfig(DefaultConfig):
 class Kunpeng920Config(DefaultConfig):
     def __init__(self):
         super().__init__()
-        self.nodelist = "kunpeng-node[101-108]"
+        self.nodelist = "kp[101-108]"
         self.sockets_per_node = 2
         self.numas_per_socket = 2
         self.cores_per_numa = 32
