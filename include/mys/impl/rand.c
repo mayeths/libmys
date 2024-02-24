@@ -44,7 +44,7 @@ MYS_API void mys_rand_srand_hardware()
     mys_rand_srand(a0, a1);
 }
 
-static inline uint64_t _mys_rotl(const uint64_t x, int k)
+static uint64_t _mys_rotl(const uint64_t x, int k)
 {
     return (x << k) | (x >> (64 - k));
 }

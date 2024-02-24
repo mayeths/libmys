@@ -13,7 +13,7 @@
 } while (0)
 
 template<typename T>
-static inline cudaError_t cudaCalloc(T **ptr, size_t nmemb, size_t size) { 
+static cudaError_t cudaCalloc(T **ptr, size_t nmemb, size_t size) { 
     cudaError_t err = cudaSuccess;
     err = cudaMalloc((void **)ptr, nmemb * size);
     if (err != cudaSuccess) return err;
