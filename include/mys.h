@@ -12,7 +12,6 @@
 // #error Require GNU C instead of ANSI C or ISO C. Consider removing -ansi or change -std=c99 to -std=gnu99 in compiler command line arguments
 #else
 
-
 #ifndef MYS_VERSION
 #define MYS_VERSION 202311L
 #endif
@@ -35,6 +34,9 @@
 #define _XOPEN_SOURCE 700
 #endif
 
+#ifdef COMPILER_ICC
+#warning Using intel compiler you may need to define MYS_DISABLE_DEBUG macro for now. Sorry for this inconvenient.
+#endif
 
 #ifndef MYS_NO_MPI
 #include <mpi.h>  // intel mpiicpc throw error if mpi.h is include in extern "C"
