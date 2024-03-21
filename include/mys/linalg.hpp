@@ -167,15 +167,15 @@ static index_t findzeros(const index_t nrows, index_t *Ap, index_t * Aj, data_t 
     index_t nexpdiagzeros = 0;
     index_t nexpzeros = 0;
     for (index_t i = 0; i < nrows; i++) {
-        const index_t I = base + i;
+        const index_t gi = base + i;
         const index_t rowstart = Ap[i];
         const index_t rowend = Ap[i + 1];
         bool missingdiag = true;
         for (index_t jj = rowstart; jj < rowend; jj++) {
-            const index_t J = Aj[jj];
+            const index_t gj = Aj[jj];
             const data_t v = Av[jj];
             if (v == 0) nexpzeros += 1;
-            if (I == J) {
+            if (gi == gj) {
                 missingdiag = false;
                 if (v == 0) {
                     nexpdiagzeros += 1;
@@ -208,21 +208,21 @@ static void dataclean(const index_t nrows, index_t *Ap, index_t * Aj, data_t *Av
     std::copy(Av, Av + nnz, newAv.begin());
     index_t count = 0;
     for (index_t i = 0; i < nrows; i++) {
-        // const index_t I = base + i;
+        // const index_t gi = base + i;
         const index_t rowstart = Ap[i];
         const index_t rowend = Ap[i + 1];
         // index_t rownnz = 0;
         for (index_t jj = rowstart; jj < rowend; jj++) {
-            const index_t J = Aj[jj];
+            const index_t gj = Aj[jj];
             const data_t v = Av[jj];
-            bool uf = J < base;
-            bool of = J >= base + nrows;
+            bool uf = gj < base;
+            bool of = gj >= base + nrows;
             bool out = uf || of;
             if (strategy == DataCleanStrategy::ToSquare && out)
                 continue;
             else if (strategy == DataCleanStrategy::OnlyNegative && uf)
                 continue;
-            newAj[count] = J;
+            newAj[count] = gj;
             newAv[count] = v;
             count += 1;
         }
@@ -262,13 +262,13 @@ static void matconvert(
         const index_t nnz = fn;
         std::map<index_t, index_t> counts;
         for (index_t jj = 0; jj < nnz; jj++) {
-            const index_t I = fIa[jj];
-            const index_t J = fJa[jj];
-            counts[I] += 1;
-            Istart = std::min(Istart, I);
-            Jstart = std::min(Jstart, J);
-            Iend = std::max(Iend, I + 1);
-            Jend = std::max(Jend, J + 1);
+            const index_t gi = fIa[jj];
+            const index_t gj = fJa[jj];
+            counts[gi] += 1;
+            Istart = std::min(Istart, gi);
+            Jstart = std::min(Jstart, gj);
+            Iend = std::max(Iend, gi + 1);
+            Jend = std::max(Jend, gj + 1);
         }
         index_t nrows = Iend - Istart;
         index_t ncols = Jend - Jstart;
@@ -281,12 +281,12 @@ static void matconvert(
         }
         std::vector<index_t> rowcounts(nrows, 0);
         for (index_t jj = 0; jj < nnz; jj++) {
-            const index_t I = fIa[jj];
-            const index_t J = fJa[jj];
+            const index_t gi = fIa[jj];
+            const index_t gj = fJa[jj];
             const data_t V = fVa[jj];
-            const index_t i = I - Istart;
+            const index_t i = gi - Istart;
             const index_t jj2 = (*tIa_)[i] + rowcounts[i];
-            (*tJa_)[jj2] = J;
+            (*tJa_)[jj2] = gj;
             (*tVa_)[jj2] = V;
             rowcounts[i] += 1;
         }
