@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <unistd.h>
 #include <sys/types.h>
 
 #include "_config.h"

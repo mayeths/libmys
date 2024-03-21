@@ -177,12 +177,12 @@ MYS_API uint64_t mys_hrtick_posix() {
     if (_mys_hrtime_posix_G.inited == false) {
         struct timeval ts;
         gettimeofday(&ts, NULL);
-        _mys_hrtime_posix_G.start = (uint64_t)t.tv_sec * (uint64_t)1000000 + (uint64_t)t.tv_usec;
+        _mys_hrtime_posix_G.start = (uint64_t)ts.tv_sec * (uint64_t)1000000 + (uint64_t)ts.tv_usec;
         _mys_hrtime_posix_G.inited = true;
     }
     struct timeval ts;
     gettimeofday(&ts, NULL);
-    t = (uint64_t)t.tv_sec * (uint64_t)1000000 + (uint64_t)t.tv_usec;
+    t = (uint64_t)ts.tv_sec * (uint64_t)1000000 + (uint64_t)ts.tv_usec;
 #endif
     return t - _mys_hrtime_posix_G.start;
 }

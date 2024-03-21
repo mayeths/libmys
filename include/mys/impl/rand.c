@@ -102,13 +102,13 @@ MYS_API size_t mys_rand_sizet(size_t mi, size_t ma)
 
 MYS_API ssize_t mys_rand_ssizet(ssize_t mi, ssize_t ma)
 {
-#if SSIZE_MAX == INT64_MAX
-    return (ssize_t)mys_rand_i64(mi, ma);
-#elif SSIZE_MAX == INT32_MAX
-    return (ssize_t)mys_rand_i32(mi, ma);
-#else
-#error Invalid SSIZE_MAX
-#endif
+    // Do not use SSIZE_MAX macro here because C99 doesn't have it
+    if (sizeof(ssize_t) == sizeof(int64_t))
+        return (ssize_t)mys_rand_i64(mi, ma);
+    if (sizeof(ssize_t) == sizeof(int32_t))
+        return (ssize_t)mys_rand_i32(mi, ma);
+    else
+        return (ssize_t)mys_rand_i64(mi, ma);
 }
 
 MYS_API double mys_rand_f64(double mi, double ma)

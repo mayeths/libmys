@@ -1,5 +1,10 @@
 #include "../os.h"
 
+extern int kill(pid_t pid, int sig) __THROW;
+extern char *strdup(const char *s) __THROW;
+extern ssize_t readlink(const char *path, char *buf, size_t bufsize) __THROW;
+
+
 static size_t _mys_readfd(char **buffer, size_t buffer_size, int fd, bool enable_realloc)
 {
     size_t read_size = 0;
@@ -297,37 +302,37 @@ MYS_API bool mys_ensure_parent(const char *path, mode_t mode)
     return success;
 }
 
-MYS_API int mys_busysleep(double seconds)
-{
-#if defined(POSIX_COMPLIANCE)
-    /* https://stackoverflow.com/a/8158862 */
-    struct timespec req;
-    req.tv_sec = (uint64_t)seconds;
-    req.tv_nsec = (uint64_t)((seconds - (double)req.tv_sec) * 1000000000);
-    do {
-        if(nanosleep(&req, &req) == 0)
-            break;
-        else if(errno != EINTR)
-            return -1;
-    } while (req.tv_sec > 0 || req.tv_nsec > 0);
-    return 0;
-#elif defined(OS_WINDOWS)
-    /* https://stackoverflow.com/a/5801863 */
-    /* https://stackoverflow.com/a/26945754 */
-    LARGE_INTEGER fr,t1,t2;
-    if (!QueryPerformanceFrequency(&fr))
-        return -1;
-    if (!QueryPerformanceCounter(&t1))
-        return -1;
-    do {
-        if (!QueryPerformanceCounter(&t2))
-            return -1;
-    } while(((double)t2.QuadPart-(double)t1.QuadPart)/(double)fr.QuadPart < sec);
-    return 0;
-#else
-    return -2;
-#endif
-}
+// MYS_API int mys_busysleep(double seconds)
+// {
+// #if defined(POSIX_COMPLIANCE)
+//     /* https://stackoverflow.com/a/8158862 */
+//     struct timespec req;
+//     req.tv_sec = (uint64_t)seconds;
+//     req.tv_nsec = (uint64_t)((seconds - (double)req.tv_sec) * 1000000000);
+//     do {
+//         if(nanosleep(&req, &req) == 0)
+//             break;
+//         else if(errno != EINTR)
+//             return -1;
+//     } while (req.tv_sec > 0 || req.tv_nsec > 0);
+//     return 0;
+// #elif defined(OS_WINDOWS)
+//     /* https://stackoverflow.com/a/5801863 */
+//     /* https://stackoverflow.com/a/26945754 */
+//     LARGE_INTEGER fr,t1,t2;
+//     if (!QueryPerformanceFrequency(&fr))
+//         return -1;
+//     if (!QueryPerformanceCounter(&t1))
+//         return -1;
+//     do {
+//         if (!QueryPerformanceCounter(&t2))
+//             return -1;
+//     } while(((double)t2.QuadPart-(double)t1.QuadPart)/(double)fr.QuadPart < sec);
+//     return 0;
+// #else
+//     return -2;
+// #endif
+// }
 
 MYS_API const char *mys_procname()
 {

@@ -8,8 +8,8 @@
 #error Require C++11 or higher. Consider removing -std or use -std=c++11 in compiler command line arguments
 #elif !defined(__cplusplus) && __STDC_VERSION__ < 199901L
 #error Require GNU C99 or higher. Consider removing -std or use -std=gnu99 in compiler command line arguments
-#elif !defined(__cplusplus) && defined(__STRICT_ANSI__)
-#error Require GNU C instead of ANSI C or ISO C. Consider removing -ansi or change -std=c99 to -std=gnu99 in compiler command line arguments
+// #elif !defined(__cplusplus) && defined(__STRICT_ANSI__)
+// #error Require GNU C instead of ANSI C or ISO C. Consider removing -ansi or change -std=c99 to -std=gnu99 in compiler command line arguments
 #else
 
 
@@ -23,10 +23,10 @@
 #error Port me
 #endif
 #if defined(OS_LINUX) && !defined(_GNU_SOURCE)
-#define _GNU_SOURCE
+#define _GNU_SOURCE 1
 #endif
 #if defined(OS_MACOS) && !defined(_DARWIN_C_SOURCE)
-#define _DARWIN_C_SOURCE
+#define _DARWIN_C_SOURCE 1
 #endif
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
@@ -53,7 +53,9 @@ extern "C" {
 #include "mys/atomic.h"
 #include "mys/base64.h"
 #include "mys/checkpoint.h"
+#ifndef MYS_DISABLE_DEBUG // if you use inte compiler like icc, then this may helps
 #include "mys/debug.h"
+#endif
 #include "mys/guard.h"
 #include "mys/hash.h"
 #include "mys/hrtime.h"
@@ -102,7 +104,9 @@ extern "C" {
 #ifndef MYS_NO_MPI
 #include "mys/impl/mpiz.c"
 #endif
+#ifndef MYS_DISABLE_DEBUG
 #include "mys/impl/debug.c"
+#endif
 #include "mys/impl/math.c"
 #include "mys/impl/mpi.c"
 // Third-Party Library (mys3)

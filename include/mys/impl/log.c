@@ -1,5 +1,8 @@
 #include "../log.h"
 
+extern int fileno(FILE *stream) __THROW;
+extern size_t strnlen(const char *s, size_t maxlen) __THROW;
+
 static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata);
 
 _mys_log_G_t _mys_log_G = {

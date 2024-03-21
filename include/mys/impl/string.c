@@ -2,19 +2,19 @@
 
 MYS_API ssize_t mys_parse_readable_size(const char *text)
 {
-    static const double Bbase = 1.0;
-    static const double Kbase = 1024.0 * Bbase;
-    static const double Mbase = 1024.0 * Kbase;
-    static const double Gbase = 1024.0 * Mbase;
-    static const double Tbase = 1024.0 * Gbase;
-    static const double Pbase = 1024.0 * Tbase;
-    static const double Ebase = 1024.0 * Pbase;
-    static const double Zbase = 1024.0 * Ebase;
+#define Bbase (double)(1.0)
+#define Kbase ((double)1024.0 * (Bbase))
+#define Mbase ((double)1024.0 * (Kbase))
+#define Gbase ((double)1024.0 * (Mbase))
+#define Tbase ((double)1024.0 * (Gbase))
+#define Pbase ((double)1024.0 * (Tbase))
+#define Ebase ((double)1024.0 * (Pbase))
+#define Zbase ((double)1024.0 * (Ebase))
     struct unit_t {
         const char *suffix;
         double base;
     };
-    struct unit_t units[] = {
+    static struct unit_t units[] = {
         { .suffix = "Bytes",  .base = Bbase },
         { .suffix = "Byte",   .base = Bbase },
         { .suffix = "B",      .base = Bbase },
@@ -67,6 +67,14 @@ MYS_API ssize_t mys_parse_readable_size(const char *text)
     }
 
     return -1;
+#undef Bbase
+#undef Kbase
+#undef Mbase
+#undef Gbase
+#undef Tbase
+#undef Pbase
+#undef Ebase
+#undef Zbase
 }
 
 MYS_API void mys_readable_size(char **ptr, size_t bytes, size_t precision)
