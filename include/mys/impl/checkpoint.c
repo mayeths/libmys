@@ -1,7 +1,7 @@
 #include "../checkpoint.h"
 #include "uthash_hash.h"
 
-extern char *strndup(const char *s, size_t n) __THROW;
+// extern char *strndup(const char *s, size_t n) __THROW;
 
 // https://troydhanson.github.io/uthash/userguide.html#_string_keys
 typedef struct _mys_chk_name_t {
