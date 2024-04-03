@@ -11,7 +11,6 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <errno.h>
-#include <alloca.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>

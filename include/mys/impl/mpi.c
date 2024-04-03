@@ -349,8 +349,8 @@ MYS_STATIC int _mys_MPI_Bcast(void *buffer, int count, _mys_MPI_Datatype datatyp
     return _mys_MPI_SUCCESS;
 }
 
-#ifdef POSIX_COMPLIANCE
 #include <time.h>
+#ifdef POSIX_COMPLIANCE
 #include <sys/time.h>
 #elif defined(OS_WINDOWS)
 #include <windows.h>
@@ -368,6 +368,9 @@ MYS_STATIC double _mys_MPI_Wtime()
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&counter);
     return (double)counter.QuadPart / frequency.QuadPart;
+#else
+   clock_t t = clock();
+   return (double)t / (double)CLOCKS_PER_SEC;
 #endif
 }
 

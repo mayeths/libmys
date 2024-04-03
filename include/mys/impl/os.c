@@ -336,7 +336,7 @@ MYS_API bool mys_ensure_parent(const char *path, mode_t mode)
 
 MYS_API const char *mys_procname()
 {
-#ifdef __linux__
+#if defined(OS_LINUX)
     static char exe[128] = { '\0' };
     if (exe[0] == '\0') {
         int ret = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
@@ -349,7 +349,7 @@ MYS_API const char *mys_procname()
         }
     }
     return exe;
-#elif __APPLE__
+#elif defined(OS_BSD)
     const char *getprogname(void);
     return getprogname();
 #endif

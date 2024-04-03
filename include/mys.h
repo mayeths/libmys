@@ -4,23 +4,21 @@
  * @brief Include all libmys C headers into one header (Require GNU99)
  * 
  */
+#ifndef MYS_VERSION
+#define MYS_VERSION 202404L
+#endif
+#include "mys/_config.h"
+
 #if defined(__cplusplus) && __cplusplus < 201103L
 #error Require C++11 or higher. Consider removing -std or use -std=c++11 in compiler command line arguments
 #elif !defined(__cplusplus) && __STDC_VERSION__ < 199901L
 #error Require GNU C99 or higher. Consider removing -std or use -std=gnu99 in compiler command line arguments
 // #elif !defined(__cplusplus) && defined(__STRICT_ANSI__)
 // #error Require GNU C instead of ANSI C or ISO C. Consider removing -ansi or change -std=c99 to -std=gnu99 in compiler command line arguments
+#elif !defined(OS_LINUX) && !defined(OS_MACOS) && !defined(OS_FREEBSD)
+#error Port me
 #else
 
-#ifndef MYS_VERSION
-#define MYS_VERSION 202311L
-#endif
-
-
-#include "mys/_config.h"
-#if !defined(OS_LINUX) && !defined(OS_MACOS)
-#error Port me
-#endif
 #if defined(OS_LINUX) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE 1
 #endif
@@ -36,6 +34,9 @@
 
 #ifdef COMPILER_ICC
 #warning Using intel compiler you may need to define MYS_DISABLE_DEBUG macro for now. Sorry for this inconvenient.
+#endif
+#ifdef OS_OS_FREEBSD
+#define MYS_DISABLE_DEBUG
 #endif
 
 #ifndef MYS_NO_MPI

@@ -34,22 +34,31 @@
 #if defined(__linux__)
 #define OS_NAME "Linux"
 #define OS_LINUX
-#elif defined(_WIN32)
-#define OS_NAME "Windows"
-#define OS_WINDOWS
-#elif defined(__APPLE__)
-#define OS_NAME "MacOS"
-#define OS_MACOS
 #elif defined(__ANDROID__)
 #define OS_NAME "Android"
 #define OS_ANDROID
 #define OS_LINUX
+#elif defined(__FreeBSD__)
+#define OS_NAME "FreeBSD"
+#define OS_FREEBSD
+#define OS_BSD
+#elif defined(__OpenBSD__)
+#define OS_NAME "OpenBSD"
+#define OS_OPENBSD
+#define OS_BSD
+#elif defined(__APPLE__)
+#define OS_NAME "MacOS"
+#define OS_MACOS
+#define OS_BSD
+#elif defined(_WIN32)
+#define OS_NAME "Windows"
+#define OS_WINDOWS
 #else
 #define OS_NAME "Unknown"
 #define OS_UNKNOWN
 #endif
 
-#if defined(OS_LINUX) || defined(OS_MACOS) || defined(OS_ANDROID)
+#if defined(OS_LINUX) || defined(OS_BSD)
 #define POSIX_COMPLIANCE
 #endif
 
