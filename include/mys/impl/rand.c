@@ -82,7 +82,7 @@ MYS_API int64_t mys_rand_i64(int64_t mi, int64_t ma)
         return mi;
     if (mi == INT64_MIN && ma == INT64_MAX)
         return v.i64;
-    return mi + v.i64 % (ma - mi);
+    return mi + v.u64 % (ma - mi);
 }
 
 MYS_API int32_t mys_rand_i32(int32_t mi, int32_t ma) { return (int32_t)mys_rand_i64(mi, ma); }
