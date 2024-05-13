@@ -73,7 +73,7 @@ typedef struct _mys_hrtime_aarch64_G_t {
     bool inited;
     uint64_t start;
 } _mys_hrtime_aarch64_G_t;
-_mys_hrtime_aarch64_G_t _mys_hrtime_aarch64_G = {
+mys_thread_local _mys_hrtime_aarch64_G_t _mys_hrtime_aarch64_G = {
     .inited = false,
     .start = 0,
 };
@@ -107,7 +107,7 @@ typedef struct _mys_hrtime_x64_G_t {
     bool inited;
     uint64_t start;
 } _mys_hrtime_x64_G_t;
-_mys_hrtime_x64_G_t _mys_hrtime_x64_G = {
+mys_thread_local _mys_hrtime_x64_G_t _mys_hrtime_x64_G = {
     .inited = false,
     .start = 0,
 };
@@ -147,7 +147,7 @@ typedef struct _mys_hrtime_posix_G_t {
     bool inited;
     uint64_t start;
 } _mys_hrtime_posix_G_t;
-_mys_hrtime_posix_G_t _mys_hrtime_posix_G = {
+mys_thread_local _mys_hrtime_posix_G_t _mys_hrtime_posix_G = {
     .inited = false,
     .start = 0,
 };
@@ -228,7 +228,7 @@ typedef struct _mys_hrtime_mpi_G_t {
     bool inited;
     double start;
 } _mys_hrtime_mpi_G_t;
-_mys_hrtime_mpi_G_t _mys_hrtime_mpi_G = {
+mys_thread_local _mys_hrtime_mpi_G_t _mys_hrtime_mpi_G = {
     .inited = false,
     .start = 0,
 };
@@ -256,7 +256,7 @@ typedef struct _mys_hrtime_openmp_G_t {
     bool inited;
     double start;
 } _mys_hrtime_openmp_G_t;
-_mys_hrtime_openmp_G_t _mys_hrtime_openmp_G = {
+mys_thread_local _mys_hrtime_openmp_G_t _mys_hrtime_openmp_G = {
     .inited = false,
     .start = 0,
 };

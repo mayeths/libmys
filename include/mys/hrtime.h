@@ -9,6 +9,7 @@
 #include "_config.h"
 #include "macro.h"
 #include "mpi.h"
+#include "thread.h"
 
 
 MYS_API const char *mys_hrname();
