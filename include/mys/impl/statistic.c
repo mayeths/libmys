@@ -29,7 +29,7 @@ MYS_API double mys_geometric_mean(double *arr, int n)
 
 MYS_API double mys_standard_deviation(double *arr, int n)
 {
-    double xbar = arthimetic_mean(arr, n);
+    double xbar = mys_arthimetic_mean(arr, n);
     double denom = 0;
     double nom = n - 1;
     for (int i = 0; i < n; i++) {
@@ -98,24 +98,92 @@ MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
 }
 
 
-#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_STATISTIC)
-MYS_API double arthimetic_mean(double *arr, int n)
+static mys_boxplot_t _mys_boxplot_impl(double *values, size_t n, bool save_fliers)
 {
-    return mys_arthimetic_mean(arr, n);
+    mys_boxplot_t bxp;
+    bxp.whislo = bxp.q1 = bxp.med = bxp.q3 = bxp.whishi = values[0];
+    bxp.iqr = 0;
+    bxp.n_fliers = 0;
+    bxp.nb_fliers = 0;
+    bxp.nt_fliers = 0;
+    bxp.fliers = NULL;
+
+    if (n == 1)
+        return bxp;
+
+    double *arr = (double *)malloc(sizeof(double) * n);
+    memcpy(arr, values, sizeof(double) * n);
+    qsort(arr, n, sizeof(double), mys_sortfn_f64);
+
+    double alpha = 1.0;
+    double beta = 1.0;
+
+    // See how numpy.percentile calculate index that used
+    // by matplotlib.cbook.boxplot_stats internally
+    // https://numpy.org/doc/stable/reference/generated/numpy.percentile.html
+    // i + g = (q / 100) * (n - alpha - beta + 1) + alpha
+    //
+    // 0-index: 0   1   2   3   4
+    //              ^       ^
+    // First quartile       |
+    //                      |
+    //         Third quartile
+    double ig_q1 = ((25. / 100.) * (double)(n - alpha - beta + 1) + (double)alpha);
+    double ig_q2 = ((50. / 100.) * (double)(n - alpha - beta + 1) + (double)alpha);
+    double ig_q3 = ((75. / 100.) * (double)(n - alpha - beta + 1) + (double)alpha);
+    // To zero indexing
+    ig_q1 -= 1;
+    ig_q2 -= 1;
+    ig_q3 -= 1;
+    size_t arg_q1 = (size_t)(ig_q1);
+    size_t arg_q2 = (size_t)(ig_q2);
+    size_t arg_q3 = (size_t)(ig_q3);
+    bxp.q1  = arr[arg_q1] + (arr[arg_q1 + 1] - arr[arg_q1]) * (ig_q1 - arg_q1);
+    bxp.med = arr[arg_q2] + (arr[arg_q2 + 1] - arr[arg_q2]) * (ig_q2 - arg_q2);
+    bxp.q3  = arr[arg_q3] + (arr[arg_q3 + 1] - arr[arg_q3]) * (ig_q3 - arg_q3);
+
+    bxp.iqr = bxp.q3 - bxp.q1;
+    double loval = bxp.q1 - 1.5 * bxp.iqr;
+    double hival = bxp.q3 + 1.5 * bxp.iqr;
+
+    bxp.whislo = bxp.q1;
+    bxp.whishi = bxp.q3;
+    bxp.nb_fliers = 0;
+    bxp.nt_fliers = 0;
+    for (size_t i = 0; i <= arg_q1; i++) {
+        if (arr[i] < loval)
+            bxp.nb_fliers += 1;
+        if (arr[i] >= loval && arr[i] < bxp.whislo)
+            bxp.whislo = arr[i];
+    }
+    for (size_t i = arg_q3; i < n; i++) {
+        if (arr[i] <= hival && arr[i] > bxp.whishi)
+            bxp.whishi = arr[i];
+        if (arr[i] > hival)
+            bxp.nt_fliers += 1;
+    }
+    bxp.n_fliers = bxp.nt_fliers + bxp.nb_fliers;
+
+    if (save_fliers) {
+        bxp.fliers = (double *)malloc(sizeof(double) * (bxp.nb_fliers + bxp.nt_fliers));
+        size_t c = 0;
+        for (size_t i = 0; i < bxp.nb_fliers; i++)
+            bxp.fliers[c++] = arr[i];
+        for (size_t i = n - bxp.nt_fliers; i < n; i++)
+            bxp.fliers[c++] = arr[i];
+    }
+
+    free(arr);
+    return bxp;
 }
 
-MYS_API double harmonic_mean(double *arr, int n)
+MYS_API mys_boxplot_t mys_boxplot(double *values, size_t n)
 {
-    return mys_harmonic_mean(arr, n);
+    return _mys_boxplot_impl(values, n, true);
 }
 
-MYS_API double geometric_mean(double *arr, int n)
+MYS_API mys_boxplot_t mys_boxplot_noflier(double *values, size_t n)
 {
-    return mys_geometric_mean(arr, n);
+    return _mys_boxplot_impl(values, n, false);
 }
 
-MYS_API double standard_deviation(double *arr, int n)
-{
-    return mys_standard_deviation(arr, n);
-}
-#endif
