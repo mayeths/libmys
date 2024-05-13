@@ -1,5 +1,21 @@
 #pragma once
 
+#include "_config.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+MYS_API int mys_sortfn_i32(const void* _a, const void* _b);
+MYS_API int mys_sortfn_i64(const void* _a, const void* _b);
+MYS_API int mys_sortfn_f32(const void* _a, const void* _b);
+MYS_API int mys_sortfn_f64(const void* _a, const void* _b);
+
+MYS_API int mys_sortfn_i32_r(const void* _a, const void* _b);
+MYS_API int mys_sortfn_i64_r(const void* _a, const void* _b);
+MYS_API int mys_sortfn_f32_r(const void* _a, const void* _b);
+MYS_API int mys_sortfn_f64_r(const void* _a, const void* _b);
+
 // FIXME: Add predefined sort compare function such as cmp_int, cmp_uint, less_uint
 // FIXME: Add sort based on index like code below
 

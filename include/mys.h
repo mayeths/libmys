@@ -91,6 +91,7 @@ extern "C" {
 #define __MYS_IMPL_ONCE__
 #include "mys/impl/uthash_hash.h"
 #include "mys/impl/uthash_list.h"
+#include "mys/impl/algorithm.c"
 #include "mys/impl/rand.c"
 #include "mys/impl/log.c"
 #include "mys/impl/hrtime.c"
