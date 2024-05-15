@@ -6,15 +6,27 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-MYS_API int mys_sortfn_i32(const void* _a, const void* _b);
-MYS_API int mys_sortfn_i64(const void* _a, const void* _b);
-MYS_API int mys_sortfn_f32(const void* _a, const void* _b);
-MYS_API int mys_sortfn_f64(const void* _a, const void* _b);
+MYS_API void mys_sort_i32(int32_t *values, size_t n);
+MYS_API void mys_sort_i64(int64_t *values, size_t n);
+MYS_API void mys_sort_f32(float *values, size_t n);
+MYS_API void mys_sort_f64(double *values, size_t n);
 
-MYS_API int mys_sortfn_i32_r(const void* _a, const void* _b);
-MYS_API int mys_sortfn_i64_r(const void* _a, const void* _b);
-MYS_API int mys_sortfn_f32_r(const void* _a, const void* _b);
-MYS_API int mys_sortfn_f64_r(const void* _a, const void* _b);
+MYS_API void mys_sort_i32_r(int32_t *values, size_t n);
+MYS_API void mys_sort_i64_r(int64_t *values, size_t n);
+MYS_API void mys_sort_f32_r(float *values, size_t n);
+MYS_API void mys_sort_f64_r(double *values, size_t n);
+
+MYS_STATIC int mys_sortfn_i32(const void* _a, const void* _b);
+MYS_STATIC int mys_sortfn_i64(const void* _a, const void* _b);
+MYS_STATIC int mys_sortfn_f32(const void* _a, const void* _b);
+MYS_STATIC int mys_sortfn_f64(const void* _a, const void* _b);
+
+MYS_STATIC int mys_sortfn_i32_r(const void* _a, const void* _b);
+MYS_STATIC int mys_sortfn_i64_r(const void* _a, const void* _b);
+MYS_STATIC int mys_sortfn_f32_r(const void* _a, const void* _b);
+MYS_STATIC int mys_sortfn_f64_r(const void* _a, const void* _b);
+
+#define mys_sort(values, n, compar_fn) qsort(values, n, sizeof(values[0]), compar_fn)
 
 // FIXME: Add predefined sort compare function such as cmp_int, cmp_uint, less_uint
 // FIXME: Add sort based on index like code below
