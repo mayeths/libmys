@@ -187,3 +187,33 @@ MYS_API mys_boxplot_t mys_boxplot_noflier(double *values, size_t n)
     return _mys_boxplot_impl(values, n, false);
 }
 
+// MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp, bool pretty_print)
+// {
+//     if (pretty_print) {
+//         printf("{\n");
+//         printf("  'whislo': %.7f,\n", bxp->whislo);
+//         printf("  'q1': %.7f,\n", bxp->q1);
+//         printf("  'med': %.7f,\n", bxp->med);
+//         printf("  'q3': %.7f,\n", bxp->q3);
+//         printf("  'whishi': %.7f,\n", bxp->whishi);
+//         printf("  'fliers': [");
+//         for (size_t i = 0; i < bxp->n_fliers; i++) {
+//             printf("%.7f, ", bxp->fliers[i]);
+//         }
+//         printf("]\n");
+//         printf("}\n");
+//     } else {
+//         printf("{");
+//         printf("'whislo': %.6e, ", bxp->whislo);
+//         printf("'q1': %.6e, ", bxp->q1);
+//         printf("'med': %.6e, ", bxp->med);
+//         printf("'q3': %.6e, ", bxp->q3);
+//         printf("'whishi': %.6e, ", bxp->whishi);
+//         printf("'fliers': [");
+//         for (size_t i = 0; i < bxp->n_fliers; i++) {
+//             printf("%.6e, ", bxp->fliers[i]);
+//         }
+//         printf("]");
+//         printf("}\n");
+//     }
+// }

@@ -107,6 +107,8 @@ MYS_API mys_boxplot_t mys_boxplot(double *values, size_t n);
  */
 MYS_API mys_boxplot_t mys_boxplot_noflier(double *values, size_t n);
 
+// MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp, bool pretty_print);
+
 /*
 #include <stdio.h>
 #include <stdlib.h>
