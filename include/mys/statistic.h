@@ -60,15 +60,25 @@ MYS_API void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregat
 
 
 typedef struct mys_boxplot_t {
-    double whishi;    // Top whisker position
-    double q3;        // Third quartile (75th percentile)
-    double med;       // Median         (50th percentile)
-    double q1;        // First quartile (25th percentile)
-    double whislo;    // Bottom whisker position
-    double iqr;       // Interquartile range (q3-q1)
-    size_t n_fliers;  // Number of fliers
-    size_t nt_fliers; // Number of top fliers
-    size_t nb_fliers; // Number of bottom fliers
+    // Top whisker position
+    double whishi;
+    // Third quartile (75th percentile)
+    double q3;
+    // Median (50th percentile)
+    double med;
+    // First quartile (25th percentile)
+    double q1;
+    // Bottom whisker position
+    double whislo;
+    // Interquartile range (q3-q1)
+    double iqr;
+    // Number of fliers
+    size_t n_fliers;
+    // Number of top fliers
+    size_t nt_fliers;
+    // Number of bottom fliers
+    size_t nb_fliers;
+    // Fliers (outliers) array. NULL if no fliers.
     double *fliers;
 } mys_boxplot_t;
 
@@ -163,15 +173,23 @@ MYS_API char *mys_boxplot_serialize_pretty(const mys_boxplot_t *bxp);
 
 int main() {
     double arr[] = { 1, 3, 7, 300, 301, 302, 303, 304, 305, 306, 307, 308, 1000, 2000 };
+    // obj = {"whislo": 3.200e-07, "q1": 3.300e-07, "med": 3.300e-07, "q3": 3.300e-07, "whishi": 4.200e-07, "fliers": []}
+    // ax.bxp([obj])
     size_t n = sizeof(arr) / sizeof(double);
     char *json = mys_boxplot(arr, n);
     if (json) {
         printf("%s\n", json);
         free(json);
     }
+    // import numpy as np
     // import matplotlib
+    // import matplotlib.pyplot as plt
     // arr=[1, 3, 7, 300, 301, 302, 303, 304, 305, 306, 307, 308, 1000, 2000]
-    // matplotlib.cbook.boxplot_stats(arr)
+    // bxp = matplotlib.cbook.boxplot_stats(arr) # return bxp data in a list
+    // print(bxp)
+    // fig, ax = plt.subplots(1, 1, figsize=(4.5, 1.5), dpi=400, layout='constrained')
+    // ax.bxp(bxp) # argument is list. bxp is already list here, we don't have to enclose it with []
+    // plt.show()
     return 0;
 }
 */
