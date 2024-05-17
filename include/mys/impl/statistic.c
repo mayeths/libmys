@@ -98,20 +98,33 @@ MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
 }
 
 
-static mys_boxplot_t _mys_boxplot_impl(double *values, size_t n, bool save_fliers)
-{
-    mys_boxplot_t bxp;
-    bxp.whislo = bxp.q1 = bxp.med = bxp.q3 = bxp.whishi = values[0];
-    bxp.iqr = 0;
-    bxp.n_fliers = 0;
-    bxp.nb_fliers = 0;
-    bxp.nt_fliers = 0;
-    bxp.fliers = NULL;
+MYS_API mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
+    if (n == 0) {
+        return NULL;
+    }
 
-    if (n == 1)
+    mys_boxplot_t *bxp = (mys_boxplot_t *)malloc(sizeof(mys_boxplot_t));
+    if (!bxp) {
+        return NULL; // Memory allocation failed
+    }
+
+    bxp->whislo = bxp->q1 = bxp->med = bxp->q3 = bxp->whishi = values[0];
+    bxp->iqr = 0;
+    bxp->n_fliers = 0;
+    bxp->nb_fliers = 0;
+    bxp->nt_fliers = 0;
+    bxp->fliers = NULL;
+
+    if (n == 1) {
         return bxp;
+    }
 
     double *arr = (double *)malloc(sizeof(double) * n);
+    if (!arr) {
+        free(bxp);
+        return NULL; // Memory allocation failed
+    }
+
     memcpy(arr, values, sizeof(double) * n);
     qsort(arr, n, sizeof(double), mys_sortfn_f64);
 
@@ -131,50 +144,60 @@ static mys_boxplot_t _mys_boxplot_impl(double *values, size_t n, bool save_flier
     double ig_q1 = ((25. / 100.) * (double)(n - alpha - beta + 1) + (double)alpha);
     double ig_q2 = ((50. / 100.) * (double)(n - alpha - beta + 1) + (double)alpha);
     double ig_q3 = ((75. / 100.) * (double)(n - alpha - beta + 1) + (double)alpha);
-    // To zero indexing
+    // To 0-indexing
     ig_q1 -= 1;
     ig_q2 -= 1;
     ig_q3 -= 1;
     size_t arg_q1 = (size_t)(ig_q1);
     size_t arg_q2 = (size_t)(ig_q2);
     size_t arg_q3 = (size_t)(ig_q3);
-    bxp.q1  = arr[arg_q1] + (arr[arg_q1 + 1] - arr[arg_q1]) * (ig_q1 - arg_q1);
-    bxp.med = arr[arg_q2] + (arr[arg_q2 + 1] - arr[arg_q2]) * (ig_q2 - arg_q2);
-    bxp.q3  = arr[arg_q3] + (arr[arg_q3 + 1] - arr[arg_q3]) * (ig_q3 - arg_q3);
+    bxp->q1  = arr[arg_q1] + (arr[arg_q1 + 1] - arr[arg_q1]) * (ig_q1 - arg_q1);
+    bxp->med = arr[arg_q2] + (arr[arg_q2 + 1] - arr[arg_q2]) * (ig_q2 - arg_q2);
+    bxp->q3  = arr[arg_q3] + (arr[arg_q3 + 1] - arr[arg_q3]) * (ig_q3 - arg_q3);
 
-    bxp.iqr = bxp.q3 - bxp.q1;
-    double loval = bxp.q1 - 1.5 * bxp.iqr;
-    double hival = bxp.q3 + 1.5 * bxp.iqr;
+    bxp->iqr = bxp->q3 - bxp->q1;
+    double loval = bxp->q1 - 1.5 * bxp->iqr;
+    double hival = bxp->q3 + 1.5 * bxp->iqr;
 
-    bxp.whislo = bxp.q1;
-    bxp.whishi = bxp.q3;
-    bxp.nb_fliers = 0;
-    bxp.nt_fliers = 0;
+    bxp->whislo = bxp->q1;
+    bxp->whishi = bxp->q3;
+    bxp->nb_fliers = 0;
+    bxp->nt_fliers = 0;
     for (size_t i = 0; i <= arg_q1; i++) {
         if (arr[i] < loval)
-            bxp.nb_fliers += 1;
-        if (arr[i] >= loval && arr[i] < bxp.whislo)
-            bxp.whislo = arr[i];
+            bxp->nb_fliers += 1;
+        if (arr[i] >= loval && arr[i] < bxp->whislo)
+            bxp->whislo = arr[i];
     }
     for (size_t i = arg_q3; i < n; i++) {
-        if (arr[i] <= hival && arr[i] > bxp.whishi)
-            bxp.whishi = arr[i];
+        if (arr[i] <= hival && arr[i] > bxp->whishi)
+            bxp->whishi = arr[i];
         if (arr[i] > hival)
-            bxp.nt_fliers += 1;
+            bxp->nt_fliers += 1;
     }
-    bxp.n_fliers = bxp.nt_fliers + bxp.nb_fliers;
+    bxp->n_fliers = bxp->nt_fliers + bxp->nb_fliers;
 
-    if (save_fliers) {
-        bxp.fliers = (double *)malloc(sizeof(double) * (bxp.nb_fliers + bxp.nt_fliers));
+    bxp->fliers = (double *)malloc(sizeof(double) * (bxp->n_fliers));
+    if (bxp->fliers) {
         size_t c = 0;
-        for (size_t i = 0; i < bxp.nb_fliers; i++)
-            bxp.fliers[c++] = arr[i];
-        for (size_t i = n - bxp.nt_fliers; i < n; i++)
-            bxp.fliers[c++] = arr[i];
+        for (size_t i = 0; i < bxp->nb_fliers; i++)
+            bxp->fliers[c++] = arr[i];
+        for (size_t i = n - bxp->nt_fliers; i < n; i++)
+            bxp->fliers[c++] = arr[i];
     }
 
     free(arr);
     return bxp;
+}
+
+MYS_API void mys_boxplot_destroy(mys_boxplot_t **bxp) {
+    if (bxp != NULL && (*bxp) != NULL) {
+        if ((*bxp)->fliers != NULL) {
+            free((*bxp)->fliers);
+        }
+        free(*bxp);
+    }
+    (*bxp) = NULL;
 }
 
 static void _mys_append_buf(char **buffer, size_t *size, size_t *used, const char *format, ...)
@@ -201,7 +224,7 @@ static void _mys_append_buf(char **buffer, size_t *size, size_t *used, const cha
         } else {
             // Buffer too small, reallocate
             *size += (written + 1); // Double the buffer size plus extra space for null terminator
-            *buffer = realloc(*buffer, *size);
+            *buffer = (char *)realloc(*buffer, *size);
             if (!*buffer) {
                 va_end(args);
                 return; // Memory allocation failed
@@ -216,7 +239,7 @@ static char *_mys_boxplot_serialize_impl(const mys_boxplot_t *bxp, bool pretty_p
 {
     size_t size = 256;
     size_t used = 0;
-    char *buffer = malloc(size);
+    char *buffer = (char *)malloc(size);
     if (!buffer)
         return NULL;
 
@@ -256,16 +279,6 @@ static char *_mys_boxplot_serialize_impl(const mys_boxplot_t *bxp, bool pretty_p
     return buffer;
 }
 
-MYS_API mys_boxplot_t mys_boxplot(double *values, size_t n)
-{
-    return _mys_boxplot_impl(values, n, true);
-}
-
-MYS_API mys_boxplot_t mys_boxplot_noflier(double *values, size_t n)
-{
-    return _mys_boxplot_impl(values, n, false);
-}
-
 MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp)
 {
     return _mys_boxplot_serialize_impl(bxp, false);
@@ -274,4 +287,15 @@ MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp)
 MYS_API char *mys_boxplot_serialize_pretty(const mys_boxplot_t *bxp)
 {
     return _mys_boxplot_serialize_impl(bxp, true);
+}
+
+MYS_API char *mys_boxplot(double *values, size_t n)
+{
+    mys_boxplot_t *bxp = mys_boxplot_create(values, n);
+    if (!bxp)
+        return NULL;
+
+    char *json = mys_boxplot_serialize(bxp);
+    mys_boxplot_destroy(&bxp);
+    return json;
 }

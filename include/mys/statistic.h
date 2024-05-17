@@ -96,24 +96,18 @@ typedef struct mys_boxplot_t {
  * 
  * @param values Data that will be represented in the boxplots
  * @param n Size of the data
- * @return mys_boxplot_t Structure containing the calculated boxplot statistics
+ * @return mys_boxplot_t* Pointer to structure containing the calculated boxplot statistics
  * 
- * @note You should free the returned fliers array yourself.
+ * @note The caller must free the returned structure using `mys_boxplot_destroy`.
  */
-MYS_API mys_boxplot_t mys_boxplot(double *values, size_t n);
+MYS_API mys_boxplot_t *mys_boxplot_create(double *values, size_t n);
 
 /**
- * @brief Return statistics used to draw a series of box and whisker plots using bxp.
+ * @brief Free the memory allocated for the boxplot statistics.
  * 
- * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
- * 
- * @param values Data that will be represented in the boxplots
- * @param n Size of the data
- * @return mys_boxplot_t Structure containing the calculated boxplot statistics
- * 
- * @note This interface doesn't malloc the fliers array.
+ * @param bxp Pointer to the boxplot statistics structure to be freed
  */
-MYS_API mys_boxplot_t mys_boxplot_noflier(double *values, size_t n);
+MYS_API void mys_boxplot_destroy(mys_boxplot_t **bxp);
 
 /**
  * @brief Serialize the boxplot statistics to a JSON string.
@@ -138,6 +132,19 @@ MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp);
  * @note The caller must free the returned string.
  */
 MYS_API char *mys_boxplot_serialize_pretty(const mys_boxplot_t *bxp);
+
+/**
+ * @brief Return statistics string used to draw a series of box and whisker plots using bxp.
+ * 
+ * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
+ * 
+ * @param values Data that will be represented in the boxplots
+ * @param n Size of the data
+ * @return char* JSON formatted string representing the boxplot statistics
+ * 
+ * @note The caller must free the returned string.
+ */
+MYS_API char *mys_boxplot(double *values, size_t n);
 
 // MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp, bool pretty_print);
 
