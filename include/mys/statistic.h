@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 MYS_API double mys_arthimetic_mean(double *arr, int n);
 MYS_API double mys_harmonic_mean(double *arr, int n);
@@ -89,23 +90,54 @@ typedef struct mys_boxplot_t {
 */
 
 /**
- * @brief Return statistics used to draw a series of box and whisker plots using bxp. See matplotlib.cbook.boxplot_stats and matplotlib.bxp
+ * @brief Return statistics used to draw a series of box and whisker plots using bxp.
+ * 
+ * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
  * 
  * @param values Data that will be represented in the boxplots
- * @param n Size of data
+ * @param n Size of the data
+ * @return mys_boxplot_t Structure containing the calculated boxplot statistics
  * 
- * @note You should free returned fliers array yourself.
+ * @note You should free the returned fliers array yourself.
  */
 MYS_API mys_boxplot_t mys_boxplot(double *values, size_t n);
+
 /**
- * @brief Return statistics used to draw a series of box and whisker plots using bxp. See matplotlib.cbook.boxplot_stats and matplotlib.bxp
+ * @brief Return statistics used to draw a series of box and whisker plots using bxp.
+ * 
+ * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
  * 
  * @param values Data that will be represented in the boxplots
- * @param n Size of data
+ * @param n Size of the data
+ * @return mys_boxplot_t Structure containing the calculated boxplot statistics
  * 
- * @note This interface wouldn't malloc fliers array.
+ * @note This interface doesn't malloc the fliers array.
  */
 MYS_API mys_boxplot_t mys_boxplot_noflier(double *values, size_t n);
+
+/**
+ * @brief Serialize the boxplot statistics to a JSON string.
+ * 
+ * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
+ * 
+ * @param bxp Pointer to the boxplot statistics structure to be serialized
+ * @return char* JSON formatted string representing the boxplot statistics
+ * 
+ * @note The caller must free the returned string.
+ */
+MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp);
+
+/**
+ * @brief Serialize the boxplot statistics to a pretty-printed JSON string.
+ * 
+ * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
+ * 
+ * @param bxp Pointer to the boxplot statistics structure to be serialized
+ * @return char* Pretty-printed JSON formatted string representing the boxplot statistics
+ * 
+ * @note The caller must free the returned string.
+ */
+MYS_API char *mys_boxplot_serialize_pretty(const mys_boxplot_t *bxp);
 
 // MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp, bool pretty_print);
 

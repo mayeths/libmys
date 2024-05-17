@@ -177,6 +177,85 @@ static mys_boxplot_t _mys_boxplot_impl(double *values, size_t n, bool save_flier
     return bxp;
 }
 
+static void _mys_append_buf(char **buffer, size_t *size, size_t *used, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    while (1) {
+        // Calculate remaining buffer size
+        size_t remaining = *size - *used;
+
+        // Attempt to write to the buffer
+        int written = vsnprintf(*buffer + *used, remaining, format, args);
+
+        // Check if the buffer was large enough
+        if (written < 0) {
+            // Encoding error
+            va_end(args);
+            return;
+        } else if ((size_t)written < remaining) {
+            // Successfully written
+            *used += written;
+            break;
+        } else {
+            // Buffer too small, reallocate
+            *size += (written + 1); // Double the buffer size plus extra space for null terminator
+            *buffer = realloc(*buffer, *size);
+            if (!*buffer) {
+                va_end(args);
+                return; // Memory allocation failed
+            }
+        }
+    }
+
+    va_end(args);
+}
+
+static char *_mys_boxplot_serialize_impl(const mys_boxplot_t *bxp, bool pretty_print)
+{
+    size_t size = 256;
+    size_t used = 0;
+    char *buffer = malloc(size);
+    if (!buffer)
+        return NULL;
+
+    if (pretty_print) {
+        _mys_append_buf(&buffer, &size, &used, "{\n");
+        _mys_append_buf(&buffer, &size, &used, "  \"whislo\": %.3e,\n", bxp->whislo);
+        _mys_append_buf(&buffer, &size, &used, "  \"q1\": %.3e,\n", bxp->q1);
+        _mys_append_buf(&buffer, &size, &used, "  \"med\": %.3e,\n", bxp->med);
+        _mys_append_buf(&buffer, &size, &used, "  \"q3\": %.3e,\n", bxp->q3);
+        _mys_append_buf(&buffer, &size, &used, "  \"whishi\": %.3e,\n", bxp->whishi);
+        _mys_append_buf(&buffer, &size, &used, "  \"fliers\": [");
+        if (bxp->fliers != NULL) {
+            for (size_t i = 0; i < bxp->n_fliers; i++) {
+                _mys_append_buf(&buffer, &size, &used, "%.3e%s", bxp->fliers[i], (i < bxp->n_fliers - 1) ? ", " : "");
+            }
+        }
+        _mys_append_buf(&buffer, &size, &used, "]\n");
+        _mys_append_buf(&buffer, &size, &used, "}");
+    } else {
+        _mys_append_buf(&buffer, &size, &used, "{");
+        _mys_append_buf(&buffer, &size, &used, "\"whislo\": %.3e, ", bxp->whislo);
+        _mys_append_buf(&buffer, &size, &used, "\"q1\": %.3e, ", bxp->q1);
+        _mys_append_buf(&buffer, &size, &used, "\"med\": %.3e, ", bxp->med);
+        _mys_append_buf(&buffer, &size, &used, "\"q3\": %.3e, ", bxp->q3);
+        _mys_append_buf(&buffer, &size, &used, "\"whishi\": %.3e, ", bxp->whishi);
+        _mys_append_buf(&buffer, &size, &used, "\"fliers\": [");
+        if (bxp->fliers != NULL) {
+            for (size_t i = 0; i < bxp->n_fliers; i++) {
+                _mys_append_buf(&buffer, &size, &used, "%.3e%s", bxp->fliers[i], (i < bxp->n_fliers - 1) ? ", " : "");
+            }
+        }
+        _mys_append_buf(&buffer, &size, &used, "]}");
+    }
+
+    // Null-terminate the buffer
+    buffer[used] = '\0';
+    return buffer;
+}
+
 MYS_API mys_boxplot_t mys_boxplot(double *values, size_t n)
 {
     return _mys_boxplot_impl(values, n, true);
@@ -187,33 +266,12 @@ MYS_API mys_boxplot_t mys_boxplot_noflier(double *values, size_t n)
     return _mys_boxplot_impl(values, n, false);
 }
 
-// MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp, bool pretty_print)
-// {
-//     if (pretty_print) {
-//         printf("{\n");
-//         printf("  'whislo': %.7f,\n", bxp->whislo);
-//         printf("  'q1': %.7f,\n", bxp->q1);
-//         printf("  'med': %.7f,\n", bxp->med);
-//         printf("  'q3': %.7f,\n", bxp->q3);
-//         printf("  'whishi': %.7f,\n", bxp->whishi);
-//         printf("  'fliers': [");
-//         for (size_t i = 0; i < bxp->n_fliers; i++) {
-//             printf("%.7f, ", bxp->fliers[i]);
-//         }
-//         printf("]\n");
-//         printf("}\n");
-//     } else {
-//         printf("{");
-//         printf("'whislo': %.6e, ", bxp->whislo);
-//         printf("'q1': %.6e, ", bxp->q1);
-//         printf("'med': %.6e, ", bxp->med);
-//         printf("'q3': %.6e, ", bxp->q3);
-//         printf("'whishi': %.6e, ", bxp->whishi);
-//         printf("'fliers': [");
-//         for (size_t i = 0; i < bxp->n_fliers; i++) {
-//             printf("%.6e, ", bxp->fliers[i]);
-//         }
-//         printf("]");
-//         printf("}\n");
-//     }
-// }
+MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp)
+{
+    return _mys_boxplot_serialize_impl(bxp, false);
+}
+
+MYS_API char *mys_boxplot_serialize_pretty(const mys_boxplot_t *bxp)
+{
+    return _mys_boxplot_serialize_impl(bxp, true);
+}
