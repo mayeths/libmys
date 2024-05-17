@@ -98,6 +98,17 @@ MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
 }
 
 
+MYS_API char *mys_boxplot(double *values, size_t n)
+{
+    mys_boxplot_t *bxp = mys_boxplot_create(values, n);
+    if (!bxp)
+        return NULL;
+
+    char *json = mys_boxplot_serialize(bxp);
+    mys_boxplot_destroy(&bxp);
+    return json;
+}
+
 MYS_API mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
     if (n == 0) {
         return NULL;
@@ -159,22 +170,29 @@ MYS_API mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
     double loval = bxp->q1 - 1.5 * bxp->iqr;
     double hival = bxp->q3 + 1.5 * bxp->iqr;
 
-    bxp->whislo = bxp->q1;
-    bxp->whishi = bxp->q3;
-    bxp->nb_fliers = 0;
-    bxp->nt_fliers = 0;
-    for (size_t i = 0; i <= arg_q1; i++) {
-        if (arr[i] < loval)
-            bxp->nb_fliers += 1;
-        if (arr[i] >= loval && arr[i] < bxp->whislo)
-            bxp->whislo = arr[i];
+    double abs_q1 = _mys_math_fabs(bxp->q1);
+    double abs_q3 = _mys_math_fabs(bxp->q3);
+    double bound = 1e-9 * ((abs_q1 > abs_q3) ? abs_q1 : abs_q3);
+    if (_mys_math_fabs(bxp->q1 - bxp->q3) < bound) {
+        bxp->whislo = arr[0];
+        bxp->whishi = arr[n - 1];
+    } else {
+        bxp->whislo = bxp->q1;
+        bxp->whishi = bxp->q3;
+        for (size_t i = 0; i <= arg_q1; i++) {
+            if (arr[i] < loval)
+                bxp->nb_fliers += 1;
+            if (arr[i] >= loval && arr[i] < bxp->whislo)
+                bxp->whislo = arr[i];
+        }
+        for (size_t i = arg_q3; i < n; i++) {
+            if (arr[i] <= hival && arr[i] > bxp->whishi)
+                bxp->whishi = arr[i];
+            if (arr[i] > hival)
+                bxp->nt_fliers += 1;
+        }
     }
-    for (size_t i = arg_q3; i < n; i++) {
-        if (arr[i] <= hival && arr[i] > bxp->whishi)
-            bxp->whishi = arr[i];
-        if (arr[i] > hival)
-            bxp->nt_fliers += 1;
-    }
+
     bxp->n_fliers = bxp->nt_fliers + bxp->nb_fliers;
 
     bxp->fliers = (double *)malloc(sizeof(double) * (bxp->n_fliers));
@@ -287,15 +305,4 @@ MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp)
 MYS_API char *mys_boxplot_serialize_pretty(const mys_boxplot_t *bxp)
 {
     return _mys_boxplot_serialize_impl(bxp, true);
-}
-
-MYS_API char *mys_boxplot(double *values, size_t n)
-{
-    mys_boxplot_t *bxp = mys_boxplot_create(values, n);
-    if (!bxp)
-        return NULL;
-
-    char *json = mys_boxplot_serialize(bxp);
-    mys_boxplot_destroy(&bxp);
-    return json;
 }

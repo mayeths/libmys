@@ -3,6 +3,7 @@
 #include "_config.h"
 #include "mpi.h"
 #include "algorithm.h"
+#include "math.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,6 +91,19 @@ typedef struct mys_boxplot_t {
 */
 
 /**
+ * @brief Return statistics string used to draw a series of box and whisker plots using bxp.
+ * 
+ * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
+ * 
+ * @param values Data that will be represented in the boxplots
+ * @param n Size of the data
+ * @return char* JSON formatted string representing the boxplot statistics
+ * 
+ * @note The caller must free the returned string.
+ */
+MYS_API char *mys_boxplot(double *values, size_t n);
+
+/**
  * @brief Return statistics used to draw a series of box and whisker plots using bxp.
  * 
  * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
@@ -99,6 +113,9 @@ typedef struct mys_boxplot_t {
  * @return mys_boxplot_t* Pointer to structure containing the calculated boxplot statistics
  * 
  * @note The caller must free the returned structure using `mys_boxplot_destroy`.
+ * 
+ * @note Autorange: when the data are distributed such that the 25th and 75th percentiles are equal,
+ * whis is set to (0, 100) such that the whisker ends are at the minimum and maximum of the data.
  */
 MYS_API mys_boxplot_t *mys_boxplot_create(double *values, size_t n);
 
@@ -133,55 +150,28 @@ MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp);
  */
 MYS_API char *mys_boxplot_serialize_pretty(const mys_boxplot_t *bxp);
 
-/**
- * @brief Return statistics string used to draw a series of box and whisker plots using bxp.
- * 
- * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
- * 
- * @param values Data that will be represented in the boxplots
- * @param n Size of the data
- * @return char* JSON formatted string representing the boxplot statistics
- * 
- * @note The caller must free the returned string.
- */
-MYS_API char *mys_boxplot(double *values, size_t n);
-
 // MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp, bool pretty_print);
 
 /*
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
+#include <string.h>
+#include <stdbool.h>
 
 #define MYS_IMPL
-#define MYS_NO_MPI
-#include "mys.h"
+#include <mys.h>
 
 int main() {
-    double aaa[] = {
-        1, 3, 7,
-        300, 301, 302, 303, 304, 305, 306, 307, 308,
-        1000, 2000
-    };
-    size_t n = sizeof(aaa) / sizeof(double);
-    mys_boxplot_t bxp = mys_boxplot(aaa, n);
-    printf("{\n");
-    printf("  'whislo': %.7f,\n", bxp.whislo);
-    printf("  'q1': %.7f,\n", bxp.q1);
-    printf("  'med': %.7f,\n", bxp.med);
-    printf("  'q3': %.7f,\n", bxp.q3);
-    printf("  'whishi': %.7f,\n", bxp.whishi);
-    printf("  'fliers': [");
-    for (size_t i = 0; i < bxp.n_fliers; i++) {
-        printf("%.7f, ", bxp.fliers[i]);
+    double arr[] = { 1, 3, 7, 300, 301, 302, 303, 304, 305, 306, 307, 308, 1000, 2000 };
+    size_t n = sizeof(arr) / sizeof(double);
+    char *json = mys_boxplot(arr, n);
+    if (json) {
+        printf("%s\n", json);
+        free(json);
     }
-    printf("]\n");
-    printf("}\n");
-    free(bxp.fliers);
-    // import numpy as np
-    // import matplotlib.pyplot as plt
-    // fig, ax = plt.subplots(1, 1, figsize=(4.5, 1.5), dpi=400, layout='constrained')
-    // ax.bxp(HYPRE_boxes, showfliers=False)
-	return 0;
+    // import matplotlib
+    // arr=[1, 3, 7, 300, 301, 302, 303, 304, 305, 306, 307, 308, 1000, 2000]
+    // matplotlib.cbook.boxplot_stats(arr)
+    return 0;
 }
 */
