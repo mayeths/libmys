@@ -1,5 +1,9 @@
 #include "../os.h"
 
+#ifdef MYS_ENABLE_NUMA
+#include <numa.h>
+#endif
+
 // extern int kill(pid_t pid, int sig) __THROW;
 // extern char *strdup(const char *s) __THROW;
 // extern ssize_t readlink(const char *path, char *buf, size_t bufsize) __THROW;

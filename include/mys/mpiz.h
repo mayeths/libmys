@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <mpi.h>
+#include <unistd.h>
+#include <sched.h>
 
 #include "_config.h"
 
@@ -73,6 +75,9 @@ MYS_API int mys_query_brother(mys_commgroup_t *group, int local_rank);
  */
 MYS_API int mys_query_neighbor(mys_commgroup_t *group, int group_id);
 
+#ifdef MYS_ENABLE_NUMA
+MYS_API mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm);
+#endif
 
 /* mpicc -I${MYS_DIR}/include a.c && mpirun -n 5 ./a.out 3
 #include <stdlib.h>

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <time.h>
 #include <limits.h>
 #include <float.h>
@@ -27,11 +28,7 @@
 #endif
 #if defined(OS_LINUX)
 #include <sched.h>
-#ifdef MYS_ENABLE_NUMA
-#include <numa.h>
 #endif
-#endif
-
 
 ///////////////////////////////////
 // Run and wait a command to finish

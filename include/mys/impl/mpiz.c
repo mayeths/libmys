@@ -1,5 +1,9 @@
 #include "../mpiz.h"
 
+#ifdef MYS_ENABLE_NUMA
+#include <numa.h>
+#endif
+
 static int _mys_commgroup_sort_i4(const void* _a, const void* _b)
 {
     const int *a = (const int *)_a;
@@ -96,6 +100,31 @@ MYS_API mys_commgroup_t *mys_commgroup_create_node(MPI_Comm global_comm)
 
     return mys_commgroup_create(global_comm, node_root, global_myrank);
 }
+
+#ifdef MYS_ENABLE_NUMA
+MYS_API mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm)
+{
+    int global_nranks, global_myrank;
+    MPI_Comm_size(global_comm, &global_nranks);
+    MPI_Comm_rank(global_comm, &global_myrank);
+
+    int cpu = sched_getcpu();
+    int numa = numa_node_of_cpu(cpu);
+    int numa_num = numa_num_configured_nodes();
+    if (cpu == -1 || numa == -1 || numa_num == -1)
+        return NULL;
+
+    MPI_Comm local_comm = MPI_COMM_NULL;
+    MPI_Comm_split_type(global_comm, MPI_COMM_TYPE_SHARED, global_myrank, MPI_INFO_NULL, &local_comm);
+    int node_id = global_myrank;
+    MPI_Bcast(&node_id, 1, MPI_INT, 0, local_comm);
+    MPI_Comm_free(&local_comm);
+
+    int group_color = node_id * numa_num + numa;
+    int group_key = cpu;
+    return mys_commgroup_create(global_comm, group_color, group_key);
+}
+#endif
 
 MYS_API int mys_query_group_id(mys_commgroup_t *group, int global_rank)
 {
