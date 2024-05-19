@@ -1,10 +1,14 @@
 #pragma once
 
 #include "_config.h"
+#include "type.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <assert.h>
+
+typedef enum { MYS_SORT_ASCEND, MYS_SORT_DESCEND } mys_sortctl_t;
 
 MYS_API void mys_sort_i32(int32_t *values, size_t n);
 MYS_API void mys_sort_i64(int64_t *values, size_t n);
@@ -16,15 +20,11 @@ MYS_API void mys_sort_i64_r(int64_t *values, size_t n);
 MYS_API void mys_sort_f32_r(float *values, size_t n);
 MYS_API void mys_sort_f64_r(double *values, size_t n);
 
-MYS_STATIC int mys_sortfn_i32(const void* _a, const void* _b);
-MYS_STATIC int mys_sortfn_i64(const void* _a, const void* _b);
-MYS_STATIC int mys_sortfn_f32(const void* _a, const void* _b);
-MYS_STATIC int mys_sortfn_f64(const void* _a, const void* _b);
+MYS_API mys_f64i_t *mys_sort_f64_to_f64i(double *values, size_t n);
+MYS_API mys_sizeti_t *mys_sort_sizet_to_sizeti(size_t *values, size_t n, mys_sortctl_t sort_type);
 
-MYS_STATIC int mys_sortfn_i32_r(const void* _a, const void* _b);
-MYS_STATIC int mys_sortfn_i64_r(const void* _a, const void* _b);
-MYS_STATIC int mys_sortfn_f32_r(const void* _a, const void* _b);
-MYS_STATIC int mys_sortfn_f64_r(const void* _a, const void* _b);
+// MYS_API void mys_sortidx_f64(double *values, int n, int *sorted_indexes);
+// MYS_API void mys_sortidx_sizet(size_t *values, int n, int *sorted_indexes);
 
 #define mys_sort(values, n, compar_fn) qsort(values, n, sizeof(values[0]), compar_fn)
 

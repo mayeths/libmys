@@ -137,7 +137,7 @@ MYS_API mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
     }
 
     memcpy(arr, values, sizeof(double) * n);
-    qsort(arr, n, sizeof(double), mys_sortfn_f64);
+    mys_sort_f64(arr, n);
 
     double alpha = 1.0;
     double beta = 1.0;
