@@ -13,3 +13,9 @@ source "$MYS_DIR/etc/profile"
 cd libmys
 rsync --filter=':- .gitignore' -av ./ REMOTE:~/project/libmys/
 ```
+
+| Macro | Description |
+|-------|-------------|
+| MYS_IMPL | Define libmys functions and variables in this file. |
+| MYS_IMPL_LOCAL | Define libmys functions and variables in this file with hidden visibility. |
+| MYS_NO_MPI | Disable MPI support. |
