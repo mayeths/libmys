@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../guard.h"
 #include "uthash_list.h"
 

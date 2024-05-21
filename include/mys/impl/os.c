@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../os.h"
 
 #ifdef MYS_ENABLE_NUMA
@@ -363,7 +364,7 @@ MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
 {
     int myrank = mys_mpi_myrank();
     int nranks = mys_mpi_nranks();
-    int digits = _mys_math_trunc(_mys_math_log10(nranks)) + 1;
+    int digits = mys_math_trunc(mys_math_log10(nranks)) + 1;
     digits = digits > 3 ? digits : 3;
     if (myrank == 0) {
         fprintf(stdout, "[WAIT::%0*d %s:%03d] Use \"touch %s\" to continue... ",
@@ -423,8 +424,8 @@ MYS_API void mys_print_affinity(FILE *fd)
                 #pragma omp ordered
 #endif
                 {
-                    int rank_digits = _mys_math_trunc(_mys_math_log10(nranks)) + 1;
-                    int thread_digits = _mys_math_trunc(_mys_math_log10(nthreads)) + 1;
+                    int rank_digits = mys_math_trunc(mys_math_log10(nranks)) + 1;
+                    int thread_digits = mys_math_trunc(mys_math_log10(nthreads)) + 1;
                     rank_digits = rank_digits > 3 ? rank_digits : 3;
                     thread_digits = thread_digits > 1 ? thread_digits : 1;
                     const char *affinity = mys_get_affinity();

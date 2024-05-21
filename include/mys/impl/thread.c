@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../thread.h"
 
 mys_thread_local uint32_t __mys_thread_id = UINT32_MAX;

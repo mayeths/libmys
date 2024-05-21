@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../mpiz.h"
 
 #ifdef MYS_ENABLE_NUMA

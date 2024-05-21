@@ -1,4 +1,4 @@
-#pragma once
+#include "_private.h"
 #include "../mpi.h"
 
 typedef struct _mys_mpi_G_t {

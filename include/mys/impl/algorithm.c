@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../algorithm.h"
 
 #define _MYS_SORTFN_IMPL(typ, l, r) typ a = *(typ*)_a, b = *(typ*)_b; return (int)((l) > (r)) - (int)((l) < (r));

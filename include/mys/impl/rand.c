@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../rand.h"
 
 struct _mys_rand_G_t {

@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../memory.h"
 
 #if defined(OS_LINUX) && defined(MYS_ENABLE_SHM)

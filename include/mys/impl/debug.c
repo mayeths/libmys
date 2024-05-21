@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../debug.h"
 
 #define _MYS_DEBUG_STRIP_DEPTH 2
@@ -416,7 +417,7 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
     void *baddrs[_MYS_DEBUG_BACKTRACE_MAX];
     int myrank = mys_mpi_myrank();
     int nranks = mys_mpi_nranks();
-    int digits = _mys_math_trunc(_mys_math_log10(nranks)) + 1;
+    int digits = mys_math_trunc(mys_math_log10(nranks)) + 1;
     digits = digits > 3 ? digits : 3;
     size_t loglen = 0;
     size_t logmax = sizeof(buflog);
@@ -462,7 +463,7 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
     {
         const char *self_exe = mys_procname();
         int bsize = backtrace(baddrs, _MYS_DEBUG_STRIP_DEPTH + _mys_debug_G.max_frames);
-        int bdigits = _mys_math_trunc(_mys_math_log10(bsize)) + 1;
+        int bdigits = mys_math_trunc(mys_math_log10(bsize)) + 1;
         bdigits = bdigits > 2 ? bdigits : 2;
         char **bsyms = backtrace_symbols(baddrs, bsize);
 

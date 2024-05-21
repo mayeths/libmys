@@ -1,21 +1,22 @@
+#include "_private.h"
 #include "../math.h"
 
 // from netlib-math/s_copysign.c
-MYS_STATIC double _mys_math_copysign(double x, double y)
+MYS_API double mys_math_copysign(double x, double y)
 {
     x = _FDLIBM_FORM_DOUBLE((_FDLIBM_HI(x)&0x7fffffff)|(_FDLIBM_HI(y)&0x80000000), _FDLIBM_LO(x));
         return x;
 }
 
 // from netlib-math/s_fabs.c
-MYS_STATIC double _mys_math_fabs(double x)
+MYS_API double mys_math_fabs(double x)
 {
     x = _FDLIBM_FORM_DOUBLE(_FDLIBM_HI(x)&0x7fffffff, _FDLIBM_LO(x));
         return x;
 }
 
 // from netlib-math/e_log.c
-MYS_STATIC double _mys_math_log(double x)
+MYS_API double mys_math_log(double x)
 {
 	double hfsq,f,s,z,R,w,t1,t2,dk;
 	int k,hx,i,j;
@@ -68,7 +69,7 @@ MYS_STATIC double _mys_math_log(double x)
 }
 
 // from netlib-math/e_log10.c
-MYS_STATIC double _mys_math_log10(double x)
+MYS_API double mys_math_log10(double x)
 {
 	double y,z;
 	int i,k,hx;
@@ -92,12 +93,12 @@ MYS_STATIC double _mys_math_log10(double x)
         hx = (hx&0x000fffff)|((0x3ff-i)<<20);
         y  = (double)(k+i);
         x = _FDLIBM_FORM_DOUBLE(hx, lx);
-	z  = y*__fdlibm_log10_2lo + __fdlibm_ivln10*_mys_math_log(x);
+	z  = y*__fdlibm_log10_2lo + __fdlibm_ivln10*mys_math_log(x);
 	return  z+y*__fdlibm_log10_2hi;
 }
 
 // from netlib-math/e_pow.c
-MYS_STATIC double _mys_math_pow(double x, double y)
+MYS_API double mys_math_pow(double x, double y)
 {
 	double z,ax,z_h,z_l,p_h,p_l;
 	double y1,t1,t2,r,s,t,u,v,w;
@@ -153,11 +154,11 @@ MYS_STATIC double _mys_math_pow(double x, double y)
 	    if(hy==0x40000000) return x*x; /* y is  2 */
 	    if(hy==0x3fe00000) {	/* y is  0.5 */
 		if(hx>=0)	/* x >= +0 */
-		return _mys_math_sqrt(x);	
+		return mys_math_sqrt(x);	
 	    }
 	}
 
-	ax   = _mys_math_fabs(x);
+	ax   = mys_math_fabs(x);
     /* special value of x */
 	if(lx==0) {
 	    if(ix==0x7ff00000||ix==0||ix==0x3ff00000){
@@ -297,13 +298,13 @@ MYS_STATIC double _mys_math_pow(double x, double y)
 	z  = __fdlibm_one-(r-z);
 	j  = _FDLIBM_HI(z);
 	j += (n<<20);
-	if((j>>20)<=0) z = _mys_math_scalbn(z,n);	/* subnormal output */
+	if((j>>20)<=0) z = mys_math_scalbn(z,n);	/* subnormal output */
 	else z = _FDLIBM_FORM_DOUBLE(_FDLIBM_HI(z) + (n<<20), _FDLIBM_LO(z));
 	return s*z;
 }
 
 // from netlib-math/s_scalbn.c
-MYS_STATIC double _mys_math_scalbn (double x, int n)
+MYS_API double mys_math_scalbn (double x, int n)
 {
 	int  k,hx,lx;
 	hx = _FDLIBM_HI(x);
@@ -318,13 +319,13 @@ MYS_STATIC double _mys_math_scalbn (double x, int n)
 	    }
         if (k==0x7ff) return x+x;		/* NaN or Inf */
         k = k+n; 
-        if (k >  0x7fe) return __fdlibm_huge*_mys_math_copysign(__fdlibm_huge,x); /* overflow  */
+        if (k >  0x7fe) return __fdlibm_huge*mys_math_copysign(__fdlibm_huge,x); /* overflow  */
         if (k > 0) 				/* normal result */
 	    {x = _FDLIBM_FORM_DOUBLE((hx&0x800fffff)|(k<<20), _FDLIBM_LO(x)); return x;}
         if (k <= -54) {
             if (n > 50000) 	/* in case integer overflow in n+k */
-		{return __fdlibm_huge*_mys_math_copysign(__fdlibm_huge,x);	/*overflow*/}
-	    else {return __fdlibm_tiny*_mys_math_copysign(__fdlibm_tiny,x); 	/*underflow*/}
+		{return __fdlibm_huge*mys_math_copysign(__fdlibm_huge,x);	/*overflow*/}
+	    else {return __fdlibm_tiny*mys_math_copysign(__fdlibm_tiny,x); 	/*underflow*/}
         }
         k += 54;				/* subnormal result */
         x = _FDLIBM_FORM_DOUBLE((hx&0x800fffff)|(k<<20), _FDLIBM_LO(x));
@@ -332,7 +333,7 @@ MYS_STATIC double _mys_math_scalbn (double x, int n)
 }
 
 // from netlib-math/e_sqrt.c
-MYS_STATIC double _mys_math_sqrt(double x)
+MYS_API double mys_math_sqrt(double x)
 {
 	double z;
 	int 	sign = (int)0x80000000; 
@@ -430,7 +431,7 @@ MYS_STATIC double _mys_math_sqrt(double x)
 }
 
 // from musl-1.2.4/src/math/trunc.c
-MYS_STATIC double _mys_math_trunc(double x)
+MYS_API double mys_math_trunc(double x)
 {
 	union {double f; uint64_t i;} u = {x};
 	int e = (int)(u.i >> 52 & 0x7ff) - 0x3ff + 12;

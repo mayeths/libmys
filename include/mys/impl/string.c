@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../string.h"
 
 MYS_API ssize_t mys_parse_readable_size(const char *text)

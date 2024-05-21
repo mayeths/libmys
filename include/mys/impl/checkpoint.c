@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../checkpoint.h"
 #include "uthash_hash.h"
 

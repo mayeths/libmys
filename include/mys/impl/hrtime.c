@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../hrtime.h"
 
 MYS_API const char *mys_hrname()

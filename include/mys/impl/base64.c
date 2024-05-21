@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../base64.h"
 
 static const char _mys_base64_table[] =

@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../statistic.h"
 
 MYS_API double mys_arthimetic_mean(double *arr, int n)
@@ -24,7 +25,7 @@ MYS_API double mys_geometric_mean(double *arr, int n)
     for (int i = 0; i < n; i++) {
         product *= arr[i];
     }
-    return _mys_math_pow(product, 1 / (double)n);
+    return mys_math_pow(product, 1 / (double)n);
 }
 
 MYS_API double mys_standard_deviation(double *arr, int n)
@@ -36,7 +37,7 @@ MYS_API double mys_standard_deviation(double *arr, int n)
         double diff = arr[i] - xbar;
         denom += diff * diff;
     }
-    return _mys_math_sqrt(denom / nom);
+    return mys_math_sqrt(denom / nom);
 }
 
 MYS_API void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregate_t *results)
@@ -63,7 +64,7 @@ MYS_API void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregat
         _mys_MPI_Allreduce(_mys_MPI_IN_PLACE, dbuf, n, _mys_MPI_DOUBLE, _mys_MPI_SUM, mys_mpi_comm());
         for (size_t i = 0; i < n; i++) {
             results[i].var = dbuf[i] / (double)nranks;
-            results[i].std = _mys_math_sqrt(results[i].var);
+            results[i].std = mys_math_sqrt(results[i].var);
         }
     }
     {// max and min
@@ -170,10 +171,10 @@ MYS_API mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
     double loval = bxp->q1 - 1.5 * bxp->iqr;
     double hival = bxp->q3 + 1.5 * bxp->iqr;
 
-    double abs_q1 = _mys_math_fabs(bxp->q1);
-    double abs_q3 = _mys_math_fabs(bxp->q3);
+    double abs_q1 = mys_math_fabs(bxp->q1);
+    double abs_q3 = mys_math_fabs(bxp->q3);
     double bound = 1e-9 * ((abs_q1 > abs_q3) ? abs_q1 : abs_q3);
-    if (_mys_math_fabs(bxp->q1 - bxp->q3) < bound) {
+    if (mys_math_fabs(bxp->q1 - bxp->q3) < bound) {
         bxp->whislo = arr[0];
         bxp->whishi = arr[n - 1];
     } else {

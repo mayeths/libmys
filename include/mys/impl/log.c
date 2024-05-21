@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../log.h"
 
 // extern int fileno(FILE *stream) __THROW;
@@ -225,8 +226,8 @@ static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata) {
     char *label = base_label;
     int label_size = sizeof(base_label);
 
-    int rank_digits = _mys_math_trunc(_mys_math_log10(event->nranks)) + 1;
-    int line_digits = _mys_math_trunc(_mys_math_log10(event->line)) + 1;
+    int rank_digits = mys_math_trunc(mys_math_log10(event->nranks)) + 1;
+    int line_digits = mys_math_trunc(mys_math_log10(event->line)) + 1;
     rank_digits = rank_digits > 3 ? rank_digits : 3;
     line_digits = line_digits > 3 ? line_digits : 3;
 

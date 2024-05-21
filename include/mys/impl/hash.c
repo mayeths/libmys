@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../hash.h"
 
 #define _ROTL(a,b) (((a) << (b)) | ((a) >> (32-(b))))

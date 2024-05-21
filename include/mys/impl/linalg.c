@@ -1,3 +1,4 @@
+#include "_private.h"
 #include "../linalg.h"
 
 MYS_API void mys_partition_naive(const int gbegin, const int gend, const int npart, const int ipart, int *lbegin, int *lend) {
