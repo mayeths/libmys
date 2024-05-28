@@ -6,7 +6,7 @@
 
 static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata);
 
-_mys_log_G_t _mys_log_G = {
+static _mys_log_G_t _mys_log_G = {
     .inited = false,
     .lock = MYS_MUTEX_INITIALIZER,
     .level = MYS_LOG_TRACE,
@@ -280,7 +280,7 @@ typedef struct {
     } dests[_MYS_RANK_LOG_DEST_NUM];
 } _mys_rank_log_G_t;
 
-_mys_rank_log_G_t _mys_rank_log_G = {
+static _mys_rank_log_G_t _mys_rank_log_G = {
     .inited = false,
     .lock = MYS_MUTEX_INITIALIZER,
     .max_used = 0,
