@@ -255,3 +255,12 @@ MYS_API void mys_sha256_hex(const void *text, size_t size, char output[MYS_SHA25
     mys_sha256_update(&ctx, text, size);
     mys_sha256_dump_hex(&ctx, (void *)output);
 }
+
+#undef _ROTL
+#undef _ROTR
+#undef _CH
+#undef _MAJ
+#undef _EP0
+#undef _EP1
+#undef _SIG0
+#undef _SIG1
