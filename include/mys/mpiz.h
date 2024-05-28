@@ -45,6 +45,13 @@ MYS_API mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group_co
  */
 MYS_API mys_commgroup_t *mys_commgroup_create_node(MPI_Comm global_comm);
 /**
+ * @brief Create communication group information based on node
+ * @return The group handle
+ * 
+ * @note This routine require MYS_ENABLE_NUMA.
+ */
+MYS_API mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm);
+/**
  * @brief Release communication group information
  * @param group The group handle
  */
@@ -74,10 +81,6 @@ MYS_API int mys_query_brother(mys_commgroup_t *group, int local_rank);
  *      or that group doesn't has corresponding neighbor that has the same `local_myrank`
  */
 MYS_API int mys_query_neighbor(mys_commgroup_t *group, int group_id);
-
-#ifdef MYS_ENABLE_NUMA
-MYS_API mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm);
-#endif
 
 /* mpicc -I${MYS_DIR}/include a.c && mpirun -n 5 ./a.out 3
 #include <stdlib.h>
