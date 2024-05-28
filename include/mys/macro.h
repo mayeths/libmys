@@ -29,3 +29,6 @@
 
 #define MYS_MACRO2STR_HELPER(x) #x
 #define MYS_MACRO2STR(x) MYS_MACRO2STR_HELPER(x)
+
+#define MYS_ALIGN_UP(value, alignment)   (((value) + (alignment) - 1) & ~((alignment) - 1))
+#define MYS_ALIGN_DOWN(value, alignment) (((value)                  ) & ~((alignment) - 1))
