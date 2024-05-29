@@ -1,8 +1,19 @@
 #include "_private.h"
 #include "../log.h"
 
-// extern int fileno(FILE *stream) __THROW;
-// extern size_t strnlen(const char *s, size_t maxlen) __THROW;
+////// Internal
+
+typedef struct {
+    bool inited;
+    mys_mutex_t lock;
+    int level;
+    bool silent;
+    struct {
+        mys_log_handler_fn fn;
+        void *udata;
+        int id;
+    } handlers[128];
+} _mys_log_G_t;
 
 static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata);
 

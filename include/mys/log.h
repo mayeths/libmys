@@ -114,6 +114,7 @@ MYS_API int mys_log_get_level();
 MYS_API void mys_log_set_level(int level);
 MYS_API void mys_log_silent(bool silent);
 MYS_API const char* mys_log_level_string(int level);
+MYS_API void mys_log_init();
 /////// rank log
 __attribute__((format(printf, 4, 5)))
 MYS_API void mys_rank_log(const char *callfile, int callline, const char *folder, const char *fmt, ...);
@@ -139,22 +140,3 @@ MYS_API void mys_rank_log_close(const char *callfile, int callline, const char *
 #define MCOLOR_B_MAGENTA "\x1b[45m"
 #define MCOLOR_B_CYAN    "\x1b[46m"
 #define MCOLOR_B_WHITE   "\x1b[47m"
-
-
-////// Internal
-
-typedef struct {
-    bool inited;
-    mys_mutex_t lock;
-    int level;
-    bool silent;
-    struct {
-        mys_log_handler_fn fn;
-        void *udata;
-        int id;
-    } handlers[128];
-} _mys_log_G_t;
-
-extern _mys_log_G_t _mys_log_G;
-
-MYS_API void mys_log_init();
