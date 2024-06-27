@@ -51,6 +51,14 @@ MYS_API uint64_t mys_hrfreq_posix();
 MYS_API double mys_hrtime_posix();
 #endif
 
+#if defined(__cplusplus)
+#define MYS_ENABLED_HRTIMER_CXX
+MYS_API const char *mys_hrname_cxx();
+MYS_API uint64_t mys_hrtick_cxx();
+MYS_API uint64_t mys_hrfreq_cxx();
+MYS_API double mys_hrtime_cxx();
+#endif
+
 #if defined(OS_WINDOWS)
 #define MYS_ENABLED_HRTIMER_WINDOWS
 MYS_API const char *mys_hrname_windows();
@@ -59,63 +67,23 @@ MYS_API uint64_t mys_hrfreq_windows();
 MYS_API double mys_hrtime_windows();
 #endif
 
-//////// Legacy
-#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_HRTIME)
-MYS_API const char *hrname();
-MYS_API uint64_t hrtick();
-MYS_API uint64_t hrfreq();
-MYS_API double hrtime();
-#endif
-
-/******* AUX *******/
-
-#if defined(POSIX_COMPLIANCE)
-#include <stdlib.h>
-#include <unistd.h>
-MYS_STATIC uint64_t test_freq()
-{
-    uint64_t raw1 = hrtick();
-    sleep(1);
-    uint64_t raw2 = hrtick();
-    return raw2 - raw1;
-}
-#endif
-
-MYS_STATIC double mys_hrfreq_check() {
-    double ticks[16];
-
-    int n = sizeof(ticks) / sizeof(double);
-    for (int i = 0; i < n; i++) {
-        double t1 = mys_hrtick();
-        double t2 = 0;
-        size_t count = 0;
-        while ((t2 = mys_hrtick()) - t1 < 1e-6)
-            count++;
-        ticks[i] = (t2 - t1) / (double)count;
-    }
-
-    double tick = FLT_MAX;
-    for (int i = 1; i < n; i++)
-        if (ticks[i] < tick) tick = ticks[i];
-
-    return tick;
-}
-
 
 /* g++ -std=c++11 -I../include -lm ./a.cpp && ./a.out
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#define MYS_IMPL
+#include <mys.h>
 
 int main(int argc, const char **argv)
 {
     uint64_t n = 1000000000;
     double t = 0;
-    double t1 = hrtime();
+    double t1 = mys_hrtime();
     for (uint64_t i = 0; i < n; i++) {
-        t += hrtime();
+        t += mys_hrtime();
     }
-    double t2 = hrtime();
+    double t2 = mys_hrtime();
     double tdiff = t2 - t1;
     DEBUG(0, "tdiff %E/%llu=%E seconds", tdiff, n, tdiff/(double)n);
 }

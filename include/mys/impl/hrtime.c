@@ -199,6 +199,39 @@ MYS_API double mys_hrtime_posix() {
 }
 #endif
 
+#if defined(MYS_ENABLED_HRTIMER_CXX)
+#include <chrono>
+mys_thread_local struct {
+    bool inited;
+    std::chrono::time_point<std::chrono::steady_clock> start;
+} _mys_hrtime_cxx_G = {
+    .inited = false,
+    .start = std::chrono::time_point<std::chrono::steady_clock>(),
+};
+const char *mys_hrname_cxx() {
+    return "High-resolution timer by std::chrono::steady_clock::now() in <chrono>";
+}
+static void _mys_hrtick_cxx_init() {
+    if (_mys_hrtime_cxx_G.inited == false) {
+        _mys_hrtime_cxx_G.start = std::chrono::steady_clock::now();
+        _mys_hrtime_cxx_G.inited = true;
+    }
+}
+uint64_t mys_hrtick_cxx() {
+    _mys_hrtick_cxx_init();
+    auto t = std::chrono::steady_clock::now();
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(t - _mys_hrtime_cxx_G.start).count();
+}
+uint64_t mys_hrfreq_cxx() {
+    return 1000000000;
+}
+double mys_hrtime_cxx() {
+    _mys_hrtick_cxx_init();
+    auto t = std::chrono::steady_clock::now();
+    return std::chrono::duration<double>(t - _mys_hrtime_cxx_G.start).count();
+}
+#endif
+
 #if defined(MYS_ENABLED_HRTIMER_WINDOWS)
 /*
  * https://stackoverflow.com/a/5801863
@@ -277,27 +310,5 @@ MYS_API uint64_t mys_hrfreq_openmp() {
 }
 MYS_API double mys_hrtime_openmp() {
     return (double)mys_hrtick_openmp() / (double)mys_hrfreq_openmp();
-}
-#endif
-
-#if !defined(MYS_NO_LEGACY) && !defined(MYS_NO_LEGACY_HRTIME)
-MYS_API const char *hrname()
-{
-    return mys_hrname();
-}
-
-MYS_API uint64_t hrtick()
-{
-    return mys_hrtick();
-}
-
-MYS_API uint64_t hrfreq()
-{
-    return mys_hrfreq();
-}
-
-MYS_API double hrtime()
-{
-    return mys_hrtime();
 }
 #endif
