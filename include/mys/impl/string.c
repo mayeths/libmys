@@ -148,3 +148,136 @@ MYS_API void mys_string_fmt(mys_string_t str, const char *format, ...)
 finish:
     va_end(vargs);
 }
+
+MYS_API int mys_str_to_int(const char *str, int default_val)
+{
+    if (sizeof(int) == sizeof(int32_t))
+        return (int)mys_str_to_i32(str, default_val);
+    else
+        return (int)mys_str_to_i64(str, default_val);
+}
+
+MYS_API long mys_str_to_long(const char *str, long default_val)
+{
+    if (sizeof(long) == sizeof(int32_t))
+        return (long)mys_str_to_i32(str, default_val);
+    else
+        return (long)mys_str_to_i64(str, default_val);
+}
+
+MYS_API size_t mys_str_to_sizet(const char *str, size_t default_val)
+{
+    if (sizeof(size_t) == sizeof(uint32_t))
+        return (size_t)mys_str_to_u32(str, default_val);
+    else
+        return (size_t)mys_str_to_u64(str, default_val);
+}
+
+MYS_API double mys_str_to_double(const char *str, double default_val)
+{
+    return (double)mys_str_to_f64(str, default_val);
+}
+
+MYS_API float mys_str_to_float(const char *str, float default_val)
+{
+    return (float)mys_str_to_f32(str, default_val);
+}
+
+
+MYS_API uint64_t mys_str_to_u64(const char *str, uint64_t default_val)
+{
+    if (str == NULL)
+        return default_val;
+
+    char *stop = NULL;
+    errno = 0;
+    uint64_t num = strtoull(str, &stop, 0);
+    int error = errno;
+    errno = 0;
+
+    if (stop == str)
+        return default_val; /* contains with non-number */
+    if ((num == ULLONG_MAX) && error == ERANGE)
+        return default_val; /* number out of range for ULONG */
+    return num;
+}
+
+MYS_API uint32_t mys_str_to_u32(const char *str, uint32_t default_val)
+{
+    uint64_t num = mys_str_to_u64(str, (uint64_t)default_val);
+    if (num > UINT_MAX)
+        return default_val; /* number out of range for UINT */
+    return (uint32_t)num;
+}
+
+
+MYS_API int64_t mys_str_to_i64(const char *str, int64_t default_val)
+{
+    if (str == NULL)
+        return default_val;
+
+    char *stop = NULL;
+    errno = 0;
+    int64_t num = strtoll(str, &stop, 0);
+    int error = errno;
+    errno = 0;
+
+    if (stop == str)
+        return default_val; /* contains with non-number */
+    if ((num == LLONG_MAX || num == LLONG_MIN) && error == ERANGE)
+        return default_val; /* number out of range for LONG */
+    return num;
+}
+
+MYS_API int32_t mys_str_to_i32(const char *str, int32_t default_val)
+{
+    int64_t num = mys_str_to_i64(str, (int64_t)default_val);
+    if ((num < INT_MIN) || (num > INT_MAX))
+        return default_val; /* number out of range for INT */
+    return (int32_t)num;
+}
+
+MYS_API double mys_str_to_f64(const char *str, double default_val)
+{
+    if (str == NULL)
+        return default_val;
+
+    char *stop = NULL;
+    errno = 0;
+    double num = strtod(str, &stop);
+    int error = errno;
+    errno = 0;
+
+    if (stop == str)
+        return default_val; /* contains with non-number */
+    if (error == ERANGE)
+        return default_val; /* number out of range for DOUBLE */
+    if (num != num)
+        return default_val; /* Not A Number */
+    return num;
+}
+
+/*
+ * We don't assume to use IEEE754 arithmetic where
+ * default_val float->double->float is unchanged.
+ * Use strtof instead of mys_str_to_f64
+ */
+MYS_API float mys_str_to_f32(const char *str, float default_val)
+{
+    if (str == NULL)
+        return default_val;
+
+    char *stop = NULL;
+    errno = 0;
+    float num = strtof(str, &stop);
+    int error = errno;
+    errno = 0;
+
+    if (stop == str)
+        return default_val; /* contains with non-number */
+    if (error == ERANGE)
+        return default_val; /* number out of range for FLOAT */
+    if (num != num)
+        return default_val; /* Not A Number */
+    return num;
+}
