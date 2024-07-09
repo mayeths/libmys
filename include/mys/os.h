@@ -14,6 +14,7 @@
 #include "mpi.h"
 #include "macro.h"
 #include "thread.h"
+#include "string.h"
 
 #if defined(POSIX_COMPLIANCE)
 #include <unistd.h>
@@ -205,6 +206,11 @@ MYS_API int mys_numa_move(void *ptr, int numa_id);
 
 
 MYS_API const char *mys_env_str(const char *name, const char *default_val);
+MYS_API int mys_env_int(const char *name, int default_val);
+MYS_API long mys_env_long(const char *name, long default_val);
+MYS_API size_t mys_env_sizet(const char *name, size_t default_val);
+MYS_API uint64_t mys_env_u64(const char *name, uint64_t default_val);
+MYS_API uint32_t mys_env_u32(const char *name, uint32_t default_val);
 MYS_API int64_t mys_env_i64(const char *name, int64_t default_val);
 MYS_API int32_t mys_env_i32(const char *name, int32_t default_val);
 MYS_API double mys_env_f64(const char *name, double default_val);

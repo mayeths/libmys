@@ -503,52 +503,44 @@ MYS_API const char *mys_env_str(const char *name, const char *default_val)
     return val;
 }
 
+MYS_API int mys_env_int(const char *name, int default_val)
+{
+    return mys_str_to_int(getenv(name), default_val);
+}
+
+MYS_API long mys_env_long(const char *name, long default_val)
+{
+    return mys_str_to_long(getenv(name), default_val);
+}
+
+MYS_API size_t mys_env_sizet(const char *name, size_t default_val)
+{
+    return mys_str_to_sizet(getenv(name), default_val);
+}
+
+MYS_API uint64_t mys_env_u64(const char *name, uint64_t default_val)
+{
+    return mys_str_to_u64(getenv(name), default_val);
+}
+
+MYS_API uint32_t mys_env_u32(const char *name, uint32_t default_val)
+{
+    return mys_str_to_u32(getenv(name), default_val);
+}
+
 MYS_API int64_t mys_env_i64(const char *name, int64_t default_val)
 {
-    const char *str = getenv(name);
-    if (str == NULL)
-        return default_val;
-
-    char *stop = NULL;
-    errno = 0;
-    int64_t num = strtoll(str, &stop, 10);
-    int error = errno;
-    errno = 0;
-
-    if (stop == str)
-        return default_val; /* contains with non-number */
-    if ((num == LLONG_MAX || num == LLONG_MIN) && error == ERANGE)
-        return default_val; /* number out of range for LONG */
-    return num;
+    return mys_str_to_i64(getenv(name), default_val);
 }
 
 MYS_API int32_t mys_env_i32(const char *name, int32_t default_val)
 {
-    int64_t num = mys_env_i64(name, (int64_t)default_val);
-    if ((num < INT_MIN) || (num > INT_MAX))
-        return default_val; /* number out of range for INT */
-    return (int32_t)num;
+    return mys_str_to_i32(getenv(name), default_val);
 }
 
 MYS_API double mys_env_f64(const char *name, double default_val)
 {
-    const char *str = getenv(name);
-    if (str == NULL)
-        return default_val;
-
-    char *stop = NULL;
-    errno = 0;
-    double num = strtod(str, &stop);
-    int error = errno;
-    errno = 0;
-
-    if (stop == str)
-        return default_val; /* contains with non-number */
-    if (error == ERANGE)
-        return default_val; /* number out of range for DOUBLE */
-    if (num != num)
-        return default_val; /* Not A Number */
-    return num;
+    return mys_str_to_f64(getenv(name), default_val);
 }
 
 /*
@@ -558,21 +550,5 @@ MYS_API double mys_env_f64(const char *name, double default_val)
  */
 MYS_API float mys_env_f32(const char *name, float default_val)
 {
-    const char *str = getenv(name);
-    if (str == NULL)
-        return default_val;
-
-    char *stop = NULL;
-    errno = 0;
-    float num = strtof(str, &stop);
-    int error = errno;
-    errno = 0;
-
-    if (stop == str)
-        return default_val; /* contains with non-number */
-    if (error == ERANGE)
-        return default_val; /* number out of range for FLOAT */
-    if (num != num)
-        return default_val; /* Not A Number */
-    return num;
+    return mys_str_to_f32(getenv(name), default_val);
 }
