@@ -201,12 +201,12 @@ MYS_API double mys_hrtime_posix() {
 
 #if defined(MYS_ENABLED_HRTIMER_CXX)
 #include <chrono>
-mys_thread_local struct {
+thread_local struct {
     bool inited;
     std::chrono::time_point<std::chrono::steady_clock> start;
 } _mys_hrtime_cxx_G = {
     .inited = false,
-    .start = std::chrono::time_point<std::chrono::steady_clock>(),
+    .start = {},
 };
 const char *mys_hrname_cxx() {
     return "High-resolution timer by std::chrono::steady_clock::now() in <chrono>";
