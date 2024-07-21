@@ -30,5 +30,12 @@
 #define MYS_MACRO2STR_HELPER(x) #x
 #define MYS_MACRO2STR(x) MYS_MACRO2STR_HELPER(x)
 
-#define MYS_ALIGN_UP(value, alignment)   (((value) + (alignment) - 1) & ~((alignment) - 1))
-#define MYS_ALIGN_DOWN(value, alignment) (((value)                  ) & ~((alignment) - 1))
+// Round up to the nearest multiple of alignment. For non-power of 2 alignment, use MYS_ROUND_UP()
+#define MYS_ALIGN_UP(n, alignment)   (((n) + (alignment) - 1) & ~((alignment) - 1))
+// Round down to the nearest multiple of alignment. For non-power of 2 alignment, use MYS_ROUND_DOWN()
+#define MYS_ALIGN_DOWN(n, alignment) (((n)                  ) & ~((alignment) - 1))
+
+// Round up integer n to the nearest multiple of width.
+#define MYS_ROUND_UP(n, width)   (((n) + (width) - 1) / (width) * (width))
+// Round down integer n to the nearest multiple of width.
+#define MYS_ROUND_DOWN(n, width) (((n)              ) / (width) * (width))
