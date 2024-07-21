@@ -38,6 +38,7 @@
 #define ASSERT(exp, fmt, ...) do { _ASX(exp, fmt, ##__VA_ARGS__);                   } while(0)
 #define ABORT(code)           do { _ASX(false, "Abort by demand. (code %d)", code); } while(0)
 #define FAILED(fmt, ...)      do { _ASX(false, fmt, ##__VA_ARGS__);                 } while(0)
+#define THROW_NOT_IMPL()      do { _ASX(false, "Not implemented.");                 } while(0)
 #define CHKRET(fncall)        do { const int   _v_ = fncall; _ASX(_v_ == 0,    "Expect (%s) return 0 but %d.",        #fncall, _v_); } while (0) /* Validate return value */
 #define CHKPTR(fncall)        do { const void *_v_ = fncall; _ASX(_v_ != NULL, "Expect (%s) return non-NULL but %p.", #fncall, _v_); } while (0) /* Validate pointer */
 

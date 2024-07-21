@@ -4,6 +4,8 @@
 
 ////// Internal
 
+#define MYS_LOG_MAX_HANDLER 128
+
 typedef struct {
     char *key;
     _mys_UT_hash_handle hh;
@@ -19,7 +21,7 @@ typedef struct {
         mys_log_handler_fn fn;
         void *udata;
         int id;
-    } handlers[128];
+    } handlers[MYS_LOG_MAX_HANDLER];
 } _mys_log_G_t;
 
 static void _mys_log_stdio_handler(mys_log_event_t *event, const char *fmt, va_list vargs, void *udata);
@@ -202,14 +204,14 @@ MYS_API int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_uda
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
     int used_max_id = INT32_MIN;
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i < MYS_LOG_MAX_HANDLER; i++) {
         if (_mys_log_G.handlers[i].fn == NULL)
             break;
         if (used_max_id < _mys_log_G.handlers[i].id)
             used_max_id = _mys_log_G.handlers[i].id;
     }
     int id = used_max_id + 1;
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i < MYS_LOG_MAX_HANDLER; i++) {
         if (_mys_log_G.handlers[i].fn != NULL)
             continue;
         _mys_log_G.handlers[i].fn = handler_fn;
@@ -225,13 +227,13 @@ MYS_API void mys_log_remove_handler(int handler_id)
 {
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i < MYS_LOG_MAX_HANDLER; i++) {
         if (_mys_log_G.handlers[i].id != handler_id)
             continue;
         _mys_log_G.handlers[i].fn = NULL;
         _mys_log_G.handlers[i].udata = NULL;
         _mys_log_G.handlers[i].id = 0;
-        for (int j = i + 1; j < 128; j++) {
+        for (int j = i + 1; j < MYS_LOG_MAX_HANDLER; j++) {
             if (_mys_log_G.handlers[j].fn == NULL)
                 break;
             _mys_log_G.handlers[j - 1].fn = _mys_log_G.handlers[j].fn;
@@ -245,7 +247,7 @@ MYS_API void mys_log_remove_handler(int handler_id)
 
 MYS_API void mys_log_invoke_handlers(mys_log_event_t *event, const char *fmt, va_list vargs)
 {
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i < MYS_LOG_MAX_HANDLER; i++) {
         if (_mys_log_G.handlers[i].fn == NULL)
             break;
         va_list vargs_copy;
