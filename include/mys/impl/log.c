@@ -1,13 +1,20 @@
 #include "_private.h"
 #include "../log.h"
+#include "uthash_hash.h"
 
 ////// Internal
+
+typedef struct {
+    char *key;
+    _mys_UT_hash_handle hh;
+} _mys_log_once_t;
 
 typedef struct {
     bool inited;
     mys_mutex_t lock;
     int level;
     bool silent;
+    _mys_log_once_t *once_map;
     struct {
         mys_log_handler_fn fn;
         void *udata;
@@ -15,13 +22,14 @@ typedef struct {
     } handlers[128];
 } _mys_log_G_t;
 
-static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata);
+static void _mys_log_stdio_handler(mys_log_event_t *event, const char *fmt, va_list vargs, void *udata);
 
 static _mys_log_G_t _mys_log_G = {
     .inited = false,
     .lock = MYS_MUTEX_INITIALIZER,
     .level = MYS_LOG_TRACE,
     .silent = false,
+    .once_map = NULL,
     .handlers = {
 #ifndef MYS_LOG_DISABLE_STDOUT_HANDLER
         { .fn = _mys_log_stdio_handler, .udata = NULL, .id = 10000 },
@@ -39,7 +47,7 @@ MYS_API void mys_log_init()
     mys_mutex_unlock(&_mys_log_G.lock);
 }
 
-MYS_API void mys_log(int who, int level, const char *file, int line, const char *fmt, ...)
+MYS_STATIC void _mys_log_impl(int who, int level, const char *file, int line, const char *fmt, va_list vargs)
 {
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
@@ -56,19 +64,67 @@ MYS_API void mys_log(int who, int level, const char *file, int line, const char 
         event.level = level;
         event.file = (strrchr(file, '/') ? strrchr(file, '/') + 1 : file);
         event.line = line;
-        event.fmt = fmt;
         event.no_vargs = false;
         if (fmt == NULL) {
             event.level = MYS_LOG_FATAL;
-            event.fmt = "Calling mys_log with NULL format string. Do you call LOG_SELF(0, \"...\") or LOG(rank, NULL)?";
+            fmt = "Calling mys_log with NULL format string. Do you call LOG_SELF(0, \"...\") or LOG(rank, NULL)?";
             event.no_vargs = true;
         }
-        va_start(event.vargs, fmt);
-        mys_log_invoke_handlers(&event);
-        va_end(event.vargs);
+        mys_log_invoke_handlers(&event, fmt, vargs);
     }
     mys_mutex_unlock(&_mys_log_G.lock);
 }
+
+MYS_API void mys_log(int who, int level, const char *file, int line, const char *fmt, ...)
+{
+    va_list vargs;
+    va_start(vargs, fmt);
+    _mys_log_impl(who, level, file, line, fmt, vargs);
+    va_end(vargs);
+}
+
+MYS_API void mys_log_when(int cond, int level, const char *file, int line, const char *fmt, ...)
+{
+    if (cond == 0)
+        return;
+    va_list vargs;
+    va_start(vargs, fmt);
+    _mys_log_impl(mys_mpi_myrank(), level, file, line, fmt, vargs);
+    va_end(vargs);
+}
+
+MYS_API void mys_log_self(int level, const char *file, int line, const char *fmt, ...)
+{
+    va_list vargs;
+    va_start(vargs, fmt);
+    _mys_log_impl(mys_mpi_myrank(), level, file, line, fmt, vargs);
+    va_end(vargs);
+}
+
+MYS_API void mys_log_once(int level, const char *file, int line, const char *fmt, ...)
+{
+    // log once according to file and line as key. Use a map to store the key. Use uthash
+    // try to find if we already log once
+    char key[1024];
+    snprintf(key, sizeof(key), "%s:%d", file, line);
+    mys_mutex_lock(&_mys_log_G.lock);
+    _mys_log_once_t *entry;
+    _HASH_FIND_STR(_mys_log_G.once_map, key, entry);
+
+    // if we didn't log once
+    if (entry == NULL) {
+        // add record to the map
+        _mys_log_once_t *new_entry = (_mys_log_once_t *)malloc(sizeof(_mys_log_once_t));
+        new_entry->key = strndup(key, sizeof(key));
+        _HASH_ADD_STR(_mys_log_G.once_map, key, new_entry);
+        // log
+        va_list vargs;
+        va_start(vargs, fmt);
+        _mys_log_impl(mys_mpi_myrank(), level, file, line, fmt, vargs);
+        va_end(vargs);
+    }
+}
+
 
 MYS_API void mys_log_ordered(int level, const char *file, int line, const char *fmt, ...)
 {
@@ -91,18 +147,18 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
         event.level = level;
         event.file = (strrchr(file, '/') ? strrchr(file, '/') + 1 : file);
         event.line = line;
-        event.fmt = fmt;
         event.no_vargs = false;
         bool broken = false;
         if (fmt == NULL) {
             event.level = MYS_LOG_FATAL;
-            event.fmt = "Calling mys_log with NULL format string. Do you call LOG_SELF(0, \"...\") or LOG(rank, NULL)?";
+            fmt = "Calling mys_log with NULL format string. Do you call LOG_SELF(0, \"...\") or LOG(rank, NULL)?";
             event.no_vargs = true;
             broken = true;
         }
-        va_start(event.vargs, fmt);
-        mys_log_invoke_handlers(&event);
-        va_end(event.vargs);
+        va_list vargs;
+        va_start(vargs, fmt);
+        mys_log_invoke_handlers(&event, fmt, vargs);
+        va_end(vargs);
         char buffer[4096];
         for (int rank = 1; rank < nranks; rank++) {
             _mys_MPI_Status status;
@@ -114,9 +170,9 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
 
             if (!broken) {
                 event.myrank = rank;
-                event.fmt = ptr;
+                fmt = ptr;
                 event.no_vargs = true;
-                mys_log_invoke_handlers(&event);
+                mys_log_invoke_handlers(&event, fmt, vargs);
             }
             if (ptr != buffer)
                 free(ptr);
@@ -187,12 +243,15 @@ MYS_API void mys_log_remove_handler(int handler_id)
     mys_mutex_unlock(&_mys_log_G.lock);
 }
 
-MYS_API void mys_log_invoke_handlers(mys_log_event_t *event)
+MYS_API void mys_log_invoke_handlers(mys_log_event_t *event, const char *fmt, va_list vargs)
 {
     for (int i = 0; i < 128; i++) {
         if (_mys_log_G.handlers[i].fn == NULL)
             break;
-        _mys_log_G.handlers[i].fn(event, _mys_log_G.handlers[i].udata);
+        va_list vargs_copy;
+        va_copy(vargs_copy, vargs);
+        _mys_log_G.handlers[i].fn(event, fmt, vargs_copy, _mys_log_G.handlers[i].udata);
+        va_end(vargs_copy);
     }
 }
 
@@ -229,7 +288,8 @@ MYS_API const char* mys_log_level_string(int level)
     return level_strings[(int)level];
 }
 
-static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata) {
+static void _mys_log_stdio_handler(mys_log_event_t *event, const char *fmt, va_list vargs, void *udata)
+{
     FILE *file = udata != NULL ? (FILE *)udata : stdout;
 
     char base_label[256] = {'\0'};
@@ -267,9 +327,9 @@ static void _mys_log_stdio_handler(mys_log_event_t *event, void *udata) {
     }
 
     if (event->no_vargs) {
-        fprintf(file, "%s", event->fmt);
+        fprintf(file, "%s", fmt);
     } else {
-        vfprintf(file, event->fmt, event->vargs);
+        vfprintf(file, fmt, vargs);
     }
     fprintf(file, "\n");
     fflush(file);

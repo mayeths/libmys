@@ -35,7 +35,10 @@ enum {
  * Print log message with 'TRACE' level ( [less important->] TDIWEFR [->most important] )
  */
 #define TLOG(who, fmt, ...) mys_log(who, MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
-#define TLOG_SELF(fmt, ...) mys_log(mys_mpi_myrank(), MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+// Refactor and add
+#define TLOG_WHEN(cond, fmt, ...) mys_log_when((cond), MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TLOG_ONCE(fmt, ...)       mys_log_once(MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
+#define TLOG_SELF(fmt, ...)       mys_log_self(MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define TLOG_ORDERED(fmt, ...) mys_log_ordered(MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'DEBUG' level ( [less important->] TDIWEFR [->most important] )
@@ -95,21 +98,20 @@ typedef struct {
     int level;
     const char *file;
     int line;
-    const char *fmt;
     bool no_vargs; // true when fmt is the final string
-    va_list vargs;
 } mys_log_event_t;
 
-typedef void (*mys_log_handler_fn)(mys_log_event_t *event, void *udata);
+typedef void (*mys_log_handler_fn)(mys_log_event_t *event, const char *fmt, va_list vargs, void *udata);
 
 /////// log
-__attribute__((format(printf, 5, 6)))
-MYS_API void mys_log(int who, int level, const char *file, int line, const char *fmt, ...);
-__attribute__((format(printf, 4, 5)))
-MYS_API void mys_log_ordered(int level, const char *file, int line, const char *fmt, ...);
+__attribute__((format(printf, 5, 6))) MYS_API void mys_log(int who, int level, const char *file, int line, const char *fmt, ...);
+__attribute__((format(printf, 5, 6))) MYS_API void mys_log_when(int cond, int level, const char *file, int line, const char *fmt, ...);
+__attribute__((format(printf, 4, 5))) MYS_API void mys_log_self(int level, const char *file, int line, const char *fmt, ...);
+__attribute__((format(printf, 4, 5))) MYS_API void mys_log_once(int level, const char *file, int line, const char *fmt, ...);
+__attribute__((format(printf, 4, 5))) MYS_API void mys_log_ordered(int level, const char *file, int line, const char *fmt, ...);
 MYS_API int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_udata);
 MYS_API void mys_log_remove_handler(int handler_id);
-MYS_API void mys_log_invoke_handlers(mys_log_event_t *event);
+MYS_API void mys_log_invoke_handlers(mys_log_event_t *event, const char *fmt, va_list vargs);
 MYS_API int mys_log_get_level();
 MYS_API void mys_log_set_level(int level);
 MYS_API void mys_log_silent(bool silent);
