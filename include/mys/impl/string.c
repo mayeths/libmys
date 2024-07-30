@@ -92,61 +92,65 @@ MYS_API void mys_readable_size(char **ptr, size_t bytes, size_t precision)
     snprintf(*ptr, len, "%.*f %s", (int)precision, size, units[i]);
 }
 
-// https://stackoverflow.com/a/466242/11702338
-static size_t _mys_round_ceil_2_power(size_t num)
+MYS_API mys_string_t *mys_string_create()
 {
-    --num;
-    num |= num >> 1;
-    num |= num >> 2;
-    num |= num >> 4;
-    num |= num >> 8;
-    num |= num >> 16;
-#if SIZE_MAX == UINT64_MAX
-    num |= num >> 32;
-#endif
-    return ++num;
-}
-
-MYS_API mys_string_t mys_string_create()
-{
-    mys_string_t str = (mys_string_t)malloc(sizeof(struct mys_string_struct));
-    str->text = NULL;
+    mys_string_t *str = (mys_string_t *)malloc(sizeof(mys_string_t));
+    if (!str)
+        return NULL;
+    str->capacity = 16;
     str->size = 0;
-    str->capacity = 0;
+    str->text = (char *)malloc(str->capacity);
+    if (!str->text) {
+        free(str);
+        return NULL;
+    }
+    str->text[0] = '\0';
+
     return str;
 }
 
-MYS_API void mys_string_destroy(mys_string_t str)
+MYS_API void mys_string_destroy(mys_string_t **str)
 {
     if (str != NULL) {
-        if (str->text != NULL)
-            free(str->text);
+        if ((*str)->text != NULL)
+            free((*str)->text);
         free(str);
     }
+    *str = NULL;
 }
 
-MYS_API void mys_string_fmt(mys_string_t str, const char *format, ...)
+MYS_API int mys_string_fmt(mys_string_t *str, const char *format, ...)
 {
+    int written = -1;
+    int needed = 0;
     va_list vargs, vargs_copy;
     va_start(vargs, format);
 
-    va_copy(vargs_copy, vargs);
-    int needed = vsnprintf(NULL, 0, format, vargs_copy) + 1; // Extra space for '\0'
-    va_end(vargs_copy);
-    if (needed <= 0)
+    if (str == NULL || format == NULL)
         goto finish;
 
-    if (str->capacity - str->size < (size_t)needed) {
-        size_t new_capacity = _mys_round_ceil_2_power(str->capacity + (size_t)needed);
+    va_copy(vargs_copy, vargs);
+    needed = vsnprintf(NULL, 0, format, vargs_copy);
+    va_end(vargs_copy);
+    if (needed < 0)
+        goto finish;
+
+    if (str->capacity < str->size + needed + 1/*'\0'*/) {
+        size_t new_capacity = str->capacity;
+        while (new_capacity < str->size + needed + 1) {
+            new_capacity *= 2; // Double the capacity
+        }
         char *new_text = (char *)realloc(str->text, new_capacity);
         if (new_text == NULL)
             goto finish;
         str->text = new_text;
         str->capacity = new_capacity;
     }
-    str->size += vsnprintf(str->text + str->size, str->capacity - str->size, format, vargs);
+    written = vsnprintf(str->text + str->size, str->capacity - str->size, format, vargs);
+    str->size += written;
 finish:
     va_end(vargs);
+    return written;
 }
 
 MYS_API int mys_str_to_int(const char *str, int default_val)
