@@ -17,3 +17,6 @@ basic: basic-gcc.c
 
 test-pool: test-pool.c
 	$(CC) $(CFLAGS) $(LFLAGS) $^
+
+test-memory: test-memory.c
+	$(CC) $(CFLAGS) $(LFLAGS) $^

@@ -14,6 +14,35 @@
 #include "_config.h"
 #include "macro.h"
 
+typedef struct mys_arena_t {
+    char name[32];
+    size_t peak; // memory bytes that peak alive
+    size_t alive; // memory bytes that being used
+    size_t freed; // memory bytes that freed
+    size_t total; // memory bytes that total allocated
+    bool _reged;
+} mys_arena_t;
+
+MYS_API extern mys_arena_t _mys_predefined_arena_ext;
+MYS_API extern mys_arena_t _mys_predefined_arena_log;
+#define mys_arena_ext ((mys_arena_t *)(&_mys_predefined_arena_ext))
+#define mys_arena_log ((mys_arena_t *)(&_mys_predefined_arena_log))
+
+// For external use (using mys_arena_ext)
+MYS_API void* mys_malloc(size_t size);
+MYS_API void* mys_calloc(size_t count, size_t size);
+MYS_API void* mys_aligned_alloc(size_t alignment, size_t size);
+MYS_API void* mys_realloc(void* ptr, size_t size);
+MYS_API void mys_free(void* ptr);
+
+MYS_API mys_arena_t *mys_arena_create(const char *name);
+MYS_API void mys_arena_destroy(mys_arena_t **arena);
+MYS_API void* mys_malloc2(mys_arena_t *arena, size_t size);
+MYS_API void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size);
+MYS_API void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t size);
+MYS_API void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size);
+MYS_API void mys_free2(mys_arena_t *arena, void* ptr, size_t _size);
+
 /* Cache clean */
 MYS_API void mys_cache_flush(size_t nbytes);
 

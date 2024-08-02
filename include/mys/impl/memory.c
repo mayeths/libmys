@@ -97,3 +97,214 @@ MYS_API void mys_cache_flush(size_t nbytes)
     mys_atomic_fence(MYS_ATOMIC_RELEASE);
     free(arr);
 }
+
+mys_arena_t _mys_predefined_arena_ext = { /*name=*/"external", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
+mys_arena_t _mys_predefined_arena_log = { /*name=*/"mys_log", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
+
+typedef struct _mys_memory_G_t {
+    mys_mutex_t lock;
+    mys_arena_t **registered_arenas;
+    size_t arena_size;
+    size_t arena_capacity;
+} _mys_memory_G_t;
+
+static _mys_memory_G_t _mys_memory_G = {
+    .lock = MYS_MUTEX_INITIALIZER,
+    .registered_arenas = NULL,
+    .arena_size = 0,
+    .arena_capacity = 0,
+};
+
+MYS_STATIC void _mys_ensure_register_arena(mys_arena_t *arena)
+{
+    AS_NE_PTR(arena, NULL);
+    if (arena->_reged)
+        return;
+    mys_mutex_lock(&_mys_memory_G.lock);
+    {
+        if (_mys_memory_G.arena_size == _mys_memory_G.arena_capacity) {
+            size_t new_cap = (_mys_memory_G.arena_capacity == 0) ? 16 : _mys_memory_G.arena_capacity * 2;
+            void *p = realloc(_mys_memory_G.registered_arenas, new_cap * sizeof(mys_arena_t *));
+            AS_NE_PTR(p, NULL);
+            _mys_memory_G.registered_arenas = (mys_arena_t **)p;
+            _mys_memory_G.arena_capacity = new_cap;
+        }
+        _mys_memory_G.registered_arenas[_mys_memory_G.arena_size] = arena;
+        _mys_memory_G.arena_size += 1;
+        arena->_reged = true;
+    }
+    mys_mutex_unlock(&_mys_memory_G.lock);
+}
+
+MYS_STATIC void _mys_unregister_arena(mys_arena_t *arena)
+{
+    AS_NE_PTR(arena, NULL);
+    if (!arena->_reged)
+        return;
+    mys_mutex_lock(&_mys_memory_G.lock);
+    {
+        for (size_t i = 0; i < _mys_memory_G.arena_size; i++) {
+            if (_mys_memory_G.registered_arenas[i] == arena) {
+                _mys_memory_G.registered_arenas[i] = NULL;
+                for (size_t j = i + 1; j < _mys_memory_G.arena_size; j++) {
+                    if (_mys_memory_G.registered_arenas[j] == NULL)
+                        break;
+                    _mys_memory_G.registered_arenas[j - 1] = _mys_memory_G.registered_arenas[j];
+                }
+                break;
+            }
+        }
+        _mys_memory_G.arena_size -= 1;
+        arena->_reged = false;
+    }
+    mys_mutex_unlock(&_mys_memory_G.lock);
+}
+
+MYS_API mys_arena_t *mys_arena_create(const char *name)
+{
+    mys_arena_t *arena = (mys_arena_t *)malloc(sizeof(mys_arena_t));
+    if (arena == NULL)
+        return NULL;
+    strncpy(arena->name, name, sizeof(arena->name));
+    arena->peak = 0;
+    arena->alive = 0;
+    arena->freed = 0;
+    arena->total = 0;
+    arena->_reged = false;
+    _mys_ensure_register_arena(arena);
+    return arena;
+}
+
+MYS_API void mys_arena_destroy(mys_arena_t **arena)
+{
+    AS_NE_PTR(arena, NULL);
+    if (*arena == NULL)
+        return;
+    _mys_unregister_arena(*arena);
+    free(*arena);
+    *arena = NULL;
+}
+
+MYS_API void* mys_malloc2(mys_arena_t *arena, size_t size)
+{
+    AS_NE_PTR(arena, NULL);
+    _mys_ensure_register_arena(arena);
+    void *p = malloc(size);
+    if (p != NULL) {
+        arena->alive += size;
+        arena->total += size;
+        AS_EQ_SIZET(arena->total, arena->alive + arena->freed);
+        if (arena->peak < arena->alive)
+            arena->peak = arena->alive;
+    }
+    return p;
+}
+
+MYS_API void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size)
+{
+    AS_NE_PTR(arena, NULL);
+    _mys_ensure_register_arena(arena);
+    void *p = calloc(count, size);
+    if (p != NULL) {
+        arena->alive += size;
+        arena->total += size;
+        AS_EQ_SIZET(arena->total, arena->alive + arena->freed);
+        if (arena->peak < arena->alive)
+            arena->peak = arena->alive;
+    }
+    return p;
+}
+
+MYS_API void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t size)
+{
+    AS_NE_PTR(arena, NULL);
+    _mys_ensure_register_arena(arena);
+    void *p = NULL;
+#if defined(_ISOC11_SOURCE) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)) // C11
+    p = aligned_alloc(alignment, size);
+#elif defined(_MSC_VER) // Microsoft
+    p = _aligned_malloc(size, alignment);
+#elif defined(__APPLE__) || defined(__MACH__) || defined(__GNUC__) || defined(__clang__) // POSIX
+    if (posix_memalign(&p, alignment, size) != 0)
+        p = NULL;
+#else
+    #error Unsupported
+#endif
+    if (p != NULL) {
+        arena->alive += size;
+        arena->total += size;
+        AS_EQ_SIZET(arena->total, arena->alive + arena->freed);
+        if (arena->peak < arena->alive)
+            arena->peak = arena->alive;
+    }
+    return p;
+}
+
+MYS_API void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size)
+{
+    AS_NE_PTR(arena, NULL);
+    _mys_ensure_register_arena(arena);
+    void *p = realloc(ptr, size);
+    if (p != NULL) {
+        arena->alive -= _old_size;
+        arena->freed += _old_size;
+        arena->alive += size;
+        arena->total += size;
+        AS_EQ_SIZET(arena->total, arena->alive + arena->freed);
+        if (arena->peak < arena->alive)
+            arena->peak = arena->alive;
+    }
+    return p;
+}
+
+
+MYS_API void mys_free2(mys_arena_t *arena, void* ptr, size_t _size)
+{
+    AS_NE_PTR(arena, NULL);
+    _mys_ensure_register_arena(arena);
+    if (ptr != NULL) {
+        arena->alive -= _size;
+        arena->freed += _size;
+        AS_EQ_SIZET(arena->total, arena->alive + arena->freed);
+    }
+    free(ptr);
+}
+
+MYS_API void* mys_malloc(size_t size)
+{
+    return mys_malloc2(mys_arena_ext, size);
+}
+
+MYS_API void* mys_calloc(size_t count, size_t size)
+{
+    return mys_calloc2(mys_arena_ext, count, size);
+}
+
+MYS_API void* mys_aligned_alloc(size_t alignment, size_t size)
+{
+    return mys_aligned_alloc2(mys_arena_ext, alignment, size);
+}
+
+MYS_API void* mys_realloc(void* ptr, size_t size)
+{
+    (void)ptr;
+    (void)size;
+    THROW_NOT_IMPL();
+    // FIXME: we require passing _old_size to mys_memory_reallocator, like c++ allocator do.
+    // This can help us don't have to trace ptr size internally.
+    // If you want to trace it, then trace it youself.
+    // Therefore, mys_arena_ext should trace size by itself, instead of asking mys_realloc2 to trace
+    // return mys_realloc2(mys_arena_ext, ptr, size, _old_size);
+    return NULL;
+}
+
+MYS_API void mys_free(void* ptr)
+{
+    (void)ptr;
+    THROW_NOT_IMPL();
+    // FIXME: we require passing size to mys_free2, like c++ allocator do.
+    // This can help us don't have to trace ptr size internally.
+    // If you want to trace it, then trace it youself.
+    // Therefore, mys_arena_ext should trace size by itself, instead of asking mys_free2 to trace
+    // return mys_free2(mys_arena_ext, ptr, size);
+}
