@@ -68,7 +68,31 @@ MYS_API void mys_debug_clear_timeout();
 #define mys_debug_set_timeout(timeout_sec) _mys_debug_set_timeout(timeout_sec, __FILE__, __LINE__)
 
 
+/**
+ * @brief Set the maximum number of stack frames to be printed in a backtrace.
+ *
+ * @param max_frames Maximum number of stack frames
+ */
+MYS_API void mys_debug_set_max_frames(int max_frames);
+/**
+ * @brief Get the maximum number of stack frames to be printed in a backtrace.
+ *
+ * @return Maximum number of stack frames
+ */
+MYS_API int mys_debug_get_max_frames();
 
+/**
+ * @brief Add a filter string to exclude matching stack frames from the backtrace.
+ *
+ * @param match_str Filter string to match stack frames
+ */
+MYS_API void mys_debug_add_stack_filter(const char *match_str);
+/**
+ * @brief Remove a filter string that excludes matching stack frames from the backtrace.
+ *
+ * @param match_str Filter string to be removed
+ */
+MYS_API void mys_debug_del_stack_filter(const char *match_str);
 
 
 
