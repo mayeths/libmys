@@ -20,14 +20,24 @@ static void _mys_rand_init()
     _mys_rand_G.inited = true;
 }
 
-MYS_API void mys_rand_srand(uint64_t a0, uint64_t a1)
+MYS_API void mys_rand_seed(uint64_t a0, uint64_t a1)
 {
     _mys_rand_init();
     _mys_rand_G.seed[0] = a0;
     _mys_rand_G.seed[1] = a1;
 }
 
-MYS_API void mys_rand_srand_hardware()
+MYS_API void mys_rand_seed_time()
+{
+    uint64_t t;
+    t = (uint64_t)time(NULL);
+    /* A(1010)5(0101) won't INVALID(1111_1111) again */
+    uint64_t a0 = (t << 32) | (t & 0xAAAA5555);
+    uint64_t a1 = UINT64_MAX - a0;
+    mys_rand_seed(a0, a1);
+}
+
+MYS_API void mys_rand_seed_hardware()
 {
     uint64_t t;
 #if defined(ARCH_X64)
@@ -37,12 +47,13 @@ MYS_API void mys_rand_srand_hardware()
 #elif defined(ARCH_AARCH64)
     __asm__ __volatile__("mrs %0, CNTVCT_EL0" : "=r"(t));
 #else
-    t = (uint64_t)time(NULL);
+    mys_rand_seed_time();
+    return;
 #endif
     /* A(1010)5(0101) won't INVALID(1111_1111) again */
     uint64_t a0 = (t << 32) | (t & 0xAAAA5555);
     uint64_t a1 = UINT64_MAX - a0;
-    mys_rand_srand(a0, a1);
+    mys_rand_seed(a0, a1);
 }
 
 static uint64_t _mys_rotl(const uint64_t x, int k)

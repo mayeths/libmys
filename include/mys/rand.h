@@ -25,12 +25,16 @@
  * 
  * @note By default, `mys_rand_xoroshiro128ss()` is seeded with `a0=0, a1=1`.
  */
-MYS_API void mys_rand_srand(uint64_t a0, uint64_t a1);
+MYS_API void mys_rand_seed(uint64_t a0, uint64_t a1);
+/**
+ * @brief Set the seed with `a0=0, a1=time(NULL)`.
+ */
+MYS_API void mys_rand_seed_time();
 /**
  * @brief Set the seed by querying some fast hardware performance counters.
- * @note On failure, it fallbacks to `a0=0, a1=time(NULL)`.
+ * @note On failure, it fallbacks to mys_rand_seed_time().
  */
-MYS_API void mys_rand_srand_hardware();
+MYS_API void mys_rand_seed_hardware();
 /**
  * @brief All-purpose, rock-solid, small-state pseudo-random number generator
  * 
@@ -240,7 +244,7 @@ int main(int argc , char **argv) {
     memset(buffer, 3, n * sizeof(data_t));
     memset(buffer, 0, n * sizeof(data_t));
 
-    // mys_rand_srand_hardware();
+    // mys_rand_seed_hardware();
     double t1 = mys_hrtime();
     rand_fn(buffer, n, mi, ma);
     double t2 = mys_hrtime();
