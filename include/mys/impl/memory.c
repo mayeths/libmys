@@ -100,19 +100,22 @@ MYS_API void mys_cache_flush(size_t nbytes)
 
 mys_arena_t _mys_predefined_arena_ext = { /*name=*/"external", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
 mys_arena_t _mys_predefined_arena_log = { /*name=*/"mys_log", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
+#define MYS_MAX_REGISTERED_ARENA 128
 
 typedef struct _mys_memory_G_t {
     mys_mutex_t lock;
-    mys_arena_t **registered_arenas;
+    // mys_arena_t **registered_arenas;
+    mys_arena_t *registered_arenas[MYS_MAX_REGISTERED_ARENA];
     size_t arena_size;
     size_t arena_capacity;
 } _mys_memory_G_t;
 
 static _mys_memory_G_t _mys_memory_G = {
     .lock = MYS_MUTEX_INITIALIZER,
-    .registered_arenas = NULL,
+    // .registered_arenas = NULL,
+    .registered_arenas = {NULL},
     .arena_size = 0,
-    .arena_capacity = 0,
+    .arena_capacity = MYS_MAX_REGISTERED_ARENA,
 };
 
 MYS_STATIC void _mys_ensure_register_arena(mys_arena_t *arena)
@@ -122,13 +125,15 @@ MYS_STATIC void _mys_ensure_register_arena(mys_arena_t *arena)
         return;
     mys_mutex_lock(&_mys_memory_G.lock);
     {
-        if (_mys_memory_G.arena_size == _mys_memory_G.arena_capacity) {
-            size_t new_cap = (_mys_memory_G.arena_capacity == 0) ? 16 : _mys_memory_G.arena_capacity * 2;
-            void *p = realloc(_mys_memory_G.registered_arenas, new_cap * sizeof(mys_arena_t *));
-            AS_NE_PTR(p, NULL);
-            _mys_memory_G.registered_arenas = (mys_arena_t **)p;
-            _mys_memory_G.arena_capacity = new_cap;
-        }
+        ASX_NE_SIZET(_mys_memory_G.arena_size, _mys_memory_G.arena_capacity,
+            "mys_memory_G support maximum %zu arenas only", _mys_memory_G.arena_capacity);
+        // if (_mys_memory_G.arena_size == _mys_memory_G.arena_capacity) {
+        //     size_t new_cap = (_mys_memory_G.arena_capacity == 0) ? 16 : _mys_memory_G.arena_capacity * 2;
+        //     void *p = realloc(_mys_memory_G.registered_arenas, new_cap * sizeof(mys_arena_t *));
+        //     AS_NE_PTR(p, NULL);
+        //     _mys_memory_G.registered_arenas = (mys_arena_t **)p;
+        //     _mys_memory_G.arena_capacity = new_cap;
+        // }
         _mys_memory_G.registered_arenas[_mys_memory_G.arena_size] = arena;
         _mys_memory_G.arena_size += 1;
         arena->_reged = true;
