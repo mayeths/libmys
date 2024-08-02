@@ -70,6 +70,7 @@ extern "C" {
 #endif
 #include "mys/os.h"
 #include "mys/linalg.h"
+#include "mys/pool.h"
 #include "mys/rand.h"
 #include "mys/statistic.h"
 #include "mys/string.h"
@@ -103,6 +104,7 @@ extern "C" {
 #include "mys/impl/hash.c"
 #include "mys/impl/checkpoint.c"
 #include "mys/impl/memory.c"
+#include "mys/impl/pool.c"
 #include "mys/impl/string.c"
 #include "mys/impl/guard.c"
 #ifndef MYS_NO_MPI
