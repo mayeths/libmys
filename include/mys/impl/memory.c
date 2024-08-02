@@ -98,13 +98,17 @@ MYS_PUBLIC void mys_cache_flush(size_t nbytes)
     free(arr);
 }
 
-MYS_STATIC mys_arena_t _mys_arena_ext = { /*name=*/"external", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
+MYS_STATIC mys_arena_t _mys_arena_std = { /*name=*/"mys_malloc*", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
 MYS_STATIC mys_arena_t _mys_arena_log = { /*name=*/"mys_log", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
 MYS_STATIC mys_arena_t _mys_arena_pool = { /*name=*/"mys_pool", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
+MYS_STATIC mys_arena_t _mys_arena_debug = { /*name=*/"mys_debug", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
+MYS_STATIC mys_arena_t _mys_arena_user = { /*name=*/"user", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
 
-mys_arena_t* mys_arena_ext = &_mys_arena_ext;
+mys_arena_t* mys_arena_std = &_mys_arena_std;
 mys_arena_t* mys_arena_log = &_mys_arena_log;
 mys_arena_t* mys_arena_pool = &_mys_arena_pool;
+mys_arena_t* mys_arena_debug = &_mys_arena_debug;
+mys_arena_t* mys_arena_user = &_mys_arena_user;
 
 #define MYS_MAX_REGISTERED_ARENA 128
 
@@ -304,41 +308,41 @@ MYS_PUBLIC void mys_free2(mys_arena_t *arena, void* ptr, size_t _size)
     free(ptr);
 }
 
-MYS_PUBLIC void* mys_malloc(size_t size)
-{
-    return mys_malloc2(mys_arena_ext, size);
-}
+// MYS_PUBLIC void* mys_malloc(size_t size)
+// {
+//     return mys_malloc2(mys_arena_std, size);
+// }
 
-MYS_PUBLIC void* mys_calloc(size_t count, size_t size)
-{
-    return mys_calloc2(mys_arena_ext, count, size);
-}
+// MYS_PUBLIC void* mys_calloc(size_t count, size_t size)
+// {
+//     return mys_calloc2(mys_arena_std, count, size);
+// }
 
-MYS_PUBLIC void* mys_aligned_alloc(size_t alignment, size_t size)
-{
-    return mys_aligned_alloc2(mys_arena_ext, alignment, size);
-}
+// MYS_PUBLIC void* mys_aligned_alloc(size_t alignment, size_t size)
+// {
+//     return mys_aligned_alloc2(mys_arena_std, alignment, size);
+// }
 
-MYS_PUBLIC void* mys_realloc(void* ptr, size_t size)
-{
-    (void)ptr;
-    (void)size;
-    THROW_NOT_IMPL();
-    // FIXME: we require passing _old_size to mys_memory_reallocator, like c++ allocator do.
-    // This can help us don't have to trace ptr size internally.
-    // If you want to trace it, then trace it youself.
-    // Therefore, mys_arena_ext should trace size by itself, instead of asking mys_realloc2 to trace
-    // return mys_realloc2(mys_arena_ext, ptr, size, _old_size);
-    return NULL;
-}
+// MYS_PUBLIC void* mys_realloc(void* ptr, size_t size)
+// {
+//     (void)ptr;
+//     (void)size;
+//     THROW_NOT_IMPL();
+//     // FIXME: we require passing _old_size to mys_memory_reallocator, like c++ allocator do.
+//     // This can help us don't have to trace ptr size internally.
+//     // If you want to trace it, then trace it youself.
+//     // Therefore, mys_arena_std should trace size by itself, instead of asking mys_realloc2 to trace
+//     // return mys_realloc2(mys_arena_std, ptr, size, _old_size);
+//     return NULL;
+// }
 
-MYS_PUBLIC void mys_free(void* ptr)
-{
-    (void)ptr;
-    THROW_NOT_IMPL();
-    // FIXME: we require passing size to mys_free2, like c++ allocator do.
-    // This can help us don't have to trace ptr size internally.
-    // If you want to trace it, then trace it youself.
-    // Therefore, mys_arena_ext should trace size by itself, instead of asking mys_free2 to trace
-    // return mys_free2(mys_arena_ext, ptr, size);
-}
+// MYS_PUBLIC void mys_free(void* ptr)
+// {
+//     (void)ptr;
+//     THROW_NOT_IMPL();
+//     // FIXME: we require passing size to mys_free2, like c++ allocator do.
+//     // This can help us don't have to trace ptr size internally.
+//     // If you want to trace it, then trace it youself.
+//     // Therefore, mys_arena_std should trace size by itself, instead of asking mys_free2 to trace
+//     // return mys_free2(mys_arena_std, ptr, size);
+// }

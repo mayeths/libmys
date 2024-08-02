@@ -23,9 +23,11 @@ typedef struct mys_arena_t {
     bool _reged;
 } mys_arena_t;
 
-MYS_PUBLIC mys_arena_t* mys_arena_ext;
-MYS_PUBLIC mys_arena_t* mys_arena_log;
-MYS_PUBLIC mys_arena_t* mys_arena_pool;
+// MYS_PUBLIC mys_arena_t* mys_arena_std; // The arena used by mys_malloc, mys_calloc, ..., mys_free
+MYS_PUBLIC mys_arena_t* mys_arena_log; // The arena used by mys_log
+MYS_PUBLIC mys_arena_t* mys_arena_pool; // The arena used by mys_pool
+MYS_PUBLIC mys_arena_t* mys_arena_debug; // The arena used by mys_debug
+MYS_PUBLIC mys_arena_t* mys_arena_user; // The predefined arena available for user use
 
 /**
  * @brief Create a new memory arena with the specified name.
@@ -62,12 +64,12 @@ MYS_PUBLIC void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t
 MYS_PUBLIC void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size);
 MYS_PUBLIC void mys_free2(mys_arena_t *arena, void* ptr, size_t _size);
 
-// For external use (using mys_arena_ext)
-MYS_PUBLIC void* mys_malloc(size_t size);
-MYS_PUBLIC void* mys_calloc(size_t count, size_t size);
-MYS_PUBLIC void* mys_aligned_alloc(size_t alignment, size_t size);
-MYS_PUBLIC void* mys_realloc(void* ptr, size_t size);
-MYS_PUBLIC void mys_free(void* ptr);
+// For external use (using mys_arena_std)
+// MYS_PUBLIC void* mys_malloc(size_t size);
+// MYS_PUBLIC void* mys_calloc(size_t count, size_t size);
+// MYS_PUBLIC void* mys_aligned_alloc(size_t alignment, size_t size);
+// MYS_PUBLIC void* mys_realloc(void* ptr, size_t size);
+// MYS_PUBLIC void mys_free(void* ptr);
 
 /* Cache clean */
 MYS_PUBLIC void mys_cache_flush(size_t nbytes);
