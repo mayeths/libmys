@@ -41,6 +41,9 @@
 #define THROW_NOT_IMPL()      do { _ASX(false, "Not implemented.");                 } while(0)
 #define CHKRET(fncall)        do { const int   _v_ = fncall; _ASX(_v_ == 0,    "Expect (%s) return 0 but %d.",        #fncall, _v_); } while (0) /* Validate return value */
 #define CHKPTR(fncall)        do { const void *_v_ = fncall; _ASX(_v_ != NULL, "Expect (%s) return non-NULL but %p.", #fncall, _v_); } while (0) /* Validate pointer */
+#define CHKGOTO(exptrue, ret, errcode, label) do {   \
+    if (!(exptrue)) { ret = (errcode); goto label; } \
+} while (0)
 
 #define _ASX_1(typ, exp, expect, actual, fmt, ...) do { \
     const typ _e0_ = exp;                               \
