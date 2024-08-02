@@ -165,40 +165,23 @@ static void deallocate_block(mys_pool_t* pool, mys_pool_block_t *block)
     }
 
     AS_NE_PTR(block2->objects, NULL);
-    {
-        int a = (int)(uint64_t)(int *)(void *)block2;
-        a += 1;
-        a += 2;
-        a += 3;
-        a += 3;
-        free(block2->objects);
-        a += 3;
-        a += 3;
-    }
-    {
-        int a = (int)(uint64_t)(int *)(void *)block2;
-        a += 1;
-        a += 2;
-        a += 3;
-        a += 3;
-        AS_NE_PTR(block2, NULL);
-        free(block2);
-        a += 3;
-        a += 3;
-        a += 3;
-        a += 3;
-    }
+    free(block2->objects);
+    free(block2);
 }
 
-MYS_API void mys_pool_destroy(mys_pool_t* pool)
+MYS_API void mys_pool_destroy(mys_pool_t **pool)
 {
-    mys_pool_block_t* block = pool->blocks;
+    AS_NE_PTR(pool, NULL);
+    if (*pool == NULL)
+        return;
+    mys_pool_block_t* block = (*pool)->blocks;
     while (block != NULL) {
         mys_pool_block_t* next_block = block->next_block;
-        deallocate_block(pool, block);
+        deallocate_block((*pool), block);
         block = next_block;
     }
-    free(pool);
+    free(*pool);
+    *pool = NULL;
 }
 
 MYS_API void *mys_pool_acquire(mys_pool_t* pool)
@@ -212,16 +195,7 @@ MYS_API void *mys_pool_acquire(mys_pool_t* pool)
 
     mys_pool_object_t *object = pool->free_objects;
     mys_pool_object_meta_t *meta = get_object_meta(pool, object);
-    {
-        int a = (int)(uint64_t)(int *)(void *)pool;
-        a += 1;
-        a += 2;
-        a += 3;
-        pool->free_objects = meta->next;
-        a += 1;
-        a += 2;
-        a += 3;
-    }
+    pool->free_objects = meta->next;
     meta->next = NULL;
     meta->block->free -= 1;
     meta->block->used_count += 1;

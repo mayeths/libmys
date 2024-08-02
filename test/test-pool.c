@@ -39,7 +39,7 @@ int main()
     }
 
     printf("acquire_count=%d release_count=%d\n", acquire_count, release_count);
-    mys_pool_destroy(pool);
+    mys_pool_destroy(&pool);
     free(allocateds);
 
     return 0;
