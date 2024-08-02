@@ -192,6 +192,29 @@ MYS_API void mys_arena_destroy(mys_arena_t **arena)
     *arena = NULL;
 }
 
+MYS_API mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
+{
+    mys_arena_t *leaked = NULL;
+    mys_mutex_lock(&_mys_memory_G.lock);
+    {
+        bool passed_pivot = (pivot == NULL) ? true : false;
+        for (size_t i = 0; i < _mys_memory_G.arena_size; i++) {
+            mys_arena_t *arena = _mys_memory_G.registered_arenas[i];
+            bool leaked = arena->alive != 0;
+            if (passed_pivot && leaked) {
+                leaked = arena;
+                break;
+            }
+            if (arena == pivot) {
+                passed_pivot = true;
+            }
+        }
+    }
+    mys_mutex_unlock(&_mys_memory_G.lock);
+    return leaked;
+}
+
+
 MYS_API void* mys_malloc2(mys_arena_t *arena, size_t size)
 {
     AS_NE_PTR(arena, NULL);

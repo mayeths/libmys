@@ -16,7 +16,7 @@
 
 typedef struct mys_arena_t {
     char name[32];
-    size_t peak; // memory bytes that peak alive
+    size_t peak;  // memory bytes that peak alive
     size_t alive; // memory bytes that being used
     size_t freed; // memory bytes that freed
     size_t total; // memory bytes that total allocated
@@ -30,20 +30,47 @@ MYS_API extern mys_arena_t _mys_predefined_arena_pool;
 #define mys_arena_log ((mys_arena_t *)(&_mys_predefined_arena_log))
 #define mys_arena_pool ((mys_arena_t *)(&_mys_predefined_arena_pool))
 
+/**
+ * @brief Create a new memory arena with the specified name.
+ *
+ * This function allocates and initializes a new memory arena with the given name.
+ *
+ * @param name The name of the new memory arena.
+ * @return A pointer to the newly created memory arena, or NULL if creation fails.
+ */
+MYS_API mys_arena_t *mys_arena_create(const char *name);
+/**
+ * @brief Destroy a memory arena and free its resources.
+ *
+ * This function destroys the specified memory arena and frees all associated resources.
+ * The pointer to the arena is set to NULL after destruction.
+ *
+ * @param arena A double pointer to the memory arena to be destroyed.
+ */
+MYS_API void mys_arena_destroy(mys_arena_t **arena);
+/**
+ * @brief Find the next leaked memory arena after a given pivot.
+ *
+ * This function searches for the next leaked memory arena after the specified
+ * pivot arena. If the pivot is NULL, it starts searching from the beginning.
+ *
+ * @param pivot The memory arena to start the search after. If NULL, starts from the beginning.
+ * @return A pointer to the next leaked memory arena, or NULL if no more leaked arenas are found.
+ */
+MYS_API mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot);
+
+MYS_API void* mys_malloc2(mys_arena_t *arena, size_t size);
+MYS_API void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size);
+MYS_API void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t size);
+MYS_API void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size);
+MYS_API void mys_free2(mys_arena_t *arena, void* ptr, size_t _size);
+
 // For external use (using mys_arena_ext)
 MYS_API void* mys_malloc(size_t size);
 MYS_API void* mys_calloc(size_t count, size_t size);
 MYS_API void* mys_aligned_alloc(size_t alignment, size_t size);
 MYS_API void* mys_realloc(void* ptr, size_t size);
 MYS_API void mys_free(void* ptr);
-
-MYS_API mys_arena_t *mys_arena_create(const char *name);
-MYS_API void mys_arena_destroy(mys_arena_t **arena);
-MYS_API void* mys_malloc2(mys_arena_t *arena, size_t size);
-MYS_API void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size);
-MYS_API void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t size);
-MYS_API void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size);
-MYS_API void mys_free2(mys_arena_t *arena, void* ptr, size_t _size);
 
 /* Cache clean */
 MYS_API void mys_cache_flush(size_t nbytes);
