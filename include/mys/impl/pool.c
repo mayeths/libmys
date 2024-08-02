@@ -1,4 +1,5 @@
 #include "_private.h"
+#include "../pool.h"
 #include "../memory.h"
 
 struct mys_pool_object_meta_t;
@@ -47,12 +48,12 @@ typedef struct mys_pool_t {
     mys_pool_object_t* free_objects; // objects that free to use
 } mys_pool_t;
 
-static mys_pool_object_t *get_object(mys_pool_t *pool, mys_pool_block_t *block, size_t i)
+static mys_pool_object_t *_mys_pool_get_object(mys_pool_t *pool, mys_pool_block_t *block, size_t i)
 {
     return (mys_pool_object_t *)(block->objects + pool->mobj_size * i);
 }
 
-static mys_pool_object_meta_t* get_object_meta(mys_pool_t *pool, mys_pool_object_t *object)
+static mys_pool_object_meta_t* _mys_pool_get_object_meta(mys_pool_t *pool, mys_pool_object_t *object)
 {
     if (pool == NULL || object == NULL)
         return NULL;
@@ -66,9 +67,9 @@ MYS_PUBLIC mys_pool_t* mys_pool_create(size_t object_size)
     return mys_pool_create2(object_size, 64, MYS_POOL_DEFAULT);
 }
 
-MYS_PUBLIC mys_pool_t *mys_pool_create2(size_t object_size, size_t initial_size, int pool_straregy)
+MYS_PUBLIC mys_pool_t *mys_pool_create2(size_t object_size, size_t initial_capacity, int pool_straregy)
 {
-    if (initial_size == 0)
+    if (initial_capacity == 0)
         return NULL;
 
     mys_pool_t *pool = (mys_pool_t *)mys_malloc2(mys_arena_pool, sizeof(mys_pool_t));
@@ -82,7 +83,7 @@ MYS_PUBLIC mys_pool_t *mys_pool_create2(size_t object_size, size_t initial_size,
     //     4;
     pool->pobj_size = MYS_ALIGN_UP(pool->robj_size, 8);
     pool->mobj_size = pool->pobj_size + MYS_ALIGN_UP(sizeof(mys_pool_object_meta_t), 8);
-    pool->block_capacity = initial_size;
+    pool->block_capacity = initial_capacity;
     pool->straregy = pool_straregy;
     pool->blocks = NULL;
     pool->free_objects = NULL;
@@ -107,7 +108,7 @@ static void allocate_block(mys_pool_t* pool)
     }
     for (size_t i = 0; i < block->capacity; i++) {
         mys_pool_object_t *object = get_object(pool, block, i);
-        mys_pool_object_meta_t *meta = get_object_meta(pool, object);
+        mys_pool_object_meta_t *meta = _mys_pool_get_object_meta(pool, object);
         meta->block = block;
         meta->next = pool->free_objects;
         pool->free_objects = object;
@@ -121,7 +122,7 @@ static void allocate_block(mys_pool_t* pool)
     pool->block_capacity = block->capacity * 2;
 }
 
-static void deallocate_block(mys_pool_t* pool, mys_pool_block_t *block)
+MYS_STATIC void deallocate_block(mys_pool_t* pool, mys_pool_block_t *block)
 {
     AS_NE_PTR(pool, NULL);
     AS_NE_PTR(block, NULL);
@@ -141,7 +142,7 @@ static void deallocate_block(mys_pool_t* pool, mys_pool_block_t *block)
     mys_pool_object_t *object = pool->free_objects;
     mys_pool_object_t *next_object = NULL;
     while (object != NULL) {
-        mys_pool_object_meta_t *meta = get_object_meta(pool, object);
+        mys_pool_object_meta_t *meta = _mys_pool_get_object_meta(pool, object);
         next_object = meta->next;
         {
             uint8_t *memory_start = block2->objects;
@@ -149,7 +150,7 @@ static void deallocate_block(mys_pool_t* pool, mys_pool_block_t *block)
             bool is_blong_to_block2 = ((uint8_t *)object >= memory_start) && ((uint8_t *)object < memory_end);
             if (is_blong_to_block2) {
                 if (prev_object != NULL) {
-                    mys_pool_object_meta_t *prev_meta = get_object_meta(pool, prev_object);
+                    mys_pool_object_meta_t *prev_meta = _mys_pool_get_object_meta(pool, prev_object);
                     prev_meta->next = next_object;
                 }
                 if (pool->free_objects == object) {
@@ -194,7 +195,7 @@ MYS_PUBLIC void *mys_pool_acquire(mys_pool_t* pool)
     }
 
     mys_pool_object_t *object = pool->free_objects;
-    mys_pool_object_meta_t *meta = get_object_meta(pool, object);
+    mys_pool_object_meta_t *meta = _mys_pool_get_object_meta(pool, object);
     pool->free_objects = meta->next;
     meta->next = NULL;
     meta->block->free -= 1;
@@ -205,7 +206,7 @@ MYS_PUBLIC void *mys_pool_acquire(mys_pool_t* pool)
 MYS_PUBLIC void mys_pool_release(mys_pool_t *pool, void *object_)
 {
     mys_pool_object_t *object = (mys_pool_object_t *)object_;
-    mys_pool_object_meta_t *meta = get_object_meta(pool, object);
+    mys_pool_object_meta_t *meta = _mys_pool_get_object_meta(pool, object);
     meta->next = pool->free_objects;
     meta->block->free += 1;
     pool->free_objects = object;
