@@ -126,8 +126,43 @@ MYS_API char *mys_boxplot(double *values, size_t n);
  * 
  * @note Autorange: when the data are distributed such that the 25th and 75th percentiles are equal,
  * whis is set to (0, 100) such that the whisker ends are at the minimum and maximum of the data.
+ * 
+ * @note See matplotlib example in header file
  */
 MYS_API mys_boxplot_t *mys_boxplot_create(double *values, size_t n);
+
+/*
+import numpy as np
+import matplotlib.pyplot as plt
+
+baseline_128 = #{"whislo": ... }
+baseline_256 = #{"whislo": ... }
+baseline_512 = #{"whislo": ... }
+baseline_1024 = #{"whislo": ...}
+
+opt_128 = #{"whislo": ... }
+opt_256 = #{"whislo": ... }
+opt_512 = #{"whislo": ... }
+opt_1024 = #{"whislo": ...}
+
+fig1, ax1 = plt.subplots(1, 1, figsize=(4.5, 2), dpi=400, layout='constrained')
+
+flierprops = dict(markeredgecolor='#c5283d', markersize=2) # 离群值的设置（离群的点）
+capprops = dict(color='#c5283d')
+whiskerprops = dict(color='#c5283d') # 连接箱体和胡须的上下两条竖线
+boxprops = dict(color='#c5283d')
+medianprops = dict(color='#c5283d') # 中位数的设置（最中间的那个横线）
+ax1.bxp([baseline_128, baseline_256, baseline_512, baseline_1024], positions=[1, 3, 5, 7], boxprops=boxprops, capprops=capprops, whiskerprops=whiskerprops, flierprops=flierprops, medianprops=medianprops)
+
+flierprops = dict(markeredgecolor='#255f85', markersize=2)
+capprops = dict(color='#255f85')
+whiskerprops = dict(color='#255f85')
+boxprops = dict(color='#255f85')
+medianprops = dict(color='#255f85')
+ax1.bxp([opt_128, opt_256, opt_512, opt_1024], positions=[1.5, 3.5, 5.5, 7.5], boxprops=boxprops, capprops=capprops, whiskerprops=whiskerprops, flierprops=flierprops, medianprops=medianprops)
+
+plt.show()
+*/
 
 /**
  * @brief Free the memory allocated for the boxplot statistics.
