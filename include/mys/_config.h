@@ -102,30 +102,30 @@
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
-#define MYS_ATTR_NO_INSTRUMENT
+#define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
 #elif defined(COMPILER_NVCC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
-#define MYS_ATTR_NO_INSTRUMENT
-#define MYS_ATTR_NOINLINE
+#define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
+#define MYS_ATTR_NOINLINE /* No equivalent attribute */
 #elif defined(COMPILER_SWCC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
-#define MYS_ATTR_NO_INSTRUMENT
-#define MYS_ATTR_NOINLINE
+#define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
+#define MYS_ATTR_NOINLINE /* No equivalent attribute */
 #elif defined(COMPILER_MSVC)
 #define MYS_ATTR_EXPORT __declspec(dllexport)
 #define MYS_ATTR_IMPORT __declspec(dllimport)
-#define MYS_ATTR_LOCAL
-#define MYS_ATTR_UNUSED
-#define MYS_ATTR_NO_INSTRUMENT
-#define MYS_ATTR_NOINLINE
-#else
+#define MYS_ATTR_LOCAL /* No equivalent attribute */
+#define MYS_ATTR_UNUSED /* No equivalent attribute */
+#define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
+#define MYS_ATTR_NOINLINE __declspec(noinline)
+#else /* Fallback for unknown compilers */
 #define MYS_ATTR_EXPORT
 #define MYS_ATTR_IMPORT
 #define MYS_ATTR_LOCAL
@@ -135,16 +135,16 @@
 #endif
 
 #if defined(MYS_IMPL)         // Make libmys with public visibility.
-#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_EXPORT
-#define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL
+#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_EXPORT extern
+#define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
 #define MYS_STATIC   MYS_ATTR_UNUSED static
 #elif defined(MYS_IMPL_LOCAL) // Make libmys with private visibility.
-#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_LOCAL
-#define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL
+#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
+#define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
 #define MYS_STATIC   MYS_ATTR_UNUSED static
-#else // Don't make libmys and use the one made by the EXE or other DSO who define MYS_IMPL.
-#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_IMPORT
-#define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL
+#else
+#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_IMPORT extern
+#define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
 #define MYS_STATIC   MYS_ATTR_UNUSED static
 #endif
 
