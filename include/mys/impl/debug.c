@@ -83,7 +83,7 @@ MYS_STATIC int  _mys_debug_set_signal(int signo, bool is_called_by_user);
 MYS_STATIC const char *_mys_sigcause(int signo, int sigcode);
 MYS_STATIC const char *_mys_signo_str(int signo);
 
-MYS_API void mys_debug_init()
+MYS_PUBLIC void mys_debug_init()
 {
     // https://stackoverflow.com/a/61860187/11702338
     // Make sure that backtrace(libgcc) is loaded before any signals are generated
@@ -158,7 +158,7 @@ MYS_API void mys_debug_init()
     mys_mutex_unlock(&_mys_debug_G.lock);
 }
 
-MYS_API void mys_debug_fini()
+MYS_PUBLIC void mys_debug_fini()
 {
     mys_mutex_lock(&_mys_debug_G.lock);
     if (_mys_debug_G.inited) {
@@ -169,12 +169,12 @@ MYS_API void mys_debug_fini()
     mys_mutex_unlock(&_mys_debug_G.lock);
 }
 
-MYS_API int mys_debug_set_signal(int signo)
+MYS_PUBLIC int mys_debug_set_signal(int signo)
 {
     return _mys_debug_set_signal(signo, 1);
 }
 
-MYS_API int mys_debug_clear_signal(int signo)
+MYS_PUBLIC int mys_debug_clear_signal(int signo)
 {
     if (_mys_debug_G.inited) {
         if (signo <= 0)
@@ -200,7 +200,7 @@ MYS_API int mys_debug_clear_signal(int signo)
     return 1;
 }
 
-MYS_API void mys_debug_get_message(char *buffer)
+MYS_PUBLIC void mys_debug_get_message(char *buffer)
 {
     mys_mutex_lock(&_mys_debug_G.lock);
     {
@@ -209,7 +209,7 @@ MYS_API void mys_debug_get_message(char *buffer)
     mys_mutex_unlock(&_mys_debug_G.lock);
 }
 
-MYS_API void mys_debug_set_message(const char *fmt, ...)
+MYS_PUBLIC void mys_debug_set_message(const char *fmt, ...)
 {
     mys_mutex_lock(&_mys_debug_G.lock);
     {
@@ -221,7 +221,7 @@ MYS_API void mys_debug_set_message(const char *fmt, ...)
     mys_mutex_unlock(&_mys_debug_G.lock);
 }
 
-MYS_API void mys_debug_clear_message()
+MYS_PUBLIC void mys_debug_clear_message()
 {
     mys_mutex_lock(&_mys_debug_G.lock);
     {
@@ -230,13 +230,13 @@ MYS_API void mys_debug_clear_message()
     mys_mutex_unlock(&_mys_debug_G.lock);
 }
 
-MYS_API void mys_debug_set_max_frames(int max_frames)
+MYS_PUBLIC void mys_debug_set_max_frames(int max_frames)
 {
     // FIXME: lock
     _mys_debug_G.max_frames = max_frames;
 }
 
-MYS_API int mys_debug_get_max_frames()
+MYS_PUBLIC int mys_debug_get_max_frames()
 {
     // FIXME: lock
     return _mys_debug_G.max_frames;
@@ -552,7 +552,7 @@ static void _mys_debug_timeout_handler(union sigval sv)
 }
 
 
-MYS_API void _mys_debug_set_timeout(double timeout, const char *file, int line)
+MYS_PUBLIC void _mys_debug_set_timeout(double timeout, const char *file, int line)
 {
     if (!_mys_debug_G.inited) {
         printf("call mys_debug_init() before mys_debug_set_timeout()\n");
@@ -598,7 +598,7 @@ MYS_API void _mys_debug_set_timeout(double timeout, const char *file, int line)
     _mys_debug_G.timeout = timeout;
 }
 
-MYS_API void mys_debug_clear_timeout()
+MYS_PUBLIC void mys_debug_clear_timeout()
 {
     if (!_mys_debug_G.timeout_inited) {
         return;
@@ -626,7 +626,7 @@ MYS_API void mys_debug_clear_timeout()
 }
 #endif /*MYS_ENABLE_DEBUG_TIMEOUT*/
 
-MYS_API void mys_debug_add_stack_filter(const char *match_str)
+MYS_PUBLIC void mys_debug_add_stack_filter(const char *match_str)
 {
     if (_mys_debug_G.n_filters == _mys_debug_G.cap_filters) {
         if (_mys_debug_G.cap_filters == 0)
@@ -638,7 +638,7 @@ MYS_API void mys_debug_add_stack_filter(const char *match_str)
     _mys_debug_G.filters[_mys_debug_G.n_filters++] = strdup(match_str);
 }
 
-MYS_API void mys_debug_del_stack_filter(const char *match_str)
+MYS_PUBLIC void mys_debug_del_stack_filter(const char *match_str)
 {
     size_t j = 0;
     bool found = false;

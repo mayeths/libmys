@@ -13,7 +13,7 @@
  * @param lbegin [RETURN] begin index of this partition (inclusive)
  * @param lend [RETURN] end index of this partition (exclusive)
  */
-MYS_API void mys_partition_naive(const int gbegin, const int gend, const int npart, const int ipart, int *lbegin, int *lend);
+MYS_PUBLIC void mys_partition_naive(const int gbegin, const int gend, const int npart, const int ipart, int *lbegin, int *lend);
 
 /**
  * @brief Naive partition of [gs, ge) to <npart> partition
@@ -26,4 +26,4 @@ MYS_API void mys_partition_naive(const int gbegin, const int gend, const int npa
  * @param lbegin [RETURN] begin index of this partition (inclusive)
  * @param lend [RETURN] end index of this partition (exclusive)
  */
-// MYS_API void mys_partition_weighted(const int gbegin, const int gend, const int npart, const int ipart, const int *weights, int *lbegin, int *lend);
+// MYS_PUBLIC void mys_partition_weighted(const int gbegin, const int gend, const int npart, const int ipart, const int *weights, int *lbegin, int *lend);

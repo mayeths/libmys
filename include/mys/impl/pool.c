@@ -61,12 +61,12 @@ static mys_pool_object_meta_t* get_object_meta(mys_pool_t *pool, mys_pool_object
     return meta;
 }
 
-MYS_API mys_pool_t* mys_pool_create(size_t object_size)
+MYS_PUBLIC mys_pool_t* mys_pool_create(size_t object_size)
 {
     return mys_pool_create2(object_size, 64, MYS_POOL_DEFAULT);
 }
 
-MYS_API mys_pool_t *mys_pool_create2(size_t object_size, size_t initial_size, int pool_straregy)
+MYS_PUBLIC mys_pool_t *mys_pool_create2(size_t object_size, size_t initial_size, int pool_straregy)
 {
     if (initial_size == 0)
         return NULL;
@@ -169,7 +169,7 @@ static void deallocate_block(mys_pool_t* pool, mys_pool_block_t *block)
     mys_free2(mys_arena_pool, block2, sizeof(mys_pool_block_t));
 }
 
-MYS_API void mys_pool_destroy(mys_pool_t **pool)
+MYS_PUBLIC void mys_pool_destroy(mys_pool_t **pool)
 {
     AS_NE_PTR(pool, NULL);
     if (*pool == NULL)
@@ -184,7 +184,7 @@ MYS_API void mys_pool_destroy(mys_pool_t **pool)
     *pool = NULL;
 }
 
-MYS_API void *mys_pool_acquire(mys_pool_t* pool)
+MYS_PUBLIC void *mys_pool_acquire(mys_pool_t* pool)
 {
     if (pool->free_objects == NULL) {
         allocate_block(pool);
@@ -202,7 +202,7 @@ MYS_API void *mys_pool_acquire(mys_pool_t* pool)
     return (void *)object;
 }
 
-MYS_API void mys_pool_release(mys_pool_t *pool, void *object_)
+MYS_PUBLIC void mys_pool_release(mys_pool_t *pool, void *object_)
 {
     mys_pool_object_t *object = (mys_pool_object_t *)object_;
     mys_pool_object_meta_t *meta = get_object_meta(pool, object);

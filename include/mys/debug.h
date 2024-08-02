@@ -32,23 +32,23 @@
 /**
  * @brief Initialize libmys' signal handlers for debugging
  */
-MYS_API void mys_debug_init();
+MYS_PUBLIC void mys_debug_init();
 /**
  * @brief Finalize libmys' signal handlers and revert old handlers
  */
-MYS_API void mys_debug_fini();
+MYS_PUBLIC void mys_debug_fini();
 /**
  * @brief Get the (thread local) message for signal handlers to print.
  * @return Constructed last message
  */
-MYS_API void mys_debug_get_message(char *buffer);
+MYS_PUBLIC void mys_debug_get_message(char *buffer);
 /**
  * @brief Enable catch of signal.
  * 
  * @param signo Signal number
  */
-MYS_API int mys_debug_set_signal(int signo);
-MYS_API int mys_debug_clear_signal(int signo);
+MYS_PUBLIC int mys_debug_set_signal(int signo);
+MYS_PUBLIC int mys_debug_clear_signal(int signo);
 /**
  * @brief Set the (thread local) message for signal handlers to print.
  * 
@@ -57,11 +57,11 @@ MYS_API int mys_debug_clear_signal(int signo);
  * 
  * @note This message length should not exceed `MYS_SIGNAL_LAST_MESSAGE_MAX`
  */
-MYS_API void mys_debug_set_message(const char *fmt, ...);
-MYS_API void mys_debug_clear_message();
+MYS_PUBLIC void mys_debug_set_message(const char *fmt, ...);
+MYS_PUBLIC void mys_debug_clear_message();
 
-MYS_API void _mys_debug_set_timeout(double timeout, const char *file, int line);
-MYS_API void mys_debug_clear_timeout();
+MYS_PUBLIC void _mys_debug_set_timeout(double timeout, const char *file, int line);
+MYS_PUBLIC void mys_debug_clear_timeout();
 // To enable this functionality, you have to
 // 1) Add `#define MYS_ENABLE_DEBUG_TIMEOUT` before `#include mys.h`
 // 2) Add `-lrt` to compiler for using `timer_create()`, `timer_settime()`, and `timer_delete()`
@@ -73,26 +73,26 @@ MYS_API void mys_debug_clear_timeout();
  *
  * @param max_frames Maximum number of stack frames
  */
-MYS_API void mys_debug_set_max_frames(int max_frames);
+MYS_PUBLIC void mys_debug_set_max_frames(int max_frames);
 /**
  * @brief Get the maximum number of stack frames to be printed in a backtrace.
  *
  * @return Maximum number of stack frames
  */
-MYS_API int mys_debug_get_max_frames();
+MYS_PUBLIC int mys_debug_get_max_frames();
 
 /**
  * @brief Add a filter string to exclude matching stack frames from the backtrace.
  *
  * @param match_str Filter string to match stack frames
  */
-MYS_API void mys_debug_add_stack_filter(const char *match_str);
+MYS_PUBLIC void mys_debug_add_stack_filter(const char *match_str);
 /**
  * @brief Remove a filter string that excludes matching stack frames from the backtrace.
  *
  * @param match_str Filter string to be removed
  */
-MYS_API void mys_debug_del_stack_filter(const char *match_str);
+MYS_PUBLIC void mys_debug_del_stack_filter(const char *match_str);
 
 
 

@@ -27,12 +27,12 @@ static const unsigned char _mys_base64_map[256] =
     64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64
 };
 
-MYS_API size_t mys_base64_encode_len(size_t plain_size)
+MYS_PUBLIC size_t mys_base64_encode_len(size_t plain_size)
 {
     return ((plain_size + 2) / 3 * 4) + 1;
 }
 
-MYS_API size_t mys_base64_decode_len(const char *encoded_src)
+MYS_PUBLIC size_t mys_base64_decode_len(const char *encoded_src)
 {
     size_t nbytesdecoded;
     const unsigned char *s;
@@ -56,7 +56,7 @@ MYS_API size_t mys_base64_decode_len(const char *encoded_src)
     }                                     \
 } while (0)
 
-MYS_API size_t mys_base64_encode(char *dst, size_t dst_size, const void *src, size_t src_size)
+MYS_PUBLIC size_t mys_base64_encode(char *dst, size_t dst_size, const void *src, size_t src_size)
 {
     const char *tab = _mys_base64_table;
     char *d;
@@ -98,7 +98,7 @@ finish:
     return d - dst;
 }
 
-MYS_API size_t mys_base64_decode(void *dst, size_t dst_size, const char *src, size_t src_size)
+MYS_PUBLIC size_t mys_base64_decode(void *dst, size_t dst_size, const char *src, size_t src_size)
 {
     const unsigned char *map = _mys_base64_map;
     typedef unsigned char u8_t;

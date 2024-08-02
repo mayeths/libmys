@@ -20,7 +20,7 @@ static int _mys_commgroup_sort_i4(const void* _a, const void* _b)
     else return 0;
 }
 
-MYS_API mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group_color, int group_key)
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group_color, int group_key)
 {
     mys_commgroup_t *group = (mys_commgroup_t *)malloc(sizeof(mys_commgroup_t));
     group->global_comm = global_comm;
@@ -75,7 +75,7 @@ MYS_API mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group_co
     return group;
 }
 
-MYS_API void mys_commgroup_release(mys_commgroup_t *group)
+MYS_PUBLIC void mys_commgroup_release(mys_commgroup_t *group)
 {
     assert(group != NULL);
     if (group == NULL) return;
@@ -87,7 +87,7 @@ MYS_API void mys_commgroup_release(mys_commgroup_t *group)
     free(group->_neighbors);
 }
 
-MYS_API mys_commgroup_t *mys_commgroup_create_node(MPI_Comm global_comm)
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(MPI_Comm global_comm)
 {
     int global_nranks, global_myrank;
     MPI_Comm_size(global_comm, &global_nranks);
@@ -103,7 +103,7 @@ MYS_API mys_commgroup_t *mys_commgroup_create_node(MPI_Comm global_comm)
 }
 
 #ifdef MYS_ENABLE_NUMA
-MYS_API mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm)
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm)
 {
     int global_nranks, global_myrank;
     MPI_Comm_size(global_comm, &global_nranks);
@@ -127,7 +127,7 @@ MYS_API mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm)
 }
 #endif
 
-MYS_API int mys_query_group_id(mys_commgroup_t *group, int global_rank)
+MYS_PUBLIC int mys_query_group_id(mys_commgroup_t *group, int global_rank)
 {
     if (global_rank < 0 || global_rank >= group->global_nranks)
         return -1;
@@ -135,7 +135,7 @@ MYS_API int mys_query_group_id(mys_commgroup_t *group, int global_rank)
         return group->_rows[global_rank];
 }
 
-MYS_API int mys_query_local_rank(mys_commgroup_t *group, int global_rank)
+MYS_PUBLIC int mys_query_local_rank(mys_commgroup_t *group, int global_rank)
 {
     if (global_rank < 0 || global_rank >= group->global_nranks)
         return -1;
@@ -143,7 +143,7 @@ MYS_API int mys_query_local_rank(mys_commgroup_t *group, int global_rank)
         return group->_cols[global_rank];
 }
 
-MYS_API int mys_query_brother(mys_commgroup_t *group, int local_rank)
+MYS_PUBLIC int mys_query_brother(mys_commgroup_t *group, int local_rank)
 {
     if (local_rank < 0 || local_rank >= group->local_nranks)
         return -1;
@@ -151,7 +151,7 @@ MYS_API int mys_query_brother(mys_commgroup_t *group, int local_rank)
         return group->_brothers[local_rank];
 }
 
-MYS_API int mys_query_neighbor(mys_commgroup_t *group, int group_id)
+MYS_PUBLIC int mys_query_neighbor(mys_commgroup_t *group, int group_id)
 {
     if (group_id < 0 || group_id >= group->group_num)
         return -1;

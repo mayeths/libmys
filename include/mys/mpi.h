@@ -86,12 +86,12 @@ typedef MPI_Status _mys_MPI_Status;
 
 //-------------------- Custom high-level MPI functions --------------------//
 // For libmys external and internal use
-MYS_API void mys_mpi_init();
-MYS_API int mys_mpi_myrank();
-MYS_API int mys_mpi_nranks();
-MYS_API int mys_mpi_barrier();
-MYS_API int mys_mpi_sync();
-MYS_API _mys_MPI_Comm mys_mpi_comm();
+MYS_PUBLIC void mys_mpi_init();
+MYS_PUBLIC int mys_mpi_myrank();
+MYS_PUBLIC int mys_mpi_nranks();
+MYS_PUBLIC int mys_mpi_barrier();
+MYS_PUBLIC int mys_mpi_sync();
+MYS_PUBLIC _mys_MPI_Comm mys_mpi_comm();
 #define MYRANK() mys_mpi_myrank()
 #define NRANKS() mys_mpi_nranks()
 #define BARRIER() mys_mpi_barrier()

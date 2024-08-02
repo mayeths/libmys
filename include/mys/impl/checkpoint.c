@@ -60,7 +60,7 @@ static _mys_chk_G_t _mys_chk_G = {
     .nameset = NULL,
 };
 
-MYS_API void mys_checkpoint_init()
+MYS_PUBLIC void mys_checkpoint_init()
 {
     if (_mys_chk_G.inited == true)
         return;
@@ -77,7 +77,7 @@ MYS_API void mys_checkpoint_init()
 }
 
 
-MYS_API void mys_checkpoint_reset()
+MYS_PUBLIC void mys_checkpoint_reset()
 {
     mys_checkpoint_init();
     mys_mutex_lock(&_mys_chk_G.lock);
@@ -91,7 +91,7 @@ MYS_API void mys_checkpoint_reset()
     mys_mutex_unlock(&_mys_chk_G.lock);
 }
 
-MYS_API void mys_checkpoint(const char *name_format, ...)
+MYS_PUBLIC void mys_checkpoint(const char *name_format, ...)
 {
     mys_checkpoint_init();
     char name[4096];
@@ -119,7 +119,7 @@ MYS_API void mys_checkpoint(const char *name_format, ...)
     mys_mutex_unlock(&_mys_chk_G.lock);
 }
 
-MYS_API int mys_checkpoint_dump(const char *file_format, ...)
+MYS_PUBLIC int mys_checkpoint_dump(const char *file_format, ...)
 {
     mys_checkpoint_init();
     char file[4096];

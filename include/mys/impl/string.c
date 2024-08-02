@@ -1,7 +1,7 @@
 #include "_private.h"
 #include "../string.h"
 
-MYS_API ssize_t mys_parse_readable_size(const char *text)
+MYS_PUBLIC ssize_t mys_parse_readable_size(const char *text)
 {
 #define Bbase (double)(1.0)
 #define Kbase ((double)1024.0 * (Bbase))
@@ -78,7 +78,7 @@ MYS_API ssize_t mys_parse_readable_size(const char *text)
 #undef Zbase
 }
 
-MYS_API void mys_readable_size(char **ptr, size_t bytes, size_t precision)
+MYS_PUBLIC void mys_readable_size(char **ptr, size_t bytes, size_t precision)
 {
     int i = 0;
     const char* units[] = {"Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
@@ -92,7 +92,7 @@ MYS_API void mys_readable_size(char **ptr, size_t bytes, size_t precision)
     snprintf(*ptr, len, "%.*f %s", (int)precision, size, units[i]);
 }
 
-MYS_API mys_string_t *mys_string_create()
+MYS_PUBLIC mys_string_t *mys_string_create()
 {
     mys_string_t *str = (mys_string_t *)malloc(sizeof(mys_string_t));
     if (!str)
@@ -109,7 +109,7 @@ MYS_API mys_string_t *mys_string_create()
     return str;
 }
 
-MYS_API void mys_string_destroy(mys_string_t **str)
+MYS_PUBLIC void mys_string_destroy(mys_string_t **str)
 {
     if (str != NULL) {
         if ((*str)->text != NULL)
@@ -119,7 +119,7 @@ MYS_API void mys_string_destroy(mys_string_t **str)
     *str = NULL;
 }
 
-MYS_API int mys_string_fmt(mys_string_t *str, const char *format, ...)
+MYS_PUBLIC int mys_string_fmt(mys_string_t *str, const char *format, ...)
 {
     int written = -1;
     int needed = 0;
@@ -153,7 +153,7 @@ finish:
     return written;
 }
 
-MYS_API int mys_str_to_int(const char *str, int default_val)
+MYS_PUBLIC int mys_str_to_int(const char *str, int default_val)
 {
     if (sizeof(int) == sizeof(int32_t))
         return (int)mys_str_to_i32(str, default_val);
@@ -161,7 +161,7 @@ MYS_API int mys_str_to_int(const char *str, int default_val)
         return (int)mys_str_to_i64(str, default_val);
 }
 
-MYS_API long mys_str_to_long(const char *str, long default_val)
+MYS_PUBLIC long mys_str_to_long(const char *str, long default_val)
 {
     if (sizeof(long) == sizeof(int32_t))
         return (long)mys_str_to_i32(str, default_val);
@@ -169,7 +169,7 @@ MYS_API long mys_str_to_long(const char *str, long default_val)
         return (long)mys_str_to_i64(str, default_val);
 }
 
-MYS_API size_t mys_str_to_sizet(const char *str, size_t default_val)
+MYS_PUBLIC size_t mys_str_to_sizet(const char *str, size_t default_val)
 {
     if (sizeof(size_t) == sizeof(uint32_t))
         return (size_t)mys_str_to_u32(str, default_val);
@@ -177,18 +177,18 @@ MYS_API size_t mys_str_to_sizet(const char *str, size_t default_val)
         return (size_t)mys_str_to_u64(str, default_val);
 }
 
-MYS_API double mys_str_to_double(const char *str, double default_val)
+MYS_PUBLIC double mys_str_to_double(const char *str, double default_val)
 {
     return (double)mys_str_to_f64(str, default_val);
 }
 
-MYS_API float mys_str_to_float(const char *str, float default_val)
+MYS_PUBLIC float mys_str_to_float(const char *str, float default_val)
 {
     return (float)mys_str_to_f32(str, default_val);
 }
 
 
-MYS_API uint64_t mys_str_to_u64(const char *str, uint64_t default_val)
+MYS_PUBLIC uint64_t mys_str_to_u64(const char *str, uint64_t default_val)
 {
     if (str == NULL)
         return default_val;
@@ -206,7 +206,7 @@ MYS_API uint64_t mys_str_to_u64(const char *str, uint64_t default_val)
     return num;
 }
 
-MYS_API uint32_t mys_str_to_u32(const char *str, uint32_t default_val)
+MYS_PUBLIC uint32_t mys_str_to_u32(const char *str, uint32_t default_val)
 {
     uint64_t num = mys_str_to_u64(str, (uint64_t)default_val);
     if (num > UINT_MAX)
@@ -215,7 +215,7 @@ MYS_API uint32_t mys_str_to_u32(const char *str, uint32_t default_val)
 }
 
 
-MYS_API int64_t mys_str_to_i64(const char *str, int64_t default_val)
+MYS_PUBLIC int64_t mys_str_to_i64(const char *str, int64_t default_val)
 {
     if (str == NULL)
         return default_val;
@@ -233,7 +233,7 @@ MYS_API int64_t mys_str_to_i64(const char *str, int64_t default_val)
     return num;
 }
 
-MYS_API int32_t mys_str_to_i32(const char *str, int32_t default_val)
+MYS_PUBLIC int32_t mys_str_to_i32(const char *str, int32_t default_val)
 {
     int64_t num = mys_str_to_i64(str, (int64_t)default_val);
     if ((num < INT_MIN) || (num > INT_MAX))
@@ -241,7 +241,7 @@ MYS_API int32_t mys_str_to_i32(const char *str, int32_t default_val)
     return (int32_t)num;
 }
 
-MYS_API double mys_str_to_f64(const char *str, double default_val)
+MYS_PUBLIC double mys_str_to_f64(const char *str, double default_val)
 {
     if (str == NULL)
         return default_val;
@@ -266,7 +266,7 @@ MYS_API double mys_str_to_f64(const char *str, double default_val)
  * default_val float->double->float is unchanged.
  * Use strtof instead of mys_str_to_f64
  */
-MYS_API float mys_str_to_f32(const char *str, float default_val)
+MYS_PUBLIC float mys_str_to_f32(const char *str, float default_val)
 {
     if (str == NULL)
         return default_val;

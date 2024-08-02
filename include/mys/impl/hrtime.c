@@ -1,7 +1,7 @@
 #include "_private.h"
 #include "../hrtime.h"
 
-MYS_API const char *mys_hrname()
+MYS_PUBLIC const char *mys_hrname()
 {
 #if defined(MYS_ENABLED_HRTIMER_AACH64)
     return mys_hrname_aarch64();
@@ -18,7 +18,7 @@ MYS_API const char *mys_hrname()
 #endif
 }
 
-MYS_API uint64_t mys_hrtick()
+MYS_PUBLIC uint64_t mys_hrtick()
 {
 #if defined(MYS_ENABLED_HRTIMER_AACH64)
     return mys_hrtick_aarch64();
@@ -35,7 +35,7 @@ MYS_API uint64_t mys_hrtick()
 #endif
 }
 
-MYS_API uint64_t mys_hrfreq()
+MYS_PUBLIC uint64_t mys_hrfreq()
 {
 #if defined(MYS_ENABLED_HRTIMER_AACH64)
     return mys_hrfreq_aarch64();
@@ -52,7 +52,7 @@ MYS_API uint64_t mys_hrfreq()
 #endif
 }
 
-MYS_API double mys_hrtime()
+MYS_PUBLIC double mys_hrtime()
 {
 #if defined(MYS_ENABLED_HRTIMER_AACH64)
     return mys_hrtime_aarch64();
@@ -78,10 +78,10 @@ mys_thread_local _mys_hrtime_aarch64_G_t _mys_hrtime_aarch64_G = {
     .inited = false,
     .start = 0,
 };
-MYS_API const char *mys_hrname_aarch64() {
+MYS_PUBLIC const char *mys_hrname_aarch64() {
     return "High-resolution timer by AArch64 assembly (10ns)";
 }
-MYS_API uint64_t mys_hrtick_aarch64() {
+MYS_PUBLIC uint64_t mys_hrtick_aarch64() {
     if (_mys_hrtime_aarch64_G.inited == false) {
         __asm__ __volatile__("mrs %0, CNTVCT_EL0" : "=r"(_mys_hrtime_aarch64_G.start));
         _mys_hrtime_aarch64_G.inited = true;
@@ -90,12 +90,12 @@ MYS_API uint64_t mys_hrtick_aarch64() {
     __asm__ __volatile__("mrs %0, CNTVCT_EL0" : "=r"(t));
     return t - _mys_hrtime_aarch64_G.start;
 }
-MYS_API uint64_t mys_hrfreq_aarch64() {
+MYS_PUBLIC uint64_t mys_hrfreq_aarch64() {
     uint64_t f;
     __asm__ __volatile__("mrs %0, CNTFRQ_EL0" : "=r"(f));
     return f;
 }
-MYS_API double mys_hrtime_aarch64() {
+MYS_PUBLIC double mys_hrtime_aarch64() {
     return (double)mys_hrtick_aarch64() / (double)mys_hrfreq_aarch64();
 }
 #endif
@@ -112,10 +112,10 @@ mys_thread_local _mys_hrtime_x64_G_t _mys_hrtime_x64_G = {
     .inited = false,
     .start = 0,
 };
-MYS_API const char *mys_hrname_x64() {
+MYS_PUBLIC const char *mys_hrname_x64() {
     return "High-resolution timer by X64 assembly (TSC_FREQ=" MYS_MACRO2STR(TSC_FREQ) ")";
 }
-MYS_API uint64_t mys_hrtick_x64() {
+MYS_PUBLIC uint64_t mys_hrtick_x64() {
     if (_mys_hrtime_x64_G.inited == false) {
         uint32_t lo, hi;
         __asm__ __volatile__("mfence":::"memory");
@@ -129,10 +129,10 @@ MYS_API uint64_t mys_hrtick_x64() {
     uint64_t t = (uint64_t)hi << 32 | (uint64_t)lo;
     return t - _mys_hrtime_x64_G.start;
 }
-MYS_API uint64_t mys_hrfreq_x64() {
+MYS_PUBLIC uint64_t mys_hrfreq_x64() {
     return (uint64_t)TSC_FREQ;
 }
-MYS_API double mys_hrtime_x64() {
+MYS_PUBLIC double mys_hrtime_x64() {
     return (double)mys_hrtick_x64() / (double)mys_hrfreq_x64();
 }
 #endif
@@ -155,14 +155,14 @@ mys_thread_local _mys_hrtime_posix_G_t _mys_hrtime_posix_G = {
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
-MYS_API const char *mys_hrname_posix() {
+MYS_PUBLIC const char *mys_hrname_posix() {
 #if defined(CLOCK_MONOTONIC)
     return "High-resolution timer by clock_gettime() of <time.h> (1us~10us)";
 #else
     return "High-resolution timer by gettimeofday() of <sys/time.h> (1us~10us)";
 #endif
 }
-MYS_API uint64_t mys_hrtick_posix() {
+MYS_PUBLIC uint64_t mys_hrtick_posix() {
     uint64_t t = 0;
 #if defined(CLOCK_MONOTONIC)
     if (_mys_hrtime_posix_G.inited == false) {
@@ -187,14 +187,14 @@ MYS_API uint64_t mys_hrtick_posix() {
 #endif
     return t - _mys_hrtime_posix_G.start;
 }
-MYS_API uint64_t mys_hrfreq_posix() {
+MYS_PUBLIC uint64_t mys_hrfreq_posix() {
 #if defined(CLOCK_MONOTONIC)
     return 1000000000;
 #else
     return 1000000;
 #endif
 }
-MYS_API double mys_hrtime_posix() {
+MYS_PUBLIC double mys_hrtime_posix() {
     return (double)mys_hrtick_posix() / (double)mys_hrfreq_posix();
 }
 #endif
@@ -238,22 +238,22 @@ double mys_hrtime_cxx() {
  * https://stackoverflow.com/a/26945754
  */
 #include <windows.h>
-MYS_API const char *mys_hrname_windows() {
+MYS_PUBLIC const char *mys_hrname_windows() {
     return "High-resolution timer by <windows.h> (1us~10us)";
 }
-MYS_API uint64_t mys_hrtick_windows() {
+MYS_PUBLIC uint64_t mys_hrtick_windows() {
     LARGE_INTEGER t;
     if (!QueryPerformanceCounter(&t))
         return 0;
     return (uint64_t)t.QuadPart;
 }
-MYS_API uint64_t mys_hrfreq_windows() {
+MYS_PUBLIC uint64_t mys_hrfreq_windows() {
     LARGE_INTEGER f;
     if (!QueryPerformanceFrequency(&f))
         return 0;
     return (uint64_t)f.QuadPart;
 }
-MYS_API double mys_hrtime_windows() {
+MYS_PUBLIC double mys_hrtime_windows() {
     return (double)mys_hrtick_windows() / (double)mys_hrfreq_windows();
 }
 #endif
@@ -266,10 +266,10 @@ mys_thread_local _mys_hrtime_mpi_G_t _mys_hrtime_mpi_G = {
     .inited = false,
     .start = 0,
 };
-MYS_API const char *mys_hrname_mpi() {
+MYS_PUBLIC const char *mys_hrname_mpi() {
     return "High-resolution timer by <mpi.h> (1us~10us)";
 }
-MYS_API uint64_t mys_hrtick_mpi() {
+MYS_PUBLIC uint64_t mys_hrtick_mpi() {
     if (_mys_hrtime_mpi_G.inited == false) {
         _mys_hrtime_mpi_G.start = _mys_MPI_Wtime();
         _mys_hrtime_mpi_G.inited = true;
@@ -277,10 +277,10 @@ MYS_API uint64_t mys_hrtick_mpi() {
     double current = _mys_MPI_Wtime() - _mys_hrtime_mpi_G.start;
     return (uint64_t)(current * 1e9); // in nano second
 }
-MYS_API uint64_t mys_hrfreq_mpi() {
+MYS_PUBLIC uint64_t mys_hrfreq_mpi() {
     return (uint64_t)1000000000;
 }
-MYS_API double mys_hrtime_mpi() {
+MYS_PUBLIC double mys_hrtime_mpi() {
     return (double)mys_hrtick_mpi() / (double)mys_hrfreq_mpi();
 }
 
@@ -294,10 +294,10 @@ mys_thread_local _mys_hrtime_openmp_G_t _mys_hrtime_openmp_G = {
     .inited = false,
     .start = 0,
 };
-MYS_API const char *mys_hrname_openmp() {
+MYS_PUBLIC const char *mys_hrname_openmp() {
     return "High-resolution timer by <omp.h> (1us~10us)";
 }
-MYS_API uint64_t mys_hrtick_openmp() {
+MYS_PUBLIC uint64_t mys_hrtick_openmp() {
     if (_mys_hrtime_openmp_G.inited == false) {
         _mys_hrtime_openmp_G.start = omp_get_wtime();
         _mys_hrtime_openmp_G.inited = true;
@@ -305,10 +305,10 @@ MYS_API uint64_t mys_hrtick_openmp() {
     double current = omp_get_wtime() - _mys_hrtime_openmp_G.start;
     return (uint64_t)(current * 1e9); // in nano second
 }
-MYS_API uint64_t mys_hrfreq_openmp() {
+MYS_PUBLIC uint64_t mys_hrfreq_openmp() {
     return (uint64_t)1000000000;
 }
-MYS_API double mys_hrtime_openmp() {
+MYS_PUBLIC double mys_hrtime_openmp() {
     return (double)mys_hrtick_openmp() / (double)mys_hrfreq_openmp();
 }
 #endif

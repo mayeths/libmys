@@ -4,14 +4,14 @@
 #include <stdint.h>
 #include "_config.h"
 
-MYS_API double mys_math_copysign(double x, double y);
-MYS_API double mys_math_fabs(double x);
-MYS_API double mys_math_log(double x);
-MYS_API double mys_math_log10(double x);
-MYS_API double mys_math_sqrt(double x);
-MYS_API double mys_math_scalbn(double x, int n);
-MYS_API double mys_math_pow(double x, double y);
-MYS_API double mys_math_trunc(double x);
+MYS_PUBLIC double mys_math_copysign(double x, double y);
+MYS_PUBLIC double mys_math_fabs(double x);
+MYS_PUBLIC double mys_math_log(double x);
+MYS_PUBLIC double mys_math_log10(double x);
+MYS_PUBLIC double mys_math_sqrt(double x);
+MYS_PUBLIC double mys_math_scalbn(double x, int n);
+MYS_PUBLIC double mys_math_pow(double x, double y);
+MYS_PUBLIC double mys_math_trunc(double x);
 
 
 /*

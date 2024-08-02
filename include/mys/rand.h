@@ -25,16 +25,16 @@
  * 
  * @note By default, `mys_rand_xoroshiro128ss()` is seeded with `a0=0, a1=1`.
  */
-MYS_API void mys_rand_seed(uint64_t a0, uint64_t a1);
+MYS_PUBLIC void mys_rand_seed(uint64_t a0, uint64_t a1);
 /**
  * @brief Set the seed with `a0=0, a1=time(NULL)`.
  */
-MYS_API void mys_rand_seed_time();
+MYS_PUBLIC void mys_rand_seed_time();
 /**
  * @brief Set the seed by querying some fast hardware performance counters.
  * @note On failure, it fallbacks to mys_rand_seed_time().
  */
-MYS_API void mys_rand_seed_hardware();
+MYS_PUBLIC void mys_rand_seed_hardware();
 /**
  * @brief All-purpose, rock-solid, small-state pseudo-random number generator
  * 
@@ -56,7 +56,7 @@ MYS_API void mys_rand_seed_hardware();
  * @note
  * https://doxygen.postgresql.org/pg__prng_8c_source.html
  */
-MYS_API uint64_t mys_rand_xoroshiro128ss();
+MYS_PUBLIC uint64_t mys_rand_xoroshiro128ss();
 
 
 //////// exclusive maximum value for convenient array element access
@@ -72,7 +72,7 @@ MYS_API uint64_t mys_rand_xoroshiro128ss();
  * @note
  * To have a random value between [mi, maximum], use `mys_rand_xoroshiro128ss()` instead.
  */
-MYS_API uint64_t mys_rand_u64(uint64_t mi, uint64_t ma);
+MYS_PUBLIC uint64_t mys_rand_u64(uint64_t mi, uint64_t ma);
 /**
  * @brief Generate random uint32_t value
  * 
@@ -80,7 +80,7 @@ MYS_API uint64_t mys_rand_u64(uint64_t mi, uint64_t ma);
  * @param ma maximum value (exclusive)
  * @return random value between [mi, ma)
  */
-MYS_API uint32_t mys_rand_u32(uint32_t mi, uint32_t ma);
+MYS_PUBLIC uint32_t mys_rand_u32(uint32_t mi, uint32_t ma);
 /**
  * @brief Generate random uint16_t value
  * 
@@ -88,7 +88,7 @@ MYS_API uint32_t mys_rand_u32(uint32_t mi, uint32_t ma);
  * @param ma maximum value (exclusive)
  * @return random value between [mi, ma)
  */
-MYS_API uint16_t mys_rand_u16(uint16_t mi, uint16_t ma);
+MYS_PUBLIC uint16_t mys_rand_u16(uint16_t mi, uint16_t ma);
 /**
  * @brief Generate random uint8_t value
  * 
@@ -96,7 +96,7 @@ MYS_API uint16_t mys_rand_u16(uint16_t mi, uint16_t ma);
  * @param ma maximum value (exclusive)
  * @return random value between [mi, ma)
  */
-MYS_API uint8_t mys_rand_u8(uint8_t mi, uint8_t ma);
+MYS_PUBLIC uint8_t mys_rand_u8(uint8_t mi, uint8_t ma);
 /**
  * @brief Generate random int64_t value
  * 
@@ -104,7 +104,7 @@ MYS_API uint8_t mys_rand_u8(uint8_t mi, uint8_t ma);
  * @param ma maximum value (exclusive)
  * @return random value between [mi, ma)
  */
-MYS_API int64_t mys_rand_i64(int64_t mi, int64_t ma);
+MYS_PUBLIC int64_t mys_rand_i64(int64_t mi, int64_t ma);
 /**
  * @brief Generate random int32_t value
  * 
@@ -112,7 +112,7 @@ MYS_API int64_t mys_rand_i64(int64_t mi, int64_t ma);
  * @param ma maximum value (exclusive)
  * @return random value between [mi, ma)
  */
-MYS_API int32_t mys_rand_i32(int32_t mi, int32_t ma);
+MYS_PUBLIC int32_t mys_rand_i32(int32_t mi, int32_t ma);
 /**
  * @brief Generate random int16_t value
  * 
@@ -120,7 +120,7 @@ MYS_API int32_t mys_rand_i32(int32_t mi, int32_t ma);
  * @param ma maximum value (exclusive)
  * @return random value between [mi, ma)
  */
-MYS_API int16_t mys_rand_i16(int16_t mi, int16_t ma);
+MYS_PUBLIC int16_t mys_rand_i16(int16_t mi, int16_t ma);
 /**
  * @brief Generate random int8_t value
  * 
@@ -128,7 +128,7 @@ MYS_API int16_t mys_rand_i16(int16_t mi, int16_t ma);
  * @param ma maximum value (exclusive)
  * @return random value between [mi, ma)
  */
-MYS_API int8_t mys_rand_i8(int8_t mi, int8_t ma);
+MYS_PUBLIC int8_t mys_rand_i8(int8_t mi, int8_t ma);
 /**
  * @brief Generate random size_t value
  * 
@@ -136,7 +136,7 @@ MYS_API int8_t mys_rand_i8(int8_t mi, int8_t ma);
  * @param ma maximum value (exclusive)
  * @return random value between [mi, ma)
  */
-MYS_API size_t mys_rand_sizet(size_t mi, size_t ma);
+MYS_PUBLIC size_t mys_rand_sizet(size_t mi, size_t ma);
 /**
  * @brief Generate random ssize_t value
  * 
@@ -144,7 +144,7 @@ MYS_API size_t mys_rand_sizet(size_t mi, size_t ma);
  * @param ma maximum value (exclusive)
  * @return random value between [mi, ma)
  */
-MYS_API ssize_t mys_rand_ssizet(ssize_t mi, ssize_t ma);
+MYS_PUBLIC ssize_t mys_rand_ssizet(ssize_t mi, ssize_t ma);
 /**
  * @brief Generate random double value
  * 
@@ -158,7 +158,7 @@ MYS_API ssize_t mys_rand_ssizet(ssize_t mi, ssize_t ma);
  * `ma` can be obtained when using either the "round to nearest"
  * (default) or "rounding up (ceiling)" rounding rules.
  */
-MYS_API double mys_rand_f64(double mi, double ma);
+MYS_PUBLIC double mys_rand_f64(double mi, double ma);
 /**
  * @brief Generate random float value
  * 
@@ -172,7 +172,7 @@ MYS_API double mys_rand_f64(double mi, double ma);
  * `ma` can be obtained when using either the "round to nearest"
  * (default) or "rounding up (ceiling)" rounding rules.
  */
-MYS_API float mys_rand_f32(float mi, float ma);
+MYS_PUBLIC float mys_rand_f32(float mi, float ma);
 
 
 ///////////////////////

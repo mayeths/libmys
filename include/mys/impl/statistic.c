@@ -1,7 +1,7 @@
 #include "_private.h"
 #include "../statistic.h"
 
-MYS_API double mys_arthimetic_mean(double *arr, int n)
+MYS_PUBLIC double mys_arthimetic_mean(double *arr, int n)
 {
     double sum = 0;
     for (int i = 0; i < n; i++) {
@@ -10,7 +10,7 @@ MYS_API double mys_arthimetic_mean(double *arr, int n)
     return (1 / (double)n) * sum;
 }
 
-MYS_API double mys_harmonic_mean(double *arr, int n)
+MYS_PUBLIC double mys_harmonic_mean(double *arr, int n)
 {
     double sum = 0;
     for (int i = 0; i < n; i++) {
@@ -19,7 +19,7 @@ MYS_API double mys_harmonic_mean(double *arr, int n)
     return ((double)n) / sum;
 }
 
-MYS_API double mys_geometric_mean(double *arr, int n)
+MYS_PUBLIC double mys_geometric_mean(double *arr, int n)
 {
     double product = 1;
     for (int i = 0; i < n; i++) {
@@ -28,7 +28,7 @@ MYS_API double mys_geometric_mean(double *arr, int n)
     return mys_math_pow(product, 1 / (double)n);
 }
 
-MYS_API double mys_standard_deviation(double *arr, int n)
+MYS_PUBLIC double mys_standard_deviation(double *arr, int n)
 {
     double xbar = mys_arthimetic_mean(arr, n);
     double denom = 0;
@@ -40,7 +40,7 @@ MYS_API double mys_standard_deviation(double *arr, int n)
     return mys_math_sqrt(denom / nom);
 }
 
-MYS_API void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregate_t *results)
+MYS_PUBLIC void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregate_t *results)
 {
     mys_mpi_init();
     int myrank = mys_mpi_myrank();
@@ -91,7 +91,7 @@ MYS_API void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregat
     free(dibuf);
 }
 
-MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
+MYS_PUBLIC mys_aggregate_t mys_aggregate_analysis(double value)
 {
     mys_aggregate_t result;
     mys_aggregate_analysis_array(1, &value, &result);
@@ -99,7 +99,7 @@ MYS_API mys_aggregate_t mys_aggregate_analysis(double value)
 }
 
 
-MYS_API char *mys_boxplot(double *values, size_t n)
+MYS_PUBLIC char *mys_boxplot(double *values, size_t n)
 {
     mys_boxplot_t *bxp = mys_boxplot_create(values, n);
     if (!bxp)
@@ -110,7 +110,7 @@ MYS_API char *mys_boxplot(double *values, size_t n)
     return json;
 }
 
-MYS_API mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
+MYS_PUBLIC mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
     if (n == 0) {
         return NULL;
     }
@@ -209,7 +209,7 @@ MYS_API mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
     return bxp;
 }
 
-MYS_API void mys_boxplot_destroy(mys_boxplot_t **bxp) {
+MYS_PUBLIC void mys_boxplot_destroy(mys_boxplot_t **bxp) {
     if (bxp != NULL && (*bxp) != NULL) {
         if ((*bxp)->fliers != NULL) {
             free((*bxp)->fliers);
@@ -298,12 +298,12 @@ static char *_mys_boxplot_serialize_impl(const mys_boxplot_t *bxp, bool pretty_p
     return buffer;
 }
 
-MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp)
+MYS_PUBLIC char *mys_boxplot_serialize(const mys_boxplot_t *bxp)
 {
     return _mys_boxplot_serialize_impl(bxp, false);
 }
 
-MYS_API char *mys_boxplot_serialize_pretty(const mys_boxplot_t *bxp)
+MYS_PUBLIC char *mys_boxplot_serialize_pretty(const mys_boxplot_t *bxp)
 {
     return _mys_boxplot_serialize_impl(bxp, true);
 }

@@ -30,26 +30,26 @@ MYS_STATIC int _mys_sortfn_sizeti_r(const void *_a, const void *_b) { return -_m
 #undef _MYS_SORTFN_IMPL
 
 
-MYS_API void mys_sort_int(int *values, size_t n) { qsort(values, n, sizeof(int), _mys_sortfn_int); }
-MYS_API void mys_sort_sizet(size_t *values, size_t n) { qsort(values, n, sizeof(size_t), _mys_sortfn_sizet); }
-MYS_API void mys_sort_i32(int32_t *values, size_t n) { qsort(values, n, sizeof(int32_t), _mys_sortfn_i32); }
-MYS_API void mys_sort_i64(int64_t *values, size_t n) { qsort(values, n, sizeof(int64_t), _mys_sortfn_i64); }
-MYS_API void mys_sort_u32(uint32_t *values, size_t n) { qsort(values, n, sizeof(uint32_t), _mys_sortfn_u32); }
-MYS_API void mys_sort_u64(uint64_t *values, size_t n) { qsort(values, n, sizeof(uint64_t), _mys_sortfn_u64); }
-MYS_API void mys_sort_f32(float *values, size_t n)   { qsort(values, n, sizeof(float),   _mys_sortfn_f32); }
-MYS_API void mys_sort_f64(double *values, size_t n)  { qsort(values, n, sizeof(double),  _mys_sortfn_f64); }
+MYS_PUBLIC void mys_sort_int(int *values, size_t n) { qsort(values, n, sizeof(int), _mys_sortfn_int); }
+MYS_PUBLIC void mys_sort_sizet(size_t *values, size_t n) { qsort(values, n, sizeof(size_t), _mys_sortfn_sizet); }
+MYS_PUBLIC void mys_sort_i32(int32_t *values, size_t n) { qsort(values, n, sizeof(int32_t), _mys_sortfn_i32); }
+MYS_PUBLIC void mys_sort_i64(int64_t *values, size_t n) { qsort(values, n, sizeof(int64_t), _mys_sortfn_i64); }
+MYS_PUBLIC void mys_sort_u32(uint32_t *values, size_t n) { qsort(values, n, sizeof(uint32_t), _mys_sortfn_u32); }
+MYS_PUBLIC void mys_sort_u64(uint64_t *values, size_t n) { qsort(values, n, sizeof(uint64_t), _mys_sortfn_u64); }
+MYS_PUBLIC void mys_sort_f32(float *values, size_t n)   { qsort(values, n, sizeof(float),   _mys_sortfn_f32); }
+MYS_PUBLIC void mys_sort_f64(double *values, size_t n)  { qsort(values, n, sizeof(double),  _mys_sortfn_f64); }
 
-MYS_API void mys_sort_int_r(int *values, size_t n) { qsort(values, n, sizeof(int), _mys_sortfn_int_r); }
-MYS_API void mys_sort_sizet_r(size_t *values, size_t n) { qsort(values, n, sizeof(size_t), _mys_sortfn_sizet_r); }
-MYS_API void mys_sort_i32_r(int32_t *values, size_t n) { qsort(values, n, sizeof(int32_t), _mys_sortfn_i32_r); }
-MYS_API void mys_sort_i64_r(int64_t *values, size_t n) { qsort(values, n, sizeof(int64_t), _mys_sortfn_i64_r); }
-MYS_API void mys_sort_u32_r(uint32_t *values, size_t n) { qsort(values, n, sizeof(uint32_t), _mys_sortfn_u32_r); }
-MYS_API void mys_sort_u64_r(uint64_t *values, size_t n) { qsort(values, n, sizeof(uint64_t), _mys_sortfn_u64_r); }
-MYS_API void mys_sort_f32_r(float *values, size_t n)   { qsort(values, n, sizeof(float),   _mys_sortfn_f32_r); }
-MYS_API void mys_sort_f64_r(double *values, size_t n)  { qsort(values, n, sizeof(double),  _mys_sortfn_f64_r); }
+MYS_PUBLIC void mys_sort_int_r(int *values, size_t n) { qsort(values, n, sizeof(int), _mys_sortfn_int_r); }
+MYS_PUBLIC void mys_sort_sizet_r(size_t *values, size_t n) { qsort(values, n, sizeof(size_t), _mys_sortfn_sizet_r); }
+MYS_PUBLIC void mys_sort_i32_r(int32_t *values, size_t n) { qsort(values, n, sizeof(int32_t), _mys_sortfn_i32_r); }
+MYS_PUBLIC void mys_sort_i64_r(int64_t *values, size_t n) { qsort(values, n, sizeof(int64_t), _mys_sortfn_i64_r); }
+MYS_PUBLIC void mys_sort_u32_r(uint32_t *values, size_t n) { qsort(values, n, sizeof(uint32_t), _mys_sortfn_u32_r); }
+MYS_PUBLIC void mys_sort_u64_r(uint64_t *values, size_t n) { qsort(values, n, sizeof(uint64_t), _mys_sortfn_u64_r); }
+MYS_PUBLIC void mys_sort_f32_r(float *values, size_t n)   { qsort(values, n, sizeof(float),   _mys_sortfn_f32_r); }
+MYS_PUBLIC void mys_sort_f64_r(double *values, size_t n)  { qsort(values, n, sizeof(double),  _mys_sortfn_f64_r); }
 
 
-MYS_API mys_f64i_t *mys_sort_f64_to_f64i(double *values, size_t n)
+MYS_PUBLIC mys_f64i_t *mys_sort_f64_to_f64i(double *values, size_t n)
 {
     mys_f64i_t *pairs = (mys_f64i_t *)malloc(n * sizeof(mys_f64i_t));
     for (size_t i = 0; i < n; i++)
@@ -61,7 +61,7 @@ MYS_API mys_f64i_t *mys_sort_f64_to_f64i(double *values, size_t n)
     return pairs;
 }
 
-MYS_API mys_sizeti_t *mys_sort_sizet_to_sizeti(size_t *values, size_t n, mys_sortctl_t sort_type)
+MYS_PUBLIC mys_sizeti_t *mys_sort_sizet_to_sizeti(size_t *values, size_t n, mys_sortctl_t sort_type)
 {
     mys_sizeti_t *pairs = (mys_sizeti_t *)malloc(n * sizeof(mys_sizeti_t));
     for (size_t i = 0; i < n; i++)
@@ -79,7 +79,7 @@ MYS_API mys_sizeti_t *mys_sort_sizet_to_sizeti(size_t *values, size_t n, mys_sor
     return pairs;
 }
 
-// MYS_API void mys_sortidx_f64(double *values, int n, int *sorted_indexes)
+// MYS_PUBLIC void mys_sortidx_f64(double *values, int n, int *sorted_indexes)
 // {
 //     mys_f64i_t *pairs = (mys_f64i_t *)malloc(n * sizeof(mys_f64i_t));
 //     for (int i = 0; i < n; i++) {
@@ -93,7 +93,7 @@ MYS_API mys_sizeti_t *mys_sort_sizet_to_sizeti(size_t *values, size_t n, mys_sor
 //     free(pairs);
 // }
 
-// MYS_API void mys_sortidx_sizet(size_t *values, int n, int *sorted_indexes)
+// MYS_PUBLIC void mys_sortidx_sizet(size_t *values, int n, int *sorted_indexes)
 // {
 //     mys_sizeti_t *pairs = (mys_sizeti_t *)malloc(n * sizeof(mys_sizeti_t));
 //     for (int i = 0; i < n; i++) {

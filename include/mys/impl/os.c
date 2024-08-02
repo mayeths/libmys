@@ -76,7 +76,7 @@ static size_t _mys_cut_suffix_space(char *buf, size_t len)
  * https://github.com/sni/mod_gearman/blob/master/common/popenRWE.c
  * https://github.com/marssaxman/ozette/blob/833b659757/src/console/popenRWE.cpp
  */
-MYS_API mys_popen_t mys_popen_create(const char *command)
+MYS_PUBLIC mys_popen_t mys_popen_create(const char *command)
 {
     mys_popen_t popen;
     popen.alive = false;
@@ -126,7 +126,7 @@ finished_0:
     return popen;
 }
 
-MYS_API bool mys_popen_test(mys_popen_t *popen)
+MYS_PUBLIC bool mys_popen_test(mys_popen_t *popen)
 {
     if (popen == NULL || !popen->alive)
         return false;
@@ -144,7 +144,7 @@ MYS_API bool mys_popen_test(mys_popen_t *popen)
     }
 }
 
-MYS_API bool mys_popen_wait(mys_popen_t *popen)
+MYS_PUBLIC bool mys_popen_wait(mys_popen_t *popen)
 {
     if (popen == NULL || !popen->alive)
         return false;
@@ -164,7 +164,7 @@ MYS_API bool mys_popen_wait(mys_popen_t *popen)
     }
 }
 
-MYS_API bool mys_popen_kill(mys_popen_t *popen, int signo)
+MYS_PUBLIC bool mys_popen_kill(mys_popen_t *popen, int signo)
 {
     if (popen == NULL || !popen->alive)
         return false;
@@ -187,7 +187,7 @@ MYS_API bool mys_popen_kill(mys_popen_t *popen, int signo)
 
 //// prun
 
-MYS_API mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t max_out, char *buf_err, size_t max_err)
+MYS_PUBLIC mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t max_out, char *buf_err, size_t max_err)
 {
     mys_prun_t prun;
     prun.success = false;
@@ -212,7 +212,7 @@ MYS_API mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t ma
     return prun;
 }
 
-MYS_API mys_prun_t mys_prun_create2(const char *command, ...)
+MYS_PUBLIC mys_prun_t mys_prun_create2(const char *command, ...)
 {
     char *command_real = NULL;
     int needed = 0;
@@ -248,7 +248,7 @@ MYS_API mys_prun_t mys_prun_create2(const char *command, ...)
     return prun;
 }
 
-MYS_API void mys_prun_destroy(mys_prun_t *prun)
+MYS_PUBLIC void mys_prun_destroy(mys_prun_t *prun)
 {
     if (prun == NULL || !prun->success)
         return;
@@ -263,7 +263,7 @@ MYS_API void mys_prun_destroy(mys_prun_t *prun)
 }
 
 
-MYS_API bool mys_mkdir(const char *path, mode_t mode)
+MYS_PUBLIC bool mys_mkdir(const char *path, mode_t mode)
 {
     struct stat st;
     bool success = true;
@@ -278,7 +278,7 @@ MYS_API bool mys_mkdir(const char *path, mode_t mode)
     return success;
 }
 
-MYS_API bool mys_ensure_dir(const char *path, mode_t mode)
+MYS_PUBLIC bool mys_ensure_dir(const char *path, mode_t mode)
 {
     char *p = strdup(path);
     char *pp = p;
@@ -298,7 +298,7 @@ MYS_API bool mys_ensure_dir(const char *path, mode_t mode)
     return success;
 }
 
-MYS_API bool mys_ensure_parent(const char *path, mode_t mode)
+MYS_PUBLIC bool mys_ensure_parent(const char *path, mode_t mode)
 {
     char *pathcopy = strdup(path);
     char *dname = dirname(pathcopy);
@@ -307,7 +307,7 @@ MYS_API bool mys_ensure_parent(const char *path, mode_t mode)
     return success;
 }
 
-// MYS_API int mys_busysleep(double seconds)
+// MYS_PUBLIC int mys_busysleep(double seconds)
 // {
 // #if defined(POSIX_COMPLIANCE)
 //     /* https://stackoverflow.com/a/8158862 */
@@ -339,7 +339,7 @@ MYS_API bool mys_ensure_parent(const char *path, mode_t mode)
 // #endif
 // }
 
-MYS_API const char *mys_procname()
+MYS_PUBLIC const char *mys_procname()
 {
 #if defined(OS_LINUX)
     static char exe[128] = { '\0' };
@@ -360,7 +360,7 @@ MYS_API const char *mys_procname()
 #endif
 }
 
-MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
+MYS_PUBLIC void mys_wait_flag(const char *file, int line, const char *flagfile)
 {
     int myrank = mys_mpi_myrank();
     int nranks = mys_mpi_nranks();
@@ -386,7 +386,7 @@ MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile)
 #ifdef MYS_ENABLE_AFFINITY
 #include <sched.h>
 mys_thread_local char _mys_affinity_buffer[256];
-MYS_API const char *mys_get_affinity() {
+MYS_PUBLIC const char *mys_get_affinity() {
     int ncores = (int)sysconf(_SC_NPROCESSORS_ONLN);
     if ((int)ncores > (int)sizeof(_mys_affinity_buffer))
         return NULL;
@@ -402,7 +402,7 @@ MYS_API const char *mys_get_affinity() {
     return _mys_affinity_buffer;
 }
 
-MYS_API void mys_print_affinity(FILE *fd)
+MYS_PUBLIC void mys_print_affinity(FILE *fd)
 {
     int myrank = mys_mpi_myrank();
     int nranks = mys_mpi_nranks();
@@ -438,7 +438,7 @@ MYS_API void mys_print_affinity(FILE *fd)
     }
 }
 
-MYS_API void mys_stick_affinity()
+MYS_PUBLIC void mys_stick_affinity()
 {
 #ifdef _OPENMP
     #pragma omp parallel
@@ -469,7 +469,7 @@ MYS_API void mys_stick_affinity()
 #endif
 
 #ifdef MYS_ENABLE_NUMA
-MYS_API int mys_numa_query(void *ptr)
+MYS_PUBLIC int mys_numa_query(void *ptr)
 {
     long page_size = sysconf(_SC_PAGESIZE);
     size_t mask = ~((size_t)page_size-1);
@@ -482,7 +482,7 @@ MYS_API int mys_numa_query(void *ptr)
     return status[0];
 }
 
-MYS_API int mys_numa_move(void *ptr, int numa_id)
+MYS_PUBLIC int mys_numa_move(void *ptr, int numa_id)
 {
     long page_size = sysconf(_SC_PAGESIZE);
     size_t mask = ~((size_t)page_size-1);
@@ -495,7 +495,7 @@ MYS_API int mys_numa_move(void *ptr, int numa_id)
 
 /* Safe string to numeric https://stackoverflow.com/a/18544436 */
 
-MYS_API const char *mys_env_str(const char *name, const char *default_val)
+MYS_PUBLIC const char *mys_env_str(const char *name, const char *default_val)
 {
     const char *val = getenv(name);
     if (val == NULL)
@@ -503,42 +503,42 @@ MYS_API const char *mys_env_str(const char *name, const char *default_val)
     return val;
 }
 
-MYS_API int mys_env_int(const char *name, int default_val)
+MYS_PUBLIC int mys_env_int(const char *name, int default_val)
 {
     return mys_str_to_int(getenv(name), default_val);
 }
 
-MYS_API long mys_env_long(const char *name, long default_val)
+MYS_PUBLIC long mys_env_long(const char *name, long default_val)
 {
     return mys_str_to_long(getenv(name), default_val);
 }
 
-MYS_API size_t mys_env_sizet(const char *name, size_t default_val)
+MYS_PUBLIC size_t mys_env_sizet(const char *name, size_t default_val)
 {
     return mys_str_to_sizet(getenv(name), default_val);
 }
 
-MYS_API uint64_t mys_env_u64(const char *name, uint64_t default_val)
+MYS_PUBLIC uint64_t mys_env_u64(const char *name, uint64_t default_val)
 {
     return mys_str_to_u64(getenv(name), default_val);
 }
 
-MYS_API uint32_t mys_env_u32(const char *name, uint32_t default_val)
+MYS_PUBLIC uint32_t mys_env_u32(const char *name, uint32_t default_val)
 {
     return mys_str_to_u32(getenv(name), default_val);
 }
 
-MYS_API int64_t mys_env_i64(const char *name, int64_t default_val)
+MYS_PUBLIC int64_t mys_env_i64(const char *name, int64_t default_val)
 {
     return mys_str_to_i64(getenv(name), default_val);
 }
 
-MYS_API int32_t mys_env_i32(const char *name, int32_t default_val)
+MYS_PUBLIC int32_t mys_env_i32(const char *name, int32_t default_val)
 {
     return mys_str_to_i32(getenv(name), default_val);
 }
 
-MYS_API double mys_env_f64(const char *name, double default_val)
+MYS_PUBLIC double mys_env_f64(const char *name, double default_val)
 {
     return mys_str_to_f64(getenv(name), default_val);
 }
@@ -548,7 +548,7 @@ MYS_API double mys_env_f64(const char *name, double default_val)
  * default_val float->double->float is unchanged.
  * Use strtof instead of mys_env_f64
  */
-MYS_API float mys_env_f32(const char *name, float default_val)
+MYS_PUBLIC float mys_env_f32(const char *name, float default_val)
 {
     return mys_str_to_f32(getenv(name), default_val);
 }

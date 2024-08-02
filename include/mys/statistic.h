@@ -9,10 +9,10 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-MYS_API double mys_arthimetic_mean(double *arr, int n);
-MYS_API double mys_harmonic_mean(double *arr, int n);
-MYS_API double mys_geometric_mean(double *arr, int n);
-MYS_API double mys_standard_deviation(double *arr, int n);
+MYS_PUBLIC double mys_arthimetic_mean(double *arr, int n);
+MYS_PUBLIC double mys_harmonic_mean(double *arr, int n);
+MYS_PUBLIC double mys_geometric_mean(double *arr, int n);
+MYS_PUBLIC double mys_standard_deviation(double *arr, int n);
 
 typedef struct mys_aggregate_t {
     /* self value */
@@ -47,7 +47,7 @@ typedef struct mys_aggregate_t {
  * @note
  * `DLOG(0, "time | self %6.3f | avg %6.3f | min %6.3f (%4d) | max %6.3f (%4d)", agg.self, agg.avg, agg.min, agg.loc_min, agg.max, agg.loc_max);`
  */
-MYS_API mys_aggregate_t mys_aggregate_analysis(double value);
+MYS_PUBLIC mys_aggregate_t mys_aggregate_analysis(double value);
 /**
  * @brief Do aggregate analysis among all MPI ranks
  * 
@@ -55,7 +55,7 @@ MYS_API mys_aggregate_t mys_aggregate_analysis(double value);
  * @param values the data to be analysis
  * @param results resulting array to containing all infomations about values of all MPI ranks
  */
-MYS_API void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregate_t *results);
+MYS_PUBLIC void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregate_t *results);
 
 
 
@@ -111,7 +111,7 @@ typedef struct mys_boxplot_t {
  * 
  * @note The caller must free the returned string.
  */
-MYS_API char *mys_boxplot(double *values, size_t n);
+MYS_PUBLIC char *mys_boxplot(double *values, size_t n);
 
 /**
  * @brief Return statistics used to draw a series of box and whisker plots using bxp.
@@ -129,7 +129,7 @@ MYS_API char *mys_boxplot(double *values, size_t n);
  * 
  * @note See matplotlib example in header file
  */
-MYS_API mys_boxplot_t *mys_boxplot_create(double *values, size_t n);
+MYS_PUBLIC mys_boxplot_t *mys_boxplot_create(double *values, size_t n);
 
 /*
 import numpy as np
@@ -169,7 +169,7 @@ plt.show()
  * 
  * @param bxp Pointer to the boxplot statistics structure to be freed
  */
-MYS_API void mys_boxplot_destroy(mys_boxplot_t **bxp);
+MYS_PUBLIC void mys_boxplot_destroy(mys_boxplot_t **bxp);
 
 /**
  * @brief Serialize the boxplot statistics to a JSON string.
@@ -181,7 +181,7 @@ MYS_API void mys_boxplot_destroy(mys_boxplot_t **bxp);
  * 
  * @note The caller must free the returned string.
  */
-MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp);
+MYS_PUBLIC char *mys_boxplot_serialize(const mys_boxplot_t *bxp);
 
 /**
  * @brief Serialize the boxplot statistics to a pretty-printed JSON string.
@@ -193,9 +193,9 @@ MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp);
  * 
  * @note The caller must free the returned string.
  */
-MYS_API char *mys_boxplot_serialize_pretty(const mys_boxplot_t *bxp);
+MYS_PUBLIC char *mys_boxplot_serialize_pretty(const mys_boxplot_t *bxp);
 
-// MYS_API char *mys_boxplot_serialize(const mys_boxplot_t *bxp, bool pretty_print);
+// MYS_PUBLIC char *mys_boxplot_serialize(const mys_boxplot_t *bxp, bool pretty_print);
 
 /*
 #include <stdio.h>

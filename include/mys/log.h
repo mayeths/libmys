@@ -112,24 +112,24 @@ typedef struct {
 typedef void (*mys_log_handler_fn)(mys_log_event_t *event, const char *fmt, va_list vargs, void *udata);
 
 /////// log
-__attribute__((format(printf, 5, 6))) MYS_API void mys_log(int who, int level, const char *file, int line, const char *fmt, ...);
-__attribute__((format(printf, 5, 6))) MYS_API void mys_log_when(int cond, int level, const char *file, int line, const char *fmt, ...);
-__attribute__((format(printf, 4, 5))) MYS_API void mys_log_self(int level, const char *file, int line, const char *fmt, ...);
-__attribute__((format(printf, 4, 5))) MYS_API void mys_log_once(int level, const char *file, int line, const char *fmt, ...);
-__attribute__((format(printf, 4, 5))) MYS_API void mys_log_ordered(int level, const char *file, int line, const char *fmt, ...);
-MYS_API int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_udata);
-MYS_API void mys_log_remove_handler(int handler_id);
-MYS_API void mys_log_invoke_handlers(mys_log_event_t *event, const char *fmt, va_list vargs);
-MYS_API int mys_log_get_level();
-MYS_API void mys_log_set_level(int level);
-MYS_API void mys_log_silent(bool silent);
-MYS_API const char* mys_log_level_string(int level);
-MYS_API void mys_log_init();
+__attribute__((format(printf, 5, 6))) MYS_PUBLIC void mys_log(int who, int level, const char *file, int line, const char *fmt, ...);
+__attribute__((format(printf, 5, 6))) MYS_PUBLIC void mys_log_when(int cond, int level, const char *file, int line, const char *fmt, ...);
+__attribute__((format(printf, 4, 5))) MYS_PUBLIC void mys_log_self(int level, const char *file, int line, const char *fmt, ...);
+__attribute__((format(printf, 4, 5))) MYS_PUBLIC void mys_log_once(int level, const char *file, int line, const char *fmt, ...);
+__attribute__((format(printf, 4, 5))) MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const char *fmt, ...);
+MYS_PUBLIC int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_udata);
+MYS_PUBLIC void mys_log_remove_handler(int handler_id);
+MYS_PUBLIC void mys_log_invoke_handlers(mys_log_event_t *event, const char *fmt, va_list vargs);
+MYS_PUBLIC int mys_log_get_level();
+MYS_PUBLIC void mys_log_set_level(int level);
+MYS_PUBLIC void mys_log_silent(bool silent);
+MYS_PUBLIC const char* mys_log_level_string(int level);
+MYS_PUBLIC void mys_log_init();
 /////// rank log
 __attribute__((format(printf, 4, 5)))
-MYS_API void mys_rank_log(const char *callfile, int callline, const char *folder, const char *fmt, ...);
-MYS_API void mys_rank_log_open(const char *callfile, int callline, const char *folder);
-MYS_API void mys_rank_log_close(const char *callfile, int callline, const char *folder);
+MYS_PUBLIC void mys_rank_log(const char *callfile, int callline, const char *folder, const char *fmt, ...);
+MYS_PUBLIC void mys_rank_log_open(const char *callfile, int callline, const char *folder);
+MYS_PUBLIC void mys_rank_log_close(const char *callfile, int callline, const char *folder);
 
 
 #define MCOLOR_NO        "\x1b[0m"

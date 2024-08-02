@@ -17,7 +17,7 @@ MYS_STATIC _mys_mpi_G_t _mys_mpi_G = {
     .comm = _mys_MPI_COMM_WORLD,
 };
 
-MYS_API void mys_mpi_init()
+MYS_PUBLIC void mys_mpi_init()
 {
     if (_mys_mpi_G.inited == true)
         return;
@@ -37,31 +37,31 @@ MYS_API void mys_mpi_init()
     mys_mutex_unlock(&_mys_mpi_G.lock);
 }
 
-MYS_API int mys_mpi_myrank()
+MYS_PUBLIC int mys_mpi_myrank()
 {
     mys_mpi_init();
     return _mys_mpi_G.myrank;
 }
 
-MYS_API int mys_mpi_nranks()
+MYS_PUBLIC int mys_mpi_nranks()
 {
     mys_mpi_init();
     return _mys_mpi_G.nranks;
 }
 
-MYS_API int mys_mpi_barrier()
+MYS_PUBLIC int mys_mpi_barrier()
 {
     mys_mpi_init();
     return _mys_MPI_Barrier(_mys_mpi_G.comm);
 }
 
-MYS_API int mys_mpi_sync()
+MYS_PUBLIC int mys_mpi_sync()
 {
     // At this point we use simple barrier for sync
     return mys_mpi_barrier();
 }
 
-MYS_API _mys_MPI_Comm mys_mpi_comm()
+MYS_PUBLIC _mys_MPI_Comm mys_mpi_comm()
 {
     return _mys_mpi_G.comm;
 }

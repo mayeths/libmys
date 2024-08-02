@@ -38,49 +38,49 @@ typedef struct mys_commgroup_t
  * 
  * @note Use mys_commgroup_create_node(comm) to construct node based group.
  */
-MYS_API mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group_color, int group_key);
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group_color, int group_key);
 /**
  * @brief Create communication group information based on node
  * @return The group handle
  */
-MYS_API mys_commgroup_t *mys_commgroup_create_node(MPI_Comm global_comm);
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(MPI_Comm global_comm);
 /**
  * @brief Create communication group information based on node
  * @return The group handle
  * 
  * @note This routine require MYS_ENABLE_NUMA.
  */
-MYS_API mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm);
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm);
 /**
  * @brief Release communication group information
  * @param group The group handle
  */
-MYS_API void mys_commgroup_release(mys_commgroup_t *group);
+MYS_PUBLIC void mys_commgroup_release(mys_commgroup_t *group);
 /**
  * @brief Query the group to which the rank belongs (Support querying rank in other group)
  * @param global_rank The global rank to be query
  * @return The group id. -1 if provided invalid global_rank
  */
-MYS_API int mys_query_group_id(mys_commgroup_t *group, int global_rank);
+MYS_PUBLIC int mys_query_group_id(mys_commgroup_t *group, int global_rank);
 /**
  * @brief Query the local rank of the global rank (Support querying rank in other group)
  * @param global_rank The global rank to be query
  * @return The local rank. -1 if provided invalid global_rank
  */
-MYS_API int mys_query_local_rank(mys_commgroup_t *group, int global_rank);
+MYS_PUBLIC int mys_query_local_rank(mys_commgroup_t *group, int global_rank);
 /**
  * @brief Query the global rank of the local rank (ONLY support querying rank in the same group)
  * @param local_rank The local rank to be query
  * @return The global rank. -1 if provided invalid local_rank
  */
-MYS_API int mys_query_brother(mys_commgroup_t *group, int local_rank);
+MYS_PUBLIC int mys_query_brother(mys_commgroup_t *group, int local_rank);
 /**
  * @brief Query the global rank of each group member that has the same `local_myrank` (Support querying rank in other group)
  * @param group_id The groud id to be query
  * @return The global rank of group member. -1 if provided invalid local_rank,
  *      or that group doesn't has corresponding neighbor that has the same `local_myrank`
  */
-MYS_API int mys_query_neighbor(mys_commgroup_t *group, int group_id);
+MYS_PUBLIC int mys_query_neighbor(mys_commgroup_t *group, int group_id);
 
 /* mpicc -I${MYS_DIR}/include a.c && mpirun -n 5 ./a.out 3
 #include <stdlib.h>

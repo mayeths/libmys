@@ -20,14 +20,14 @@ static void _mys_rand_init()
     _mys_rand_G.inited = true;
 }
 
-MYS_API void mys_rand_seed(uint64_t a0, uint64_t a1)
+MYS_PUBLIC void mys_rand_seed(uint64_t a0, uint64_t a1)
 {
     _mys_rand_init();
     _mys_rand_G.seed[0] = a0;
     _mys_rand_G.seed[1] = a1;
 }
 
-MYS_API void mys_rand_seed_time()
+MYS_PUBLIC void mys_rand_seed_time()
 {
     uint64_t t;
     t = (uint64_t)time(NULL);
@@ -37,7 +37,7 @@ MYS_API void mys_rand_seed_time()
     mys_rand_seed(a0, a1);
 }
 
-MYS_API void mys_rand_seed_hardware()
+MYS_PUBLIC void mys_rand_seed_hardware()
 {
     uint64_t t;
 #if defined(ARCH_X64)
@@ -60,7 +60,7 @@ static uint64_t _mys_rotl(const uint64_t x, int k)
 {
     return (x << k) | (x >> (64 - k));
 }
-MYS_API uint64_t mys_rand_xoroshiro128ss()
+MYS_PUBLIC uint64_t mys_rand_xoroshiro128ss()
 {
     _mys_rand_init();
     const uint64_t s0 = _mys_rand_G.seed[0];
@@ -72,7 +72,7 @@ MYS_API uint64_t mys_rand_xoroshiro128ss()
     return result;
 }
 
-MYS_API uint64_t mys_rand_u64(uint64_t mi, uint64_t ma)
+MYS_PUBLIC uint64_t mys_rand_u64(uint64_t mi, uint64_t ma)
 {
     uint64_t v = mys_rand_xoroshiro128ss();
     if (ma <= mi)
@@ -82,11 +82,11 @@ MYS_API uint64_t mys_rand_u64(uint64_t mi, uint64_t ma)
     return mi + v % (ma - mi);
 }
 
-MYS_API uint32_t mys_rand_u32(uint32_t mi, uint32_t ma) { return (uint32_t)mys_rand_u64(mi, ma); }
-MYS_API uint16_t mys_rand_u16(uint16_t mi, uint16_t ma) { return (uint16_t)mys_rand_u64(mi, ma); }
-MYS_API uint8_t  mys_rand_u8 (uint8_t  mi, uint8_t  ma) { return (uint8_t )mys_rand_u64(mi, ma); }
+MYS_PUBLIC uint32_t mys_rand_u32(uint32_t mi, uint32_t ma) { return (uint32_t)mys_rand_u64(mi, ma); }
+MYS_PUBLIC uint16_t mys_rand_u16(uint16_t mi, uint16_t ma) { return (uint16_t)mys_rand_u64(mi, ma); }
+MYS_PUBLIC uint8_t  mys_rand_u8 (uint8_t  mi, uint8_t  ma) { return (uint8_t )mys_rand_u64(mi, ma); }
 
-MYS_API int64_t mys_rand_i64(int64_t mi, int64_t ma)
+MYS_PUBLIC int64_t mys_rand_i64(int64_t mi, int64_t ma)
 {
     union _mys_dicast_t { uint64_t u64; int64_t i64; } v;
     v.u64 = mys_rand_xoroshiro128ss();
@@ -97,11 +97,11 @@ MYS_API int64_t mys_rand_i64(int64_t mi, int64_t ma)
     return mi + v.u64 % (ma - mi);
 }
 
-MYS_API int32_t mys_rand_i32(int32_t mi, int32_t ma) { return (int32_t)mys_rand_i64(mi, ma); }
-MYS_API int16_t mys_rand_i16(int16_t mi, int16_t ma) { return (int16_t)mys_rand_i64(mi, ma); }
-MYS_API int8_t  mys_rand_i8 (int8_t  mi, int8_t  ma) { return (int8_t )mys_rand_i64(mi, ma); }
+MYS_PUBLIC int32_t mys_rand_i32(int32_t mi, int32_t ma) { return (int32_t)mys_rand_i64(mi, ma); }
+MYS_PUBLIC int16_t mys_rand_i16(int16_t mi, int16_t ma) { return (int16_t)mys_rand_i64(mi, ma); }
+MYS_PUBLIC int8_t  mys_rand_i8 (int8_t  mi, int8_t  ma) { return (int8_t )mys_rand_i64(mi, ma); }
 
-MYS_API size_t mys_rand_sizet(size_t mi, size_t ma)
+MYS_PUBLIC size_t mys_rand_sizet(size_t mi, size_t ma)
 {
 #if SIZE_MAX == UINT64_MAX
     return (size_t)mys_rand_u64(mi, ma);
@@ -112,7 +112,7 @@ MYS_API size_t mys_rand_sizet(size_t mi, size_t ma)
 #endif
 }
 
-MYS_API ssize_t mys_rand_ssizet(ssize_t mi, ssize_t ma)
+MYS_PUBLIC ssize_t mys_rand_ssizet(ssize_t mi, ssize_t ma)
 {
     // Do not use SSIZE_MAX macro here because C99 doesn't have it
     if (sizeof(ssize_t) == sizeof(int64_t))
@@ -123,7 +123,7 @@ MYS_API ssize_t mys_rand_ssizet(ssize_t mi, ssize_t ma)
         return (ssize_t)mys_rand_i64(mi, ma);
 }
 
-MYS_API double mys_rand_f64(double mi, double ma)
+MYS_PUBLIC double mys_rand_f64(double mi, double ma)
 {
     uint64_t v = mys_rand_xoroshiro128ss();
     if (ma <= mi)
@@ -134,7 +134,7 @@ MYS_API double mys_rand_f64(double mi, double ma)
     return mi + v01 * (ma - mi); // [mi, ma] due to IEEE 754 rounding
 }
 
-MYS_API float mys_rand_f32(float mi, float ma) {
+MYS_PUBLIC float mys_rand_f32(float mi, float ma) {
     uint32_t v = (uint32_t)mys_rand_xoroshiro128ss();
     if (ma <= mi)
         return mi;

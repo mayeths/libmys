@@ -62,7 +62,7 @@ static void _mys_sha256_trans(mys_sha256_ctx_t *ctx, const unsigned char data[])
     ctx->state[7] += h;
 }
 
-MYS_API void mys_sha256_init(mys_sha256_ctx_t *ctx)
+MYS_PUBLIC void mys_sha256_init(mys_sha256_ctx_t *ctx)
 {
     ctx->datalen = 0;
     ctx->bitlen = 0;
@@ -76,7 +76,7 @@ MYS_API void mys_sha256_init(mys_sha256_ctx_t *ctx)
     ctx->state[7] = 0x5be0cd19;
 }
 
-MYS_API void mys_sha256_update(mys_sha256_ctx_t *ctx, const void *data, size_t len)
+MYS_PUBLIC void mys_sha256_update(mys_sha256_ctx_t *ctx, const void *data, size_t len)
 {
     unsigned int i;
     const unsigned char *raw = (const unsigned char *)data;
@@ -92,72 +92,72 @@ MYS_API void mys_sha256_update(mys_sha256_ctx_t *ctx, const void *data, size_t l
     }
 }
 
-MYS_API void mys_sha256_update_i8(mys_sha256_ctx_t *ctx, const int8_t data)
+MYS_PUBLIC void mys_sha256_update_i8(mys_sha256_ctx_t *ctx, const int8_t data)
 {
     mys_sha256_update(ctx, &data, sizeof(int8_t));
 }
-MYS_API void mys_sha256_update_i16(mys_sha256_ctx_t *ctx, const int16_t data)
+MYS_PUBLIC void mys_sha256_update_i16(mys_sha256_ctx_t *ctx, const int16_t data)
 {
     mys_sha256_update(ctx, &data, sizeof(int16_t));
 }
-MYS_API void mys_sha256_update_i32(mys_sha256_ctx_t *ctx, const int32_t data)
+MYS_PUBLIC void mys_sha256_update_i32(mys_sha256_ctx_t *ctx, const int32_t data)
 {
     mys_sha256_update(ctx, &data, sizeof(int32_t));
 }
-MYS_API void mys_sha256_update_i64(mys_sha256_ctx_t *ctx, const int64_t data)
+MYS_PUBLIC void mys_sha256_update_i64(mys_sha256_ctx_t *ctx, const int64_t data)
 {
     mys_sha256_update(ctx, &data, sizeof(int64_t));
 }
-MYS_API void mys_sha256_update_u8(mys_sha256_ctx_t *ctx, const uint8_t data)
+MYS_PUBLIC void mys_sha256_update_u8(mys_sha256_ctx_t *ctx, const uint8_t data)
 {
     mys_sha256_update(ctx, &data, sizeof(uint8_t));
 }
-MYS_API void mys_sha256_update_u16(mys_sha256_ctx_t *ctx, const uint16_t data)
+MYS_PUBLIC void mys_sha256_update_u16(mys_sha256_ctx_t *ctx, const uint16_t data)
 {
     mys_sha256_update(ctx, &data, sizeof(uint16_t));
 }
-MYS_API void mys_sha256_update_u32(mys_sha256_ctx_t *ctx, const uint32_t data)
+MYS_PUBLIC void mys_sha256_update_u32(mys_sha256_ctx_t *ctx, const uint32_t data)
 {
     mys_sha256_update(ctx, &data, sizeof(uint32_t));
 }
-MYS_API void mys_sha256_update_u64(mys_sha256_ctx_t *ctx, const uint64_t data)
+MYS_PUBLIC void mys_sha256_update_u64(mys_sha256_ctx_t *ctx, const uint64_t data)
 {
     mys_sha256_update(ctx, &data, sizeof(uint64_t));
 }
-MYS_API void mys_sha256_update_f32(mys_sha256_ctx_t *ctx, const float data)
+MYS_PUBLIC void mys_sha256_update_f32(mys_sha256_ctx_t *ctx, const float data)
 {
     mys_sha256_update(ctx, &data, sizeof(float));
 }
-MYS_API void mys_sha256_update_f64(mys_sha256_ctx_t *ctx, const double data)
+MYS_PUBLIC void mys_sha256_update_f64(mys_sha256_ctx_t *ctx, const double data)
 {
     mys_sha256_update(ctx, &data, sizeof(double));
 }
-MYS_API void mys_sha256_update_int(mys_sha256_ctx_t *ctx, const int data)
+MYS_PUBLIC void mys_sha256_update_int(mys_sha256_ctx_t *ctx, const int data)
 {
     mys_sha256_update(ctx, &data, sizeof(int));
 }
-MYS_API void mys_sha256_update_float(mys_sha256_ctx_t *ctx, const float data)
+MYS_PUBLIC void mys_sha256_update_float(mys_sha256_ctx_t *ctx, const float data)
 {
     mys_sha256_update(ctx, &data, sizeof(float));
 }
-MYS_API void mys_sha256_update_double(mys_sha256_ctx_t *ctx, const double data)
+MYS_PUBLIC void mys_sha256_update_double(mys_sha256_ctx_t *ctx, const double data)
 {
     mys_sha256_update(ctx, &data, sizeof(double));
 }
-MYS_API void mys_sha256_update_char(mys_sha256_ctx_t *ctx, const char data)
+MYS_PUBLIC void mys_sha256_update_char(mys_sha256_ctx_t *ctx, const char data)
 {
     mys_sha256_update(ctx, &data, sizeof(char));
 }
-MYS_API void mys_sha256_update_ptr(mys_sha256_ctx_t *ctx, const void *data)
+MYS_PUBLIC void mys_sha256_update_ptr(mys_sha256_ctx_t *ctx, const void *data)
 {
     mys_sha256_update(ctx, &data, sizeof(void *));
 }
-MYS_API void mys_sha256_update_arr(mys_sha256_ctx_t *ctx, const void *data, size_t size)
+MYS_PUBLIC void mys_sha256_update_arr(mys_sha256_ctx_t *ctx, const void *data, size_t size)
 {
     mys_sha256_update(ctx, data, size);
 }
 
-MYS_API void mys_sha256_dump_bin(mys_sha256_ctx_t *ctx, void *outbin)
+MYS_PUBLIC void mys_sha256_dump_bin(mys_sha256_ctx_t *ctx, void *outbin)
 {
     mys_sha256_ctx_t ictx;
     memcpy(&ictx, ctx, sizeof(mys_sha256_ctx_t));
@@ -209,7 +209,7 @@ MYS_API void mys_sha256_dump_bin(mys_sha256_ctx_t *ctx, void *outbin)
 
 static const char _mys_hex_table[] = "0123456789abcdef";
 
-MYS_API void mys_sha256_dump_hex(mys_sha256_ctx_t *ctx, void *outhex)
+MYS_PUBLIC void mys_sha256_dump_hex(mys_sha256_ctx_t *ctx, void *outhex)
 {
     uint8_t outbin[MYS_SHA256_BIN_SIZE];
     mys_sha256_dump_bin(ctx, outbin);
@@ -225,14 +225,14 @@ MYS_API void mys_sha256_dump_hex(mys_sha256_ctx_t *ctx, void *outhex)
     *out = '\0';
 }
 
-MYS_API void mys_sha256_dump_base64(mys_sha256_ctx_t *ctx, void *outbase64)
+MYS_PUBLIC void mys_sha256_dump_base64(mys_sha256_ctx_t *ctx, void *outbase64)
 {
     uint8_t outbin[MYS_SHA256_BIN_SIZE];
     mys_sha256_dump_bin(ctx, outbin);
     mys_base64_encode((char *)outbase64, MYS_SHA256_BASE64_SIZE, outbin, MYS_SHA256_BIN_SIZE);
 }
 
-MYS_API void mys_sha256_bin(const void *text, size_t size, uint8_t output[MYS_SHA256_BIN_SIZE])
+MYS_PUBLIC void mys_sha256_bin(const void *text, size_t size, uint8_t output[MYS_SHA256_BIN_SIZE])
 {
     mys_sha256_ctx_t ctx;
     mys_sha256_init(&ctx);
@@ -240,7 +240,7 @@ MYS_API void mys_sha256_bin(const void *text, size_t size, uint8_t output[MYS_SH
     mys_sha256_dump_bin(&ctx, (void *)output);
 }
 
-MYS_API void mys_sha256_base64(const void *text, size_t size, char output[MYS_SHA256_BASE64_SIZE])
+MYS_PUBLIC void mys_sha256_base64(const void *text, size_t size, char output[MYS_SHA256_BASE64_SIZE])
 {
     mys_sha256_ctx_t ctx;
     mys_sha256_init(&ctx);
@@ -248,7 +248,7 @@ MYS_API void mys_sha256_base64(const void *text, size_t size, char output[MYS_SH
     mys_sha256_dump_base64(&ctx, (void *)output);
 }
 
-MYS_API void mys_sha256_hex(const void *text, size_t size, char output[MYS_SHA256_HEX_SIZE])
+MYS_PUBLIC void mys_sha256_hex(const void *text, size_t size, char output[MYS_SHA256_HEX_SIZE])
 {
     mys_sha256_ctx_t ctx;
     mys_sha256_init(&ctx);

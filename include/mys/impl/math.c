@@ -75,21 +75,21 @@ static const double
 
 
 // from netlib-math/s_copysign.c
-MYS_API double mys_math_copysign(double x, double y)
+MYS_PUBLIC double mys_math_copysign(double x, double y)
 {
     x = _FDLIBM_FORM_DOUBLE((_FDLIBM_HI(x)&0x7fffffff)|(_FDLIBM_HI(y)&0x80000000), _FDLIBM_LO(x));
         return x;
 }
 
 // from netlib-math/s_fabs.c
-MYS_API double mys_math_fabs(double x)
+MYS_PUBLIC double mys_math_fabs(double x)
 {
     x = _FDLIBM_FORM_DOUBLE(_FDLIBM_HI(x)&0x7fffffff, _FDLIBM_LO(x));
         return x;
 }
 
 // from netlib-math/e_log.c
-MYS_API double mys_math_log(double x)
+MYS_PUBLIC double mys_math_log(double x)
 {
 	double hfsq,f,s,z,R,w,t1,t2,dk;
 	int k,hx,i,j;
@@ -142,7 +142,7 @@ MYS_API double mys_math_log(double x)
 }
 
 // from netlib-math/e_log10.c
-MYS_API double mys_math_log10(double x)
+MYS_PUBLIC double mys_math_log10(double x)
 {
 	double y,z;
 	int i,k,hx;
@@ -171,7 +171,7 @@ MYS_API double mys_math_log10(double x)
 }
 
 // from netlib-math/e_pow.c
-MYS_API double mys_math_pow(double x, double y)
+MYS_PUBLIC double mys_math_pow(double x, double y)
 {
 	double z,ax,z_h,z_l,p_h,p_l;
 	double y1,t1,t2,r,s,t,u,v,w;
@@ -377,7 +377,7 @@ MYS_API double mys_math_pow(double x, double y)
 }
 
 // from netlib-math/s_scalbn.c
-MYS_API double mys_math_scalbn (double x, int n)
+MYS_PUBLIC double mys_math_scalbn (double x, int n)
 {
 	int  k,hx,lx;
 	hx = _FDLIBM_HI(x);
@@ -406,7 +406,7 @@ MYS_API double mys_math_scalbn (double x, int n)
 }
 
 // from netlib-math/e_sqrt.c
-MYS_API double mys_math_sqrt(double x)
+MYS_PUBLIC double mys_math_sqrt(double x)
 {
 	double z;
 	int 	sign = (int)0x80000000; 
@@ -504,7 +504,7 @@ MYS_API double mys_math_sqrt(double x)
 }
 
 // from musl-1.2.4/src/math/trunc.c
-MYS_API double mys_math_trunc(double x)
+MYS_PUBLIC double mys_math_trunc(double x)
 {
 	union {double f; uint64_t i;} u = {x};
 	int e = (int)(u.i >> 52 & 0x7ff) - 0x3ff + 12;

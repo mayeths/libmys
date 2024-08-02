@@ -40,7 +40,7 @@ static _mys_log_G_t _mys_log_G = {
     },
 };
 
-MYS_API void mys_log_init()
+MYS_PUBLIC void mys_log_init()
 {
     if (_mys_log_G.inited == true)
         return;
@@ -77,7 +77,7 @@ MYS_STATIC void _mys_log_impl(int who, int level, const char *file, int line, co
     mys_mutex_unlock(&_mys_log_G.lock);
 }
 
-MYS_API void mys_log(int who, int level, const char *file, int line, const char *fmt, ...)
+MYS_PUBLIC void mys_log(int who, int level, const char *file, int line, const char *fmt, ...)
 {
     va_list vargs;
     va_start(vargs, fmt);
@@ -85,7 +85,7 @@ MYS_API void mys_log(int who, int level, const char *file, int line, const char 
     va_end(vargs);
 }
 
-MYS_API void mys_log_when(int cond, int level, const char *file, int line, const char *fmt, ...)
+MYS_PUBLIC void mys_log_when(int cond, int level, const char *file, int line, const char *fmt, ...)
 {
     if (cond == 0)
         return;
@@ -95,7 +95,7 @@ MYS_API void mys_log_when(int cond, int level, const char *file, int line, const
     va_end(vargs);
 }
 
-MYS_API void mys_log_self(int level, const char *file, int line, const char *fmt, ...)
+MYS_PUBLIC void mys_log_self(int level, const char *file, int line, const char *fmt, ...)
 {
     va_list vargs;
     va_start(vargs, fmt);
@@ -103,7 +103,7 @@ MYS_API void mys_log_self(int level, const char *file, int line, const char *fmt
     va_end(vargs);
 }
 
-MYS_API void mys_log_once(int level, const char *file, int line, const char *fmt, ...)
+MYS_PUBLIC void mys_log_once(int level, const char *file, int line, const char *fmt, ...)
 {
     // log once according to file and line as key. Use a map to store the key. Use uthash
     // try to find if we already log once
@@ -128,7 +128,7 @@ MYS_API void mys_log_once(int level, const char *file, int line, const char *fmt
 }
 
 
-MYS_API void mys_log_ordered(int level, const char *file, int line, const char *fmt, ...)
+MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const char *fmt, ...)
 {
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
@@ -199,7 +199,7 @@ MYS_API void mys_log_ordered(int level, const char *file, int line, const char *
     mys_mutex_unlock(&_mys_log_G.lock);
 }
 
-MYS_API int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_udata)
+MYS_PUBLIC int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_udata)
 {
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
@@ -223,7 +223,7 @@ MYS_API int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_uda
     return id;
 }
 
-MYS_API void mys_log_remove_handler(int handler_id)
+MYS_PUBLIC void mys_log_remove_handler(int handler_id)
 {
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
@@ -245,7 +245,7 @@ MYS_API void mys_log_remove_handler(int handler_id)
     mys_mutex_unlock(&_mys_log_G.lock);
 }
 
-MYS_API void mys_log_invoke_handlers(mys_log_event_t *event, const char *fmt, va_list vargs)
+MYS_PUBLIC void mys_log_invoke_handlers(mys_log_event_t *event, const char *fmt, va_list vargs)
 {
     for (int i = 0; i < MYS_LOG_MAX_HANDLER; i++) {
         if (_mys_log_G.handlers[i].fn == NULL)
@@ -257,7 +257,7 @@ MYS_API void mys_log_invoke_handlers(mys_log_event_t *event, const char *fmt, va
     }
 }
 
-MYS_API int mys_log_get_level()
+MYS_PUBLIC int mys_log_get_level()
 {
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
@@ -266,7 +266,7 @@ MYS_API int mys_log_get_level()
     return level;
 }
 
-MYS_API void mys_log_set_level(int level)
+MYS_PUBLIC void mys_log_set_level(int level)
 {
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
@@ -274,7 +274,7 @@ MYS_API void mys_log_set_level(int level)
     mys_mutex_unlock(&_mys_log_G.lock);
 }
 
-MYS_API void mys_log_silent(bool silent)
+MYS_PUBLIC void mys_log_silent(bool silent)
 {
     mys_log_init();
     mys_mutex_lock(&_mys_log_G.lock);
@@ -282,7 +282,7 @@ MYS_API void mys_log_silent(bool silent)
     mys_mutex_unlock(&_mys_log_G.lock);
 }
 
-MYS_API const char* mys_log_level_string(int level)
+MYS_PUBLIC const char* mys_log_level_string(int level)
 {
     const char *level_strings[] = {
         "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
@@ -386,7 +386,7 @@ MYS_STATIC int _mys_rank_log_find_dest(const char *folder, size_t len)
     return index;
 }
 
-MYS_API void mys_rank_log(const char *callfile, int callline, const char *folder, const char *fmt, ...)
+MYS_PUBLIC void mys_rank_log(const char *callfile, int callline, const char *folder, const char *fmt, ...)
 {
     _mys_rank_log_init();
     va_list vargs;
@@ -419,7 +419,7 @@ _finished:
     mys_mutex_unlock(&_mys_rank_log_G.lock);
 }
 
-MYS_API void mys_rank_log_open(const char *callfile, int callline, const char *folder)
+MYS_PUBLIC void mys_rank_log_open(const char *callfile, int callline, const char *folder)
 {
     _mys_rank_log_init();
     size_t len = strnlen(folder, _MYS_FNAME_MAX);
@@ -467,7 +467,7 @@ _finished:
     mys_mutex_unlock(&_mys_rank_log_G.lock);
 }
 
-MYS_API void mys_rank_log_close(const char *callfile, int callline, const char *folder)
+MYS_PUBLIC void mys_rank_log_close(const char *callfile, int callline, const char *folder)
 {
     _mys_rank_log_init();
     size_t len = strnlen(folder, _MYS_FNAME_MAX);

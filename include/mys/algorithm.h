@@ -10,29 +10,29 @@
 
 typedef enum { MYS_SORT_ASCEND, MYS_SORT_DESCEND } mys_sortctl_t;
 
-MYS_API void mys_sort_int(int *values, size_t n);
-MYS_API void mys_sort_sizet(size_t *values, size_t n);
-MYS_API void mys_sort_i32(int32_t *values, size_t n);
-MYS_API void mys_sort_i64(int64_t *values, size_t n);
-MYS_API void mys_sort_u32(uint32_t *values, size_t n);
-MYS_API void mys_sort_u64(uint64_t *values, size_t n);
-MYS_API void mys_sort_f32(float *values, size_t n);
-MYS_API void mys_sort_f64(double *values, size_t n);
+MYS_PUBLIC void mys_sort_int(int *values, size_t n);
+MYS_PUBLIC void mys_sort_sizet(size_t *values, size_t n);
+MYS_PUBLIC void mys_sort_i32(int32_t *values, size_t n);
+MYS_PUBLIC void mys_sort_i64(int64_t *values, size_t n);
+MYS_PUBLIC void mys_sort_u32(uint32_t *values, size_t n);
+MYS_PUBLIC void mys_sort_u64(uint64_t *values, size_t n);
+MYS_PUBLIC void mys_sort_f32(float *values, size_t n);
+MYS_PUBLIC void mys_sort_f64(double *values, size_t n);
 
-MYS_API void mys_sort_int_r(int *values, size_t n);
-MYS_API void mys_sort_sizet_r(size_t *values, size_t n);
-MYS_API void mys_sort_i32_r(int32_t *values, size_t n);
-MYS_API void mys_sort_i64_r(int64_t *values, size_t n);
-MYS_API void mys_sort_u32_r(uint32_t *values, size_t n);
-MYS_API void mys_sort_u64_r(uint64_t *values, size_t n);
-MYS_API void mys_sort_f32_r(float *values, size_t n);
-MYS_API void mys_sort_f64_r(double *values, size_t n);
+MYS_PUBLIC void mys_sort_int_r(int *values, size_t n);
+MYS_PUBLIC void mys_sort_sizet_r(size_t *values, size_t n);
+MYS_PUBLIC void mys_sort_i32_r(int32_t *values, size_t n);
+MYS_PUBLIC void mys_sort_i64_r(int64_t *values, size_t n);
+MYS_PUBLIC void mys_sort_u32_r(uint32_t *values, size_t n);
+MYS_PUBLIC void mys_sort_u64_r(uint64_t *values, size_t n);
+MYS_PUBLIC void mys_sort_f32_r(float *values, size_t n);
+MYS_PUBLIC void mys_sort_f64_r(double *values, size_t n);
 
-MYS_API mys_f64i_t *mys_sort_f64_to_f64i(double *values, size_t n);
-MYS_API mys_sizeti_t *mys_sort_sizet_to_sizeti(size_t *values, size_t n, mys_sortctl_t sort_type);
+MYS_PUBLIC mys_f64i_t *mys_sort_f64_to_f64i(double *values, size_t n);
+MYS_PUBLIC mys_sizeti_t *mys_sort_sizet_to_sizeti(size_t *values, size_t n, mys_sortctl_t sort_type);
 
-// MYS_API void mys_sortidx_f64(double *values, int n, int *sorted_indexes);
-// MYS_API void mys_sortidx_sizet(size_t *values, int n, int *sorted_indexes);
+// MYS_PUBLIC void mys_sortidx_f64(double *values, int n, int *sorted_indexes);
+// MYS_PUBLIC void mys_sortidx_sizet(size_t *values, int n, int *sorted_indexes);
 
 #define mys_sort(values, n, compar_fn) qsort(values, n, sizeof(values[0]), compar_fn)
 

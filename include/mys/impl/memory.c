@@ -30,7 +30,7 @@ static void _mys_shm_G_init()
     mys_mutex_unlock(&_mys_shm_G.lock);
 }
 
-MYS_API mys_shm_t mys_alloc_shared_memory(int owner_rank, size_t size)
+MYS_PUBLIC mys_shm_t mys_alloc_shared_memory(int owner_rank, size_t size)
 {
     _mys_shm_G_init();
     mys_mutex_lock(&_mys_shm_G.lock);
@@ -54,7 +54,7 @@ MYS_API mys_shm_t mys_alloc_shared_memory(int owner_rank, size_t size)
     return shm;
 }
 
-MYS_API void mys_free_shared_memory(mys_shm_t *shm)
+MYS_PUBLIC void mys_free_shared_memory(mys_shm_t *shm)
 {
     _mys_shm_G_init();
     mys_mutex_lock(&_mys_shm_G.lock);
@@ -69,7 +69,7 @@ MYS_API void mys_free_shared_memory(mys_shm_t *shm)
 
 #endif
 
-MYS_API mys_bits_t mys_bits(const void *data, size_t size)
+MYS_PUBLIC mys_bits_t mys_bits(const void *data, size_t size)
 {
     mys_bits_t res;
     memset(&res, 0, sizeof(mys_bits_t));
@@ -84,7 +84,7 @@ MYS_API mys_bits_t mys_bits(const void *data, size_t size)
     return res;
 }
 
-MYS_API void mys_cache_flush(size_t nbytes)
+MYS_PUBLIC void mys_cache_flush(size_t nbytes)
 {
     char * volatile arr = (char *)malloc(nbytes * sizeof(char));
     memset(arr, 0, nbytes);
@@ -167,7 +167,7 @@ MYS_STATIC void _mys_unregister_arena(mys_arena_t *arena)
     mys_mutex_unlock(&_mys_memory_G.lock);
 }
 
-MYS_API mys_arena_t *mys_arena_create(const char *name)
+MYS_PUBLIC mys_arena_t *mys_arena_create(const char *name)
 {
     mys_arena_t *arena = (mys_arena_t *)malloc(sizeof(mys_arena_t));
     if (arena == NULL)
@@ -182,7 +182,7 @@ MYS_API mys_arena_t *mys_arena_create(const char *name)
     return arena;
 }
 
-MYS_API void mys_arena_destroy(mys_arena_t **arena)
+MYS_PUBLIC void mys_arena_destroy(mys_arena_t **arena)
 {
     AS_NE_PTR(arena, NULL);
     if (*arena == NULL)
@@ -192,7 +192,7 @@ MYS_API void mys_arena_destroy(mys_arena_t **arena)
     *arena = NULL;
 }
 
-MYS_API mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
+MYS_PUBLIC mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
 {
     mys_arena_t *leaked = NULL;
     mys_mutex_lock(&_mys_memory_G.lock);
@@ -215,7 +215,7 @@ MYS_API mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
 }
 
 
-MYS_API void* mys_malloc2(mys_arena_t *arena, size_t size)
+MYS_PUBLIC void* mys_malloc2(mys_arena_t *arena, size_t size)
 {
     AS_NE_PTR(arena, NULL);
     _mys_ensure_register_arena(arena);
@@ -230,7 +230,7 @@ MYS_API void* mys_malloc2(mys_arena_t *arena, size_t size)
     return p;
 }
 
-MYS_API void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size)
+MYS_PUBLIC void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size)
 {
     AS_NE_PTR(arena, NULL);
     _mys_ensure_register_arena(arena);
@@ -245,7 +245,7 @@ MYS_API void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size)
     return p;
 }
 
-MYS_API void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t size)
+MYS_PUBLIC void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t size)
 {
     AS_NE_PTR(arena, NULL);
     _mys_ensure_register_arena(arena);
@@ -270,7 +270,7 @@ MYS_API void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t si
     return p;
 }
 
-MYS_API void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size)
+MYS_PUBLIC void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size)
 {
     AS_NE_PTR(arena, NULL);
     _mys_ensure_register_arena(arena);
@@ -288,7 +288,7 @@ MYS_API void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _o
 }
 
 
-MYS_API void mys_free2(mys_arena_t *arena, void* ptr, size_t _size)
+MYS_PUBLIC void mys_free2(mys_arena_t *arena, void* ptr, size_t _size)
 {
     AS_NE_PTR(arena, NULL);
     _mys_ensure_register_arena(arena);
@@ -300,22 +300,22 @@ MYS_API void mys_free2(mys_arena_t *arena, void* ptr, size_t _size)
     free(ptr);
 }
 
-MYS_API void* mys_malloc(size_t size)
+MYS_PUBLIC void* mys_malloc(size_t size)
 {
     return mys_malloc2(mys_arena_ext, size);
 }
 
-MYS_API void* mys_calloc(size_t count, size_t size)
+MYS_PUBLIC void* mys_calloc(size_t count, size_t size)
 {
     return mys_calloc2(mys_arena_ext, count, size);
 }
 
-MYS_API void* mys_aligned_alloc(size_t alignment, size_t size)
+MYS_PUBLIC void* mys_aligned_alloc(size_t alignment, size_t size)
 {
     return mys_aligned_alloc2(mys_arena_ext, alignment, size);
 }
 
-MYS_API void* mys_realloc(void* ptr, size_t size)
+MYS_PUBLIC void* mys_realloc(void* ptr, size_t size)
 {
     (void)ptr;
     (void)size;
@@ -328,7 +328,7 @@ MYS_API void* mys_realloc(void* ptr, size_t size)
     return NULL;
 }
 
-MYS_API void mys_free(void* ptr)
+MYS_PUBLIC void mys_free(void* ptr)
 {
     (void)ptr;
     THROW_NOT_IMPL();

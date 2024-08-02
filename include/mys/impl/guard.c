@@ -102,7 +102,7 @@ static struct _mys_guard_G_t _mys_guard_G = {
     .map = NULL,
 };
 
-MYS_API void mys_guard_begin(const char *type_name, size_t type_size, void *variable_ptr, const char *file, int line)
+MYS_PUBLIC void mys_guard_begin(const char *type_name, size_t type_size, void *variable_ptr, const char *file, int line)
 {
     if (type_name == NULL) {
         mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Invalid type name (nil).");
@@ -120,7 +120,7 @@ MYS_API void mys_guard_begin(const char *type_name, size_t type_size, void *vari
     type_node->num_record += 1;
 }
 
-MYS_API void mys_guard_end(const char *type_name, size_t type_size, void *variable_ptr, const char *file, int line)
+MYS_PUBLIC void mys_guard_end(const char *type_name, size_t type_size, void *variable_ptr, const char *file, int line)
 {
     if (type_name == NULL) {
         mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Invalid type name (nil).");

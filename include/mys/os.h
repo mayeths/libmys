@@ -59,7 +59,7 @@ typedef struct mys_prun_t {
  * @note This subroutine is async-signal-safe.
  * @note On Linux and MacOS, system shell is "/bin/sh".
  */
-MYS_API mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t max_out, char *buf_err, size_t max_err);
+MYS_PUBLIC mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t max_out, char *buf_err, size_t max_err);
 /**
  * @brief Run a subprocess using system shell,
  * capture the exit code and stdout/stderr messages in new allcoated buffer.
@@ -70,7 +70,7 @@ MYS_API mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t ma
  * 
  * @note This subroutine is NOT async-signal-safe, due to this subroutine will allocate memory.
  */
-MYS_API mys_prun_t mys_prun_create2(const char *command, ...);
+MYS_PUBLIC mys_prun_t mys_prun_create2(const char *command, ...);
 /**
  * @brief Destroy the handler from `mys_prun_create()` or `mys_prun_create2()`.
  * 
@@ -80,7 +80,7 @@ MYS_API mys_prun_t mys_prun_create2(const char *command, ...);
  * @note If argument `prun` is created by `mys_prun_create()`, then it is async-signal-safe.
  * @note If argument `prun` is created by `mys_prun_create2()`, then it is NOT async-signal-safe.
  */
-MYS_API void mys_prun_destroy(mys_prun_t *prun);
+MYS_PUBLIC void mys_prun_destroy(mys_prun_t *prun);
 
 
 ///////////////////////////////////
@@ -105,7 +105,7 @@ typedef struct mys_popen_t {
  * 
  * @note This subroutine is async-signal-safe.
  */
-MYS_API mys_popen_t mys_popen_create(const char *command);
+MYS_PUBLIC mys_popen_t mys_popen_create(const char *command);
 /**
  * @brief Test status of subprocess that associated with `popen`.
  * 
@@ -116,7 +116,7 @@ MYS_API mys_popen_t mys_popen_create(const char *command);
  * @note Upon subprocess exited or failed, `popen->retval` is set to its exit code.
  * @note You still have to call `mys_popen_wait()` to clean up if test return false.
  */
-MYS_API bool mys_popen_test(mys_popen_t *popen);
+MYS_PUBLIC bool mys_popen_test(mys_popen_t *popen);
 /**
  * @brief Wait subprocess that associated with `popen` to exit or fail.
  * 
@@ -127,7 +127,7 @@ MYS_API bool mys_popen_test(mys_popen_t *popen);
  * @note This subroutine is async-signal-safe.
  * @note Upon subprocess exited or failed, `popen->retval` is set to its exit code.
  */
-MYS_API bool mys_popen_wait(mys_popen_t *popen);
+MYS_PUBLIC bool mys_popen_wait(mys_popen_t *popen);
 /**
  * @brief Kill subprocess that associated with `popen` immediately.
  * 
@@ -138,7 +138,7 @@ MYS_API bool mys_popen_wait(mys_popen_t *popen);
  * @note This subroutine is async-signal-safe.
  * @note Upon subprocess is killed, `popen->retval` is set to its exit code.
  */
-MYS_API bool mys_popen_kill(mys_popen_t *popen, int signo);
+MYS_PUBLIC bool mys_popen_kill(mys_popen_t *popen, int signo);
 
 
 
@@ -155,7 +155,7 @@ MYS_API bool mys_popen_kill(mys_popen_t *popen, int signo);
  * @note https://stackoverflow.com/a/675193
  * @note Failed if one of the intermediate directories doesn't exist
  */
-MYS_API bool mys_mkdir(const char *path, mode_t mode);
+MYS_PUBLIC bool mys_mkdir(const char *path, mode_t mode);
 /**
  * @brief Make directory and all intermediate directories
  * 
@@ -166,7 +166,7 @@ MYS_API bool mys_mkdir(const char *path, mode_t mode);
  * @note mys_ensure_dir("/a/b/c/d/", 0777)
  * @note Intermediate directories are created with permission bits of “rwxrwxrwx” (0777)
  */
-MYS_API bool mys_ensure_dir(const char *path, mode_t mode);
+MYS_PUBLIC bool mys_ensure_dir(const char *path, mode_t mode);
 /**
  * @brief Make parent directory and all intermediate directories
  * @brief Ensure all directories in parent path exist
@@ -178,14 +178,14 @@ MYS_API bool mys_ensure_dir(const char *path, mode_t mode);
  * @note mys_ensure_parent("/a/b/c/d/e.txt", 0777)
  * @note Intermediate directories are created with permission bits of “rwxrwxrwx” (0777)
  */
-MYS_API bool mys_ensure_parent(const char *path, mode_t mode);
-// MYS_API int mys_busysleep(double seconds);
-MYS_API const char *mys_procname();
-MYS_API void mys_wait_flag(const char *file, int line, const char *flagfile);
+MYS_PUBLIC bool mys_ensure_parent(const char *path, mode_t mode);
+// MYS_PUBLIC int mys_busysleep(double seconds);
+MYS_PUBLIC const char *mys_procname();
+MYS_PUBLIC void mys_wait_flag(const char *file, int line, const char *flagfile);
 #if defined(OS_LINUX)
-MYS_API const char *mys_get_affinity();
-MYS_API void mys_print_affinity(FILE *fd);
-MYS_API void mys_stick_affinity();
+MYS_PUBLIC const char *mys_get_affinity();
+MYS_PUBLIC void mys_print_affinity(FILE *fd);
+MYS_PUBLIC void mys_stick_affinity();
 #endif
 
 /**
@@ -194,7 +194,7 @@ MYS_API void mys_stick_affinity();
  * @param ptr page pointer that hope to query (not necessary to be page aligned)
  * @return The numa id where the page resides, otherwise -1 on failed.
  */
-MYS_API int mys_numa_query(void *ptr);
+MYS_PUBLIC int mys_numa_query(void *ptr);
 /**
  * @brief Move a page to a specific numa node
  * 
@@ -202,19 +202,19 @@ MYS_API int mys_numa_query(void *ptr);
  * @param numa_id the numa node id to move to
  * @return 0 on success, otherwise -1. If positive value is returned, it is the number of nonmigrated pages.
  */
-MYS_API int mys_numa_move(void *ptr, int numa_id);
+MYS_PUBLIC int mys_numa_move(void *ptr, int numa_id);
 
 
-MYS_API const char *mys_env_str(const char *name, const char *default_val);
-MYS_API int mys_env_int(const char *name, int default_val);
-MYS_API long mys_env_long(const char *name, long default_val);
-MYS_API size_t mys_env_sizet(const char *name, size_t default_val);
-MYS_API uint64_t mys_env_u64(const char *name, uint64_t default_val);
-MYS_API uint32_t mys_env_u32(const char *name, uint32_t default_val);
-MYS_API int64_t mys_env_i64(const char *name, int64_t default_val);
-MYS_API int32_t mys_env_i32(const char *name, int32_t default_val);
-MYS_API double mys_env_f64(const char *name, double default_val);
-MYS_API float mys_env_f32(const char *name, float default_val);
+MYS_PUBLIC const char *mys_env_str(const char *name, const char *default_val);
+MYS_PUBLIC int mys_env_int(const char *name, int default_val);
+MYS_PUBLIC long mys_env_long(const char *name, long default_val);
+MYS_PUBLIC size_t mys_env_sizet(const char *name, size_t default_val);
+MYS_PUBLIC uint64_t mys_env_u64(const char *name, uint64_t default_val);
+MYS_PUBLIC uint32_t mys_env_u32(const char *name, uint32_t default_val);
+MYS_PUBLIC int64_t mys_env_i64(const char *name, int64_t default_val);
+MYS_PUBLIC int32_t mys_env_i32(const char *name, int32_t default_val);
+MYS_PUBLIC double mys_env_f64(const char *name, double default_val);
+MYS_PUBLIC float mys_env_f32(const char *name, float default_val);
 
 
 /////// check memory leak by valgrind

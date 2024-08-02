@@ -34,7 +34,7 @@
 /**********************************/
 // intel compiler complains that mys_mutex_lock uses mys_atomic_load_n
 // on int32_t type thread_id. Seems like it only provide uint32_t atomic functions
-MYS_API uint32_t mys_thread_id();
+MYS_PUBLIC uint32_t mys_thread_id();
 
 /**********************************/
 // mys_mutex_t
@@ -51,10 +51,10 @@ typedef struct mys_mutex_t mys_mutex_t;
 #define MYS_MUTEX_INITIALIZER { .tid = __MYS_MUTEX_IDLE }
 #endif /*MYS_USE_POSIX_MUTEX*/
 ///////////
-MYS_API int mys_mutex_init(mys_mutex_t *lock);
-MYS_API int mys_mutex_destroy(mys_mutex_t *lock);
-MYS_API int mys_mutex_lock(mys_mutex_t *lock);
-MYS_API int mys_mutex_unlock(mys_mutex_t *lock);
+MYS_PUBLIC int mys_mutex_init(mys_mutex_t *lock);
+MYS_PUBLIC int mys_mutex_destroy(mys_mutex_t *lock);
+MYS_PUBLIC int mys_mutex_lock(mys_mutex_t *lock);
+MYS_PUBLIC int mys_mutex_unlock(mys_mutex_t *lock);
 
 /* gcc -Wall -Wextra -O3 -I${MYS_DIR}/include -g -fopenmp a.c && ./a.out 4999
 
