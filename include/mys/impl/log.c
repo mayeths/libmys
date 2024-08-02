@@ -1,5 +1,6 @@
 #include "_private.h"
 #include "../log.h"
+#include "../memory.h"
 #include "uthash_hash.h"
 
 ////// Internal
@@ -167,7 +168,7 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
             int needed;
             _mys_MPI_Probe(rank, tag, comm, &status);
             _mys_MPI_Get_count(&status, _mys_MPI_CHAR, &needed);
-            char *ptr = (needed > 4096) ? (char *)malloc(needed) : buffer;
+            char *ptr = (needed > 4096) ? (char *)mys_malloc2(mys_arena_log, needed) : buffer;
             _mys_MPI_Recv(ptr, needed, _mys_MPI_CHAR, rank, tag, comm, _mys_MPI_STATUS_IGNORE);
 
             if (!broken) {
@@ -177,7 +178,7 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
                 mys_log_invoke_handlers(&event, fmt, vargs);
             }
             if (ptr != buffer)
-                free(ptr);
+                mys_free2(mys_arena_log, ptr, needed);
         }
         _mys_MPI_Barrier(comm);
     } else {
@@ -187,11 +188,11 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
         va_copy(vargs_test, vargs);
         int needed = vsnprintf(NULL, 0, fmt, vargs_test) + 1;
         va_end(vargs_test);
-        char *ptr = (needed > 4096) ? (char *)malloc(needed) : buffer;
+        char *ptr = (needed > 4096) ? (char *)mys_malloc2(mys_arena_log, needed) : buffer;
         vsnprintf(ptr, needed, fmt, vargs);
         _mys_MPI_Send(ptr, needed, _mys_MPI_CHAR, 0, tag, comm);
         if (ptr != buffer)
-            free(ptr);
+            mys_free2(mys_arena_log, ptr, needed);
         va_end(vargs);
         _mys_MPI_Barrier(comm); // We don't expect logging increase processes' nondeterministic
     }

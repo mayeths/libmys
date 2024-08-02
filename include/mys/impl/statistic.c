@@ -1,5 +1,6 @@
 #include "_private.h"
 #include "../statistic.h"
+#include "../memory.h"
 
 MYS_PUBLIC double mys_arthimetic_mean(double *arr, int n)
 {
@@ -46,7 +47,7 @@ MYS_PUBLIC void mys_aggregate_analysis_array(size_t n, double *values, mys_aggre
     int myrank = mys_mpi_myrank();
     int nranks = mys_mpi_nranks();
     struct di_t { double d; int i; };
-    struct di_t *dibuf = (struct di_t *)malloc(sizeof(struct di_t) * n);
+    struct di_t *dibuf = (struct di_t *)mys_malloc2(mys_arena_stat, sizeof(struct di_t) * n);
     double *dbuf = (double *)((void *)dibuf);
 
     {// mine, sum, avg
@@ -88,7 +89,7 @@ MYS_PUBLIC void mys_aggregate_analysis_array(size_t n, double *values, mys_aggre
             results[i].loc_min = dibuf[i].i;
         }
     }
-    free(dibuf);
+    mys_free2(mys_arena_stat, dibuf, sizeof(struct di_t) * n);
 }
 
 MYS_PUBLIC mys_aggregate_t mys_aggregate_analysis(double value)
@@ -115,7 +116,7 @@ MYS_PUBLIC mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
         return NULL;
     }
 
-    mys_boxplot_t *bxp = (mys_boxplot_t *)malloc(sizeof(mys_boxplot_t));
+    mys_boxplot_t *bxp = (mys_boxplot_t *)mys_malloc2(mys_arena_stat, sizeof(mys_boxplot_t));
     if (!bxp) {
         return NULL; // Memory allocation failed
     }
@@ -131,9 +132,9 @@ MYS_PUBLIC mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
         return bxp;
     }
 
-    double *arr = (double *)malloc(sizeof(double) * n);
+    double *arr = (double *)mys_malloc2(mys_arena_stat, sizeof(double) * n);
     if (!arr) {
-        free(bxp);
+        mys_free2(mys_arena_stat, bxp, sizeof(mys_boxplot_t));
         return NULL; // Memory allocation failed
     }
 
@@ -196,7 +197,7 @@ MYS_PUBLIC mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
 
     bxp->n_fliers = bxp->nt_fliers + bxp->nb_fliers;
 
-    bxp->fliers = (double *)malloc(sizeof(double) * (bxp->n_fliers));
+    bxp->fliers = (double *)mys_malloc2(mys_arena_stat, sizeof(double) * (bxp->n_fliers));
     if (bxp->fliers) {
         size_t c = 0;
         for (size_t i = 0; i < bxp->nb_fliers; i++)
@@ -205,16 +206,16 @@ MYS_PUBLIC mys_boxplot_t *mys_boxplot_create(double *values, size_t n) {
             bxp->fliers[c++] = arr[i];
     }
 
-    free(arr);
+    mys_free2(mys_arena_stat, arr, sizeof(double) * n);
     return bxp;
 }
 
 MYS_PUBLIC void mys_boxplot_destroy(mys_boxplot_t **bxp) {
     if (bxp != NULL && (*bxp) != NULL) {
         if ((*bxp)->fliers != NULL) {
-            free((*bxp)->fliers);
+            mys_free2(mys_arena_stat, (*bxp)->fliers, sizeof(double) * ((*bxp)->n_fliers));
         }
-        free(*bxp);
+        mys_free2(mys_arena_stat, *bxp, sizeof(mys_boxplot_t));
     }
     (*bxp) = NULL;
 }

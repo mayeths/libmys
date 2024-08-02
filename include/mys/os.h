@@ -36,13 +36,15 @@
 ///////////////////////////////////
 
 typedef struct mys_prun_t {
-    bool success; // if calling subprocess success
     char *out;
     char *err;
     size_t len_out;
     size_t len_err;
     int retval;
+    bool success; // if calling subprocess success
     bool _alloced;
+    size_t _cap_out;
+    size_t _cap_err;
 } mys_prun_t;
 
 /**

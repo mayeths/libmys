@@ -1,5 +1,6 @@
 #include "_private.h"
 #include "../string.h"
+#include "../memory.h"
 
 MYS_PUBLIC ssize_t mys_parse_readable_size(const char *text)
 {
@@ -94,14 +95,14 @@ MYS_PUBLIC void mys_readable_size(char **ptr, size_t bytes, size_t precision)
 
 MYS_PUBLIC mys_string_t *mys_string_create()
 {
-    mys_string_t *str = (mys_string_t *)malloc(sizeof(mys_string_t));
+    mys_string_t *str = (mys_string_t *)mys_malloc2(mys_arena_str, sizeof(mys_string_t));
     if (!str)
         return NULL;
     str->capacity = 16;
     str->size = 0;
-    str->text = (char *)malloc(str->capacity);
+    str->text = (char *)mys_malloc2(mys_arena_str, str->capacity);
     if (!str->text) {
-        free(str);
+        mys_free2(mys_arena_str, str, sizeof(mys_string_t));
         return NULL;
     }
     str->text[0] = '\0';
@@ -113,8 +114,8 @@ MYS_PUBLIC void mys_string_destroy(mys_string_t **str)
 {
     if (str != NULL) {
         if ((*str)->text != NULL)
-            free((*str)->text);
-        free(str);
+            mys_free2(mys_arena_str, (*str)->text, (*str)->capacity);
+        mys_free2(mys_arena_str, *str, sizeof(mys_string_t));
     }
     *str = NULL;
 }
@@ -140,7 +141,7 @@ MYS_PUBLIC int mys_string_fmt(mys_string_t *str, const char *format, ...)
         while (new_capacity < str->size + needed + 1) {
             new_capacity *= 2; // Double the capacity
         }
-        char *new_text = (char *)realloc(str->text, new_capacity);
+        char *new_text = (char *)mys_realloc2(mys_arena_str, str->text, new_capacity, str->capacity);
         if (new_text == NULL)
             goto finish;
         str->text = new_text;

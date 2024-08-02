@@ -1,5 +1,6 @@
 #include "_private.h"
 #include "../os.h"
+#include "../memory.h"
 
 #ifdef MYS_ENABLE_NUMA
 #include <numa.h>
@@ -10,7 +11,7 @@
 // extern ssize_t readlink(const char *path, char *buf, size_t bufsize) __THROW;
 
 
-static size_t _mys_readfd(char **buffer, size_t buffer_size, int fd, bool enable_realloc)
+static size_t _mys_readfd(char **buffer, size_t *buffer_size, int fd, bool enable_realloc)
 {
     size_t read_size = 0;
 
@@ -18,9 +19,10 @@ static size_t _mys_readfd(char **buffer, size_t buffer_size, int fd, bool enable
         if (!enable_realloc)
             goto finished;
         else {
-            if (buffer_size == 0)
-                buffer_size = 64;
-            *buffer = (char *)realloc(NULL, buffer_size);
+            size_t old_buffer_size = *buffer_size;
+            if (*buffer_size == 0)
+                *buffer_size = 64;
+            *buffer = (char *)mys_realloc2(mys_arena_log, NULL, *buffer_size, old_buffer_size);
             if (*buffer == NULL)
                 goto finished;
         }
@@ -28,19 +30,20 @@ static size_t _mys_readfd(char **buffer, size_t buffer_size, int fd, bool enable
 
     while (1)
     {
-        size_t remaining = buffer_size - read_size;
+        size_t remaining = *buffer_size - read_size;
         if (remaining == 0) {
             if (!enable_realloc)
                 goto finished;
             else {
                 // read() will fail if the parameter nbyte exceeds INT_MAX,
                 // and do not attempt a partial read.
+                size_t old_buffer_size = *buffer_size;
                 size_t threshold = 4096; /* size_t threshold = INT_MAX; */
-                if (buffer_size * 2 < threshold)
-                    buffer_size *= 2;
+                if (*buffer_size * 2 < threshold)
+                    *buffer_size *= 2;
                 else
-                    buffer_size += threshold;
-                *buffer = (char *)realloc(*buffer, buffer_size);
+                    *buffer_size += threshold;
+                *buffer = (char *)mys_realloc2(mys_arena_log, *buffer, *buffer_size, old_buffer_size);
                 if (*buffer == NULL)
                     goto finished;
             }
@@ -190,20 +193,22 @@ MYS_PUBLIC bool mys_popen_kill(mys_popen_t *popen, int signo)
 MYS_PUBLIC mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t max_out, char *buf_err, size_t max_err)
 {
     mys_prun_t prun;
-    prun.success = false;
     prun.out = buf_out;
     prun.err = buf_err;
     prun.len_out = 0;
     prun.len_err = 0;
     prun.retval = -1;
+    prun.success = false;
     prun._alloced = false;
+    prun._cap_out = max_out;
+    prun._cap_err = max_err;
 
     mys_popen_t popen = mys_popen_create(command);
     if (!popen.alive)
         return prun;
 
-    prun.len_out = _mys_readfd(&prun.out, max_out, popen.ofd, prun._alloced);
-    prun.len_err = _mys_readfd(&prun.err, max_err, popen.efd, prun._alloced);
+    prun.len_out = _mys_readfd(&prun.out, &prun._cap_out, popen.ofd, prun._alloced);
+    prun.len_err = _mys_readfd(&prun.err, &prun._cap_err, popen.efd, prun._alloced);
     prun.len_out = _mys_cut_suffix_space(prun.out, prun.len_out);
     prun.len_err = _mys_cut_suffix_space(prun.err, prun.len_err);
     mys_popen_wait(&popen);
@@ -217,29 +222,31 @@ MYS_PUBLIC mys_prun_t mys_prun_create2(const char *command, ...)
     char *command_real = NULL;
     int needed = 0;
     mys_prun_t prun;
-    prun.success = false;
     prun.out = NULL;
     prun.err = NULL;
     prun.len_out = 0;
     prun.len_err = 0;
     prun.retval = -1;
+    prun.success = false;
     prun._alloced = true;
+    prun._cap_out = 0;
+    prun._cap_err = 0;
 
     va_list vargs, vargs_test;
     va_start(vargs, command);
     va_copy(vargs_test, vargs);
     needed = vsnprintf(NULL, 0, command, vargs_test) + 1;
-    command_real = (char *)malloc(needed);
+    command_real = (char *)mys_malloc2(mys_arena_os, needed);
     vsnprintf(command_real, needed, command, vargs);
     va_end(vargs);
 
     mys_popen_t popen = mys_popen_create(command_real);
-    free(command_real);
+    mys_free2(mys_arena_os, command_real, needed);
     if (!popen.alive)
         return prun;
 
-    prun.len_out = _mys_readfd(&prun.out, 0, popen.ofd, prun._alloced);
-    prun.len_err = _mys_readfd(&prun.err, 0, popen.efd, prun._alloced);
+    prun.len_out = _mys_readfd(&prun.out, &prun._cap_out, popen.ofd, prun._alloced);
+    prun.len_err = _mys_readfd(&prun.err, &prun._cap_err, popen.efd, prun._alloced);
     prun.len_out = _mys_cut_suffix_space(prun.out, prun.len_out);
     prun.len_err = _mys_cut_suffix_space(prun.err, prun.len_err);
     mys_popen_wait(&popen);
@@ -253,8 +260,8 @@ MYS_PUBLIC void mys_prun_destroy(mys_prun_t *prun)
     if (prun == NULL || !prun->success)
         return;
     if (prun->_alloced) {
-        if (prun->out != NULL) free(prun->out);
-        if (prun->err != NULL) free(prun->err);
+        if (prun->out != NULL) mys_free2(mys_arena_log, prun->out, prun->_cap_out);
+        if (prun->err != NULL) mys_free2(mys_arena_log, prun->err, prun->_cap_err);
     }
     prun->out = NULL;
     prun->err = NULL;
@@ -280,7 +287,10 @@ MYS_PUBLIC bool mys_mkdir(const char *path, mode_t mode)
 
 MYS_PUBLIC bool mys_ensure_dir(const char *path, mode_t mode)
 {
-    char *p = strdup(path);
+    size_t len = strlen(path) + 1;
+    char *p = (char *)mys_malloc2(mys_arena_os, len);
+    memcpy(p, path, len);
+    // char *p = strdup(path);
     char *pp = p;
     char *sp = NULL;
     bool success = true;
@@ -294,16 +304,21 @@ MYS_PUBLIC bool mys_ensure_dir(const char *path, mode_t mode)
     }
     if (success)
         success = mys_mkdir(path, mode);
-    free(p);
+    // free(p);
+    mys_free2(mys_arena_os, p, len);
     return success;
 }
 
 MYS_PUBLIC bool mys_ensure_parent(const char *path, mode_t mode)
 {
-    char *pathcopy = strdup(path);
+    size_t len = strlen(path) + 1;
+    char *pathcopy = (char *)mys_malloc2(mys_arena_os, len);
+    memcpy(pathcopy, path, len);
+    // char *pathcopy = strdup(path);
     char *dname = dirname(pathcopy);
     bool success = mys_ensure_dir(dname, mode);
-    free(pathcopy);
+    // free(pathcopy);
+    mys_free2(mys_arena_os, pathcopy, len);
     return success;
 }
 

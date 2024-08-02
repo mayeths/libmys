@@ -1,5 +1,6 @@
 #include "_private.h"
 #include "../mpiz.h"
+#include "../memory.h"
 
 #ifdef MYS_ENABLE_NUMA
 #include <numa.h>
@@ -22,7 +23,7 @@ static int _mys_commgroup_sort_i4(const void* _a, const void* _b)
 
 MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group_color, int group_key)
 {
-    mys_commgroup_t *group = (mys_commgroup_t *)malloc(sizeof(mys_commgroup_t));
+    mys_commgroup_t *group = (mys_commgroup_t *)mys_malloc2(mys_arena_mpiz, sizeof(mys_commgroup_t));
     group->global_comm = global_comm;
     MPI_Comm_size(group->global_comm, &group->global_nranks);
     MPI_Comm_rank(group->global_comm, &group->global_myrank);
@@ -35,17 +36,17 @@ MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group
     // MPI_Comm_split(group->global_comm, iam_group_root ? 0 : 1, group_color, &group->inter_comm);
     // if (!iam_group_root) MPI_Comm_free(&group->inter_comm);
 
-    int *temp = (int *)malloc(sizeof(int) * 4 * group->global_nranks);
+    int *temp = (int *)mys_malloc2(mys_arena_mpiz, sizeof(int) * 4 * group->global_nranks);
     temp[group->global_myrank * 4 + 0] = group_color;
     temp[group->global_myrank * 4 + 1] = group->local_myrank;
     temp[group->global_myrank * 4 + 2] = group->global_myrank;
     temp[group->global_myrank * 4 + 3] = 0; // dummy
     MPI_Allgather(MPI_IN_PLACE, 4, MPI_INT, temp, 4, MPI_INT, global_comm);
     qsort(temp, group->global_nranks, sizeof(int[4]), _mys_commgroup_sort_i4);
-    group->_neighbors = (int *)malloc(sizeof(int) * group->group_num);
-    group->_rows = (int *)malloc(sizeof(int) * group->global_nranks);
-    group->_cols = (int *)malloc(sizeof(int) * group->global_nranks);
-    group->_brothers = (int *)malloc(sizeof(int) * group->local_nranks);
+    group->_neighbors = (int *)mys_malloc2(mys_arena_mpiz, sizeof(int) * group->group_num);
+    group->_rows = (int *)mys_malloc2(mys_arena_mpiz, sizeof(int) * group->global_nranks);
+    group->_cols = (int *)mys_malloc2(mys_arena_mpiz, sizeof(int) * group->global_nranks);
+    group->_brothers = (int *)mys_malloc2(mys_arena_mpiz, sizeof(int) * group->local_nranks);
     int group_index = -1;
     int last_color = -1;
     int neighbor_cnt = 0;
@@ -70,7 +71,7 @@ MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group
             group->_brothers[brother_cnt++] = o_global_rank;
         }
     }
-    free(temp);
+    mys_free2(mys_arena_mpiz, temp, sizeof(int) * 4 * group->global_nranks);
 
     return group;
 }
@@ -81,10 +82,10 @@ MYS_PUBLIC void mys_commgroup_release(mys_commgroup_t *group)
     if (group == NULL) return;
     MPI_Comm_free(&group->local_comm);
     MPI_Comm_free(&group->inter_comm);
-    free(group->_rows);
-    free(group->_cols);
-    free(group->_brothers);
-    free(group->_neighbors);
+    mys_free2(mys_arena_mpiz, group->_neighbors, sizeof(int) * group->group_num);
+    mys_free2(mys_arena_mpiz, group->_rows, sizeof(int) * group->global_nranks);
+    mys_free2(mys_arena_mpiz, group->_cols, sizeof(int) * group->global_nranks);
+    mys_free2(mys_arena_mpiz, group->_brothers, sizeof(int) * group->local_nranks);
 }
 
 MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(MPI_Comm global_comm)
