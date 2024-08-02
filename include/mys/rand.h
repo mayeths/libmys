@@ -18,6 +18,14 @@
 #include "thread.h"
 
 /**
+ * @brief Set the seed of mys_rand_xoroshiro128ss() with `a0=0, a1=a1`.
+ * 
+ * @param a1 lower 64 bits of xoroshiro128ss algorithm's internal state
+ * 
+ * @note By default, `mys_rand_xoroshiro128ss()` is seeded with `a0=0, a1=1`.
+ */
+MYS_PUBLIC void mys_rand_seed(uint64_t a1);
+/**
  * @brief Set the seed for a new sequence to be returned by mys_rand_xoroshiro128ss().
  * 
  * @param a0 upper 64 bits of xoroshiro128ss algorithm's internal state
@@ -25,7 +33,7 @@
  * 
  * @note By default, `mys_rand_xoroshiro128ss()` is seeded with `a0=0, a1=1`.
  */
-MYS_PUBLIC void mys_rand_seed(uint64_t a0, uint64_t a1);
+MYS_PUBLIC void mys_rand_seed2(uint64_t a0, uint64_t a1);
 /**
  * @brief Set the seed with `a0=0, a1=time(NULL)`.
  */
