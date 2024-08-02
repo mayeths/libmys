@@ -40,6 +40,8 @@ int main()
 
     printf("acquire_count=%d release_count=%d\n", acquire_count, release_count);
     mys_pool_destroy(&pool);
+    AS_EQ_SIZET(mys_arena_pool->alive, 0);
+    AS_EQ_SIZET(mys_arena_pool->freed, mys_arena_pool->total);
     free(allocateds);
 
     return 0;

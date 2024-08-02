@@ -25,8 +25,10 @@ typedef struct mys_arena_t {
 
 MYS_API extern mys_arena_t _mys_predefined_arena_ext;
 MYS_API extern mys_arena_t _mys_predefined_arena_log;
+MYS_API extern mys_arena_t _mys_predefined_arena_pool;
 #define mys_arena_ext ((mys_arena_t *)(&_mys_predefined_arena_ext))
 #define mys_arena_log ((mys_arena_t *)(&_mys_predefined_arena_log))
+#define mys_arena_pool ((mys_arena_t *)(&_mys_predefined_arena_pool))
 
 // For external use (using mys_arena_ext)
 MYS_API void* mys_malloc(size_t size);

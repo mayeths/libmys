@@ -71,7 +71,7 @@ MYS_API mys_pool_t *mys_pool_create2(size_t object_size, size_t initial_size, in
     if (initial_size == 0)
         return NULL;
 
-    mys_pool_t *pool = (mys_pool_t *)malloc(sizeof(mys_pool_t));
+    mys_pool_t *pool = (mys_pool_t *)mys_malloc2(mys_arena_pool, sizeof(mys_pool_t));
     if (!pool)
         return NULL;
 
@@ -93,16 +93,16 @@ MYS_API mys_pool_t *mys_pool_create2(size_t object_size, size_t initial_size, in
 
 static void allocate_block(mys_pool_t* pool)
 {
-    mys_pool_block_t* block = (mys_pool_block_t*)malloc(sizeof(mys_pool_block_t));
+    mys_pool_block_t* block = (mys_pool_block_t *)mys_malloc2(mys_arena_pool, sizeof(mys_pool_block_t));
     if (block == NULL)
         return;
 
     block->capacity = pool->block_capacity;
     block->free = pool->block_capacity;
     block->used_count = 0;
-    posix_memalign((void **)&block->objects, sysconf(_SC_PAGE_SIZE), block->capacity * pool->mobj_size);
+    block->objects = (uint8_t *)mys_aligned_alloc2(mys_arena_pool, sysconf(_SC_PAGE_SIZE), block->capacity * pool->mobj_size);
     if (block->objects == NULL) {
-        free(block);
+        mys_free2(mys_arena_pool, block, sizeof(mys_pool_block_t));
         return;
     }
     for (size_t i = 0; i < block->capacity; i++) {
@@ -165,8 +165,8 @@ static void deallocate_block(mys_pool_t* pool, mys_pool_block_t *block)
     }
 
     AS_NE_PTR(block2->objects, NULL);
-    free(block2->objects);
-    free(block2);
+    mys_free2(mys_arena_pool, block2->objects, block2->capacity * pool->mobj_size);
+    mys_free2(mys_arena_pool, block2, sizeof(mys_pool_block_t));
 }
 
 MYS_API void mys_pool_destroy(mys_pool_t **pool)
@@ -180,7 +180,7 @@ MYS_API void mys_pool_destroy(mys_pool_t **pool)
         deallocate_block((*pool), block);
         block = next_block;
     }
-    free(*pool);
+    mys_free2(mys_arena_pool, *pool, sizeof(mys_pool_t));
     *pool = NULL;
 }
 
