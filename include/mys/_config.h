@@ -84,61 +84,68 @@
 #endif
 
 #if defined(COMPILER_GCC)
-#define _MYS_UNUSED __attribute__((unused))
-#define _MYS_NO_INSTRUMENT __attribute__((no_instrument_function))
-#define MYS_NOINLINE __attribute__((noinline))
+#define MYS_ATTR_EXPORT __attribute__((visibility("default")))
+#define MYS_ATTR_IMPORT __attribute__((visibility("default")))
+#define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
+#define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
+#define MYS_ATTR_NOINLINE __attribute__((noinline))
 #elif defined(COMPILER_CLANG)
-#define _MYS_UNUSED __attribute__((unused))
-#define _MYS_NO_INSTRUMENT __attribute__((no_instrument_function))
-#define MYS_NOINLINE __attribute__((noinline))
+#define MYS_ATTR_EXPORT __attribute__((visibility("default")))
+#define MYS_ATTR_IMPORT __attribute__((visibility("default")))
+#define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
+#define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
+#define MYS_ATTR_NOINLINE __attribute__((noinline))
 #elif defined(COMPILER_ICC)
-#define _MYS_UNUSED __attribute__((unused))
-#define _MYS_NO_INSTRUMENT
-#define MYS_NOINLINE __attribute__((noinline))
+#define MYS_ATTR_EXPORT __attribute__((visibility("default")))
+#define MYS_ATTR_IMPORT __attribute__((visibility("default")))
+#define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
+#define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_NO_INSTRUMENT
+#define MYS_ATTR_NOINLINE __attribute__((noinline))
 #elif defined(COMPILER_NVCC)
-#define _MYS_UNUSED __attribute__((unused))
-#define _MYS_NO_INSTRUMENT
-#define MYS_NOINLINE
+#define MYS_ATTR_EXPORT __attribute__((visibility("default")))
+#define MYS_ATTR_IMPORT __attribute__((visibility("default")))
+#define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
+#define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_NO_INSTRUMENT
+#define MYS_ATTR_NOINLINE
 #elif defined(COMPILER_SWCC)
-#define _MYS_UNUSED __attribute__((unused))
-#define _MYS_NO_INSTRUMENT
-#define MYS_NOINLINE
+#define MYS_ATTR_EXPORT __attribute__((visibility("default")))
+#define MYS_ATTR_IMPORT __attribute__((visibility("default")))
+#define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
+#define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_NO_INSTRUMENT
+#define MYS_ATTR_NOINLINE
 #elif defined(COMPILER_MSVC)
-#define _MYS_UNUSED
-#define _MYS_NO_INSTRUMENT
-#define MYS_NOINLINE
+#define MYS_ATTR_EXPORT __declspec(dllexport)
+#define MYS_ATTR_IMPORT __declspec(dllimport)
+#define MYS_ATTR_LOCAL
+#define MYS_ATTR_UNUSED
+#define MYS_ATTR_NO_INSTRUMENT
+#define MYS_ATTR_NOINLINE
 #else
-#define _MYS_UNUSED
-#define _MYS_NO_INSTRUMENT
-#define MYS_NOINLINE
-#endif
-
-#if defined(OS_WINDOWS) || defined(COMPILER_CYGWIN)
-#define _MYS_SYMBOL_IMPORT __declspec(dllimport)
-#define _MYS_SYMBOL_EXPORT __declspec(dllexport)
-#define _MYS_SYMBOL_LOCAL
-#elif defined(COMPILER_GCC)
-#define _MYS_SYMBOL_IMPORT __attribute__((visibility("default")))
-#define _MYS_SYMBOL_EXPORT __attribute__((visibility("default")))
-#define _MYS_SYMBOL_LOCAL  __attribute__((visibility("hidden")))
-#else
-#define _MYS_SYMBOL_IMPORT
-#define _MYS_SYMBOL_EXPORT
-#define _MYS_SYMBOL_LOCAL
+#define MYS_ATTR_EXPORT
+#define MYS_ATTR_IMPORT
+#define MYS_ATTR_LOCAL
+#define MYS_ATTR_UNUSED
+#define MYS_ATTR_NO_INSTRUMENT
+#define MYS_ATTR_NOINLINE
 #endif
 
 #if defined(MYS_IMPL)         // Make libmys with public visibility.
-#define MYS_PUBLIC   _MYS_UNUSED _MYS_SYMBOL_EXPORT
-#define MYS_INTERNAL _MYS_UNUSED _MYS_SYMBOL_LOCAL
-#define MYS_STATIC   _MYS_UNUSED static
+#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_EXPORT
+#define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL
+#define MYS_STATIC   MYS_ATTR_UNUSED static
 #elif defined(MYS_IMPL_LOCAL) // Make libmys with private visibility.
-#define MYS_PUBLIC   _MYS_UNUSED _MYS_SYMBOL_LOCAL
-#define MYS_INTERNAL _MYS_UNUSED _MYS_SYMBOL_LOCAL
-#define MYS_STATIC   _MYS_UNUSED static
+#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_LOCAL
+#define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL
+#define MYS_STATIC   MYS_ATTR_UNUSED static
 #else // Don't make libmys and use the one made by the EXE or other DSO who define MYS_IMPL.
-#define MYS_PUBLIC   _MYS_UNUSED _MYS_SYMBOL_IMPORT
-#define MYS_INTERNAL _MYS_UNUSED _MYS_SYMBOL_LOCAL
-#define MYS_STATIC   _MYS_UNUSED static
+#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_IMPORT
+#define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL
+#define MYS_STATIC   MYS_ATTR_UNUSED static
 #endif
 
 

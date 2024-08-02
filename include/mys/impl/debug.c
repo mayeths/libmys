@@ -402,7 +402,7 @@ MYS_STATIC void _mys_debug_revert_all()
     mys_mutex_unlock(&_mys_debug_G.lock);
 }
 
-MYS_NOINLINE
+MYS_ATTR_NOINLINE
 MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context)
 {
     (void)context;
