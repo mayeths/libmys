@@ -1,415 +1,360 @@
- PMPI_Abort 'int (MPI_Comm, int)'
- PMPI_Accumulate 'int (const void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Op, MPI_Win)'
- PMPI_Add_error_class 'int (int *)'
- PMPI_Add_error_code 'int (int, int *)'
- PMPI_Add_error_string 'int (int, const char *)'
- PMPI_Allgather 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm)'
- PMPI_Iallgather 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm, MPI_Request *)'
- PMPI_Allgatherv 'int (const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm)'
- PMPI_Iallgatherv 'int (const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm, MPI_Request *)'
- PMPI_Alloc_mem 'int (MPI_Aint, MPI_Info, void *)'
- PMPI_Allreduce 'int (const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm)'
- PMPI_Iallreduce 'int (const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request *)'
- PMPI_Alltoall 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm)'
- PMPI_Ialltoall 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm, MPI_Request *)'
- PMPI_Alltoallv 'int (const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm)'
- PMPI_Ialltoallv 'int (const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm, MPI_Request *)'
- PMPI_Alltoallw 'int (const void *, const int *, const int *, const MPI_Datatype *, void *, const int *, const int *, const MPI_Datatype *, MPI_Comm)'
- PMPI_Ialltoallw 'int (const void *, const int *, const int *, const MPI_Datatype *, void *, const int *, const int *, const MPI_Datatype *, MPI_Comm, MPI_Request *)'
- PMPI_Dist_graph_create 'int (MPI_Comm, int, const int *, const int *, const int *, const int *, MPI_Info, int, MPI_Comm *)'
- PMPI_Dist_graph_create_adjacent 'int (MPI_Comm, int, const int *, const int *, int, const int *, const int *, MPI_Info, int, MPI_Comm *)'
- PMPI_Dist_graph_neighbors 'int (MPI_Comm, int, int *, int *, int, int *, int *)'
- PMPI_Dist_graph_neighbors_count 'int (MPI_Comm, int *, int *, int *)'
- PMPI_Barrier 'int (MPI_Comm)'
- PMPI_Ibarrier 'int (MPI_Comm, MPI_Request *)'
- PMPI_Bcast 'int (void *, int, MPI_Datatype, int, MPI_Comm)'
- PMPI_Ibcast 'int (void *, int, MPI_Datatype, int, MPI_Comm, MPI_Request *)'
- PMPI_Bsend 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm)'
- PMPI_Bsend_init 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *)'
- PMPI_Buffer_attach 'int (void *, int)'
- PMPI_Buffer_detach 'int (void *, int *)'
- PMPI_Cancel 'int (MPI_Request *)'
- PMPI_Cart_coords 'int (MPI_Comm, int, int, int *)'
- PMPI_Cart_create 'int (MPI_Comm, int, const int *, const int *, int, MPI_Comm *)'
- PMPI_Cart_get 'int (MPI_Comm, int, int *, int *, int *)'
- PMPI_Cart_map 'int (MPI_Comm, int, const int *, const int *, int *)'
- PMPI_Cart_rank 'int (MPI_Comm, const int *, int *)'
- PMPI_Cart_shift 'int (MPI_Comm, int, int, int *, int *)'
- PMPI_Cart_sub 'int (MPI_Comm, const int *, MPI_Comm *)'
- PMPI_Cartdim_get 'int (MPI_Comm, int *)'
- PMPI_Close_port 'int (const char *)'
- PMPI_Comm_accept 'int (const char *, MPI_Info, int, MPI_Comm, MPI_Comm *)'
- PMPI_Comm_c2f 'int (MPI_Comm)'
- PMPI_Comm_call_errhandler 'int (MPI_Comm, int)'
- PMPI_Comm_compare 'int (MPI_Comm, MPI_Comm, int *)'
- PMPI_Comm_connect 'int (const char *, MPI_Info, int, MPI_Comm, MPI_Comm *)'
- PMPI_Comm_create_errhandler 'int (MPI_Comm_errhandler_function *, MPI_Errhandler *)'
- PMPI_Comm_create_keyval 'int (MPI_Comm_copy_attr_function *, MPI_Comm_delete_attr_function *, int *, void *)'
- PMPI_Comm_create_group 'int (MPI_Comm, MPI_Group, int, MPI_Comm *)'
- PMPI_Comm_create 'int (MPI_Comm, MPI_Group, MPI_Comm *)'
- PMPI_Comm_delete_attr 'int (MPI_Comm, int)'
- PMPI_Comm_disconnect 'int (MPI_Comm *)'
- PMPI_Comm_dup 'int (MPI_Comm, MPI_Comm *)'
- PMPI_Comm_idup 'int (MPI_Comm, MPI_Comm *, MPI_Request *)'
- PMPI_Comm_dup_with_info 'int (MPI_Comm, MPI_Info, MPI_Comm *)'
- PMPI_Comm_f2c 'MPI_Comm (int)'
- PMPI_Comm_free_keyval 'int (int *)'
- PMPI_Comm_free 'int (MPI_Comm *)'
- PMPI_Comm_get_attr 'int (MPI_Comm, int, void *, int *)'
- PMPI_Comm_get_errhandler 'int (MPI_Comm, MPI_Errhandler *)'
- PMPI_Comm_get_info 'int (MPI_Comm, MPI_Info *)'
- PMPI_Comm_get_name 'int (MPI_Comm, char *, int *)'
- PMPI_Comm_get_parent 'int (MPI_Comm *)'
- PMPI_Comm_group 'int (MPI_Comm, MPI_Group *)'
- PMPI_Comm_join 'int (int, MPI_Comm *)'
- PMPI_Comm_rank 'int (MPI_Comm, int *)'
- PMPI_Comm_remote_group 'int (MPI_Comm, MPI_Group *)'
- PMPI_Comm_remote_size 'int (MPI_Comm, int *)'
- PMPI_Comm_set_attr 'int (MPI_Comm, int, void *)'
- PMPI_Comm_set_errhandler 'int (MPI_Comm, MPI_Errhandler)'
- PMPI_Comm_set_info 'int (MPI_Comm, MPI_Info)'
- PMPI_Comm_set_name 'int (MPI_Comm, const char *)'
- PMPI_Comm_size 'int (MPI_Comm, int *)'
- PMPI_Comm_spawn 'int (const char *, char **, int, MPI_Info, int, MPI_Comm, MPI_Comm *, int *)'
- PMPI_Comm_spawn_multiple 'int (int, char **, char ***, const int *, const MPI_Info *, int, MPI_Comm, MPI_Comm *, int *)'
- PMPI_Comm_split 'int (MPI_Comm, int, int, MPI_Comm *)'
- PMPI_Comm_split_type 'int (MPI_Comm, int, int, MPI_Info, MPI_Comm *)'
- PMPI_Comm_test_inter 'int (MPI_Comm, int *)'
- PMPI_Compare_and_swap 'int (const void *, const void *, void *, MPI_Datatype, int, MPI_Aint, MPI_Win)'
- PMPI_Dims_create 'int (int, int, int *)'
- PMPI_Errhandler_c2f 'int (MPI_Errhandler)'
- PMPI_Errhandler_f2c 'MPI_Errhandler (int)'
- PMPI_Errhandler_free 'int (MPI_Errhandler *)'
- PMPI_Error_class 'int (int, int *)'
- PMPI_Error_string 'int (int, char *, int *)'
- PMPI_Exscan 'int (const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm)'
- PMPI_Fetch_and_op 'int (const void *, void *, MPI_Datatype, int, MPI_Aint, MPI_Op, MPI_Win)'
- PMPI_Iexscan 'int (const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request *)'
- PMPI_File_c2f 'int (MPI_File)'
- PMPI_File_f2c 'MPI_File (int)'
- PMPI_File_call_errhandler 'int (MPI_File, int)'
- PMPI_File_create_errhandler 'int (MPI_File_errhandler_function *, MPI_Errhandler *)'
- PMPI_File_set_errhandler 'int (MPI_File, MPI_Errhandler)'
- PMPI_File_get_errhandler 'int (MPI_File, MPI_Errhandler *)'
- PMPI_File_open 'int (MPI_Comm, const char *, int, MPI_Info, MPI_File *)'
- PMPI_File_close 'int (MPI_File *)'
- PMPI_File_delete 'int (const char *, MPI_Info)'
- PMPI_File_set_size 'int (MPI_File, MPI_Offset)'
- PMPI_File_preallocate 'int (MPI_File, MPI_Offset)'
- PMPI_File_get_size 'int (MPI_File, MPI_Offset *)'
- PMPI_File_get_group 'int (MPI_File, MPI_Group *)'
- PMPI_File_get_amode 'int (MPI_File, int *)'
- PMPI_File_set_info 'int (MPI_File, MPI_Info)'
- PMPI_File_get_info 'int (MPI_File, MPI_Info *)'
- PMPI_File_set_view 'int (MPI_File, MPI_Offset, MPI_Datatype, MPI_Datatype, const char *, MPI_Info)'
- PMPI_File_get_view 'int (MPI_File, MPI_Offset *, MPI_Datatype *, MPI_Datatype *, char *)'
- PMPI_File_read_at 'int (MPI_File, MPI_Offset, void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_read_at_all 'int (MPI_File, MPI_Offset, void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_write_at 'int (MPI_File, MPI_Offset, const void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_write_at_all 'int (MPI_File, MPI_Offset, const void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_iread_at 'int (MPI_File, MPI_Offset, void *, int, MPI_Datatype, MPI_Request *)'
- PMPI_File_iwrite_at 'int (MPI_File, MPI_Offset, const void *, int, MPI_Datatype, MPI_Request *)'
- PMPI_File_iread_at_all 'int (MPI_File, MPI_Offset, void *, int, MPI_Datatype, MPI_Request *)'
- PMPI_File_iwrite_at_all 'int (MPI_File, MPI_Offset, const void *, int, MPI_Datatype, MPI_Request *)'
- PMPI_File_read 'int (MPI_File, void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_read_all 'int (MPI_File, void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_write 'int (MPI_File, const void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_write_all 'int (MPI_File, const void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_iread 'int (MPI_File, void *, int, MPI_Datatype, MPI_Request *)'
- PMPI_File_iwrite 'int (MPI_File, const void *, int, MPI_Datatype, MPI_Request *)'
- PMPI_File_iread_all 'int (MPI_File, void *, int, MPI_Datatype, MPI_Request *)'
- PMPI_File_iwrite_all 'int (MPI_File, const void *, int, MPI_Datatype, MPI_Request *)'
- PMPI_File_seek 'int (MPI_File, MPI_Offset, int)'
- PMPI_File_get_position 'int (MPI_File, MPI_Offset *)'
- PMPI_File_get_byte_offset 'int (MPI_File, MPI_Offset, MPI_Offset *)'
- PMPI_File_read_shared 'int (MPI_File, void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_write_shared 'int (MPI_File, const void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_iread_shared 'int (MPI_File, void *, int, MPI_Datatype, MPI_Request *)'
- PMPI_File_iwrite_shared 'int (MPI_File, const void *, int, MPI_Datatype, MPI_Request *)'
- PMPI_File_read_ordered 'int (MPI_File, void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_write_ordered 'int (MPI_File, const void *, int, MPI_Datatype, MPI_Status *)'
- PMPI_File_seek_shared 'int (MPI_File, MPI_Offset, int)'
- PMPI_File_get_position_shared 'int (MPI_File, MPI_Offset *)'
- PMPI_File_read_at_all_begin 'int (MPI_File, MPI_Offset, void *, int, MPI_Datatype)'
- PMPI_File_read_at_all_end 'int (MPI_File, void *, MPI_Status *)'
- PMPI_File_write_at_all_begin 'int (MPI_File, MPI_Offset, const void *, int, MPI_Datatype)'
- PMPI_File_write_at_all_end 'int (MPI_File, const void *, MPI_Status *)'
- PMPI_File_read_all_begin 'int (MPI_File, void *, int, MPI_Datatype)'
- PMPI_File_read_all_end 'int (MPI_File, void *, MPI_Status *)'
- PMPI_File_write_all_begin 'int (MPI_File, const void *, int, MPI_Datatype)'
- PMPI_File_write_all_end 'int (MPI_File, const void *, MPI_Status *)'
- PMPI_File_read_ordered_begin 'int (MPI_File, void *, int, MPI_Datatype)'
- PMPI_File_read_ordered_end 'int (MPI_File, void *, MPI_Status *)'
- PMPI_File_write_ordered_begin 'int (MPI_File, const void *, int, MPI_Datatype)'
- PMPI_File_write_ordered_end 'int (MPI_File, const void *, MPI_Status *)'
- PMPI_File_get_type_extent 'int (MPI_File, MPI_Datatype, MPI_Aint *)'
- PMPI_File_set_atomicity 'int (MPI_File, int)'
- PMPI_File_get_atomicity 'int (MPI_File, int *)'
- PMPI_File_sync 'int (MPI_File)'
- PMPI_Finalize 'int (void)'
- PMPI_Finalized 'int (int *)'
- PMPI_Free_mem 'int (void *)'
- PMPI_Gather 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm)'
- PMPI_Igather 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm, MPI_Request *)'
- PMPI_Gatherv 'int (const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, int, MPI_Comm)'
- PMPI_Igatherv 'int (const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, int, MPI_Comm, MPI_Request *)'
- PMPI_Get_address 'int (const void *, MPI_Aint *)'
- PMPI_Get_count 'int (const MPI_Status *, MPI_Datatype, int *)'
- PMPI_Get_elements 'int (const MPI_Status *, MPI_Datatype, int *)'
- PMPI_Get_elements_x 'int (const MPI_Status *, MPI_Datatype, MPI_Count *)'
- PMPI_Get 'int (void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Win)'
- PMPI_Get_accumulate 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Op, MPI_Win)'
- PMPI_Get_library_version 'int (char *, int *)'
- PMPI_Get_processor_name 'int (char *, int *)'
- PMPI_Get_version 'int (int *, int *)'
- PMPI_Graph_create 'int (MPI_Comm, int, const int *, const int *, int, MPI_Comm *)'
- PMPI_Graph_get 'int (MPI_Comm, int, int, int *, int *)'
- PMPI_Graph_map 'int (MPI_Comm, int, const int *, const int *, int *)'
- PMPI_Graph_neighbors_count 'int (MPI_Comm, int, int *)'
- PMPI_Graph_neighbors 'int (MPI_Comm, int, int, int *)'
- PMPI_Graphdims_get 'int (MPI_Comm, int *, int *)'
- PMPI_Grequest_complete 'int (MPI_Request)'
- PMPI_Grequest_start 'int (MPI_Grequest_query_function *, MPI_Grequest_free_function *, MPI_Grequest_cancel_function *, void *, MPI_Request *)'
- PMPI_Group_c2f 'int (MPI_Group)'
- PMPI_Group_compare 'int (MPI_Group, MPI_Group, int *)'
- PMPI_Group_difference 'int (MPI_Group, MPI_Group, MPI_Group *)'
- PMPI_Group_excl 'int (MPI_Group, int, const int *, MPI_Group *)'
- PMPI_Group_f2c 'MPI_Group (int)'
- PMPI_Group_free 'int (MPI_Group *)'
- PMPI_Group_incl 'int (MPI_Group, int, const int *, MPI_Group *)'
- PMPI_Group_intersection 'int (MPI_Group, MPI_Group, MPI_Group *)'
- PMPI_Group_range_excl 'int (MPI_Group, int, int (*)[3], MPI_Group *)'
- PMPI_Group_range_incl 'int (MPI_Group, int, int (*)[3], MPI_Group *)'
- PMPI_Group_rank 'int (MPI_Group, int *)'
- PMPI_Group_size 'int (MPI_Group, int *)'
- PMPI_Group_translate_ranks 'int (MPI_Group, int, const int *, MPI_Group, int *)'
- PMPI_Group_union 'int (MPI_Group, MPI_Group, MPI_Group *)'
- PMPI_Ibsend 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *)'
- PMPI_Improbe 'int (int, int, MPI_Comm, int *, MPI_Message *, MPI_Status *)'
- PMPI_Imrecv 'int (void *, int, MPI_Datatype, MPI_Message *, MPI_Request *)'
- PMPI_Info_c2f 'int (MPI_Info)'
- PMPI_Info_create 'int (MPI_Info *)'
- PMPI_Info_delete 'int (MPI_Info, const char *)'
- PMPI_Info_dup 'int (MPI_Info, MPI_Info *)'
- PMPI_Info_f2c 'MPI_Info (int)'
- PMPI_Info_free 'int (MPI_Info *)'
- PMPI_Info_get 'int (MPI_Info, const char *, int, char *, int *)'
- PMPI_Info_get_nkeys 'int (MPI_Info, int *)'
- PMPI_Info_get_nthkey 'int (MPI_Info, int, char *)'
- PMPI_Info_get_valuelen 'int (MPI_Info, const char *, int *, int *)'
- PMPI_Info_set 'int (MPI_Info, const char *, const char *)'
- PMPI_Init 'int (int *, char ***)'
- PMPI_Initialized 'int (int *)'
- PMPI_Init_thread 'int (int *, char ***, int, int *)'
- PMPI_Intercomm_create 'int (MPI_Comm, int, MPI_Comm, int, int, MPI_Comm *)'
- PMPI_Intercomm_merge 'int (MPI_Comm, int, MPI_Comm *)'
- PMPI_Iprobe 'int (int, int, MPI_Comm, int *, MPI_Status *)'
- PMPI_Irecv 'int (void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *)'
- PMPI_Irsend 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *)'
- PMPI_Isend 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *)'
- PMPI_Issend 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *)'
- PMPI_Is_thread_main 'int (int *)'
- PMPI_Lookup_name 'int (const char *, MPI_Info, char *)'
- PMPI_Message_c2f 'int (MPI_Message)'
- PMPI_Message_f2c 'MPI_Message (int)'
- PMPI_Mprobe 'int (int, int, MPI_Comm, MPI_Message *, MPI_Status *)'
- PMPI_Mrecv 'int (void *, int, MPI_Datatype, MPI_Message *, MPI_Status *)'
- PMPI_Neighbor_allgather 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm)'
- PMPI_Ineighbor_allgather 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm, MPI_Request *)'
- PMPI_Neighbor_allgatherv 'int (const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm)'
- PMPI_Ineighbor_allgatherv 'int (const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm, MPI_Request *)'
- PMPI_Neighbor_alltoall 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm)'
- PMPI_Ineighbor_alltoall 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm, MPI_Request *)'
- PMPI_Neighbor_alltoallv 'int (const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm)'
- PMPI_Ineighbor_alltoallv 'int (const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm, MPI_Request *)'
- PMPI_Neighbor_alltoallw 'int (const void *, const int *, const MPI_Aint *, const MPI_Datatype *, void *, const int *, const MPI_Aint *, const MPI_Datatype *, MPI_Comm)'
- PMPI_Ineighbor_alltoallw 'int (const void *, const int *, const MPI_Aint *, const MPI_Datatype *, void *, const int *, const MPI_Aint *, const MPI_Datatype *, MPI_Comm, MPI_Request *)'
- PMPI_Op_c2f 'int (MPI_Op)'
- PMPI_Op_commutative 'int (MPI_Op, int *)'
- PMPI_Op_create 'int (MPI_User_function *, int, MPI_Op *)'
- PMPI_Open_port 'int (MPI_Info, char *)'
- PMPI_Op_f2c 'MPI_Op (int)'
- PMPI_Op_free 'int (MPI_Op *)'
- PMPI_Pack_external 'int (const char *, const void *, int, MPI_Datatype, void *, MPI_Aint, MPI_Aint *)'
- PMPI_Pack_external_size 'int (const char *, int, MPI_Datatype, MPI_Aint *)'
- PMPI_Pack 'int (const void *, int, MPI_Datatype, void *, int, int *, MPI_Comm)'
- PMPI_Pack_size 'int (int, MPI_Datatype, MPI_Comm, int *)'
- PMPI_Pcontrol 'int (const int, ...)'
- PMPI_Probe 'int (int, int, MPI_Comm, MPI_Status *)'
- PMPI_Publish_name 'int (const char *, MPI_Info, const char *)'
- PMPI_Put 'int (const void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Win)'
- PMPI_Query_thread 'int (int *)'
- PMPI_Raccumulate 'int (const void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Op, MPI_Win, MPI_Request *)'
- PMPI_Recv_init 'int (void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *)'
- PMPI_Recv 'int (void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Status *)'
- PMPI_Reduce 'int (const void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm)'
- PMPI_Ireduce 'int (const void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm, MPI_Request *)'
- PMPI_Reduce_local 'int (const void *, void *, int, MPI_Datatype, MPI_Op)'
- PMPI_Reduce_scatter 'int (const void *, void *, const int *, MPI_Datatype, MPI_Op, MPI_Comm)'
- PMPI_Ireduce_scatter 'int (const void *, void *, const int *, MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request *)'
- PMPI_Reduce_scatter_block 'int (const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm)'
- PMPI_Ireduce_scatter_block 'int (const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request *)'
- PMPI_Register_datarep 'int (const char *, MPI_Datarep_conversion_function *, MPI_Datarep_conversion_function *, MPI_Datarep_extent_function *, void *)'
- PMPI_Request_c2f 'int (MPI_Request)'
- PMPI_Request_f2c 'MPI_Request (int)'
- PMPI_Request_free 'int (MPI_Request *)'
- PMPI_Request_get_status 'int (MPI_Request, int *, MPI_Status *)'
- PMPI_Rget 'int (void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Win, MPI_Request *)'
- PMPI_Rget_accumulate 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Op, MPI_Win, MPI_Request *)'
- PMPI_Rput 'int (const void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Win, MPI_Request *)'
- PMPI_Rsend 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm)'
- PMPI_Rsend_init 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *)'
- PMPI_Scan 'int (const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm)'
- PMPI_Iscan 'int (const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request *)'
- PMPI_Scatter 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm)'
- PMPI_Iscatter 'int (const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm, MPI_Request *)'
- PMPI_Scatterv 'int (const void *, const int *, const int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm)'
- PMPI_Iscatterv 'int (const void *, const int *, const int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm, MPI_Request *)'
- PMPI_Send_init 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *)'
- PMPI_Send 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm)'
- PMPI_Sendrecv 'int (const void *, int, MPI_Datatype, int, int, void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Status *)'
- PMPI_Sendrecv_replace 'int (void *, int, MPI_Datatype, int, int, int, int, MPI_Comm, MPI_Status *)'
- PMPI_Ssend_init 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *)'
- PMPI_Ssend 'int (const void *, int, MPI_Datatype, int, int, MPI_Comm)'
- PMPI_Start 'int (MPI_Request *)'
- PMPI_Startall 'int (int, MPI_Request *)'
- PMPI_Status_c2f 'int (const MPI_Status *, int *)'
- PMPI_Status_f2c 'int (const int *, MPI_Status *)'
- PMPI_Status_set_cancelled 'int (MPI_Status *, int)'
- PMPI_Status_set_elements 'int (MPI_Status *, MPI_Datatype, int)'
- PMPI_Status_set_elements_x 'int (MPI_Status *, MPI_Datatype, MPI_Count)'
- PMPI_Testall 'int (int, MPI_Request *, int *, MPI_Status *)'
- PMPI_Testany 'int (int, MPI_Request *, int *, int *, MPI_Status *)'
- PMPI_Test 'int (MPI_Request *, int *, MPI_Status *)'
- PMPI_Test_cancelled 'int (const MPI_Status *, int *)'
- PMPI_Testsome 'int (int, MPI_Request *, int *, int *, MPI_Status *)'
- PMPI_Topo_test 'int (MPI_Comm, int *)'
- PMPI_Type_c2f 'int (MPI_Datatype)'
- PMPI_Type_commit 'int (MPI_Datatype *)'
- PMPI_Type_contiguous 'int (int, MPI_Datatype, MPI_Datatype *)'
- PMPI_Type_create_darray 'int (int, int, int, const int *, const int *, const int *, const int *, int, MPI_Datatype, MPI_Datatype *)'
- PMPI_Type_create_f90_complex 'int (int, int, MPI_Datatype *)'
- PMPI_Type_create_f90_integer 'int (int, MPI_Datatype *)'
- PMPI_Type_create_f90_real 'int (int, int, MPI_Datatype *)'
- PMPI_Type_create_hindexed 'int (int, const int *, const MPI_Aint *, MPI_Datatype, MPI_Datatype *)'
- PMPI_Type_create_hvector 'int (int, int, MPI_Aint, MPI_Datatype, MPI_Datatype *)'
- PMPI_Type_create_keyval 'int (MPI_Type_copy_attr_function *, MPI_Type_delete_attr_function *, int *, void *)'
- PMPI_Type_create_hindexed_block 'int (int, int, const MPI_Aint *, MPI_Datatype, MPI_Datatype *)'
- PMPI_Type_create_indexed_block 'int (int, int, const int *, MPI_Datatype, MPI_Datatype *)'
- PMPI_Type_create_struct 'int (int, const int *, const MPI_Aint *, const MPI_Datatype *, MPI_Datatype *)'
- PMPI_Type_create_subarray 'int (int, const int *, const int *, const int *, int, MPI_Datatype, MPI_Datatype *)'
- PMPI_Type_create_resized 'int (MPI_Datatype, MPI_Aint, MPI_Aint, MPI_Datatype *)'
- PMPI_Type_delete_attr 'int (MPI_Datatype, int)'
- PMPI_Type_dup 'int (MPI_Datatype, MPI_Datatype *)'
- PMPI_Type_free 'int (MPI_Datatype *)'
- PMPI_Type_free_keyval 'int (int *)'
- PMPI_Type_f2c 'MPI_Datatype (int)'
- PMPI_Type_get_attr 'int (MPI_Datatype, int, void *, int *)'
- PMPI_Type_get_contents 'int (MPI_Datatype, int, int, int, int *, MPI_Aint *, MPI_Datatype *)'
- PMPI_Type_get_envelope 'int (MPI_Datatype, int *, int *, int *, int *)'
- PMPI_Type_get_extent 'int (MPI_Datatype, MPI_Aint *, MPI_Aint *)'
- PMPI_Type_get_extent_x 'int (MPI_Datatype, MPI_Count *, MPI_Count *)'
- PMPI_Type_get_name 'int (MPI_Datatype, char *, int *)'
- PMPI_Type_get_true_extent 'int (MPI_Datatype, MPI_Aint *, MPI_Aint *)'
- PMPI_Type_get_true_extent_x 'int (MPI_Datatype, MPI_Count *, MPI_Count *)'
- PMPI_Type_indexed 'int (int, const int *, const int *, MPI_Datatype, MPI_Datatype *)'
- PMPI_Type_match_size 'int (int, int, MPI_Datatype *)'
- PMPI_Type_set_attr 'int (MPI_Datatype, int, void *)'
- PMPI_Type_set_name 'int (MPI_Datatype, const char *)'
- PMPI_Type_size 'int (MPI_Datatype, int *)'
- PMPI_Type_size_x 'int (MPI_Datatype, MPI_Count *)'
- PMPI_Type_vector 'int (int, int, int, MPI_Datatype, MPI_Datatype *)'
- PMPI_Unpack 'int (const void *, int, int *, void *, int, MPI_Datatype, MPI_Comm)'
- PMPI_Unpublish_name 'int (const char *, MPI_Info, const char *)'
- PMPI_Unpack_external 'int (const char *, const void *, MPI_Aint, MPI_Aint *, void *, int, MPI_Datatype)'
- PMPI_Waitall 'int (int, MPI_Request *, MPI_Status *)'
- PMPI_Waitany 'int (int, MPI_Request *, int *, MPI_Status *)'
- PMPI_Wait 'int (MPI_Request *, MPI_Status *)'
- PMPI_Waitsome 'int (int, MPI_Request *, int *, int *, MPI_Status *)'
- PMPI_Win_allocate 'int (MPI_Aint, int, MPI_Info, MPI_Comm, void *, MPI_Win *)'
- PMPI_Win_allocate_shared 'int (MPI_Aint, int, MPI_Info, MPI_Comm, void *, MPI_Win *)'
- PMPI_Win_attach 'int (MPI_Win, void *, MPI_Aint)'
- PMPI_Win_c2f 'int (MPI_Win)'
- PMPI_Win_call_errhandler 'int (MPI_Win, int)'
- PMPI_Win_complete 'int (MPI_Win)'
- PMPI_Win_create 'int (void *, MPI_Aint, int, MPI_Info, MPI_Comm, MPI_Win *)'
- PMPI_Win_create_dynamic 'int (MPI_Info, MPI_Comm, MPI_Win *)'
- PMPI_Win_create_errhandler 'int (MPI_Win_errhandler_function *, MPI_Errhandler *)'
- PMPI_Win_create_keyval 'int (MPI_Win_copy_attr_function *, MPI_Win_delete_attr_function *, int *, void *)'
- PMPI_Win_delete_attr 'int (MPI_Win, int)'
- PMPI_Win_detach 'int (MPI_Win, const void *)'
- PMPI_Win_f2c 'MPI_Win (int)'
- PMPI_Win_fence 'int (int, MPI_Win)'
- PMPI_Win_flush 'int (int, MPI_Win)'
- PMPI_Win_flush_all 'int (MPI_Win)'
- PMPI_Win_flush_local 'int (int, MPI_Win)'
- PMPI_Win_flush_local_all 'int (MPI_Win)'
- PMPI_Win_free 'int (MPI_Win *)'
- PMPI_Win_free_keyval 'int (int *)'
- PMPI_Win_get_attr 'int (MPI_Win, int, void *, int *)'
- PMPI_Win_get_errhandler 'int (MPI_Win, MPI_Errhandler *)'
- PMPI_Win_get_group 'int (MPI_Win, MPI_Group *)'
- PMPI_Win_get_info 'int (MPI_Win, MPI_Info *)'
- PMPI_Win_get_name 'int (MPI_Win, char *, int *)'
- PMPI_Win_lock 'int (int, int, int, MPI_Win)'
- PMPI_Win_lock_all 'int (int, MPI_Win)'
- PMPI_Win_post 'int (MPI_Group, int, MPI_Win)'
- PMPI_Win_set_attr 'int (MPI_Win, int, void *)'
- PMPI_Win_set_errhandler 'int (MPI_Win, MPI_Errhandler)'
- PMPI_Win_set_info 'int (MPI_Win, MPI_Info)'
- PMPI_Win_set_name 'int (MPI_Win, const char *)'
- PMPI_Win_shared_query 'int (MPI_Win, int, MPI_Aint *, int *, void *)'
- PMPI_Win_start 'int (MPI_Group, int, MPI_Win)'
- PMPI_Win_sync 'int (MPI_Win)'
- PMPI_Win_test 'int (MPI_Win, int *)'
- PMPI_Win_unlock 'int (int, MPI_Win)'
- PMPI_Win_unlock_all 'int (MPI_Win)'
- PMPI_Win_wait 'int (MPI_Win)'
- PMPI_Wtick 'double (void)'
- PMPI_Wtime 'double (void)'
- PMPI_T_init_thread 'int (int, int *)'
- PMPI_T_finalize 'int (void)'
- PMPI_T_cvar_get_num 'int (int *)'
- PMPI_T_cvar_get_info 'int (int, char *, int *, int *, MPI_Datatype *, MPI_T_enum *, char *, int *, int *, int *)'
- PMPI_T_cvar_get_index 'int (const char *, int *)'
- PMPI_T_cvar_handle_alloc 'int (int, void *, MPI_T_cvar_handle *, int *)'
- PMPI_T_cvar_handle_free 'int (MPI_T_cvar_handle *)'
- PMPI_T_cvar_read 'int (MPI_T_cvar_handle, void *)'
- PMPI_T_cvar_write 'int (MPI_T_cvar_handle, const void *)'
- PMPI_T_category_get_num 'int (int *)'
- PMPI_T_category_get_info 'int (int, char *, int *, char *, int *, int *, int *, int *)'
- PMPI_T_category_get_index 'int (const char *, int *)'
- PMPI_T_category_get_cvars 'int (int, int, int *)'
- PMPI_T_category_get_pvars 'int (int, int, int *)'
- PMPI_T_category_get_categories 'int (int, int, int *)'
- PMPI_T_category_changed 'int (int *)'
- PMPI_T_pvar_get_num 'int (int *)'
- PMPI_T_pvar_get_info 'int (int, char *, int *, int *, int *, MPI_Datatype *, MPI_T_enum *, char *, int *, int *, int *, int *, int *)'
- PMPI_T_pvar_get_index 'int (const char *, int, int *)'
- PMPI_T_pvar_session_create 'int (MPI_T_pvar_session *)'
- PMPI_T_pvar_session_free 'int (MPI_T_pvar_session *)'
- PMPI_T_pvar_handle_alloc 'int (MPI_T_pvar_session, int, void *, MPI_T_pvar_handle *, int *)'
- PMPI_T_pvar_handle_free 'int (MPI_T_pvar_session, MPI_T_pvar_handle *)'
- PMPI_T_pvar_start 'int (MPI_T_pvar_session, MPI_T_pvar_handle)'
- PMPI_T_pvar_stop 'int (MPI_T_pvar_session, MPI_T_pvar_handle)'
- PMPI_T_pvar_read 'int (MPI_T_pvar_session, MPI_T_pvar_handle, void *)'
- PMPI_T_pvar_write 'int (MPI_T_pvar_session, MPI_T_pvar_handle, const void *)'
- PMPI_T_pvar_reset 'int (MPI_T_pvar_session, MPI_T_pvar_handle)'
- PMPI_T_pvar_readreset 'int (MPI_T_pvar_session, MPI_T_pvar_handle, void *)'
- PMPI_T_enum_get_info 'int (MPI_T_enum, int *, char *, int *)'
- PMPI_T_enum_get_item 'int (MPI_T_enum, int, int *, char *, int *)'
- PMPI_Attr_delete 'int (MPI_Comm, int)'
- PMPI_Attr_get 'int (MPI_Comm, int, void *, int *)'
- PMPI_Attr_put 'int (MPI_Comm, int, void *)'
- PMPI_Keyval_create 'int (MPI_Copy_function *, MPI_Delete_function *, int *, void *)'
- PMPI_Keyval_free 'int (int *)'
- PMPI_Address 'int (void *, MPI_Aint *)'
- PMPI_Errhandler_create 'int (MPI_Handler_function *, MPI_Errhandler *)'
- PMPI_Errhandler_get 'int (MPI_Comm, MPI_Errhandler *)'
- PMPI_Errhandler_set 'int (MPI_Comm, MPI_Errhandler)'
- PMPI_Type_extent 'int (MPI_Datatype, MPI_Aint *)'
- PMPI_Type_hindexed 'int (int, int *, MPI_Aint *, MPI_Datatype, MPI_Datatype *)'
- PMPI_Type_hvector 'int (int, int, MPI_Aint, MPI_Datatype, MPI_Datatype *)'
- PMPI_Type_lb 'int (MPI_Datatype, MPI_Aint *)'
- PMPI_Type_struct 'int (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *)'
- PMPI_Type_ub 'int (MPI_Datatype, MPI_Aint *)'
+_TYPEDEF_PARAM_A2(MPI_Abort, MPI_Comm, comm, int, errorcode);
+_TYPEDEF_PARAM_A9(MPI_Accumulate, const void*, origin_addr, int, origin_count, MPI_Datatype, origin_datatype, int, target_rank, MPI_Aint, target_disp, int, target_count, MPI_Datatype, target_datatype, MPI_Op, op, MPI_Win, win);
+_TYPEDEF_PARAM_A1(MPI_Add_error_class, int*, errorclass);
+_TYPEDEF_PARAM_A2(MPI_Add_error_code, int, errorclass, int*, errorcode);
+_TYPEDEF_PARAM_A2(MPI_Add_error_string, int, errorcode, const char*, string);
+_TYPEDEF_PARAM_A7(MPI_Allgather, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, MPI_Comm, comm);
+_TYPEDEF_PARAM_A8(MPI_Iallgather, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A8(MPI_Allgatherv, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, const int*, recvcounts, const int*, displs, MPI_Datatype, recvtype, MPI_Comm, comm);
+_TYPEDEF_PARAM_A9(MPI_Iallgatherv, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, const int*, recvcounts, const int*, displs, MPI_Datatype, recvtype, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A3(MPI_Alloc_mem, MPI_Aint, size, MPI_Info, info, void*, baseptr);
+_TYPEDEF_PARAM_A6(MPI_Allreduce, const void*, sendbuf, void*, recvbuf, int, count, MPI_Datatype, datatype, MPI_Op, op, MPI_Comm, comm);
+_TYPEDEF_PARAM_A7(MPI_Iallreduce, const void*, sendbuf, void*, recvbuf, int, count, MPI_Datatype, datatype, MPI_Op, op, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A7(MPI_Alltoall, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, MPI_Comm, comm);
+_TYPEDEF_PARAM_A8(MPI_Ialltoall, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A9(MPI_Alltoallv, const void*, sendbuf, const int*, sendcounts, const int*, sdispls, MPI_Datatype, sendtype, void*, recvbuf, const int*, recvcounts, const int*, rdispls, MPI_Datatype, recvtype, MPI_Comm, comm);
+_TYPEDEF_PARAM_A10(MPI_Ialltoallv, const void*, sendbuf, const int*, sendcounts, const int*, sdispls, MPI_Datatype, sendtype, void*, recvbuf, const int*, recvcounts, const int*, rdispls, MPI_Datatype, recvtype, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A9(MPI_Alltoallw, const void*, sendbuf, const int*, sendcounts, const int*, sdispls, const MPI_Datatype*, sendtypes, void*, recvbuf, const int*, recvcounts, const int*, rdispls, const MPI_Datatype*, recvtypes, MPI_Comm, comm);
+_TYPEDEF_PARAM_A10(MPI_Ialltoallw, const void*, sendbuf, const int*, sendcounts, const int*, sdispls, const MPI_Datatype*, sendtypes, void*, recvbuf, const int*, recvcounts, const int*, rdispls, const MPI_Datatype*, recvtypes, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A1(MPI_Barrier, MPI_Comm, comm);
+_TYPEDEF_PARAM_A2(MPI_Ibarrier, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A5(MPI_Bcast, void*, buffer, int, count, MPI_Datatype, datatype, int, root, MPI_Comm, comm);
+_TYPEDEF_PARAM_A6(MPI_Bsend, const void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm);
+_TYPEDEF_PARAM_A6(MPI_Ibcast, void*, buffer, int, count, MPI_Datatype, datatype, int, root, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A7(MPI_Bsend_init, const void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A2(MPI_Buffer_attach, void*, buffer, int, size);
+_TYPEDEF_PARAM_A2(MPI_Buffer_detach, void*, buffer, int*, size);
+_TYPEDEF_PARAM_A1(MPI_Cancel, MPI_Request*, request);
+_TYPEDEF_PARAM_A4(MPI_Cart_coords, MPI_Comm, comm, int, rank, int, maxdims, int*, coords);
+_TYPEDEF_PARAM_A6(MPI_Cart_create, MPI_Comm, old_comm, int, ndims, const int*, dims, const int*, periods, int, reorder, MPI_Comm*, comm_cart);
+_TYPEDEF_PARAM_A5(MPI_Cart_get, MPI_Comm, comm, int, maxdims, int*, dims, int*, periods, int*, coords);
+_TYPEDEF_PARAM_A5(MPI_Cart_map, MPI_Comm, comm, int, ndims, const int*, dims, const int*, periods, int*, newrank);
+_TYPEDEF_PARAM_A3(MPI_Cart_rank, MPI_Comm, comm, const int*, coords, int*, rank);
+_TYPEDEF_PARAM_A5(MPI_Cart_shift, MPI_Comm, comm, int, direction, int, disp, int*, rank_source, int*, rank_dest);
+_TYPEDEF_PARAM_A3(MPI_Cart_sub, MPI_Comm, comm, const int*, remain_dims, MPI_Comm*, new_comm);
+_TYPEDEF_PARAM_A2(MPI_Cartdim_get, MPI_Comm, comm, int*, ndims);
+_TYPEDEF_PARAM_A1(MPI_Close_port, const char*, port_name);
+_TYPEDEF_PARAM_A5(MPI_Comm_accept, const char*, port_name, MPI_Info, info, int, root, MPI_Comm, comm, MPI_Comm*, newcomm);
+_TYPEDEF_PARAM_A2(MPI_Comm_call_errhandler, MPI_Comm, comm, int, errorcode);
+_TYPEDEF_PARAM_A3(MPI_Comm_compare, MPI_Comm, comm1, MPI_Comm, comm2, int*, result);
+_TYPEDEF_PARAM_A5(MPI_Comm_connect, const char*, port_name, MPI_Info, info, int, root, MPI_Comm, comm, MPI_Comm*, newcomm);
+_TYPEDEF_PARAM_A2(MPI_Comm_create_errhandler, MPI_Comm_errhandler_function*, function, MPI_Errhandler*, errhandler);
+_TYPEDEF_PARAM_A4(MPI_Comm_create_keyval, MPI_Comm_copy_attr_function*, comm_copy_attr_fn, MPI_Comm_delete_attr_function*, comm_delete_attr_fn, int*, comm_keyval, void*, extra_state);
+_TYPEDEF_PARAM_A4(MPI_Comm_create_group, MPI_Comm, comm, MPI_Group, group, int, tag, MPI_Comm*, newcomm);
+_TYPEDEF_PARAM_A3(MPI_Comm_create, MPI_Comm, comm, MPI_Group, group, MPI_Comm*, newcomm);
+_TYPEDEF_PARAM_A2(MPI_Comm_delete_attr, MPI_Comm, comm, int, comm_keyval);
+_TYPEDEF_PARAM_A1(MPI_Comm_disconnect, MPI_Comm*, comm);
+_TYPEDEF_PARAM_A2(MPI_Comm_dup, MPI_Comm, comm, MPI_Comm*, newcomm);
+_TYPEDEF_PARAM_A3(MPI_Comm_idup, MPI_Comm, comm, MPI_Comm*, newcomm, MPI_Request*, request);
+_TYPEDEF_PARAM_A3(MPI_Comm_dup_with_info, MPI_Comm, comm, MPI_Info, info, MPI_Comm*, newcomm);
+_TYPEDEF_PARAM_A1(MPI_Comm_free_keyval, int*, comm_keyval);
+_TYPEDEF_PARAM_A1(MPI_Comm_free, MPI_Comm*, comm);
+_TYPEDEF_PARAM_A4(MPI_Comm_get_attr, MPI_Comm, comm, int, comm_keyval, void*, attribute_val, int*, flag);
+_TYPEDEF_PARAM_A9(MPI_Dist_graph_create, MPI_Comm, comm_old, int, n, const int*, nodes, const int*, degrees, const int*, targets, const int*, weights, MPI_Info, info, int, reorder, MPI_Comm*, newcomm);
+_TYPEDEF_PARAM_A10(MPI_Dist_graph_create_adjacent, MPI_Comm, comm_old, int, indegree, const int*, sources, const int*, sourceweights, int, outdegree, const int*, destinations, const int*, destweights, MPI_Info, info, int, reorder, MPI_Comm*, comm_dist_graph);
+_TYPEDEF_PARAM_A7(MPI_Dist_graph_neighbors, MPI_Comm, comm, int, maxindegree, int*, sources, int*, sourceweights, int, maxoutdegree, int*, destinations, int*, destweights);
+_TYPEDEF_PARAM_A4(MPI_Dist_graph_neighbors_count, MPI_Comm, comm, int*, inneighbors, int*, outneighbors, int*, weighted);
+_TYPEDEF_PARAM_A2(MPI_Comm_get_errhandler, MPI_Comm, comm, MPI_Errhandler*, erhandler);
+_TYPEDEF_PARAM_A2(MPI_Comm_get_info, MPI_Comm, comm, MPI_Info*, info_used);
+_TYPEDEF_PARAM_A3(MPI_Comm_get_name, MPI_Comm, comm, char*, comm_name, int*, resultlen);
+_TYPEDEF_PARAM_A1(MPI_Comm_get_parent, MPI_Comm*, parent);
+_TYPEDEF_PARAM_A2(MPI_Comm_group, MPI_Comm, comm, MPI_Group*, group);
+_TYPEDEF_PARAM_A2(MPI_Comm_join, int, fd, MPI_Comm*, intercomm);
+_TYPEDEF_PARAM_A2(MPI_Comm_rank, MPI_Comm, comm, int*, rank);
+_TYPEDEF_PARAM_A2(MPI_Comm_remote_group, MPI_Comm, comm, MPI_Group*, group);
+_TYPEDEF_PARAM_A2(MPI_Comm_remote_size, MPI_Comm, comm, int*, size);
+_TYPEDEF_PARAM_A3(MPI_Comm_set_attr, MPI_Comm, comm, int, comm_keyval, void*, attribute_val);
+_TYPEDEF_PARAM_A2(MPI_Comm_set_errhandler, MPI_Comm, comm, MPI_Errhandler, errhandler);
+_TYPEDEF_PARAM_A2(MPI_Comm_set_info, MPI_Comm, comm, MPI_Info, info);
+_TYPEDEF_PARAM_A2(MPI_Comm_set_name, MPI_Comm, comm, const char*, comm_name);
+_TYPEDEF_PARAM_A2(MPI_Comm_size, MPI_Comm, comm, int*, size);
+_TYPEDEF_PARAM_A4(MPI_Comm_split, MPI_Comm, comm, int, color, int, key, MPI_Comm*, newcomm);
+_TYPEDEF_PARAM_A5(MPI_Comm_split_type, MPI_Comm, comm, int, split_type, int, key, MPI_Info, info, MPI_Comm*, newcomm);
+_TYPEDEF_PARAM_A2(MPI_Comm_test_inter, MPI_Comm, comm, int*, flag);
+_TYPEDEF_PARAM_A7(MPI_Compare_and_swap, const void*, origin_addr, const void*, compare_addr, void*, result_addr, MPI_Datatype, datatype, int, target_rank, MPI_Aint, target_disp, MPI_Win, win);
+_TYPEDEF_PARAM_A3(MPI_Dims_create, int, nnodes, int, ndims, int*, dims);
+_TYPEDEF_PARAM_A1(MPI_Errhandler_free, MPI_Errhandler*, errhandler);
+_TYPEDEF_PARAM_A2(MPI_Error_class, int, errorcode, int*, errorclass);
+_TYPEDEF_PARAM_A3(MPI_Error_string, int, errorcode, char*, string, int*, resultlen);
+_TYPEDEF_PARAM_A6(MPI_Exscan, const void*, sendbuf, void*, recvbuf, int, count, MPI_Datatype, datatype, MPI_Op, op, MPI_Comm, comm);
+_TYPEDEF_PARAM_A7(MPI_Fetch_and_op, const void*, origin_addr, void*, result_addr, MPI_Datatype, datatype, int, target_rank, MPI_Aint, target_disp, MPI_Op, op, MPI_Win, win);
+_TYPEDEF_PARAM_A7(MPI_Iexscan, const void*, sendbuf, void*, recvbuf, int, count, MPI_Datatype, datatype, MPI_Op, op, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A2(MPI_File_call_errhandler, MPI_File, fh, int, errorcode);
+_TYPEDEF_PARAM_A2(MPI_File_create_errhandler, MPI_File_errhandler_function*, function, MPI_Errhandler*, errhandler);
+_TYPEDEF_PARAM_A2(MPI_File_set_errhandler, MPI_File, file, MPI_Errhandler, errhandler);
+_TYPEDEF_PARAM_A2(MPI_File_get_errhandler, MPI_File, file, MPI_Errhandler*, errhandler);
+_TYPEDEF_PARAM_A5(MPI_File_open, MPI_Comm, comm, const char*, filename, int, amode, MPI_Info, info, MPI_File*, fh);
+_TYPEDEF_PARAM_A1(MPI_File_close, MPI_File*, fh);
+_TYPEDEF_PARAM_A2(MPI_File_delete, const char*, filename, MPI_Info, info);
+_TYPEDEF_PARAM_A2(MPI_File_set_size, MPI_File, fh, MPI_Offset, size);
+_TYPEDEF_PARAM_A2(MPI_File_preallocate, MPI_File, fh, MPI_Offset, size);
+_TYPEDEF_PARAM_A2(MPI_File_get_size, MPI_File, fh, MPI_Offset*, size);
+_TYPEDEF_PARAM_A2(MPI_File_get_group, MPI_File, fh, MPI_Group*, group);
+_TYPEDEF_PARAM_A2(MPI_File_get_amode, MPI_File, fh, int*, amode);
+_TYPEDEF_PARAM_A2(MPI_File_set_info, MPI_File, fh, MPI_Info, info);
+_TYPEDEF_PARAM_A2(MPI_File_get_info, MPI_File, fh, MPI_Info*, info_used);
+_TYPEDEF_PARAM_A6(MPI_File_set_view, MPI_File, fh, MPI_Offset, disp, MPI_Datatype, etype, MPI_Datatype, filetype, const char*, datarep, MPI_Info, info);
+_TYPEDEF_PARAM_A5(MPI_File_get_view, MPI_File, fh, MPI_Offset*, disp, MPI_Datatype*, etype, MPI_Datatype*, filetype, char*, datarep);
+_TYPEDEF_PARAM_A6(MPI_File_read_at, MPI_File, fh, MPI_Offset, offset, void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A6(MPI_File_read_at_all, MPI_File, fh, MPI_Offset, offset, void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A6(MPI_File_write_at, MPI_File, fh, MPI_Offset, offset, const void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A6(MPI_File_write_at_all, MPI_File, fh, MPI_Offset, offset, const void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A6(MPI_File_iread_at, MPI_File, fh, MPI_Offset, offset, void*, buf, int, count, MPI_Datatype, datatype, MPI_Request*, request);
+_TYPEDEF_PARAM_A6(MPI_File_iwrite_at, MPI_File, fh, MPI_Offset, offset, const void*, buf, int, count, MPI_Datatype, datatype, MPI_Request*, request);
+_TYPEDEF_PARAM_A6(MPI_File_iread_at_all, MPI_File, fh, MPI_Offset, offset, void*, buf, int, count, MPI_Datatype, datatype, MPI_Request*, request);
+_TYPEDEF_PARAM_A6(MPI_File_iwrite_at_all, MPI_File, fh, MPI_Offset, offset, const void*, buf, int, count, MPI_Datatype, datatype, MPI_Request*, request);
+_TYPEDEF_PARAM_A5(MPI_File_read, MPI_File, fh, void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A5(MPI_File_read_all, MPI_File, fh, void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A5(MPI_File_write, MPI_File, fh, const void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A5(MPI_File_write_all, MPI_File, fh, const void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A5(MPI_File_iread, MPI_File, fh, void*, buf, int, count, MPI_Datatype, datatype, MPI_Request*, request);
+_TYPEDEF_PARAM_A5(MPI_File_iwrite, MPI_File, fh, const void*, buf, int, count, MPI_Datatype, datatype, MPI_Request*, request);
+_TYPEDEF_PARAM_A5(MPI_File_iread_all, MPI_File, fh, void*, buf, int, count, MPI_Datatype, datatype, MPI_Request*, request);
+_TYPEDEF_PARAM_A5(MPI_File_iwrite_all, MPI_File, fh, const void*, buf, int, count, MPI_Datatype, datatype, MPI_Request*, request);
+_TYPEDEF_PARAM_A3(MPI_File_seek, MPI_File, fh, MPI_Offset, offset, int, whence);
+_TYPEDEF_PARAM_A2(MPI_File_get_position, MPI_File, fh, MPI_Offset*, offset);
+_TYPEDEF_PARAM_A3(MPI_File_get_byte_offset, MPI_File, fh, MPI_Offset, offset, MPI_Offset*, disp);
+_TYPEDEF_PARAM_A5(MPI_File_read_shared, MPI_File, fh, void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A5(MPI_File_write_shared, MPI_File, fh, const void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A5(MPI_File_iread_shared, MPI_File, fh, void*, buf, int, count, MPI_Datatype, datatype, MPI_Request*, request);
+_TYPEDEF_PARAM_A5(MPI_File_iwrite_shared, MPI_File, fh, const void*, buf, int, count, MPI_Datatype, datatype, MPI_Request*, request);
+_TYPEDEF_PARAM_A5(MPI_File_read_ordered, MPI_File, fh, void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A5(MPI_File_write_ordered, MPI_File, fh, const void*, buf, int, count, MPI_Datatype, datatype, MPI_Status*, status);
+_TYPEDEF_PARAM_A3(MPI_File_seek_shared, MPI_File, fh, MPI_Offset, offset, int, whence);
+_TYPEDEF_PARAM_A2(MPI_File_get_position_shared, MPI_File, fh, MPI_Offset*, offset);
+_TYPEDEF_PARAM_A5(MPI_File_read_at_all_begin, MPI_File, fh, MPI_Offset, offset, void*, buf, int, count, MPI_Datatype, datatype);
+_TYPEDEF_PARAM_A3(MPI_File_read_at_all_end, MPI_File, fh, void*, buf, MPI_Status*, status);
+_TYPEDEF_PARAM_A5(MPI_File_write_at_all_begin, MPI_File, fh, MPI_Offset, offset, const void*, buf, int, count, MPI_Datatype, datatype);
+_TYPEDEF_PARAM_A3(MPI_File_write_at_all_end, MPI_File, fh, const void*, buf, MPI_Status*, status);
+_TYPEDEF_PARAM_A4(MPI_File_read_all_begin, MPI_File, fh, void*, buf, int, count, MPI_Datatype, datatype);
+_TYPEDEF_PARAM_A3(MPI_File_read_all_end, MPI_File, fh, void*, buf, MPI_Status*, status);
+_TYPEDEF_PARAM_A4(MPI_File_write_all_begin, MPI_File, fh, const void*, buf, int, count, MPI_Datatype, datatype);
+_TYPEDEF_PARAM_A3(MPI_File_write_all_end, MPI_File, fh, const void*, buf, MPI_Status*, status);
+_TYPEDEF_PARAM_A4(MPI_File_read_ordered_begin, MPI_File, fh, void*, buf, int, count, MPI_Datatype, datatype);
+_TYPEDEF_PARAM_A3(MPI_File_read_ordered_end, MPI_File, fh, void*, buf, MPI_Status*, status);
+_TYPEDEF_PARAM_A4(MPI_File_write_ordered_begin, MPI_File, fh, const void*, buf, int, count, MPI_Datatype, datatype);
+_TYPEDEF_PARAM_A3(MPI_File_write_ordered_end, MPI_File, fh, const void*, buf, MPI_Status*, status);
+_TYPEDEF_PARAM_A3(MPI_File_get_type_extent, MPI_File, fh, MPI_Datatype, datatype, MPI_Aint*, extent);
+_TYPEDEF_PARAM_A2(MPI_File_set_atomicity, MPI_File, fh, int, flag);
+_TYPEDEF_PARAM_A2(MPI_File_get_atomicity, MPI_File, fh, int*, flag);
+_TYPEDEF_PARAM_A1(MPI_File_sync, MPI_File, fh);
+_TYPEDEF_PARAM_A0(MPI_Finalize);
+_TYPEDEF_PARAM_A1(MPI_Finalized, int*, flag);
+_TYPEDEF_PARAM_A1(MPI_Free_mem, void*, base);
+_TYPEDEF_PARAM_A8(MPI_Gather, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, int, root, MPI_Comm, comm);
+_TYPEDEF_PARAM_A9(MPI_Igather, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, int, root, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A9(MPI_Gatherv, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, const int*, recvcounts, const int*, displs, MPI_Datatype, recvtype, int, root, MPI_Comm, comm);
+_TYPEDEF_PARAM_A10(MPI_Igatherv, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, const int*, recvcounts, const int*, displs, MPI_Datatype, recvtype, int, root, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A2(MPI_Get_address, const void*, location, MPI_Aint*, address);
+_TYPEDEF_PARAM_A3(MPI_Get_count, const MPI_Status*, status, MPI_Datatype, datatype, int*, count);
+_TYPEDEF_PARAM_A3(MPI_Get_elements, const MPI_Status*, status, MPI_Datatype, datatype, int*, count);
+_TYPEDEF_PARAM_A3(MPI_Get_elements_x, const MPI_Status*, status, MPI_Datatype, datatype, MPI_Count*, count);
+_TYPEDEF_PARAM_A8(MPI_Get, void*, origin_addr, int, origin_count, MPI_Datatype, origin_datatype, int, target_rank, MPI_Aint, target_disp, int, target_count, MPI_Datatype, target_datatype, MPI_Win, win);
+_TYPEDEF_PARAM_A12(MPI_Get_accumulate, const void*, origin_addr, int, origin_count, MPI_Datatype, origin_datatype, void*, result_addr, int, result_count, MPI_Datatype, result_datatype, int, target_rank, MPI_Aint, target_disp, int, target_count, MPI_Datatype, target_datatype, MPI_Op, op, MPI_Win, win);
+_TYPEDEF_PARAM_A2(MPI_Get_library_version, char*, version, int*, resultlen);
+_TYPEDEF_PARAM_A2(MPI_Get_processor_name, char*, name, int*, resultlen);
+_TYPEDEF_PARAM_A2(MPI_Get_version, int*, version, int*, subversion);
+_TYPEDEF_PARAM_A6(MPI_Graph_create, MPI_Comm, comm_old, int, nnodes, const int*, index, const int*, edges, int, reorder, MPI_Comm*, comm_graph);
+_TYPEDEF_PARAM_A5(MPI_Graph_get, MPI_Comm, comm, int, maxindex, int, maxedges, int*, index, int*, edges);
+_TYPEDEF_PARAM_A5(MPI_Graph_map, MPI_Comm, comm, int, nnodes, const int*, index, const int*, edges, int*, newrank);
+_TYPEDEF_PARAM_A3(MPI_Graph_neighbors_count, MPI_Comm, comm, int, rank, int*, nneighbors);
+_TYPEDEF_PARAM_A4(MPI_Graph_neighbors, MPI_Comm, comm, int, rank, int, maxneighbors, int*, neighbors);
+_TYPEDEF_PARAM_A3(MPI_Graphdims_get, MPI_Comm, comm, int*, nnodes, int*, nedges);
+_TYPEDEF_PARAM_A1(MPI_Grequest_complete, MPI_Request, request);
+_TYPEDEF_PARAM_A5(MPI_Grequest_start, MPI_Grequest_query_function*, query_fn, MPI_Grequest_free_function*, free_fn, MPI_Grequest_cancel_function*, cancel_fn, void*, extra_state, MPI_Request*, request);
+_TYPEDEF_PARAM_A3(MPI_Group_compare, MPI_Group, group1, MPI_Group, group2, int*, result);
+_TYPEDEF_PARAM_A3(MPI_Group_difference, MPI_Group, group1, MPI_Group, group2, MPI_Group*, newgroup);
+_TYPEDEF_PARAM_A4(MPI_Group_excl, MPI_Group, group, int, n, const int*, ranks, MPI_Group*, newgroup);
+_TYPEDEF_PARAM_A1(MPI_Group_free, MPI_Group*, group);
+_TYPEDEF_PARAM_A4(MPI_Group_incl, MPI_Group, group, int, n, const int*, ranks, MPI_Group*, newgroup);
+_TYPEDEF_PARAM_A3(MPI_Group_intersection, MPI_Group, group1, MPI_Group, group2, MPI_Group*, newgroup);
+_TYPEDEF_PARAM_A4(MPI_Group_range_excl, MPI_Group, group, int, n, int(*), ranges[3], MPI_Group*, newgroup);
+_TYPEDEF_PARAM_A4(MPI_Group_range_incl, MPI_Group, group, int, n, int(*), ranges[3], MPI_Group*, newgroup);
+_TYPEDEF_PARAM_A2(MPI_Group_rank, MPI_Group, group, int*, rank);
+_TYPEDEF_PARAM_A2(MPI_Group_size, MPI_Group, group, int*, size);
+_TYPEDEF_PARAM_A5(MPI_Group_translate_ranks, MPI_Group, group1, int, n, const int*, ranks1, MPI_Group, group2, int*, ranks2);
+_TYPEDEF_PARAM_A3(MPI_Group_union, MPI_Group, group1, MPI_Group, group2, MPI_Group*, newgroup);
+_TYPEDEF_PARAM_A7(MPI_Ibsend, const void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A6(MPI_Improbe, int, source, int, tag, MPI_Comm, comm, int*, flag, MPI_Message*, message, MPI_Status*, status);
+_TYPEDEF_PARAM_A5(MPI_Imrecv, void*, buf, int, count, MPI_Datatype, type, MPI_Message*, message, MPI_Request*, request);
+_TYPEDEF_PARAM_A1(MPI_Info_create, MPI_Info*, info);
+_TYPEDEF_PARAM_A2(MPI_Info_delete, MPI_Info, info, const char*, key);
+_TYPEDEF_PARAM_A2(MPI_Info_dup, MPI_Info, info, MPI_Info*, newinfo);
+_TYPEDEF_PARAM_A1(MPI_Info_free, MPI_Info*, info);
+_TYPEDEF_PARAM_A5(MPI_Info_get, MPI_Info, info, const char*, key, int, valuelen, char*, value, int*, flag);
+_TYPEDEF_PARAM_A2(MPI_Info_get_nkeys, MPI_Info, info, int*, nkeys);
+_TYPEDEF_PARAM_A3(MPI_Info_get_nthkey, MPI_Info, info, int, n, char*, key);
+_TYPEDEF_PARAM_A4(MPI_Info_get_valuelen, MPI_Info, info, const char*, key, int*, valuelen, int*, flag);
+_TYPEDEF_PARAM_A3(MPI_Info_set, MPI_Info, info, const char*, key, const char*, value);
+_TYPEDEF_PARAM_A2(MPI_Init, int*, argc, char***, argv);
+_TYPEDEF_PARAM_A1(MPI_Initialized, int*, flag);
+_TYPEDEF_PARAM_A4(MPI_Init_thread, int*, argc, char***, argv, int, required, int*, provided);
+_TYPEDEF_PARAM_A6(MPI_Intercomm_create, MPI_Comm, local_comm, int, local_leader, MPI_Comm, bridge_comm, int, remote_leader, int, tag, MPI_Comm*, newintercomm);
+_TYPEDEF_PARAM_A3(MPI_Intercomm_merge, MPI_Comm, intercomm, int, high, MPI_Comm*, newintercomm);
+_TYPEDEF_PARAM_A5(MPI_Iprobe, int, source, int, tag, MPI_Comm, comm, int*, flag, MPI_Status*, status);
+_TYPEDEF_PARAM_A7(MPI_Irecv, void*, buf, int, count, MPI_Datatype, datatype, int, source, int, tag, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A7(MPI_Irsend, const void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A7(MPI_Isend, const void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A7(MPI_Issend, const void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A1(MPI_Is_thread_main, int*, flag);
+_TYPEDEF_PARAM_A3(MPI_Lookup_name, const char*, service_name, MPI_Info, info, char*, port_name);
+_TYPEDEF_PARAM_A5(MPI_Mprobe, int, source, int, tag, MPI_Comm, comm, MPI_Message*, message, MPI_Status*, status);
+_TYPEDEF_PARAM_A5(MPI_Mrecv, void*, buf, int, count, MPI_Datatype, type, MPI_Message*, message, MPI_Status*, status);
+_TYPEDEF_PARAM_A7(MPI_Neighbor_allgather, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, MPI_Comm, comm);
+_TYPEDEF_PARAM_A8(MPI_Ineighbor_allgather, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A8(MPI_Neighbor_allgatherv, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, const int*, recvcounts, const int*, displs, MPI_Datatype, recvtype, MPI_Comm, comm);
+_TYPEDEF_PARAM_A9(MPI_Ineighbor_allgatherv, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, const int*, recvcounts, const int*, displs, MPI_Datatype, recvtype, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A7(MPI_Neighbor_alltoall, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, MPI_Comm, comm);
+_TYPEDEF_PARAM_A8(MPI_Ineighbor_alltoall, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A9(MPI_Neighbor_alltoallv, const void*, sendbuf, const int*, sendcounts, const int*, sdispls, MPI_Datatype, sendtype, void*, recvbuf, const int*, recvcounts, const int*, rdispls, MPI_Datatype, recvtype, MPI_Comm, comm);
+_TYPEDEF_PARAM_A10(MPI_Ineighbor_alltoallv, const void*, sendbuf, const int*, sendcounts, const int*, sdispls, MPI_Datatype, sendtype, void*, recvbuf, const int*, recvcounts, const int*, rdispls, MPI_Datatype, recvtype, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A9(MPI_Neighbor_alltoallw, const void*, sendbuf, const int*, sendcounts, const MPI_Aint*, sdispls, const MPI_Datatype*, sendtypes, void*, recvbuf, const int*, recvcounts, const MPI_Aint*, rdispls, const MPI_Datatype*, recvtypes, MPI_Comm, comm);
+_TYPEDEF_PARAM_A10(MPI_Ineighbor_alltoallw, const void*, sendbuf, const int*, sendcounts, const MPI_Aint*, sdispls, const MPI_Datatype*, sendtypes, void*, recvbuf, const int*, recvcounts, const MPI_Aint*, rdispls, const MPI_Datatype*, recvtypes, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A2(MPI_Op_commutative, MPI_Op, op, int*, commute);
+_TYPEDEF_PARAM_A3(MPI_Op_create, MPI_User_function*, function, int, commute, MPI_Op*, op);
+_TYPEDEF_PARAM_A2(MPI_Open_port, MPI_Info, info, char*, port_name);
+_TYPEDEF_PARAM_A1(MPI_Op_free, MPI_Op*, op);
+_TYPEDEF_PARAM_A7(MPI_Pack_external, const char*, datarep, const void*, inbuf, int, incount, MPI_Datatype, datatype, void*, outbuf, MPI_Aint, outsize, MPI_Aint*, position);
+_TYPEDEF_PARAM_A4(MPI_Pack_external_size, const char*, datarep, int, incount, MPI_Datatype, datatype, MPI_Aint*, size);
+_TYPEDEF_PARAM_A7(MPI_Pack, const void*, inbuf, int, incount, MPI_Datatype, datatype, void*, outbuf, int, outsize, int*, position, MPI_Comm, comm);
+_TYPEDEF_PARAM_A4(MPI_Pack_size, int, incount, MPI_Datatype, datatype, MPI_Comm, comm, int*, size);
+
+_TYPEDEF_PARAM_A4(MPI_Probe, int, source, int, tag, MPI_Comm, comm, MPI_Status*, status);
+_TYPEDEF_PARAM_A3(MPI_Publish_name, const char*, service_name, MPI_Info, info, const char*, port_name);
+_TYPEDEF_PARAM_A8(MPI_Put, const void*, origin_addr, int, origin_count, MPI_Datatype, origin_datatype, int, target_rank, MPI_Aint, target_disp, int, target_count, MPI_Datatype, target_datatype, MPI_Win, win);
+_TYPEDEF_PARAM_A1(MPI_Query_thread, int*, provided);
+_TYPEDEF_PARAM_A10(MPI_Raccumulate, const void*, origin_addr, int, origin_count, MPI_Datatype, origin_datatype, int, target_rank, MPI_Aint, target_disp, int, target_count, MPI_Datatype, target_datatype, MPI_Op, op, MPI_Win, win, MPI_Request*, request);
+_TYPEDEF_PARAM_A7(MPI_Recv_init, void*, buf, int, count, MPI_Datatype, datatype, int, source, int, tag, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A7(MPI_Recv, void*, buf, int, count, MPI_Datatype, datatype, int, source, int, tag, MPI_Comm, comm, MPI_Status*, status);
+_TYPEDEF_PARAM_A7(MPI_Reduce, const void*, sendbuf, void*, recvbuf, int, count, MPI_Datatype, datatype, MPI_Op, op, int, root, MPI_Comm, comm);
+_TYPEDEF_PARAM_A8(MPI_Ireduce, const void*, sendbuf, void*, recvbuf, int, count, MPI_Datatype, datatype, MPI_Op, op, int, root, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A5(MPI_Reduce_local, const void*, inbuf, void*, inoutbuf, int, count, MPI_Datatype, datatype, MPI_Op, op);
+_TYPEDEF_PARAM_A6(MPI_Reduce_scatter, const void*, sendbuf, void*, recvbuf, const int*, recvcounts, MPI_Datatype, datatype, MPI_Op, op, MPI_Comm, comm);
+_TYPEDEF_PARAM_A7(MPI_Ireduce_scatter, const void*, sendbuf, void*, recvbuf, const int*, recvcounts, MPI_Datatype, datatype, MPI_Op, op, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A6(MPI_Reduce_scatter_block, const void*, sendbuf, void*, recvbuf, int, recvcount, MPI_Datatype, datatype, MPI_Op, op, MPI_Comm, comm);
+_TYPEDEF_PARAM_A7(MPI_Ireduce_scatter_block, const void*, sendbuf, void*, recvbuf, int, recvcount, MPI_Datatype, datatype, MPI_Op, op, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A5(MPI_Register_datarep, const char*, datarep, MPI_Datarep_conversion_function*, read_conversion_fn, MPI_Datarep_conversion_function*, write_conversion_fn, MPI_Datarep_extent_function*, dtype_file_extent_fn, void*, extra_state);
+_TYPEDEF_PARAM_A1(MPI_Request_free, MPI_Request*, request);
+_TYPEDEF_PARAM_A3(MPI_Request_get_status, MPI_Request, request, int*, flag, MPI_Status*, status);
+_TYPEDEF_PARAM_A9(MPI_Rget, void*, origin_addr, int, origin_count, MPI_Datatype, origin_datatype, int, target_rank, MPI_Aint, target_disp, int, target_count, MPI_Datatype, target_datatype, MPI_Win, win, MPI_Request*, request);
+_TYPEDEF_PARAM_A13(MPI_Rget_accumulate, const void*, origin_addr, int, origin_count, MPI_Datatype, origin_datatype, void*, result_addr, int, result_count, MPI_Datatype, result_datatype, int, target_rank, MPI_Aint, target_disp, int, target_count, MPI_Datatype, target_datatype, MPI_Op, op, MPI_Win, win, MPI_Request*, request);
+_TYPEDEF_PARAM_A9(MPI_Rput, const void*, origin_addr, int, origin_count, MPI_Datatype, origin_datatype, int, target_rank, MPI_Aint, target_disp, int, target_cout, MPI_Datatype, target_datatype, MPI_Win, win, MPI_Request*, request);
+_TYPEDEF_PARAM_A6(MPI_Rsend, const void*, ibuf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm);
+_TYPEDEF_PARAM_A7(MPI_Rsend_init, const void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A6(MPI_Scan, const void*, sendbuf, void*, recvbuf, int, count, MPI_Datatype, datatype, MPI_Op, op, MPI_Comm, comm);
+_TYPEDEF_PARAM_A7(MPI_Iscan, const void*, sendbuf, void*, recvbuf, int, count, MPI_Datatype, datatype, MPI_Op, op, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A8(MPI_Scatter, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, int, root, MPI_Comm, comm);
+_TYPEDEF_PARAM_A9(MPI_Iscatter, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, int, root, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A9(MPI_Scatterv, const void*, sendbuf, const int*, sendcounts, const int*, displs, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, int, root, MPI_Comm, comm);
+_TYPEDEF_PARAM_A10(MPI_Iscatterv, const void*, sendbuf, const int*, sendcounts, const int*, displs, MPI_Datatype, sendtype, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, int, root, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A7(MPI_Send_init, const void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A6(MPI_Send, const void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm);
+_TYPEDEF_PARAM_A12(MPI_Sendrecv, const void*, sendbuf, int, sendcount, MPI_Datatype, sendtype, int, dest, int, sendtag, void*, recvbuf, int, recvcount, MPI_Datatype, recvtype, int, source, int, recvtag, MPI_Comm, comm, MPI_Status*, status);
+_TYPEDEF_PARAM_A9(MPI_Sendrecv_replace, void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, sendtag, int, source, int, recvtag, MPI_Comm, comm, MPI_Status*, status);
+_TYPEDEF_PARAM_A7(MPI_Ssend_init, const void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm, MPI_Request*, request);
+_TYPEDEF_PARAM_A6(MPI_Ssend, const void*, buf, int, count, MPI_Datatype, datatype, int, dest, int, tag, MPI_Comm, comm);
+_TYPEDEF_PARAM_A1(MPI_Start, MPI_Request*, request);
+_TYPEDEF_PARAM_A2(MPI_Startall, int, count, MPI_Request*, array_of_requests);
+_TYPEDEF_PARAM_A2(MPI_Status_set_cancelled, MPI_Status*, status, int, flag);
+_TYPEDEF_PARAM_A3(MPI_Status_set_elements, MPI_Status*, status, MPI_Datatype, datatype, int, count);
+_TYPEDEF_PARAM_A3(MPI_Status_set_elements_x, MPI_Status*, status, MPI_Datatype, datatype, MPI_Count, count);
+_TYPEDEF_PARAM_A4(MPI_Testall, int, count, MPI_Request*, array_of_requests, int*, flag, MPI_Status*, array_of_statuses);
+_TYPEDEF_PARAM_A5(MPI_Testany, int, count, MPI_Request*, array_of_requests, int*, index, int*, flag, MPI_Status*, status);
+_TYPEDEF_PARAM_A3(MPI_Test, MPI_Request*, request, int*, flag, MPI_Status*, status);
+_TYPEDEF_PARAM_A2(MPI_Test_cancelled, const MPI_Status*, status, int*, flag);
+_TYPEDEF_PARAM_A5(MPI_Testsome, int, incount, MPI_Request*, array_of_requests, int*, outcount, int*, array_of_indices, MPI_Status*, array_of_statuses);
+_TYPEDEF_PARAM_A2(MPI_Topo_test, MPI_Comm, comm, int*, status);
+_TYPEDEF_PARAM_A1(MPI_Type_commit, MPI_Datatype*, type);
+_TYPEDEF_PARAM_A3(MPI_Type_contiguous, int, count, MPI_Datatype, oldtype, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A10(MPI_Type_create_darray, int, size, int, rank, int, ndims, const int*, gsize_array, const int*, distrib_array, const int*, darg_array, const int*, psize_array, int, order, MPI_Datatype, oldtype, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A3(MPI_Type_create_f90_complex, int, p, int, r, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A2(MPI_Type_create_f90_integer, int, r, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A3(MPI_Type_create_f90_real, int, p, int, r, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A5(MPI_Type_create_hindexed_block, int, count, int, blocklength, const MPI_Aint*, array_of_displacements, MPI_Datatype, oldtype, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A5(MPI_Type_create_hindexed, int, count, const int*, array_of_blocklengths, const MPI_Aint*, array_of_displacements, MPI_Datatype, oldtype, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A5(MPI_Type_create_hvector, int, count, int, blocklength, MPI_Aint, stride, MPI_Datatype, oldtype, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A4(MPI_Type_create_keyval, MPI_Type_copy_attr_function*, type_copy_attr_fn, MPI_Type_delete_attr_function*, type_delete_attr_fn, int*, type_keyval, void*, extra_state);
+_TYPEDEF_PARAM_A5(MPI_Type_create_indexed_block, int, count, int, blocklength, const int*, array_of_displacements, MPI_Datatype, oldtype, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A5(MPI_Type_create_struct, int, count, const int*, array_of_block_lengths, const MPI_Aint*, array_of_displacements, const MPI_Datatype*, array_of_types, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A7(MPI_Type_create_subarray, int, ndims, const int*, size_array, const int*, subsize_array, const int*, start_array, int, order, MPI_Datatype, oldtype, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A4(MPI_Type_create_resized, MPI_Datatype, oldtype, MPI_Aint, lb, MPI_Aint, extent, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A2(MPI_Type_delete_attr, MPI_Datatype, type, int, type_keyval);
+_TYPEDEF_PARAM_A2(MPI_Type_dup, MPI_Datatype, type, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A1(MPI_Type_free, MPI_Datatype*, type);
+_TYPEDEF_PARAM_A1(MPI_Type_free_keyval, int*, type_keyval);
+_TYPEDEF_PARAM_A4(MPI_Type_get_attr, MPI_Datatype, type, int, type_keyval, void*, attribute_val, int*, flag);
+_TYPEDEF_PARAM_A7(MPI_Type_get_contents, MPI_Datatype, mtype, int, max_integers, int, max_addresses, int, max_datatypes, int*, array_of_integers, MPI_Aint*, array_of_addresses, MPI_Datatype*, array_of_datatypes);
+_TYPEDEF_PARAM_A5(MPI_Type_get_envelope, MPI_Datatype, type, int*, num_integers, int*, num_addresses, int*, num_datatypes, int*, combiner);
+_TYPEDEF_PARAM_A3(MPI_Type_get_extent, MPI_Datatype, type, MPI_Aint*, lb, MPI_Aint*, extent);
+_TYPEDEF_PARAM_A3(MPI_Type_get_extent_x, MPI_Datatype, type, MPI_Count*, lb, MPI_Count*, extent);
+_TYPEDEF_PARAM_A3(MPI_Type_get_name, MPI_Datatype, type, char*, type_name, int*, resultlen);
+_TYPEDEF_PARAM_A3(MPI_Type_get_true_extent, MPI_Datatype, datatype, MPI_Aint*, true_lb, MPI_Aint*, true_extent);
+_TYPEDEF_PARAM_A3(MPI_Type_get_true_extent_x, MPI_Datatype, datatype, MPI_Count*, true_lb, MPI_Count*, true_extent);
+_TYPEDEF_PARAM_A5(MPI_Type_indexed, int, count, const int*, array_of_blocklengths, const int*, array_of_displacements, MPI_Datatype, oldtype, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A3(MPI_Type_match_size, int, typeclass, int, size, MPI_Datatype*, type);
+_TYPEDEF_PARAM_A3(MPI_Type_set_attr, MPI_Datatype, type, int, type_keyval, void*, attr_val);
+_TYPEDEF_PARAM_A2(MPI_Type_set_name, MPI_Datatype, type, const char*, type_name);
+_TYPEDEF_PARAM_A2(MPI_Type_size, MPI_Datatype, type, int*, size);
+_TYPEDEF_PARAM_A2(MPI_Type_size_x, MPI_Datatype, type, MPI_Count*, size);
+_TYPEDEF_PARAM_A5(MPI_Type_vector, int, count, int, blocklength, int, stride, MPI_Datatype, oldtype, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A7(MPI_Unpack, const void*, inbuf, int, insize, int*, position, void*, outbuf, int, outcount, MPI_Datatype, datatype, MPI_Comm, comm);
+_TYPEDEF_PARAM_A3(MPI_Unpublish_name, const char*, service_name, MPI_Info, info, const char*, port_name);
+_TYPEDEF_PARAM_A7(MPI_Unpack_external, const char*, datarep, const void*, inbuf, MPI_Aint, insize, MPI_Aint*, position, void*, outbuf, int, outcount, MPI_Datatype, datatype);
+_TYPEDEF_PARAM_A3(MPI_Waitall, int, count, MPI_Request*, array_of_requests, MPI_Status*, array_of_statuses);
+_TYPEDEF_PARAM_A4(MPI_Waitany, int, count, MPI_Request*, array_of_requests, int*, index, MPI_Status*, status);
+_TYPEDEF_PARAM_A2(MPI_Wait, MPI_Request*, request, MPI_Status*, status);
+_TYPEDEF_PARAM_A5(MPI_Waitsome, int, incount, MPI_Request*, array_of_requests, int*, outcount, int*, array_of_indices, MPI_Status*, array_of_statuses);
+_TYPEDEF_PARAM_A6(MPI_Win_allocate, MPI_Aint, size, int, disp_unit, MPI_Info, info, MPI_Comm, comm, void*, baseptr, MPI_Win*, win);
+_TYPEDEF_PARAM_A6(MPI_Win_allocate_shared, MPI_Aint, size, int, disp_unit, MPI_Info, info, MPI_Comm, comm, void*, baseptr, MPI_Win*, win);
+_TYPEDEF_PARAM_A3(MPI_Win_attach, MPI_Win, win, void*, base, MPI_Aint, size);
+_TYPEDEF_PARAM_A2(MPI_Win_call_errhandler, MPI_Win, win, int, errorcode);
+_TYPEDEF_PARAM_A1(MPI_Win_complete, MPI_Win, win);
+_TYPEDEF_PARAM_A6(MPI_Win_create, void*, base, MPI_Aint, size, int, disp_unit, MPI_Info, info, MPI_Comm, comm, MPI_Win*, win);
+_TYPEDEF_PARAM_A3(MPI_Win_create_dynamic, MPI_Info, info, MPI_Comm, comm, MPI_Win*, win);
+_TYPEDEF_PARAM_A2(MPI_Win_create_errhandler, MPI_Win_errhandler_function*, function, MPI_Errhandler*, errhandler);
+_TYPEDEF_PARAM_A4(MPI_Win_create_keyval, MPI_Win_copy_attr_function*, win_copy_attr_fn, MPI_Win_delete_attr_function*, win_delete_attr_fn, int*, win_keyval, void*, extra_state);
+_TYPEDEF_PARAM_A2(MPI_Win_delete_attr, MPI_Win, win, int, win_keyval);
+_TYPEDEF_PARAM_A2(MPI_Win_detach, MPI_Win, win, const void*, base);
+_TYPEDEF_PARAM_A2(MPI_Win_fence, int, assert, MPI_Win, win);
+_TYPEDEF_PARAM_A2(MPI_Win_flush, int, rank, MPI_Win, win);
+_TYPEDEF_PARAM_A1(MPI_Win_flush_all, MPI_Win, win);
+_TYPEDEF_PARAM_A2(MPI_Win_flush_local, int, rank, MPI_Win, win);
+_TYPEDEF_PARAM_A1(MPI_Win_flush_local_all, MPI_Win, win);
+_TYPEDEF_PARAM_A1(MPI_Win_free, MPI_Win*, win);
+_TYPEDEF_PARAM_A1(MPI_Win_free_keyval, int*, win_keyval);
+_TYPEDEF_PARAM_A4(MPI_Win_get_attr, MPI_Win, win, int, win_keyval, void*, attribute_val, int*, flag);
+_TYPEDEF_PARAM_A2(MPI_Win_get_errhandler, MPI_Win, win, MPI_Errhandler*, errhandler);
+_TYPEDEF_PARAM_A2(MPI_Win_get_group, MPI_Win, win, MPI_Group*, group);
+_TYPEDEF_PARAM_A2(MPI_Win_get_info, MPI_Win, win, MPI_Info*, info_used);
+_TYPEDEF_PARAM_A3(MPI_Win_get_name, MPI_Win, win, char*, win_name, int*, resultlen);
+_TYPEDEF_PARAM_A4(MPI_Win_lock, int, lock_type, int, rank, int, assert, MPI_Win, win);
+_TYPEDEF_PARAM_A2(MPI_Win_lock_all, int, assert, MPI_Win, win);
+_TYPEDEF_PARAM_A3(MPI_Win_post, MPI_Group, group, int, assert, MPI_Win, win);
+_TYPEDEF_PARAM_A3(MPI_Win_set_attr, MPI_Win, win, int, win_keyval, void*, attribute_val);
+_TYPEDEF_PARAM_A2(MPI_Win_set_errhandler, MPI_Win, win, MPI_Errhandler, errhandler);
+_TYPEDEF_PARAM_A2(MPI_Win_set_info, MPI_Win, win, MPI_Info, info);
+_TYPEDEF_PARAM_A2(MPI_Win_set_name, MPI_Win, win, const char*, win_name);
+_TYPEDEF_PARAM_A5(MPI_Win_shared_query, MPI_Win, win, int, rank, MPI_Aint*, size, int*, disp_unit, void*, baseptr);
+_TYPEDEF_PARAM_A3(MPI_Win_start, MPI_Group, group, int, assert, MPI_Win, win);
+_TYPEDEF_PARAM_A1(MPI_Win_sync, MPI_Win, win);
+_TYPEDEF_PARAM_A2(MPI_Win_test, MPI_Win, win, int*, flag);
+_TYPEDEF_PARAM_A2(MPI_Win_unlock, int, rank, MPI_Win, win);
+_TYPEDEF_PARAM_A1(MPI_Win_unlock_all, MPI_Win, win);
+_TYPEDEF_PARAM_A1(MPI_Win_wait, MPI_Win, win);
+
+
+_TYPEDEF_PARAM_A2(MPI_Attr_delete, MPI_Comm, comm, int, keyval);
+_TYPEDEF_PARAM_A4(MPI_Attr_get, MPI_Comm, comm, int, keyval, void*, attribute_val, int*, flag);
+_TYPEDEF_PARAM_A3(MPI_Attr_put, MPI_Comm, comm, int, keyval, void*, attribute_val);
+_TYPEDEF_PARAM_A4(MPI_Keyval_create, MPI_Copy_function*, copy_fn, MPI_Delete_function*, delete_fn, int*, keyval, void*, extra_state);
+_TYPEDEF_PARAM_A1(MPI_Keyval_free, int*, keyval);
+_TYPEDEF_PARAM_A2(MPI_Address, void*, location, MPI_Aint*, address);
+_TYPEDEF_PARAM_A2(MPI_Errhandler_create, MPI_Handler_function*, function, MPI_Errhandler*, errhandler);
+_TYPEDEF_PARAM_A2(MPI_Errhandler_get, MPI_Comm, comm, MPI_Errhandler*, errhandler);
+_TYPEDEF_PARAM_A2(MPI_Errhandler_set, MPI_Comm, comm, MPI_Errhandler, errhandler);
+_TYPEDEF_PARAM_A2(MPI_Type_extent, MPI_Datatype, type, MPI_Aint*, extent);
+_TYPEDEF_PARAM_A5(MPI_Type_hindexed, int, count, int*, array_of_blocklengths, MPI_Aint*, array_of_displacements, MPI_Datatype, oldtype, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A5(MPI_Type_hvector, int, count, int, blocklength, MPI_Aint, stride, MPI_Datatype, oldtype, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A2(MPI_Type_lb, MPI_Datatype, type, MPI_Aint*, lb);
+_TYPEDEF_PARAM_A5(MPI_Type_struct, int, count, int*, array_of_blocklengths, MPI_Aint*, array_of_displacements, MPI_Datatype*, array_of_types, MPI_Datatype*, newtype);
+_TYPEDEF_PARAM_A2(MPI_Type_ub, MPI_Datatype, mtype, MPI_Aint*, ub);
