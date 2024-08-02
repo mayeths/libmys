@@ -23,12 +23,9 @@ typedef struct mys_arena_t {
     bool _reged;
 } mys_arena_t;
 
-MYS_PUBLIC mys_arena_t _mys_predefined_arena_ext;
-MYS_PUBLIC mys_arena_t _mys_predefined_arena_log;
-MYS_PUBLIC mys_arena_t _mys_predefined_arena_pool;
-#define mys_arena_ext ((mys_arena_t *)(&_mys_predefined_arena_ext))
-#define mys_arena_log ((mys_arena_t *)(&_mys_predefined_arena_log))
-#define mys_arena_pool ((mys_arena_t *)(&_mys_predefined_arena_pool))
+MYS_PUBLIC mys_arena_t* mys_arena_ext;
+MYS_PUBLIC mys_arena_t* mys_arena_log;
+MYS_PUBLIC mys_arena_t* mys_arena_pool;
 
 /**
  * @brief Create a new memory arena with the specified name.

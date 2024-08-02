@@ -98,9 +98,13 @@ MYS_PUBLIC void mys_cache_flush(size_t nbytes)
     free(arr);
 }
 
-mys_arena_t _mys_predefined_arena_ext = { /*name=*/"external", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
-mys_arena_t _mys_predefined_arena_log = { /*name=*/"mys_log", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
-mys_arena_t _mys_predefined_arena_pool = { /*name=*/"mys_pool", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
+MYS_STATIC mys_arena_t _mys_arena_ext = { /*name=*/"external", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
+MYS_STATIC mys_arena_t _mys_arena_log = { /*name=*/"mys_log", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
+MYS_STATIC mys_arena_t _mys_arena_pool = { /*name=*/"mys_pool", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
+
+mys_arena_t* mys_arena_ext = &_mys_arena_ext;
+mys_arena_t* mys_arena_log = &_mys_arena_log;
+mys_arena_t* mys_arena_pool = &_mys_arena_pool;
 
 #define MYS_MAX_REGISTERED_ARENA 128
 
