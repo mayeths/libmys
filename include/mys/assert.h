@@ -37,12 +37,12 @@
 
 /* Runtime Assertion */
 
-#define _ASX(exp, fmt, ...) if (!(exp)) { \
-    int _rank_ = mys_mpi_myrank();        \
-    mys_log(_rank_, MYS_LOG_FATAL,        \
-        __FILE__, __LINE__,               \
-        (fmt), ##__VA_ARGS__);            \
-    exit(1);                              \
+#define _ASX(exp, fmt, ...) if (MYS_UNLIKELY(!(exp))) { \
+    int _rank_ = mys_mpi_myrank();                      \
+    mys_log(_rank_, MYS_LOG_FATAL,                      \
+        __FILE__, __LINE__,                             \
+        (fmt), ##__VA_ARGS__);                          \
+    exit(1);                                            \
 }
 
 #define ASSERT(exp, fmt, ...) do { _ASX(exp, fmt, ##__VA_ARGS__);                   } while(0)

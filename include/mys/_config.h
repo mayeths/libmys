@@ -93,20 +93,16 @@
 #define ARCH_UNKNOWN
 #endif
 
-#if defined(COMPILER_GCC)
+#if defined(COMPILER_GCC) || defined(COMPILER_CLANG)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
 #define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
-#elif defined(COMPILER_CLANG)
-#define MYS_ATTR_EXPORT __attribute__((visibility("default")))
-#define MYS_ATTR_IMPORT __attribute__((visibility("default")))
-#define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
-#define MYS_ATTR_UNUSED __attribute__((unused))
-#define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
-#define MYS_ATTR_NOINLINE __attribute__((noinline))
+#define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
+#define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
+#define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #elif defined(COMPILER_ICC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
@@ -114,6 +110,9 @@
 #define MYS_ATTR_UNUSED __attribute__((unused))
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
+#define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
+#define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
+#define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #elif defined(COMPILER_NVCC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
@@ -121,6 +120,9 @@
 #define MYS_ATTR_UNUSED __attribute__((unused))
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE /* No equivalent attribute */
+#define MYS_ATTR_ALWAYS_INLINE __forceinline__
+#define MYS_LIKELY(x) (x) /* No equivalent attribute */
+#define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
 #elif defined(COMPILER_SWCC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
@@ -128,6 +130,9 @@
 #define MYS_ATTR_UNUSED __attribute__((unused))
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE /* No equivalent attribute */
+#define MYS_ATTR_ALWAYS_INLINE /* No equivalent attribute */
+#define MYS_LIKELY(x) (x) /* No equivalent attribute */
+#define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
 #elif defined(COMPILER_MSVC)
 #define MYS_ATTR_EXPORT __declspec(dllexport)
 #define MYS_ATTR_IMPORT __declspec(dllimport)
@@ -135,6 +140,9 @@
 #define MYS_ATTR_UNUSED /* No equivalent attribute */
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE __declspec(noinline)
+#define MYS_ATTR_ALWAYS_INLINE __forceinline
+#define MYS_LIKELY(x) (x) /* No equivalent attribute */
+#define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
 #else /* Fallback for unknown compilers */
 #define MYS_ATTR_EXPORT
 #define MYS_ATTR_IMPORT
@@ -142,6 +150,9 @@
 #define MYS_ATTR_UNUSED
 #define MYS_ATTR_NO_INSTRUMENT
 #define MYS_ATTR_NOINLINE
+#define MYS_ATTR_ALWAYS_INLINE inline
+#define MYS_LIKELY(x) (x) /* No equivalent attribute */
+#define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
 #endif
 
 #if defined(MYS_IMPL)         // Make libmys with public visibility.
