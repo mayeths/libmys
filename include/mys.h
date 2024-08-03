@@ -1,12 +1,17 @@
-/**
- * @file mys.h
- * @author mayeths (wow@mayeths.com)
- * @brief Include all libmys C headers into one header (Require GNU99)
+/* 
+ * Copyright (c) 2024 Haopeng Huang - All Rights Reserved
  * 
+ * Licensed under the MIT License. You may use, distribute,
+ * and modify this code under the terms of the MIT license.
+ * You should have received a copy of the MIT license along
+ * with this file. If not, see:
+ * 
+ * https://opensource.org/licenses/MIT
  */
 #ifndef MYS_VERSION
-#define MYS_VERSION 202404L
+#define MYS_VERSION 202408L
 #endif
+
 #include "mys/_config.h"
 
 #if defined(__cplusplus) && __cplusplus < 201103L

@@ -1,3 +1,13 @@
+/* 
+ * Copyright (c) 2024 Haopeng Huang - All Rights Reserved
+ * 
+ * Licensed under the MIT License. You may use, distribute,
+ * and modify this code under the terms of the MIT license.
+ * You should have received a copy of the MIT license along
+ * with this file. If not, see:
+ * 
+ * https://opensource.org/licenses/MIT
+ */
 // TODO: Add MYS_MALLOC and MYS_CALLOC macro that enable leak check
 // 
 // Level 1 (MYS_ALLOC_CHECK_LEVEL 1): only record unfree nbytes

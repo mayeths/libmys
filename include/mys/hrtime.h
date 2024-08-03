@@ -1,3 +1,13 @@
+/* 
+ * Copyright (c) 2024 Haopeng Huang - All Rights Reserved
+ * 
+ * Licensed under the MIT License. You may use, distribute,
+ * and modify this code under the terms of the MIT license.
+ * You should have received a copy of the MIT license along
+ * with this file. If not, see:
+ * 
+ * https://opensource.org/licenses/MIT
+ */
 #pragma once
 /* Please check https://github.com/nclack/tictoc for platform-timer (Windows/Linux/MacOS) */
 /* See OpenMPI Wiki https://github.com/open-mpi/ompi/wiki/Timers for how they think and implement timer */

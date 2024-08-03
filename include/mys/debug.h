@@ -1,3 +1,13 @@
+/* 
+ * Copyright (c) 2024 Haopeng Huang - All Rights Reserved
+ * 
+ * Licensed under the MIT License. You may use, distribute,
+ * and modify this code under the terms of the MIT license.
+ * You should have received a copy of the MIT license along
+ * with this file. If not, see:
+ * 
+ * https://opensource.org/licenses/MIT
+ */
 #pragma once
 
 // https://github.com/openucx/ucx/blob/da0fdd7d0bd6d4592cd26f61ce712a4a77073fa0/src/ucs/debug/debug.c#L1080

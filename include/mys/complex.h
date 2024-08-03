@@ -1,3 +1,13 @@
+/* 
+ * Copyright (c) 2024 Haopeng Huang - All Rights Reserved
+ * 
+ * Licensed under the MIT License. You may use, distribute,
+ * and modify this code under the terms of the MIT license.
+ * You should have received a copy of the MIT license along
+ * with this file. If not, see:
+ * 
+ * https://opensource.org/licenses/MIT
+ */
 #pragma once
 // Compatibility for C99 and C++ complex. This header
 // can be included by either C99 or ANSI C++ programs to
