@@ -146,6 +146,7 @@ static _mys_memory_G_t _mys_memory_G = {
     .arena_capacity = MYS_MAX_REGISTERED_ARENA,
 };
 
+MYS_ATTR_OPTIMIZE_O3
 MYS_STATIC void _mys_ensure_register_arena(mys_arena_t *arena)
 {
     AS_NE_PTR(arena, NULL);
@@ -199,6 +200,7 @@ MYS_PUBLIC mys_arena_t *mys_arena_create(const char *name)
     if (arena == NULL)
         return NULL;
     strncpy(arena->name, name, sizeof(arena->name));
+    arena->name[sizeof(arena->name) - 1] = '\0';
     arena->peak = 0;
     arena->alive = 0;
     arena->freed = 0;
@@ -241,6 +243,7 @@ MYS_PUBLIC mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
 }
 
 
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC void* mys_malloc2(mys_arena_t *arena, size_t size)
 {
     AS_NE_PTR(arena, NULL);
@@ -256,6 +259,7 @@ MYS_PUBLIC void* mys_malloc2(mys_arena_t *arena, size_t size)
     return p;
 }
 
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size)
 {
     AS_NE_PTR(arena, NULL);
@@ -271,6 +275,7 @@ MYS_PUBLIC void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size)
     return p;
 }
 
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t size)
 {
     AS_NE_PTR(arena, NULL);
@@ -296,12 +301,14 @@ MYS_PUBLIC void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t
     return p;
 }
 
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size)
 {
     AS_NE_PTR(arena, NULL);
     _mys_ensure_register_arena(arena);
     void *p = realloc(ptr, size);
     if (p != NULL) {
+        AS_GE_SIZET(arena->alive, _old_size);
         arena->alive -= _old_size;
         arena->freed += _old_size;
         arena->alive += size;
@@ -314,11 +321,13 @@ MYS_PUBLIC void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t
 }
 
 
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC void mys_free2(mys_arena_t *arena, void* ptr, size_t _size)
 {
     AS_NE_PTR(arena, NULL);
     _mys_ensure_register_arena(arena);
     if (ptr != NULL) {
+        AS_GE_SIZET(arena->alive, _size);
         arena->alive -= _size;
         arena->freed += _size;
         AS_EQ_SIZET(arena->total, arena->alive + arena->freed);
