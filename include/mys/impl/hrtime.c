@@ -28,6 +28,7 @@ MYS_PUBLIC const char *mys_hrname()
 #endif
 }
 
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrtick()
 {
 #if defined(MYS_ENABLED_HRTIMER_AACH64)
@@ -45,6 +46,7 @@ MYS_PUBLIC uint64_t mys_hrtick()
 #endif
 }
 
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrfreq()
 {
 #if defined(MYS_ENABLED_HRTIMER_AACH64)
@@ -62,6 +64,7 @@ MYS_PUBLIC uint64_t mys_hrfreq()
 #endif
 }
 
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC double mys_hrtime()
 {
 #if defined(MYS_ENABLED_HRTIMER_AACH64)
@@ -91,6 +94,7 @@ mys_thread_local _mys_hrtime_aarch64_G_t _mys_hrtime_aarch64_G = {
 MYS_PUBLIC const char *mys_hrname_aarch64() {
     return "High-resolution timer by AArch64 assembly (10ns)";
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrtick_aarch64() {
     if (_mys_hrtime_aarch64_G.inited == false) {
         __asm__ __volatile__("mrs %0, CNTVCT_EL0" : "=r"(_mys_hrtime_aarch64_G.start));
@@ -100,11 +104,13 @@ MYS_PUBLIC uint64_t mys_hrtick_aarch64() {
     __asm__ __volatile__("mrs %0, CNTVCT_EL0" : "=r"(t));
     return t - _mys_hrtime_aarch64_G.start;
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrfreq_aarch64() {
     uint64_t f;
     __asm__ __volatile__("mrs %0, CNTFRQ_EL0" : "=r"(f));
     return f;
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC double mys_hrtime_aarch64() {
     return (double)mys_hrtick_aarch64() / (double)mys_hrfreq_aarch64();
 }
@@ -125,6 +131,7 @@ mys_thread_local _mys_hrtime_x64_G_t _mys_hrtime_x64_G = {
 MYS_PUBLIC const char *mys_hrname_x64() {
     return "High-resolution timer by X64 assembly (TSC_FREQ=" MYS_MACRO2STR(TSC_FREQ) ")";
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrtick_x64() {
     if (_mys_hrtime_x64_G.inited == false) {
         uint32_t lo, hi;
@@ -139,9 +146,11 @@ MYS_PUBLIC uint64_t mys_hrtick_x64() {
     uint64_t t = (uint64_t)hi << 32 | (uint64_t)lo;
     return t - _mys_hrtime_x64_G.start;
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrfreq_x64() {
     return (uint64_t)TSC_FREQ;
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC double mys_hrtime_x64() {
     return (double)mys_hrtick_x64() / (double)mys_hrfreq_x64();
 }
@@ -172,6 +181,7 @@ MYS_PUBLIC const char *mys_hrname_posix() {
     return "High-resolution timer by gettimeofday() of <sys/time.h> (1us~10us)";
 #endif
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrtick_posix() {
     uint64_t t = 0;
 #if defined(CLOCK_MONOTONIC)
@@ -197,6 +207,7 @@ MYS_PUBLIC uint64_t mys_hrtick_posix() {
 #endif
     return t - _mys_hrtime_posix_G.start;
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrfreq_posix() {
 #if defined(CLOCK_MONOTONIC)
     return 1000000000;
@@ -204,6 +215,7 @@ MYS_PUBLIC uint64_t mys_hrfreq_posix() {
     return 1000000;
 #endif
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC double mys_hrtime_posix() {
     return (double)mys_hrtick_posix() / (double)mys_hrfreq_posix();
 }
@@ -227,14 +239,17 @@ static void _mys_hrtick_cxx_init() {
         _mys_hrtime_cxx_G.inited = true;
     }
 }
+MYS_ATTR_OPTIMIZE_O3
 uint64_t mys_hrtick_cxx() {
     _mys_hrtick_cxx_init();
     auto t = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::nanoseconds>(t - _mys_hrtime_cxx_G.start).count();
 }
+MYS_ATTR_OPTIMIZE_O3
 uint64_t mys_hrfreq_cxx() {
     return 1000000000;
 }
+MYS_ATTR_OPTIMIZE_O3
 double mys_hrtime_cxx() {
     _mys_hrtick_cxx_init();
     auto t = std::chrono::steady_clock::now();
@@ -251,18 +266,21 @@ double mys_hrtime_cxx() {
 MYS_PUBLIC const char *mys_hrname_windows() {
     return "High-resolution timer by <windows.h> (1us~10us)";
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrtick_windows() {
     LARGE_INTEGER t;
     if (!QueryPerformanceCounter(&t))
         return 0;
     return (uint64_t)t.QuadPart;
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrfreq_windows() {
     LARGE_INTEGER f;
     if (!QueryPerformanceFrequency(&f))
         return 0;
     return (uint64_t)f.QuadPart;
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC double mys_hrtime_windows() {
     return (double)mys_hrtick_windows() / (double)mys_hrfreq_windows();
 }
@@ -276,9 +294,11 @@ mys_thread_local _mys_hrtime_mpi_G_t _mys_hrtime_mpi_G = {
     .inited = false,
     .start = 0,
 };
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC const char *mys_hrname_mpi() {
     return "High-resolution timer by <mpi.h> (1us~10us)";
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrtick_mpi() {
     if (_mys_hrtime_mpi_G.inited == false) {
         _mys_hrtime_mpi_G.start = _mys_MPI_Wtime();
@@ -287,9 +307,11 @@ MYS_PUBLIC uint64_t mys_hrtick_mpi() {
     double current = _mys_MPI_Wtime() - _mys_hrtime_mpi_G.start;
     return (uint64_t)(current * 1e9); // in nano second
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrfreq_mpi() {
     return (uint64_t)1000000000;
 }
+MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC double mys_hrtime_mpi() {
     return (double)mys_hrtick_mpi() / (double)mys_hrfreq_mpi();
 }
