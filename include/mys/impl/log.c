@@ -175,7 +175,7 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
         char buffer[4096];
         for (int rank = 1; rank < nranks; rank++) {
             _mys_MPI_Status status;
-            int needed;
+            int needed = 0;
             _mys_MPI_Probe(rank, tag, comm, &status);
             _mys_MPI_Get_count(&status, _mys_MPI_CHAR, &needed);
             char *ptr = (needed > 4096) ? (char *)mys_malloc2(mys_arena_log, needed) : buffer;
