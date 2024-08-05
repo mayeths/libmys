@@ -116,6 +116,7 @@ MYS_STATIC mys_arena_t _mys_arena_mpiz = { /*name=*/"mys_mpiz", /*peak=*/0, /*al
 MYS_STATIC mys_arena_t _mys_arena_os = { /*name=*/"mys_os", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
 MYS_STATIC mys_arena_t _mys_arena_stat = { /*name=*/"mys_statistic", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
 MYS_STATIC mys_arena_t _mys_arena_str = { /*name=*/"mys_string", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
+MYS_STATIC mys_arena_t _mys_arena_trace = { /*name=*/"mys_trace", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
 MYS_STATIC mys_arena_t _mys_arena_user = { /*name=*/"user", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_reged=*/false };
 
 mys_arena_t* mys_arena_std = &_mys_arena_std;
@@ -126,6 +127,7 @@ mys_arena_t* mys_arena_mpiz = &_mys_arena_mpiz;
 mys_arena_t* mys_arena_os = &_mys_arena_os;
 mys_arena_t* mys_arena_stat = &_mys_arena_stat;
 mys_arena_t* mys_arena_str = &_mys_arena_str;
+mys_arena_t* mys_arena_trace = &_mys_arena_trace;
 mys_arena_t* mys_arena_user = &_mys_arena_user;
 
 #define MYS_MAX_REGISTERED_ARENA 128

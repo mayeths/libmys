@@ -81,6 +81,7 @@ extern "C" {
 #include "mys/statistic.h"
 #include "mys/string.h"
 #include "mys/thread.h"
+#include "mys/trace.h"
 // Third-Party Library (mys3)
 #include "mys3/cJSON/cJSON.h"
 #include "mys3/matrixmarket/mmio.h"
@@ -114,6 +115,7 @@ extern "C" {
 #include "mys/impl/pool.c"
 #include "mys/impl/string.c"
 #include "mys/impl/guard.c"
+#include "mys/impl/trace.c"
 #ifndef MYS_NO_MPI
 #include "mys/impl/mpiz.c"
 #endif

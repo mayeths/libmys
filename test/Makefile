@@ -20,3 +20,6 @@ test-pool: test-pool.c
 
 test-memory: test-memory.c
 	$(CC) $(CFLAGS) $(LFLAGS) $^
+
+test-trace: test-trace.c
+	$(CC) $(CFLAGS) $(LFLAGS) $^ -O3
