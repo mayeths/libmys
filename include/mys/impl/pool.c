@@ -71,22 +71,19 @@ typedef struct mys_pool_t {
 
 static mys_pool_object_t* _mys_pool_get_object(mys_pool_t* pool, mys_pool_block_t* block, size_t i)
 {
-    if (pool == NULL || block == NULL)
-        return NULL;
+    MYS_RETIF(pool == NULL || block == NULL, MYS_EINVAL, NULL);
     return (mys_pool_object_t*)(block->memory + pool->mobj_size * i);
 }
 
 static size_t _mys_pool_index_object(mys_pool_t* pool, mys_pool_block_t* block, mys_pool_object_t* object)
 {
-    if (pool == NULL || block == NULL || object == NULL)
-        return 0;
+    MYS_RETIF(pool == NULL || block == NULL || object == NULL, MYS_EINVAL, 0);
     return ((uint8_t*)object - block->memory) / pool->mobj_size;
 }
 
 static mys_pool_object_meta_t* _mys_pool_get_object_meta(mys_pool_t* pool, mys_pool_object_t* object)
 {
-    if (pool == NULL || object == NULL)
-        return NULL;
+    MYS_RETIF(pool == NULL || object == NULL, MYS_EINVAL, NULL);
     uint8_t* memory = (uint8_t*)object;
     mys_pool_object_meta_t* meta = (mys_pool_object_meta_t*)(memory + pool->pobj_size);
     return meta;
@@ -99,12 +96,10 @@ MYS_PUBLIC mys_pool_t* mys_pool_create(size_t object_size)
 
 MYS_PUBLIC mys_pool_t* mys_pool_create2(size_t object_size, size_t initial_capacity, int pool_strategy)
 {
-    if (initial_capacity == 0)
-        return NULL;
+    MYS_RETIF(initial_capacity == 0, MYS_EINVAL, NULL);
 
     mys_pool_t* pool = (mys_pool_t*)mys_malloc2(mys_arena_pool, sizeof(mys_pool_t));
-    if (!pool)
-        return NULL;
+    MYS_RETIF(pool == NULL, MYS_ENOMEM, NULL);
 
     pool->robj_size = object_size;
     pool->pobj_size = MYS_ALIGN_UP(pool->robj_size, 8);
@@ -122,8 +117,7 @@ MYS_PUBLIC mys_pool_t* mys_pool_create2(size_t object_size, size_t initial_capac
 static void allocate_block(mys_pool_t* pool)
 {
     mys_pool_block_t* block = (mys_pool_block_t*)mys_malloc2(mys_arena_pool, sizeof(mys_pool_block_t));
-    if (block == NULL)
-        return;
+    MYS_RETIF(block == NULL, MYS_ENOMEM);
     // DLOG(0, "    Allocate block %p", block);
 
     block->capacity = pool->block_capacity;
@@ -131,17 +125,10 @@ static void allocate_block(mys_pool_t* pool)
     block->acquired_count = 0;
 
     block->memory = (uint8_t*)mys_aligned_alloc2(mys_arena_pool, sysconf(_SC_PAGE_SIZE), block->capacity * pool->mobj_size);
-    if (block->memory == NULL) {
-        mys_free2(mys_arena_pool, block, sizeof(mys_pool_block_t));
-        return;
-    }
+    MYS_GOTOIF(block->memory == NULL, MYS_ENOMEM, failed);
 
     block->objects = (mys_pool_olist_t*)mys_malloc2(mys_arena_pool, block->capacity * sizeof(mys_pool_olist_t));
-    if (block->objects == NULL) {
-        mys_free2(mys_arena_pool, block->memory, block->capacity * pool->mobj_size);
-        mys_free2(mys_arena_pool, block, sizeof(mys_pool_block_t));
-        return;
-    }
+    MYS_GOTOIF(block->objects == NULL, MYS_ENOMEM, failed);
 
     block->free_object_head = NULL;
     for (size_t i = block->capacity; i > 0; i--) { // i=block->capacity-1 will crash if cap=0
@@ -154,21 +141,29 @@ static void allocate_block(mys_pool_t* pool)
         // DLOG(0, "    Prepare object %zu %p", i - 1, object);
     }
 
-    mys_pool_block_t *next_block = pool->free_block_head;
-    pool->free_block_head = block;
-    block->prev = NULL;
-    block->next = next_block;
-    // DLOG(0, "    Block %p->next is set to %p", block, next_block);
-    if (next_block != NULL) next_block->prev = block;
-    if (pool->free_block_tail == NULL) pool->free_block_tail = block;
+    {
+        mys_pool_block_t *next_block = pool->free_block_head;
+        pool->free_block_head = block;
+        block->prev = NULL;
+        block->next = next_block;
+        // DLOG(0, "    Block %p->next is set to %p", block, next_block);
+        if (next_block != NULL) next_block->prev = block;
+        if (pool->free_block_tail == NULL) pool->free_block_tail = block;
+        pool->block_capacity *= 2;
+    }
 
-    pool->block_capacity *= 2;
+    return;
+failed:
+    if (block != NULL) {
+        if (block->objects != NULL) mys_free2(mys_arena_pool, block->objects, block->capacity * sizeof(mys_pool_olist_t));
+        if (block->memory != NULL) mys_free2(mys_arena_pool, block->memory, block->capacity * pool->mobj_size);
+        mys_free2(mys_arena_pool, block, sizeof(mys_pool_block_t));
+    }
 }
 
 MYS_STATIC void deallocate_block(mys_pool_t* pool, mys_pool_block_t* block)
 {
-    AS_NE_PTR(pool, NULL);
-    AS_NE_PTR(block, NULL);
+    MYS_RETIF(pool == NULL || block == NULL, MYS_EINVAL);
 
     if (block == pool->free_block_head) pool->free_block_head = block->next;
     if (block == pool->free_block_tail) pool->free_block_tail = block->prev;
@@ -185,10 +180,8 @@ MYS_STATIC void deallocate_block(mys_pool_t* pool, mys_pool_block_t* block)
 
 MYS_PUBLIC void mys_pool_destroy(mys_pool_t* *pool)
 {
-    AS_NE_PTR(pool, NULL);
+    MYS_RETIF(pool == NULL || *pool == NULL, MYS_EINVAL);
 
-    if (*pool == NULL)
-        return;
     mys_pool_block_t* block = NULL;
     block = (*pool)->free_block_head;
     while (block != NULL) {
@@ -209,21 +202,15 @@ MYS_PUBLIC void mys_pool_destroy(mys_pool_t* *pool)
 MYS_PUBLIC void* mys_pool_acquire(mys_pool_t* pool)
 {
     // DLOG(0, "Acquiring");
-    AS_NE_PTR(pool, NULL);
+    MYS_RETIF(pool == NULL, MYS_EINVAL, NULL);
 
     if (pool->free_block_head == NULL) {
         allocate_block(pool);
-        if (pool->free_block_head == NULL) {
-            // DLOG(0, "    Failed to allocate block for pool %p", pool);
-            return NULL;
-        }
+        MYS_RETIF(pool->free_block_head == NULL, MYS_ENOMEM, NULL);
     }
 
     mys_pool_block_t* block = pool->free_block_head;
-    if (block->free_object_head == NULL) {
-        // DLOG(0, "    What? %p block=%p", pool, block);
-        return NULL;
-    }
+    MYS_RETIF(block->free_object_head == NULL, MYS_ENOMEM, NULL);
 
     mys_pool_olist_t* llist_node = block->free_object_head;
     block->free_object_head = llist_node->next;
@@ -264,7 +251,7 @@ MYS_PUBLIC void* mys_pool_acquire(mys_pool_t* pool)
 MYS_PUBLIC void mys_pool_release(mys_pool_t* pool, void* object_)
 {
     // DLOG(0, "Releasing %p", object_);
-    AS_NE_PTR(pool, NULL);
+    MYS_RETIF(pool == NULL, MYS_EINVAL);
 
     mys_pool_object_t* object = (mys_pool_object_t*)object_;
     mys_pool_object_meta_t* meta = _mys_pool_get_object_meta(pool, object);
