@@ -109,9 +109,9 @@ MYS_PUBLIC mys_popen_t mys_popen_create(const char *command)
     popen.pid = fork();
     
     if (popen.pid == 0) { // child
-        close(in[1]);  close(0); dup(in[0]);  // pipe to stdin
-        close(out[0]); close(1); dup(out[1]); // pipe to stdout
-        close(err[0]); close(2); dup(err[1]); // pipe to stderr
+        close(in[1]);  close(0); in[1]=dup(in[0]);  // pipe to stdin, in[1] must store 0 after dup
+        close(out[0]); close(1); out[0]=dup(out[1]); // pipe to stdout, out[0] must store 1 after dup
+        close(err[0]); close(2); err[0]=dup(err[1]); // pipe to stderr, err[0] must store 2 after dup
         execl("/bin/sh", "sh", "-c", command, NULL);
         _exit(1);
     } else { // parent

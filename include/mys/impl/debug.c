@@ -289,61 +289,129 @@ MYS_STATIC const char *_mys_sigcause(int signo, int sigcode)
 {
     if (signo == SIGILL) {
         switch (sigcode) {
+#ifdef ILL_ILLOPC
             case ILL_ILLOPC : return "illegal opcode";
+#endif
+#ifdef ILL_ILLOPN
             case ILL_ILLOPN : return "illegal operand";
+#endif
+#ifdef ILL_ILLADR
             case ILL_ILLADR : return "illegal addressing mode";
+#endif
+#ifdef ILL_ILLTRP
             case ILL_ILLTRP : return "illegal trap";
+#endif
+#ifdef ILL_PRVOPC
             case ILL_PRVOPC : return "privileged opcode";
+#endif
+#ifdef ILL_PRVREG
             case ILL_PRVREG : return "privileged register";
+#endif
+#ifdef ILL_COPROC
             case ILL_COPROC : return "coprocessor error";
+#endif
+#ifdef ILL_BADSTK
             case ILL_BADSTK : return "internal stack error";
+#endif
         }
     } else if (signo == SIGTRAP) {
         switch (sigcode) {
+#ifdef TRAP_BRKPT
             case TRAP_BRKPT : return "process breakpoint";
+#endif
+#ifdef TRAP_TRACE
             case TRAP_TRACE : return "process trace trap";
+#endif
         }
     } else if (signo == SIGBUS) {
         switch (sigcode) {
+#ifdef BUS_ADRALN
             case BUS_ADRALN : return "invalid address alignment";
+#endif
+#ifdef BUS_ADRERR
             case BUS_ADRERR : return "nonexistent physical address";
+#endif
+#ifdef BUS_OBJERR
             case BUS_OBJERR : return "object-specific hardware error";
+#endif
         }
     } else if (signo == SIGFPE) {
         switch (sigcode) {
+#ifdef FPE_INTDIV
             case FPE_INTDIV : return "integer divide by zero";
+#endif
+#ifdef FPE_INTOVF
             case FPE_INTOVF : return "integer overflow";
+#endif
+#ifdef FPE_FLTDIV
             case FPE_FLTDIV : return "floating-point divide by zero";
+#endif
+#ifdef FPE_FLTOVF
             case FPE_FLTOVF : return "floating-point overflow";
+#endif
+#ifdef FPE_FLTUND
             case FPE_FLTUND : return "floating-point underflow";
+#endif
+#ifdef FPE_FLTRES
             case FPE_FLTRES : return "floating-point inexact result";
+#endif
+#ifdef FPE_FLTINV
             case FPE_FLTINV : return "floating-point invalid operation";
+#endif
+#ifdef FPE_FLTSUB
             case FPE_FLTSUB : return "subscript bufout of range";
+#endif
         }
     } else if (signo == SIGSEGV) {
         switch (sigcode) {
+#ifdef SEGV_MAPERR
             case SEGV_MAPERR : return "address not mapped to object";
+#endif
+#ifdef SEGV_ACCERR
             case SEGV_ACCERR : return "invalid permissions for mapped object";
+#endif
         }
     } else if (signo == SIGCHLD) {
         switch (sigcode) {
+#ifdef CLD_EXITED
             case CLD_EXITED    : return "child has exited";
+#endif
+#ifdef CLD_KILLED
             case CLD_KILLED    : return "child was killed";
+#endif
+#ifdef CLD_DUMPED
             case CLD_DUMPED    : return "child terminated abnormally";
+#endif
+#ifdef CLD_TRAPPED
             case CLD_TRAPPED   : return "traced child has trapped";
+#endif
+#ifdef CLD_STOPPED
             case CLD_STOPPED   : return "child has stopped";
+#endif
+#ifdef CLD_CONTINUED
             case CLD_CONTINUED : return "stopped child has continued";
+#endif
         }
     } else { // common
         switch (sigcode) {
+#ifdef SI_USER
             case SI_USER    : return "sent by kill(2) or raise(3)";
-#ifdef __linux__
+#endif
+#ifdef SI_KERNEL
             case SI_KERNEL  : return "sent by kernel";
 #endif
+#ifdef SI_QUEUE
             case SI_QUEUE   : return "sent by sigqueue(2)";
+#endif
+#ifdef SI_TIMER
             case SI_TIMER   : return "sent by POSIX timer expiration";
+#endif
+#ifdef SI_MESGQ
             case SI_MESGQ   : return "sent by POSIX message queue state change";
+#endif
+#ifdef SI_ASYNCIO
             case SI_ASYNCIO : return "sent by AIO completion";
+#endif
 #ifdef SI_SIGIO
             case SI_SIGIO   : return "sent by queued SIGIO";
 #endif
@@ -358,36 +426,90 @@ MYS_STATIC const char *_mys_sigcause(int signo, int sigcode)
 MYS_STATIC const char *_mys_signo_str(int signo)
 {
     switch (signo) {
+#ifdef SIGALRM
     case SIGALRM: return "SIGALRM";
+#endif
+#ifdef SIGHUP
     case SIGHUP: return "SIGHUP";
+#endif
+#ifdef SIGINT
     case SIGINT: return "SIGINT";
+#endif
+#ifdef SIGKILL
     case SIGKILL: return "SIGKILL";
+#endif
+#ifdef SIGPIPE
     case SIGPIPE: return "SIGPIPE";
+#endif
 #ifdef SIGPOLL
     case SIGPOLL: return "SIGPOLL";
 #endif
+#ifdef SIGPROF
     case SIGPROF: return "SIGPROF";
+#endif
+#ifdef SIGTERM
     case SIGTERM: return "SIGTERM";
+#endif
+#ifdef SIGUSR1
     case SIGUSR1: return "SIGUSR1";
+#endif
+#ifdef SIGUSR2
     case SIGUSR2: return "SIGUSR2";
+#endif
+#ifdef SIGVTALRM
     case SIGVTALRM: return "SIGVTALRM";
+#endif
+#ifdef SIGABRT
     case SIGABRT: return "SIGABRT";
+#endif
+#ifdef SIGBUS
     case SIGBUS: return "SIGBUS";
+#endif
+#ifdef SIGFPE
     case SIGFPE: return "SIGFPE";
+#endif
+#ifdef SIGILL
     case SIGILL: return "SIGILL";
+#endif
+#ifdef SIGQUIT
     case SIGQUIT: return "SIGQUIT";
+#endif
+#ifdef SIGSEGV
     case SIGSEGV: return "SIGSEGV";
+#endif
+#ifdef SIGSYS
     case SIGSYS: return "SIGSYS";
+#endif
+#ifdef SIGTRAP
     case SIGTRAP: return "SIGTRAP";
+#endif
+#ifdef SIGXCPU
     case SIGXCPU: return "SIGXCPU";
+#endif
+#ifdef SIGXFSZ
     case SIGXFSZ: return "SIGXFSZ";
+#endif
+#ifdef SIGCHLD
     case SIGCHLD: return "SIGCHLD";
+#endif
+#ifdef SIGURG
     case SIGURG: return "SIGURG";
+#endif
+#ifdef SIGSTOP
     case SIGSTOP: return "SIGSTOP";
+#endif
+#ifdef SIGTSTP
     case SIGTSTP: return "SIGTSTP";
+#endif
+#ifdef SIGTTIN
     case SIGTTIN: return "SIGTTIN";
+#endif
+#ifdef SIGTTOU
     case SIGTTOU: return "SIGTTOU";
+#endif
+#ifdef SIGCONT
     case SIGCONT: return "SIGCONT";
+#endif
     }
     return "SIGUNKNOWN";
 }
@@ -406,7 +528,8 @@ MYS_STATIC void _mys_debug_revert_all()
             if (ret != 0) {
                 snprintf(msg, sizeof(msg), "failed to revert signal handler for sig %d : %s\n",
                     sig, strerror(errno));
-                write(_mys_debug_G.outfd, msg, strnlen(msg, sizeof(msg)));
+                ssize_t written = write(_mys_debug_G.outfd, msg, strnlen(msg, sizeof(msg)));
+                (void)written;
             }
         }
     }
@@ -533,7 +656,8 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
 #undef _YFMT4
 #undef _YFMT5
 #undef _YFMT6
-    write(_mys_debug_G.outfd, buflog, loglen);
+    ssize_t written = write(_mys_debug_G.outfd, buflog, loglen);
+    (void)written;
     int post_action = _mys_debug_G.post_action;
     if (post_action == MYS_DEBUG_ACTION_EXIT) {
         // when there are a lot of ranks, immediately exit will
