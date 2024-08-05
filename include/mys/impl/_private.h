@@ -14,6 +14,7 @@
 // We don't expect users to use them.
 
 #include "../_config.h"
+#include "../errno.h"
 #include "../mpi.h"
 
 // mpi.c

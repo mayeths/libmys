@@ -64,6 +64,7 @@ extern "C" {
 #ifndef MYS_DISABLE_DEBUG // if you use inte compiler like icc, then this may helps
 #include "mys/debug.h"
 #endif
+#include "mys/errno.h"
 #include "mys/guard.h"
 #include "mys/hash.h"
 #include "mys/hrtime.h"
@@ -98,6 +99,7 @@ extern "C" {
 #include "mys/impl/uthash_hash.h"
 #include "mys/impl/uthash_list.h"
 #include "mys/impl/algorithm.c"
+#include "mys/impl/errno.c"
 #include "mys/impl/rand.c"
 #include "mys/impl/log.c"
 #include "mys/impl/hrtime.c"
