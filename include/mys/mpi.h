@@ -102,6 +102,7 @@ MYS_PUBLIC int mys_mpi_nranks();
 MYS_PUBLIC int mys_mpi_barrier();
 MYS_PUBLIC int mys_mpi_sync();
 MYS_PUBLIC _mys_MPI_Comm mys_mpi_comm();
+MYS_PUBLIC void mys_mpi_set_comm(_mys_MPI_Comm comm);
 #define MYRANK() mys_mpi_myrank()
 #define NRANKS() mys_mpi_nranks()
 #define BARRIER() mys_mpi_barrier()

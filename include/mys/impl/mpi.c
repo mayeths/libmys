@@ -76,6 +76,17 @@ MYS_PUBLIC _mys_MPI_Comm mys_mpi_comm()
     return _mys_mpi_G.comm;
 }
 
+#ifndef MYS_NO_MPI
+MYS_PUBLIC void mys_mpi_set_comm(_mys_MPI_Comm comm)
+{
+    mys_mpi_init();
+    mys_mutex_lock(&_mys_mpi_G.lock);
+   _mys_mpi_G.comm = comm;
+   _mys_MPI_Comm_rank(_mys_mpi_G.comm, &_mys_mpi_G.myrank);
+   _mys_MPI_Comm_size(_mys_mpi_G.comm, &_mys_mpi_G.nranks);
+    mys_mutex_unlock(&_mys_mpi_G.lock);
+}
+#endif
 
 
 #ifndef MYS_NO_MPI
