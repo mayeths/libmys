@@ -97,11 +97,13 @@ enum {
 #define RLOG_WHEN(cond, fmt, ...) mys_log_when((cond), MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define RLOG_ORDERED(fmt, ...)    mys_log_ordered(MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
- * TODO
- * Behavior: Default to stdout to force explicit open and close a folder
- * Upon the first time opening, print a info log to stdout to indicate using this facility.
- * XLOG will flush message to last opening target, which we store the folder name internally.
- * In our design, such a function may be high-overhead, so it should be striking enough to prevent accident outputing.
+ * Print log message separately to a file named 'rank:6d.log' within the folder, like to folder/000001.log
+```c
+RANKLOG_OPEN("LOG.test");
+RANKLOG("LOG.test", "setup time %f", setup_time);
+RANKLOG("LOG.test", "solve time %f", solve_time);
+RANKLOG_CLOSE("LOG.test");
+```
  */
 #define RANKLOG(folder, fmt, ...) mys_rank_log(__FILE__, __LINE__, folder, fmt, ##__VA_ARGS__)
 #define RANKLOG_OPEN(folder) mys_rank_log_open(__FILE__, __LINE__, folder) // Collective call

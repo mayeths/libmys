@@ -116,26 +116,31 @@ MYS_PUBLIC void mys_log_self(int level, const char *file, int line, const char *
 
 MYS_PUBLIC void mys_log_once(int level, const char *file, int line, const char *fmt, ...)
 {
-    // log once according to file and line as key. Use a map to store the key. Use uthash
-    // try to find if we already log once
+    // log only once at "file:line".
+    _mys_log_once_t *entry = NULL, *new_entry = NULL;
     char key[1024];
     snprintf(key, sizeof(key), "%s:%d", file, line);
     mys_mutex_lock(&_mys_log_G.lock);
-    _mys_log_once_t *entry;
-    _HASH_FIND_STR(_mys_log_G.once_map, key, entry);
-
-    // if we didn't log once
-    if (entry == NULL) {
-        // add record to the map
-        _mys_log_once_t *new_entry = (_mys_log_once_t *)malloc(sizeof(_mys_log_once_t));
-        new_entry->key = strndup(key, sizeof(key));
-        _HASH_ADD_STR(_mys_log_G.once_map, key, new_entry);
-        // log
-        va_list vargs;
-        va_start(vargs, fmt);
-        _mys_log_impl(mys_mpi_myrank(), level, file, line, fmt, vargs);
-        va_end(vargs);
+    {
+        _HASH_FIND_STR(_mys_log_G.once_map, key, entry);
     }
+    mys_mutex_unlock(&_mys_log_G.lock);
+
+    if (entry != NULL) // already logged
+        return;
+
+    new_entry = (_mys_log_once_t *)malloc(sizeof(_mys_log_once_t));
+    new_entry->key = strndup(key, sizeof(key));
+    mys_mutex_lock(&_mys_log_G.lock);
+    {
+        _HASH_ADD_STR(_mys_log_G.once_map, key, new_entry);
+    }
+    mys_mutex_unlock(&_mys_log_G.lock);
+
+    va_list vargs;
+    va_start(vargs, fmt);
+    _mys_log_impl(mys_mpi_myrank(), level, file, line, fmt, vargs);
+    va_end(vargs);
 }
 
 
@@ -407,15 +412,15 @@ MYS_PUBLIC void mys_rank_log(const char *callfile, int callline, const char *fol
     mys_mutex_lock(&_mys_rank_log_G.lock);
     callfile = (strrchr(callfile, '/') ? strrchr(callfile, '/') + 1 : callfile);
     if (index == -1) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Invoked mys_rank_log() with invalid folder: %s", folder);
+        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Invoked mys_rank_log() with invalid folder: %s", folder);
         goto _finished;
     }
     if (_mys_rank_log_G.dests[index].file == NULL) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Invoked mys_rank_log() with closed folder: %s", folder);
+        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Invoked mys_rank_log() with closed folder: %s", folder);
         goto _finished;
     }
     if (fmt == NULL) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Invoked mys_rank_log() with NULL format.");
+        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Invoked mys_rank_log() with NULL format.");
         goto _finished;
     }
 
@@ -438,12 +443,12 @@ MYS_PUBLIC void mys_rank_log_open(const char *callfile, int callline, const char
     mys_mutex_lock(&_mys_rank_log_G.lock);
     callfile = (strrchr(callfile, '/') ? strrchr(callfile, '/') + 1 : callfile);
     if (index != -1 && _mys_rank_log_G.dests[index].file != NULL) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Reopen an activating rank log folder: %s", folder);
+        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Reopen an activating rank log folder: %s", folder);
         goto _finished;
     }
 
     if (_mys_rank_log_G.max_used == _MYS_RANK_LOG_DEST_NUM) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Cannot open %s because too many folder opened (%d)", folder, _mys_rank_log_G.max_used);
+        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Cannot open %s because too many folder opened (%d)", folder, _mys_rank_log_G.max_used);
         goto _finished;
     }
     char name[4096];
@@ -453,7 +458,7 @@ MYS_PUBLIC void mys_rank_log_open(const char *callfile, int callline, const char
         // First time. Open with create mode
         FILE *file = fopen(name, "w");
         if (file == NULL) {
-            mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Error on opening rank log folder: %s", folder);
+            mys_log_self(MYS_LOG_FATAL, callfile, callline, "Error on opening rank log folder: %s", folder);
             goto _finished;
         }
         index = _mys_rank_log_G.max_used++;
@@ -465,7 +470,7 @@ MYS_PUBLIC void mys_rank_log_open(const char *callfile, int callline, const char
         // Open with append mode
         FILE *file = fopen(name, "a");
         if (file == NULL) {
-            mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Error on reopening rank log folder: %s", folder);
+            mys_log_self(MYS_LOG_FATAL, callfile, callline, "Error on reopening rank log folder: %s", folder);
             goto _finished;
         }
         _mys_rank_log_G.dests[index].file = file;
@@ -489,11 +494,11 @@ MYS_PUBLIC void mys_rank_log_close(const char *callfile, int callline, const cha
     callfile = (strrchr(callfile, '/') ? strrchr(callfile, '/') + 1 : callfile);
 
     if (index == -1) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Can not close invalid folder: %s", folder);
+        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Can not close invalid folder: %s", folder);
         goto _finished;
     }
     if (_mys_rank_log_G.dests[index].file == NULL) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, callfile, callline, "Can not close closed folder: %s", folder);
+        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Can not close closed folder: %s", folder);
         goto _finished;
     }
     fclose(_mys_rank_log_G.dests[index].file);
