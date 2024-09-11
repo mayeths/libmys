@@ -74,6 +74,7 @@ extern "C" {
 #ifndef MYS_NO_MPI
 #include "mys/mpiz.h"
 #endif
+#include "mys/net.h"
 #include "mys/os.h"
 #include "mys/linalg.h"
 #include "mys/pool.h"
@@ -124,6 +125,7 @@ extern "C" {
 #endif
 #include "mys/impl/math.c"
 #include "mys/impl/mpi.c"
+#include "mys/impl/net.c"
 // Third-Party Library (mys3)
 #ifdef MYS_ENABLE_CJSON
 #include "mys3/cJSON/cJSON.c"
