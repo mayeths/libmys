@@ -169,7 +169,6 @@ MYS_PUBLIC int mys_udp_client(const char *server_addr, int server_port)
 {
     int sock = -1;
     struct sockaddr_storage addr;
-    socklen_t addr_len;
 
     int family = strchr(server_addr, ':') ? AF_INET6 : AF_INET;
 
@@ -186,7 +185,6 @@ MYS_PUBLIC int mys_udp_client(const char *server_addr, int server_port)
             close(sock);
             return -1;
         }
-        addr_len = sizeof(*addr_in);
     } else if (family == AF_INET6) {
         struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)&addr;
         memset(addr_in6, 0, sizeof(*addr_in6));
@@ -196,7 +194,6 @@ MYS_PUBLIC int mys_udp_client(const char *server_addr, int server_port)
             close(sock);
             return -1;
         }
-        addr_len = sizeof(*addr_in6);
     }
 
     return sock;
