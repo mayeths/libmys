@@ -119,7 +119,7 @@ static bool fpass_asctime(mys_string_t *buf, const char *pass_spec, void *pass_c
     if (len == 0)
         buffer[0] = '\0';
 
-    mys_string_fmt(buf, "%s", buffer);
+    mys_string_append_n(buf, buffer, len);
     return true;
 }
 
@@ -137,7 +137,7 @@ static bool fpass_path(mys_string_t *buf, const char *pass_spec, void *pass_ctx)
     else
         return false;
 
-    mys_string_fmt(buf, "%s", path);
+    mys_string_append(buf, path);
     return true;
 }
 
@@ -151,7 +151,7 @@ static bool fpass_message(mys_string_t *buf, const char *pass_spec, void *pass_c
 
     char *msg_buffer = malloc(msg_len + 1);
     vsnprintf(msg_buffer, msg_len + 1, ctx->message, ctx->message_args);
-    mys_string_fmt(buf, "%s", msg_buffer);
+    mys_string_append_n(buf, msg_buffer, msg_len);
     free(msg_buffer);
 
     return true;
