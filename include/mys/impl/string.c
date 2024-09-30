@@ -130,6 +130,22 @@ MYS_PUBLIC void mys_string_destroy(mys_string_t **str)
     *str = NULL;
 }
 
+MYS_STATIC ssize_t _mys_string_reallocate_if_needed(mys_string_t *str, size_t required)
+{
+    if (str->capacity < str->size + required) {
+        size_t new_capacity = str->capacity;
+        while (new_capacity < str->size + required) {
+            new_capacity *= 2; // Double the capacity
+        }
+        char *new_text = (char *)mys_realloc2(mys_arena_str, str->text, new_capacity, str->capacity);
+        if (new_text == NULL)
+            return -1;
+        str->text = new_text;
+        str->capacity = new_capacity;
+    }
+    return (ssize_t)str->capacity;
+}
+
 MYS_PUBLIC int mys_string_fmt(mys_string_t *str, const char *format, ...)
 {
     int written = -1;
@@ -145,24 +161,32 @@ MYS_PUBLIC int mys_string_fmt(mys_string_t *str, const char *format, ...)
     va_end(vargs_copy);
     if (needed < 0)
         goto finish;
+    if (_mys_string_reallocate_if_needed(str, needed + 1/*'\0'*/) == -1)
+        goto finish;
 
-    if (str->capacity < str->size + needed + 1/*'\0'*/) {
-        size_t new_capacity = str->capacity;
-        while (new_capacity < str->size + needed + 1) {
-            new_capacity *= 2; // Double the capacity
-        }
-        char *new_text = (char *)mys_realloc2(mys_arena_str, str->text, new_capacity, str->capacity);
-        if (new_text == NULL)
-            goto finish;
-        str->text = new_text;
-        str->capacity = new_capacity;
-    }
     written = vsnprintf(str->text + str->size, str->capacity - str->size, format, vargs);
     str->size += written;
 finish:
     va_end(vargs);
     return written;
 }
+
+MYS_PUBLIC int mys_string_append(mys_string_t *str, const char *other)
+{
+    return mys_string_append_n(str, other, strlen(other));
+}
+
+MYS_PUBLIC int mys_string_append_n(mys_string_t *str, const char *other, size_t len)
+{
+    if (_mys_string_reallocate_if_needed(str, len + 1/*'\0'*/) == -1)
+        return -1;
+
+    memcpy(str->text + str->size, other, len);
+    str->size += len;
+    str->text[str->size] = '\0';
+    return len + 1;
+}
+
 
 MYS_PUBLIC int mys_str_to_int(const char *str, int default_val)
 {

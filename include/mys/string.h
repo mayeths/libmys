@@ -52,6 +52,17 @@ MYS_PUBLIC void mys_string_destroy(mys_string_t **str);
  * @note this routine will automatically extend the size of string if necessary.
  */
 MYS_PUBLIC int mys_string_fmt(mys_string_t *str, const char *format, ...);
+/**
+ * @brief Append other string to the end of `str.text`
+ * 
+ * @param str string manager
+ * @param other other string
+ * 
+ * @note this routine will automatically extend the size of string if necessary.
+ */
+MYS_PUBLIC int mys_string_append(mys_string_t *str, const char *other);
+MYS_PUBLIC int mys_string_append_n(mys_string_t *str, const char *other, size_t len);
+
 
 
 MYS_PUBLIC ssize_t mys_parse_readable_size(const char *text);

@@ -163,7 +163,7 @@ MYS_PUBLIC mys_string_t *mys_fmtex_apply(mys_fmtex_t *fmtex, void *ctx)
     for (size_t i = 0; i < fmtex->nrun; ++i) {
         mys_fmtrun_t *run = &fmtex->runs[i];
         if (run->pass_fn == NULL) {
-            mys_string_fmt(buf, "%s", run->pass_spec);
+            mys_string_append(buf, run->pass_spec);
         } else {
             run->pass_fn(buf, run->pass_spec, ctx);
         }
