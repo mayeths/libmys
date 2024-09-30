@@ -30,7 +30,7 @@ MYS_PUBLIC int mys_tcp_server2(const char *bind_addr, int bind_port, int sock_op
     int enable = 1;
     int family = strchr(bind_addr, ':') ? AF_INET6 : AF_INET;
     struct sockaddr_storage addr;
-    socklen_t addr_len;
+    socklen_t addr_len = 0;
 
     if ((sock = socket(family, SOCK_STREAM, 0)) == -1) {
         return -1;
