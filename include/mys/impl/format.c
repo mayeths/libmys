@@ -35,7 +35,7 @@ typedef struct mys_fmter_t {
 
 MYS_PUBLIC mys_fmter_t *mys_fmter_create()
 {
-    mys_fmter_t *fmter = malloc(sizeof(mys_fmter_t));
+    mys_fmter_t *fmter = (mys_fmter_t *)mys_malloc2(mys_arena_format, sizeof(mys_fmter_t));
     fmter->npass = 0;
     return fmter;
 }
@@ -44,9 +44,9 @@ MYS_PUBLIC void mys_fmter_destroy(mys_fmter_t **fmter)
 {
     if (fmter && *fmter) {
         for (size_t i = 0; i < (*fmter)->npass; ++i) {
-            free((*fmter)->pass_names[i]);
+            mys_free2(mys_arena_format, (*fmter)->pass_names[i], strlen((*fmter)->pass_names[i]));
         }
-        free(*fmter);
+        mys_free2(mys_arena_format, *fmter, sizeof(mys_fmter_t));
         *fmter = NULL;
     }
 }
@@ -54,7 +54,10 @@ MYS_PUBLIC void mys_fmter_destroy(mys_fmter_t **fmter)
 MYS_PUBLIC void mys_fmter_register_pass(mys_fmter_t *fmter, const char *pass_name, mys_fmt_pass pass_fn)
 {
     if (fmter->npass < MYS_FORMATER_MAX_PASSES) {
-        fmter->pass_names[fmter->npass] = strdup(pass_name);
+        size_t len = (size_t)strlen(pass_name);
+        fmter->pass_names[fmter->npass] = (char *)mys_malloc2(mys_arena_format, len + 1);
+        strncpy(fmter->pass_names[fmter->npass], pass_name, len);
+        fmter->pass_names[fmter->npass][len] = '\0';
         fmter->pass_fns[fmter->npass] = pass_fn;
         fmter->npass++;
     }
@@ -62,7 +65,7 @@ MYS_PUBLIC void mys_fmter_register_pass(mys_fmter_t *fmter, const char *pass_nam
 
 MYS_PUBLIC mys_fmtex_t *mys_fmter_compile(mys_fmter_t *fmter, const char *fmtex_str)
 {
-    mys_fmtex_t *fmtex = malloc(sizeof(mys_fmtex_t));
+    mys_fmtex_t *fmtex = (mys_fmtex_t *)mys_malloc2(mys_arena_format, sizeof(mys_fmtex_t));
     fmtex->runs = NULL;
     fmtex->nrun = 0;
 
@@ -115,9 +118,12 @@ MYS_PUBLIC mys_fmtex_t *mys_fmter_compile(mys_fmter_t *fmter, const char *fmtex_
                     }
                 }
                 if (pass_fn) {
+                    fmtex->runs = (mys_fmtrun_t *)mys_realloc2(mys_arena_format, fmtex->runs,
+                        sizeof(mys_fmtrun_t) * (fmtex->nrun + 1), sizeof(mys_fmtrun_t) * (fmtex->nrun)
+                    );
                     fmtex->runs = realloc(fmtex->runs, sizeof(mys_fmtrun_t) * (fmtex->nrun + 1));
                     fmtex->runs[fmtex->nrun].pass_fn = pass_fn;
-                    fmtex->runs[fmtex->nrun].pass_spec = malloc(spec_len + 1);
+                    fmtex->runs[fmtex->nrun].pass_spec = (char *)mys_malloc2(mys_arena_format, spec_len + 1);
                     strncpy(fmtex->runs[fmtex->nrun].pass_spec, pass_spec, spec_len);
                     fmtex->runs[fmtex->nrun].pass_spec[spec_len] = '\0';
                     fmtex->nrun++;
@@ -132,9 +138,11 @@ MYS_PUBLIC mys_fmtex_t *mys_fmter_compile(mys_fmter_t *fmter, const char *fmtex_
         }
 
         if (direct_copy_len != 0) {
-            fmtex->runs = realloc(fmtex->runs, sizeof(mys_fmtrun_t) * (fmtex->nrun + 1));
+            fmtex->runs = (mys_fmtrun_t *)mys_realloc2(mys_arena_format, fmtex->runs,
+                sizeof(mys_fmtrun_t) * (fmtex->nrun + 1), sizeof(mys_fmtrun_t) * (fmtex->nrun)
+            );
             fmtex->runs[fmtex->nrun].pass_fn = NULL;
-            fmtex->runs[fmtex->nrun].pass_spec = malloc(direct_copy_len + 1);
+            fmtex->runs[fmtex->nrun].pass_spec = (char *)mys_malloc2(mys_arena_format, direct_copy_len + 1);
             strncpy(fmtex->runs[fmtex->nrun].pass_spec, ptr, direct_copy_len);
             fmtex->runs[fmtex->nrun].pass_spec[direct_copy_len] = '\0';
             fmtex->nrun++;
@@ -168,10 +176,10 @@ MYS_PUBLIC void mys_fmtex_free(mys_fmtex_t **fmtex)
 {
     if (*fmtex) {
         for (size_t i = 0; i < (*fmtex)->nrun; ++i) {
-            free((*fmtex)->runs[i].pass_spec);
+            mys_free2(mys_arena_format, (*fmtex)->runs[i].pass_spec, strlen((*fmtex)->runs[i].pass_spec));
         }
-        free((*fmtex)->runs);
-        free(*fmtex);
+        mys_free2(mys_arena_format, (*fmtex)->runs, sizeof(mys_fmtrun_t) * (*fmtex)->nrun);
+        mys_free2(mys_arena_format, *fmtex, sizeof(mys_fmtex_t));
         *fmtex = NULL;
     }
 }
