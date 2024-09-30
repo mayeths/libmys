@@ -65,6 +65,7 @@ extern "C" {
 #include "mys/debug.h"
 #endif
 #include "mys/errno.h"
+#include "mys/format.h"
 #include "mys/guard.h"
 #include "mys/hash.h"
 #include "mys/hrtime.h"
@@ -102,6 +103,7 @@ extern "C" {
 #include "mys/impl/uthash_list.h"
 #include "mys/impl/algorithm.c"
 #include "mys/impl/errno.c"
+#include "mys/impl/format.c"
 #include "mys/impl/rand.c"
 #include "mys/impl/log.c"
 #include "mys/impl/hrtime.c"
