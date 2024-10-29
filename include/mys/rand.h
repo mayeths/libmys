@@ -210,6 +210,28 @@ MYS_STATIC void mys_rand_f64_array   (double   *array, size_t nelem, double   mi
 MYS_STATIC void mys_rand_f32_array   (float    *array, size_t nelem, float    mi, float    ma) { _RLOOP(mys_rand_f32   ); }
 #undef _RLOOP
 
+/**
+ * Fills the array with random characters chosen from the choices string.
+ * 
+ * @param buf: The destination buffer to fill with random characters.
+ * @param nchar: The number of random characters to generate.
+ * @param choices: The string containing possible characters to choose from.
+ * 
+ * @note buf[nchar] will be set to '\0' to make sure it ends like C string.
+ * 
+ * Digits: "0123456789"
+ * 
+ * Lower case: "abcdefghijklmnopqrstuvwxyz"
+ * 
+ * Upper case: "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+ * 
+ * Lower mixed: "abcdefghijklmnopqrstuvwxyz0123456789"
+ * 
+ * Upper mixed: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+ * 
+ * All mixed: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+ */
+MYS_PUBLIC void mys_rand_str(char *buf, size_t nchar, const char *choices);
 
 ///////////////////////
 
