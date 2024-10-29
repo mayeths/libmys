@@ -1,5 +1,21 @@
 import re
 
+def to_readable_size(bytes: int, precision: int = 2) -> str:
+    units = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+    size = float(bytes)
+    i = 0
+
+    while size >= 1024 and i < len(units) - 1:
+        size /= 1024
+        i += 1
+
+    return f"{size:.{precision}f} {units[i]}"
+
+# # Example usage
+# size_in_bytes = 123456789
+# readable_size = to_readable_size(size_in_bytes, precision=2)
+# print(readable_size)  # Output: "117.74 MB"
+
 # https://stackoverflow.com/a/60708339
 def parse_readable_size(size: str):
     # based on https://stackoverflow.com/a/42865957/2002471
