@@ -12,7 +12,8 @@
 
 #define PREVENT_ELIMIMATED(a) do {     \
     static volatile uint64_t sink = 0; \
-    sink = (uint64_t)a;                \
+    sink = (uint64_t)(a);              \
+    (void)sink;                        \
 } while (0)
 
 #define RMIDX(row, col, nrow, ncol) ((row) * (ncol) + (col)) /* row major index */
