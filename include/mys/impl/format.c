@@ -54,10 +54,12 @@ MYS_PUBLIC void mys_fmter_destroy(mys_fmter_t **fmter)
 MYS_PUBLIC void mys_fmter_register_pass(mys_fmter_t *fmter, const char *pass_name, mys_fmt_pass pass_fn)
 {
     if (fmter->npass < MYS_FORMATER_MAX_PASSES) {
-        size_t len = (size_t)strlen(pass_name);
-        fmter->pass_names[fmter->npass] = (char *)mys_malloc2(mys_arena_format, len + 1);
-        strncpy(fmter->pass_names[fmter->npass], pass_name, len);
-        fmter->pass_names[fmter->npass][len] = '\0';
+        size_t len = strlen(pass_name);
+        char *pass_name_dup = (char *)mys_malloc2(mys_arena_format, len + 1);
+        // strncpy(pass_name_dup, pass_name, len);
+        memcpy(pass_name_dup, pass_name, len);
+        pass_name_dup[len] = '\0'; // Ensure null termination
+        fmter->pass_names[fmter->npass] = pass_name_dup;
         fmter->pass_fns[fmter->npass] = pass_fn;
         fmter->npass++;
     }
@@ -121,7 +123,6 @@ MYS_PUBLIC mys_fmtex_t *mys_fmter_compile(mys_fmter_t *fmter, const char *fmtex_
                     fmtex->runs = (mys_fmtrun_t *)mys_realloc2(mys_arena_format, fmtex->runs,
                         sizeof(mys_fmtrun_t) * (fmtex->nrun + 1), sizeof(mys_fmtrun_t) * (fmtex->nrun)
                     );
-                    fmtex->runs = realloc(fmtex->runs, sizeof(mys_fmtrun_t) * (fmtex->nrun + 1));
                     fmtex->runs[fmtex->nrun].pass_fn = pass_fn;
                     fmtex->runs[fmtex->nrun].pass_spec = (char *)mys_malloc2(mys_arena_format, spec_len + 1);
                     strncpy(fmtex->runs[fmtex->nrun].pass_spec, pass_spec, spec_len);
