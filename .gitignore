@@ -24,6 +24,7 @@ timing.7*
 timing.8*
 timing.9*
 
+*.pyc
 *.zwc
 *.swp
 etc/omz/custom/
