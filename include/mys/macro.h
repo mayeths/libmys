@@ -10,6 +10,13 @@
  */
 #pragma once
 
+#define GRACEFUL_EXIT() do {                                 \
+    mys_mpi_barrier();                                       \
+    DLOG(0, "Gracefully exit at %s:%d", __FILE__, __LINE__); \
+    mys_mpi_finalize();                                      \
+    exit(0);                                                 \
+} while (0)
+
 #define PREVENT_ELIMIMATED(a) do {     \
     static volatile uint64_t sink = 0; \
     sink = (uint64_t)(a);              \

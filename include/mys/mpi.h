@@ -97,6 +97,7 @@ typedef MPI_Status _mys_MPI_Status;
 //-------------------- Custom high-level MPI functions --------------------//
 // For libmys external and internal use
 MYS_PUBLIC void mys_mpi_init();
+MYS_PUBLIC void mys_mpi_finalize();
 MYS_PUBLIC int mys_mpi_myrank();
 MYS_PUBLIC int mys_mpi_nranks();
 MYS_PUBLIC int mys_mpi_barrier();

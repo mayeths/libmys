@@ -47,6 +47,13 @@ MYS_PUBLIC void mys_mpi_init()
     mys_mutex_unlock(&_mys_mpi_G.lock);
 }
 
+MYS_PUBLIC void mys_mpi_finalize()
+{
+    mys_mutex_lock(&_mys_mpi_G.lock);
+    _mys_MPI_Finalize();
+    mys_mutex_unlock(&_mys_mpi_G.lock);
+}
+
 MYS_PUBLIC int mys_mpi_myrank()
 {
     mys_mpi_init();
@@ -108,6 +115,11 @@ MYS_STATIC int _mys_MPI_Initialized(int *flag)
 MYS_STATIC int _mys_MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
 {
     return MPI_Init_thread(argc, argv, required, provided);
+}
+
+MYS_STATIC int _mys_MPI_Finalize()
+{
+    return MPI_Finalize();
 }
 
 MYS_STATIC int _mys_MPI_Comm_rank(_mys_MPI_Comm comm, int *rank)
@@ -182,6 +194,11 @@ MYS_STATIC int _mys_MPI_Init_thread(int *argc, char ***argv, int required, int *
     (void)argv;
     (void)required;
     *provided = _mys_MPI_THREAD_SINGLE;
+    return _mys_MPI_SUCCESS;
+}
+
+MYS_STATIC int _mys_MPI_Finalize()
+{
     return _mys_MPI_SUCCESS;
 }
 
