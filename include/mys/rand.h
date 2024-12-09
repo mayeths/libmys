@@ -28,7 +28,7 @@
 #include "thread.h"
 
 /**
- * @brief Set the seed of mys_rand_xoroshiro128ss() with `a0=0, a1=a1`.
+ * @brief Set the seed of mys_rand_xoroshiro128ss() with `a0=2147483647, a1=a1`.
  * 
  * @param a1 lower 64 bits of xoroshiro128ss algorithm's internal state
  * 

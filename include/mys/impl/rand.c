@@ -30,18 +30,25 @@ static void _mys_rand_init()
     _mys_rand_G.inited = true;
 }
 
-MYS_PUBLIC void mys_rand_seed(uint64_t a1)
-{
-    _mys_rand_init();
-    _mys_rand_G.seed[0] = 0;
-    _mys_rand_G.seed[1] = a1;
-}
-
 MYS_PUBLIC void mys_rand_seed2(uint64_t a0, uint64_t a1)
 {
     _mys_rand_init();
     _mys_rand_G.seed[0] = a0;
     _mys_rand_G.seed[1] = a1;
+
+    // The first several values are equal for seed (0, 1, 2, 3, 4). Make them more distinguish.
+    size_t go = 100;
+    int64_t d = 0;
+    for (size_t i = 0; i < go; i++) {
+        d += mys_rand_i64(INT64_MIN, INT64_MAX);
+    }
+    PREVENT_ELIMIMATED(d);
+}
+
+MYS_PUBLIC void mys_rand_seed(uint64_t a1)
+{
+    // mys_rand_seed2(0, 0) will cause sequence 1
+    mys_rand_seed2(2147483647, a1);
 }
 
 MYS_PUBLIC void mys_rand_seed_time()
