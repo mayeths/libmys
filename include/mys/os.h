@@ -191,7 +191,7 @@ MYS_PUBLIC bool mys_ensure_dir(const char *path, mode_t mode);
  * @note Intermediate directories are created with permission bits of “rwxrwxrwx” (0777)
  */
 MYS_PUBLIC bool mys_ensure_parent(const char *path, mode_t mode);
-// MYS_PUBLIC int mys_busysleep(double seconds);
+MYS_PUBLIC int mys_busysleep(double seconds);
 MYS_PUBLIC const char *mys_procname();
 MYS_PUBLIC void mys_wait_flag(const char *file, int line, const char *flagfile);
 #if defined(OS_LINUX)

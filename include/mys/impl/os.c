@@ -11,6 +11,7 @@
 #include "_private.h"
 #include "../os.h"
 #include "../memory.h"
+#include "../hrtime.h"
 
 #ifdef MYS_ENABLE_NUMA
 #include <numa.h>
@@ -332,37 +333,15 @@ MYS_PUBLIC bool mys_ensure_parent(const char *path, mode_t mode)
     return success;
 }
 
-// MYS_PUBLIC int mys_busysleep(double seconds)
-// {
-// #if defined(POSIX_COMPLIANCE)
-//     /* https://stackoverflow.com/a/8158862 */
-//     struct timespec req;
-//     req.tv_sec = (uint64_t)seconds;
-//     req.tv_nsec = (uint64_t)((seconds - (double)req.tv_sec) * 1000000000);
-//     do {
-//         if(nanosleep(&req, &req) == 0)
-//             break;
-//         else if(errno != EINTR)
-//             return -1;
-//     } while (req.tv_sec > 0 || req.tv_nsec > 0);
-//     return 0;
-// #elif defined(OS_WINDOWS)
-//     /* https://stackoverflow.com/a/5801863 */
-//     /* https://stackoverflow.com/a/26945754 */
-//     LARGE_INTEGER fr,t1,t2;
-//     if (!QueryPerformanceFrequency(&fr))
-//         return -1;
-//     if (!QueryPerformanceCounter(&t1))
-//         return -1;
-//     do {
-//         if (!QueryPerformanceCounter(&t2))
-//             return -1;
-//     } while(((double)t2.QuadPart-(double)t1.QuadPart)/(double)fr.QuadPart < sec);
-//     return 0;
-// #else
-//     return -2;
-// #endif
-// }
+MYS_PUBLIC int mys_busysleep(double seconds)
+{
+    double t_start = mys_hrtime();
+    double t_curr = mys_hrtime();
+    while (t_curr - t_start < seconds) {
+        t_curr = mys_hrtime();
+    }
+    return 0;
+}
 
 MYS_PUBLIC const char *mys_procname()
 {
