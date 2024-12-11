@@ -8,7 +8,9 @@
  * 
  * https://opensource.org/licenses/MIT
  */
-#include "_private.h"
+#include "../_config.h"
+#include "../errno.h"
+#include "../mpistubs.h"
 #include "../hash.h"
 
 #define _ROTL(a,b) (((a) << (b)) | ((a) >> (32-(b))))

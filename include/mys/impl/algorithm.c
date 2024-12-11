@@ -8,7 +8,9 @@
  * 
  * https://opensource.org/licenses/MIT
  */
-#include "_private.h"
+#include "../_config.h"
+#include "../errno.h"
+#include "../mpistubs.h"
 #include "../algorithm.h"
 
 #define _MYS_SORTFN_IMPL(typ, l, r) typ a = *(typ*)_a, b = *(typ*)_b; return (int)((l) > (r)) - (int)((l) < (r));

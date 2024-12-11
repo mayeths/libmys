@@ -8,9 +8,10 @@
  * 
  * https://opensource.org/licenses/MIT
  */
-#include "_private.h"
+#include "../_config.h"
+#include "../errno.h"
+#include "../mpistubs.h"
 #include "../assert.h"
-#include "assert.h"
 #include "../trace.h"
 #include "../memory.h"
 #include "../thread.h"

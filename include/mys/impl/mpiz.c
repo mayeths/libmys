@@ -8,9 +8,10 @@
  * 
  * https://opensource.org/licenses/MIT
  */
-#include "_private.h"
-#include "../mpiz.h"
+#include "../_config.h"
+#include "../errno.h"
 #include "../mpistubs.h"
+#include "../mpiz.h"
 #include "../memory.h"
 
 #ifdef MYS_ENABLE_NUMA

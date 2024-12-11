@@ -8,7 +8,9 @@
  * 
  * https://opensource.org/licenses/MIT
  */
-#include "_private.h"
+#include "../_config.h"
+#include "../errno.h"
+#include "../mpistubs.h"
 #include "../memory.h"
 
 #if defined(OS_LINUX) && defined(MYS_ENABLE_SHM)

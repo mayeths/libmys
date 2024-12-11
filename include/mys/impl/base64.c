@@ -8,7 +8,9 @@
  * 
  * https://opensource.org/licenses/MIT
  */
-#include "_private.h"
+#include "../_config.h"
+#include "../errno.h"
+#include "../mpistubs.h"
 #include "../base64.h"
 
 static const char _mys_base64_table[] =

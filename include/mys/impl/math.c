@@ -8,7 +8,9 @@
  * 
  * https://opensource.org/licenses/MIT
  */
-#include "_private.h"
+#include "../_config.h"
+#include "../errno.h"
+#include "../mpistubs.h"
 #include "../math.h"
 
 #define __musl_fp_force_evalf(x) do { volatile float y; y = x; (void)y; } while (0)

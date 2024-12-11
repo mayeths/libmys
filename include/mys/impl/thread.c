@@ -8,7 +8,9 @@
  * 
  * https://opensource.org/licenses/MIT
  */
-#include "_private.h"
+#include "../_config.h"
+#include "../errno.h"
+#include "../mpistubs.h"
 #include "../thread.h"
 
 mys_thread_local uint32_t __mys_thread_id = UINT32_MAX;
