@@ -1,5 +1,0 @@
-[config]
-repository = FileRepository
-repositorypath = /Users/mayeths/project/easybuild/mayeths/repo
-prefix = ./tempbuild
-robot-paths = %(repositorypath)s:%(DEFAULT_ROBOT_PATHS)s
