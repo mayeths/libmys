@@ -132,6 +132,8 @@ __attribute__((format(printf, 4, 5))) MYS_PUBLIC void mys_log_ordered(int level,
 MYS_PUBLIC int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_udata);
 MYS_PUBLIC void mys_log_remove_handler(int handler_id);
 MYS_PUBLIC void mys_log_invoke_handlers(mys_log_event_t *event, const char *fmt, va_list vargs);
+MYS_PUBLIC mys_MPI_Comm mys_log_get_comm();
+MYS_PUBLIC void mys_log_set_comm(mys_MPI_Comm comm);
 MYS_PUBLIC int mys_log_get_level();
 MYS_PUBLIC void mys_log_set_level(int level);
 MYS_PUBLIC void mys_log_silent(bool silent);

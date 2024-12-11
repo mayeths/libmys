@@ -284,6 +284,24 @@ MYS_PUBLIC void mys_log_invoke_handlers(mys_log_event_t *event, const char *fmt,
     }
 }
 
+MYS_PUBLIC mys_MPI_Comm mys_log_get_comm()
+{
+    mys_MPI_Comm comm;
+    mys_log_init();
+    mys_mutex_lock(&_mys_log_G.lock);
+    comm = _mys_log_G.comm;
+    mys_mutex_unlock(&_mys_log_G.lock);
+    return comm;
+}
+
+MYS_PUBLIC void mys_log_set_comm(mys_MPI_Comm comm)
+{
+    mys_log_init();
+    mys_mutex_lock(&_mys_log_G.lock);
+    _mys_log_G.comm = comm;
+    mys_mutex_unlock(&_mys_log_G.lock);
+}
+
 MYS_PUBLIC int mys_log_get_level()
 {
     mys_log_init();
