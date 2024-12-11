@@ -30,7 +30,7 @@ rsync --filter=':- .gitignore' -av ./ REMOTE:~/project/libmys/
 
 #### Example
 
-See `test/basic-gcc.c`
+See examples in `test/`
 
 ```c
 //// main.c
