@@ -74,9 +74,7 @@ extern "C" {
 #include "mys/memory.h"
 #include "mys/mpistubs.h"
 #include "mys/mpi.h"
-#ifndef MYS_NO_MPI
-#include "mys/mpiz.h"
-#endif
+#include "mys/commgroup.h"
 #include "mys/net.h"
 #include "mys/os.h"
 #include "mys/linalg.h"
@@ -123,9 +121,7 @@ extern "C" {
 #include "mys/impl/trace.c"
 #include "mys/impl/mpistubs.c"
 #include "mys/impl/mpi.c"
-#ifndef MYS_NO_MPI
-#include "mys/impl/mpiz.c"
-#endif
+#include "mys/impl/commgroup.c"
 #ifndef MYS_DISABLE_DEBUG
 #include "mys/impl/debug.c"
 #endif

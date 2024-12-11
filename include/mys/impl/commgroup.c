@@ -11,7 +11,7 @@
 #include "../_config.h"
 #include "../errno.h"
 #include "../mpistubs.h"
-#include "../mpiz.h"
+#include "../commgroup.h"
 #include "../memory.h"
 
 #ifdef MYS_ENABLE_NUMA
