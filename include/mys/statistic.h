@@ -11,7 +11,7 @@
 #pragma once
 
 #include "_config.h"
-#include "mpi.h"
+#include "mpistubs.h"
 #include "algorithm.h"
 #include "math.h"
 

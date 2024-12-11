@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include "_config.h"
-#include "mpi.h"
+#include "mpistubs.h"
 #include "macro.h"
 #include "thread.h"
 #include "math.h"
