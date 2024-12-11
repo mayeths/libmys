@@ -154,7 +154,7 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
     }
     int myrank = mys_mpi_myrank();
     int nranks = mys_mpi_nranks();
-    _mys_MPI_Comm comm = mys_mpi_comm();
+    mys_MPI_Comm comm = mys_mpi_comm();
 
     const int tag = 65521; /*100000007 OpenMPI 4.1.0 on AArch64 throw invalid tag on large number*/
 
@@ -179,12 +179,12 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
         va_end(vargs);
         char buffer[4096];
         for (int rank = 1; rank < nranks; rank++) {
-            _mys_MPI_Status status;
+            mys_MPI_Status status;
             int needed = 0;
-            _mys_MPI_Probe(rank, tag, comm, &status);
-            _mys_MPI_Get_count(&status, _mys_MPI_CHAR, &needed);
+            mys_MPI_Probe(rank, tag, comm, &status);
+            mys_MPI_Get_count(&status, mys_MPI_CHAR, &needed);
             char *ptr = (needed > 4096) ? (char *)mys_malloc2(mys_arena_log, needed) : buffer;
-            _mys_MPI_Recv(ptr, needed, _mys_MPI_CHAR, rank, tag, comm, _mys_MPI_STATUS_IGNORE);
+            mys_MPI_Recv(ptr, needed, mys_MPI_CHAR, rank, tag, comm, mys_MPI_STATUS_IGNORE);
 
             if (!broken) {
                 event.myrank = rank;
@@ -195,7 +195,7 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
             if (ptr != buffer)
                 mys_free2(mys_arena_log, ptr, needed);
         }
-        _mys_MPI_Barrier(comm);
+        mys_MPI_Barrier(comm);
     } else {
         char buffer[4096];
         va_list vargs, vargs_test;
@@ -205,11 +205,11 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
         va_end(vargs_test);
         char *ptr = (needed > 4096) ? (char *)mys_malloc2(mys_arena_log, needed) : buffer;
         vsnprintf(ptr, needed, fmt, vargs);
-        _mys_MPI_Send(ptr, needed, _mys_MPI_CHAR, 0, tag, comm);
+        mys_MPI_Send(ptr, needed, mys_MPI_CHAR, 0, tag, comm);
         if (ptr != buffer)
             mys_free2(mys_arena_log, ptr, needed);
         va_end(vargs);
-        _mys_MPI_Barrier(comm); // We don't expect logging increase processes' nondeterministic
+        mys_MPI_Barrier(comm); // We don't expect logging increase processes' nondeterministic
     }
 
     mys_mutex_unlock(&_mys_log_G.lock);

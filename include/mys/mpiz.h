@@ -10,6 +10,9 @@
  */
 #pragma once
 
+#include "_config.h"
+#include "mpistubs.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,19 +22,17 @@
 #include <unistd.h>
 #include <sched.h>
 
-#include "_config.h"
-
 typedef struct mys_commgroup_t
 {
     int group_id; // nonnegative counting sequence (0,1,2,3,...,group_num-1)
     int group_num;
-    MPI_Comm global_comm;
+    mys_MPI_Comm global_comm;
     int global_myrank;
     int global_nranks;
-    MPI_Comm local_comm;
+    mys_MPI_Comm local_comm;
     int local_myrank;
     int local_nranks;
-    MPI_Comm inter_comm; // communicator for the same local_myrank among groups (ranks are ordered by group_id)
+    mys_MPI_Comm inter_comm; // communicator for the same local_myrank among groups (ranks are ordered by group_id)
     int *_rows; // size=global_nranks. _rows[global_rank] is the group to which the rank belongs
     int *_cols; // size=global_nranks. _cols[global_rank] is the local_rank in group
     int *_brothers; // size=local_nranks. _brothers[local_rank] is the global_rank of each group_member in the same group
@@ -48,19 +49,19 @@ typedef struct mys_commgroup_t
  * 
  * @note Use mys_commgroup_create_node(comm) to construct node based group.
  */
-MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group_color, int group_key);
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(mys_MPI_Comm global_comm, int group_color, int group_key);
 /**
  * @brief Create communication group information based on node
  * @return The group handle
  */
-MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(MPI_Comm global_comm);
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(mys_MPI_Comm global_comm);
 /**
  * @brief Create communication group information based on node
  * @return The group handle
  * 
  * @note This routine require MYS_ENABLE_NUMA.
  */
-MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm);
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_numa(mys_MPI_Comm global_comm);
 /**
  * @brief Release communication group information
  * @param group The group handle

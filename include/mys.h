@@ -72,6 +72,8 @@ extern "C" {
 #include "mys/log.h"
 #include "mys/macro.h"
 #include "mys/memory.h"
+#include "mys/mpistubs.h"
+#include "mys/mpi.h"
 #ifndef MYS_NO_MPI
 #include "mys/mpiz.h"
 #endif
@@ -119,6 +121,8 @@ extern "C" {
 #include "mys/impl/string.c"
 #include "mys/impl/guard.c"
 #include "mys/impl/trace.c"
+#include "mys/impl/mpistubs.c"
+#include "mys/impl/mpi.c"
 #ifndef MYS_NO_MPI
 #include "mys/impl/mpiz.c"
 #endif
@@ -126,7 +130,6 @@ extern "C" {
 #include "mys/impl/debug.c"
 #endif
 #include "mys/impl/math.c"
-#include "mys/impl/mpi.c"
 #include "mys/impl/net.c"
 // Third-Party Library (mys3)
 #ifdef MYS_ENABLE_CJSON

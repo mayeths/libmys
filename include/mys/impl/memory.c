@@ -34,7 +34,7 @@ static void _mys_shm_G_init()
     {
         if (mys_mpi_myrank() == 0)
             _mys_shm_G.program_id = getpid();
-        _mys_MPI_Bcast(&_mys_shm_G.program_id, 1, _mys_MPI_INT, 0, _mys_MPI_COMM_WORLD);
+        _mys_MPI_Bcast(&_mys_shm_G.program_id, 1, mys_MPI_INT, 0, mys_MPI_COMM_WORLD);
     }
     _mys_shm_G.inited = true;
     mys_mutex_unlock(&_mys_shm_G.lock);
@@ -54,9 +54,9 @@ MYS_PUBLIC mys_shm_t mys_alloc_shared_memory(int owner_rank, size_t size)
         shm.mem = mmap(NULL, shm._size, PROT_READ | PROT_WRITE, MAP_SHARED, shm._fd, 0);
         memset(shm.mem, 0, shm._size);
         mys_memory_smp_mb();
-        _mys_MPI_Barrier(_mys_MPI_COMM_WORLD);
+        mys_MPI_Barrier(mys_MPI_COMM_WORLD);
     } else {
-        _mys_MPI_Barrier(_mys_MPI_COMM_WORLD);
+        mys_MPI_Barrier(mys_MPI_COMM_WORLD);
         shm._fd = shm_open(shm._name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
         shm.mem = mmap(NULL, shm._size, PROT_READ | PROT_WRITE, MAP_SHARED, shm._fd, 0);
     }

@@ -230,7 +230,7 @@ MYS_PUBLIC uint64_t mys_hrtick_mpi() {
     if (_mys_hrtime_mpi_G.inited == false) {
         mys_hrreset_mpi();
     }
-    double current = _mys_MPI_Wtime() - _mys_hrtime_mpi_G.offset;
+    double current = mys_MPI_Wtime() - _mys_hrtime_mpi_G.offset;
     return (uint64_t)(current * 1e9); // in nano second
 }
 MYS_ATTR_OPTIMIZE_O3
@@ -243,7 +243,7 @@ MYS_PUBLIC double mys_hrtime_mpi() {
 }
 MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC void mys_hrreset_mpi() {
-    _mys_hrtime_mpi_G.offset = _mys_MPI_Wtime();
+    _mys_hrtime_mpi_G.offset = mys_MPI_Wtime();
     _mys_hrtime_mpi_G.inited = true;
 }
 MYS_PUBLIC void mys_hrsync_mpi()

@@ -10,6 +10,7 @@
  */
 #include "_private.h"
 #include "../mpiz.h"
+#include "../mpistubs.h"
 #include "../memory.h"
 
 #ifdef MYS_ENABLE_NUMA
@@ -31,27 +32,27 @@ static int _mys_commgroup_sort_i4(const void* _a, const void* _b)
     else return 0;
 }
 
-MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(MPI_Comm global_comm, int group_color, int group_key)
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(mys_MPI_Comm global_comm, int group_color, int group_key)
 {
     mys_commgroup_t *group = (mys_commgroup_t *)mys_malloc2(mys_arena_mpiz, sizeof(mys_commgroup_t));
     group->global_comm = global_comm;
-    MPI_Comm_size(group->global_comm, &group->global_nranks);
-    MPI_Comm_rank(group->global_comm, &group->global_myrank);
-    MPI_Comm_split(group->global_comm, group_color, group_key, &group->local_comm);
-    MPI_Comm_size(group->local_comm, &group->local_nranks);
-    MPI_Comm_rank(group->local_comm, &group->local_myrank);
-    MPI_Comm_split(group->global_comm, group->local_myrank, group_color, &group->inter_comm); // overhead for so many comm?
+    mys_MPI_Comm_size(group->global_comm, &group->global_nranks);
+    mys_MPI_Comm_rank(group->global_comm, &group->global_myrank);
+    mys_MPI_Comm_split(group->global_comm, group_color, group_key, &group->local_comm);
+    mys_MPI_Comm_size(group->local_comm, &group->local_nranks);
+    mys_MPI_Comm_rank(group->local_comm, &group->local_myrank);
+    mys_MPI_Comm_split(group->global_comm, group->local_myrank, group_color, &group->inter_comm); // overhead for so many comm?
     int iam_group_root = group->local_myrank == 0;
-    MPI_Allreduce(&iam_group_root, &group->group_num, 1, MPI_INT, MPI_SUM, global_comm);
-    // MPI_Comm_split(group->global_comm, iam_group_root ? 0 : 1, group_color, &group->inter_comm);
-    // if (!iam_group_root) MPI_Comm_free(&group->inter_comm);
+    mys_MPI_Allreduce(&iam_group_root, &group->group_num, 1, mys_MPI_INT, mys_MPI_SUM, global_comm);
+    // mys_MPI_Comm_split(group->global_comm, iam_group_root ? 0 : 1, group_color, &group->inter_comm);
+    // if (!iam_group_root) mys_MPI_Comm_free(&group->inter_comm);
 
     int *temp = (int *)mys_malloc2(mys_arena_mpiz, sizeof(int) * 4 * group->global_nranks);
     temp[group->global_myrank * 4 + 0] = group_color;
     temp[group->global_myrank * 4 + 1] = group->local_myrank;
     temp[group->global_myrank * 4 + 2] = group->global_myrank;
     temp[group->global_myrank * 4 + 3] = 0; // dummy
-    MPI_Allgather(MPI_IN_PLACE, 4, MPI_INT, temp, 4, MPI_INT, global_comm);
+    mys_MPI_Allgather(mys_MPI_IN_PLACE, 4, mys_MPI_INT, temp, 4, mys_MPI_INT, global_comm);
     qsort(temp, group->global_nranks, sizeof(int[4]), _mys_commgroup_sort_i4);
     group->_neighbors = (int *)mys_malloc2(mys_arena_mpiz, sizeof(int) * group->group_num);
     group->_rows = (int *)mys_malloc2(mys_arena_mpiz, sizeof(int) * group->global_nranks);
@@ -90,35 +91,35 @@ MYS_PUBLIC void mys_commgroup_release(mys_commgroup_t *group)
 {
     assert(group != NULL);
     if (group == NULL) return;
-    MPI_Comm_free(&group->local_comm);
-    MPI_Comm_free(&group->inter_comm);
+    mys_MPI_Comm_free(&group->local_comm);
+    mys_MPI_Comm_free(&group->inter_comm);
     mys_free2(mys_arena_mpiz, group->_neighbors, sizeof(int) * group->group_num);
     mys_free2(mys_arena_mpiz, group->_rows, sizeof(int) * group->global_nranks);
     mys_free2(mys_arena_mpiz, group->_cols, sizeof(int) * group->global_nranks);
     mys_free2(mys_arena_mpiz, group->_brothers, sizeof(int) * group->local_nranks);
 }
 
-MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(MPI_Comm global_comm)
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(mys_MPI_Comm global_comm)
 {
     int global_nranks, global_myrank;
-    MPI_Comm_size(global_comm, &global_nranks);
-    MPI_Comm_rank(global_comm, &global_myrank);
+    mys_MPI_Comm_size(global_comm, &global_nranks);
+    mys_MPI_Comm_rank(global_comm, &global_myrank);
 
-    MPI_Comm local_comm = MPI_COMM_NULL;
+    mys_MPI_Comm local_comm = mys_MPI_COMM_NULL;
     int node_root = global_myrank;
-    MPI_Comm_split_type(global_comm, MPI_COMM_TYPE_SHARED, global_myrank, MPI_INFO_NULL, &local_comm);
-    MPI_Bcast(&node_root, 1, MPI_INT, 0, local_comm);
-    MPI_Comm_free(&local_comm);
+    mys_MPI_Comm_split_type(global_comm, mys_MPI_COMM_TYPE_SHARED, global_myrank, mys_MPI_INFO_NULL, &local_comm);
+    mys_MPI_Bcast(&node_root, 1, mys_MPI_INT, 0, local_comm);
+    mys_MPI_Comm_free(&local_comm);
 
     return mys_commgroup_create(global_comm, node_root, global_myrank);
 }
 
 #ifdef MYS_ENABLE_NUMA
-MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm)
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_numa(mys_MPI_Comm global_comm)
 {
     int global_nranks, global_myrank;
-    MPI_Comm_size(global_comm, &global_nranks);
-    MPI_Comm_rank(global_comm, &global_myrank);
+    mys_MPI_Comm_size(global_comm, &global_nranks);
+    mys_MPI_Comm_rank(global_comm, &global_myrank);
 
     int cpu = sched_getcpu();
     int numa = numa_node_of_cpu(cpu);
@@ -126,11 +127,11 @@ MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_numa(MPI_Comm global_comm)
     if (cpu == -1 || numa == -1 || numa_num == -1)
         return NULL;
 
-    MPI_Comm local_comm = MPI_COMM_NULL;
-    MPI_Comm_split_type(global_comm, MPI_COMM_TYPE_SHARED, global_myrank, MPI_INFO_NULL, &local_comm);
+    mys_MPI_Comm local_comm = mys_MPI_COMM_NULL;
+    mys_MPI_Comm_split_type(global_comm, mys_MPI_COMM_TYPE_SHARED, global_myrank, mys_MPI_INFO_NULL, &local_comm);
     int node_id = global_myrank;
-    MPI_Bcast(&node_id, 1, MPI_INT, 0, local_comm);
-    MPI_Comm_free(&local_comm);
+    mys_MPI_Bcast(&node_id, 1, mys_MPI_INT, 0, local_comm);
+    mys_MPI_Comm_free(&local_comm);
 
     int group_color = node_id * numa_num + numa;
     int group_key = cpu;
