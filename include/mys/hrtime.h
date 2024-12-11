@@ -18,7 +18,7 @@
 
 #include "_config.h"
 #include "macro.h"
-#include "mpi.h"
+#include "mpistubs.h"
 #include "thread.h"
 
 // The default high-resolution timer
@@ -27,7 +27,7 @@ MYS_PUBLIC uint64_t mys_hrtick();
 MYS_PUBLIC uint64_t mys_hrfreq();
 MYS_PUBLIC double mys_hrtime();
 MYS_PUBLIC void mys_hrreset();
-MYS_PUBLIC void mys_hrsync();
+MYS_PUBLIC void mys_hrsync(mys_MPI_Comm comm);
 
 #if defined(ARCH_AARCH64)
 #define MYS_HRTIMER_HAVE_AACH64
@@ -36,7 +36,7 @@ MYS_PUBLIC uint64_t mys_hrtick_aarch64();
 MYS_PUBLIC uint64_t mys_hrfreq_aarch64();
 MYS_PUBLIC double mys_hrtime_aarch64();
 MYS_PUBLIC void mys_hrreset_aarch64();
-MYS_PUBLIC void mys_hrsync_aarch64();
+MYS_PUBLIC void mys_hrsync_aarch64(mys_MPI_Comm comm);
 #endif
 
 #if defined(POSIX_COMPLIANCE)
@@ -46,7 +46,7 @@ MYS_PUBLIC uint64_t mys_hrtick_posix();
 MYS_PUBLIC uint64_t mys_hrfreq_posix();
 MYS_PUBLIC double mys_hrtime_posix();
 MYS_PUBLIC void mys_hrreset_posix();
-MYS_PUBLIC void mys_hrsync_posix();
+MYS_PUBLIC void mys_hrsync_posix(mys_MPI_Comm comm);
 #endif
 
 #define MYS_HRTIMER_HAVE_MPI
@@ -55,7 +55,7 @@ MYS_PUBLIC uint64_t mys_hrtick_mpi();
 MYS_PUBLIC uint64_t mys_hrfreq_mpi();
 MYS_PUBLIC double mys_hrtime_mpi();
 MYS_PUBLIC void mys_hrreset_mpi();
-MYS_PUBLIC void mys_hrsync_mpi();
+MYS_PUBLIC void mys_hrsync_mpi(mys_MPI_Comm comm);
 
 /* g++ -std=c++11 -I../include -lm ./a.cpp && ./a.out
 #include <stdlib.h>

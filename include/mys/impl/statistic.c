@@ -55,15 +55,16 @@ MYS_PUBLIC double mys_standard_deviation(double *arr, int n)
 
 MYS_PUBLIC void mys_aggregate_analysis_array(size_t n, double *values, mys_aggregate_t *results)
 {
-    mys_mpi_init();
-    int myrank = mys_mpi_myrank();
-    int nranks = mys_mpi_nranks();
+    mys_mpi_ensure_init();
+    int myrank, nranks;
+    mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &myrank);
+    mys_MPI_Comm_size(mys_MPI_COMM_WORLD, &nranks);
     struct di_t { double d; int i; };
     struct di_t *dibuf = (struct di_t *)mys_malloc2(mys_arena_stat, sizeof(struct di_t) * n);
     double *dbuf = (double *)((void *)dibuf);
 
     {// mine, sum, avg
-        mys_MPI_Allreduce(values, dbuf, n, mys_MPI_DOUBLE, mys_MPI_SUM, mys_mpi_comm());
+        mys_MPI_Allreduce(values, dbuf, n, mys_MPI_DOUBLE, mys_MPI_SUM, mys_MPI_COMM_WORLD);
         for (size_t i = 0; i < n; i++) {
             results[i].self = values[i];
             results[i].sum = dbuf[i];
@@ -74,7 +75,7 @@ MYS_PUBLIC void mys_aggregate_analysis_array(size_t n, double *values, mys_aggre
         for (size_t i = 0; i < n; i++) {
             dbuf[i] = (values[i] - results[i].avg) * (values[i] - results[i].avg);
         }
-        mys_MPI_Allreduce(mys_MPI_IN_PLACE, dbuf, n, mys_MPI_DOUBLE, mys_MPI_SUM, mys_mpi_comm());
+        mys_MPI_Allreduce(mys_MPI_IN_PLACE, dbuf, n, mys_MPI_DOUBLE, mys_MPI_SUM, mys_MPI_COMM_WORLD);
         for (size_t i = 0; i < n; i++) {
             results[i].var = dbuf[i] / (double)nranks;
             results[i].std = mys_math_sqrt(results[i].var);
@@ -85,7 +86,7 @@ MYS_PUBLIC void mys_aggregate_analysis_array(size_t n, double *values, mys_aggre
             dibuf[i].d = values[i];
             dibuf[i].i = myrank;
         }
-        mys_MPI_Allreduce(mys_MPI_IN_PLACE, dibuf, n, mys_MPI_DOUBLE_INT, mys_MPI_MAXLOC, mys_mpi_comm());
+        mys_MPI_Allreduce(mys_MPI_IN_PLACE, dibuf, n, mys_MPI_DOUBLE_INT, mys_MPI_MAXLOC, mys_MPI_COMM_WORLD);
         for (size_t i = 0; i < n; i++) {
             results[i].max = dibuf[i].d;
             results[i].loc_max = dibuf[i].i;
@@ -95,7 +96,7 @@ MYS_PUBLIC void mys_aggregate_analysis_array(size_t n, double *values, mys_aggre
             dibuf[i].d = values[i];
             dibuf[i].i = myrank;
         }
-        mys_MPI_Allreduce(mys_MPI_IN_PLACE, dibuf, n, mys_MPI_DOUBLE_INT, mys_MPI_MINLOC, mys_mpi_comm());
+        mys_MPI_Allreduce(mys_MPI_IN_PLACE, dibuf, n, mys_MPI_DOUBLE_INT, mys_MPI_MINLOC, mys_MPI_COMM_WORLD);
         for (size_t i = 0; i < n; i++) {
             results[i].min = dibuf[i].d;
             results[i].loc_min = dibuf[i].i;

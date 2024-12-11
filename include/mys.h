@@ -73,7 +73,7 @@ extern "C" {
 #include "mys/macro.h"
 #include "mys/memory.h"
 #include "mys/mpistubs.h"
-#include "mys/mpi.h"
+#include "mys/misc.h"
 #include "mys/commgroup.h"
 #include "mys/net.h"
 #include "mys/os.h"
@@ -120,7 +120,7 @@ extern "C" {
 #include "mys/impl/guard.c"
 #include "mys/impl/trace.c"
 #include "mys/impl/mpistubs.c"
-#include "mys/impl/mpi.c"
+#include "mys/impl/misc.c"
 #include "mys/impl/commgroup.c"
 #ifndef MYS_DISABLE_DEBUG
 #include "mys/impl/debug.c"

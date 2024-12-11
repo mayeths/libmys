@@ -27,6 +27,7 @@ typedef struct {
 typedef struct {
     bool inited;
     mys_mutex_t lock;
+    mys_MPI_Comm comm;
     int level;
     bool silent;
     _mys_log_once_t *once_map;
@@ -42,6 +43,7 @@ static void _mys_log_stdio_handler(mys_log_event_t *event, const char *fmt, va_l
 static _mys_log_G_t _mys_log_G = {
     .inited = false,
     .lock = MYS_MUTEX_INITIALIZER,
+    .comm = mys_MPI_COMM_WORLD,
     .level = MYS_LOG_TRACE,
     .silent = false,
     .once_map = NULL,
@@ -70,8 +72,9 @@ MYS_STATIC void _mys_log_impl(int who, int level, const char *file, int line, co
         mys_mutex_unlock(&_mys_log_G.lock);
         return;
     }
-    int myrank = mys_mpi_myrank();
-    int nranks = mys_mpi_nranks();
+    int myrank, nranks;
+    mys_MPI_Comm_rank(_mys_log_G.comm, &myrank);
+    mys_MPI_Comm_size(_mys_log_G.comm, &nranks);
     if (who == myrank && (int)level >= (int)_mys_log_G.level) {
         mys_log_event_t event;
         event.myrank = myrank;
@@ -102,17 +105,21 @@ MYS_PUBLIC void mys_log_when(int cond, int level, const char *file, int line, co
 {
     if (cond == 0)
         return;
+    int myrank;
+    mys_MPI_Comm_rank(_mys_log_G.comm, &myrank);
     va_list vargs;
     va_start(vargs, fmt);
-    _mys_log_impl(mys_mpi_myrank(), level, file, line, fmt, vargs);
+    _mys_log_impl(myrank, level, file, line, fmt, vargs);
     va_end(vargs);
 }
 
 MYS_PUBLIC void mys_log_self(int level, const char *file, int line, const char *fmt, ...)
 {
+    int myrank;
+    mys_MPI_Comm_rank(_mys_log_G.comm, &myrank);
     va_list vargs;
     va_start(vargs, fmt);
-    _mys_log_impl(mys_mpi_myrank(), level, file, line, fmt, vargs);
+    _mys_log_impl(myrank, level, file, line, fmt, vargs);
     va_end(vargs);
 }
 
@@ -139,9 +146,11 @@ MYS_PUBLIC void mys_log_once(int level, const char *file, int line, const char *
     }
     mys_mutex_unlock(&_mys_log_G.lock);
 
+    int myrank;
+    mys_MPI_Comm_rank(_mys_log_G.comm, &myrank);
     va_list vargs;
     va_start(vargs, fmt);
-    _mys_log_impl(mys_mpi_myrank(), level, file, line, fmt, vargs);
+    _mys_log_impl(myrank, level, file, line, fmt, vargs);
     va_end(vargs);
 }
 
@@ -154,9 +163,9 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
         mys_mutex_unlock(&_mys_log_G.lock);
         return;
     }
-    int myrank = mys_mpi_myrank();
-    int nranks = mys_mpi_nranks();
-    mys_MPI_Comm comm = mys_mpi_comm();
+    int myrank, nranks;
+    mys_MPI_Comm_rank(_mys_log_G.comm, &myrank);
+    mys_MPI_Comm_size(_mys_log_G.comm, &nranks);
 
     const int tag = 65521; /*100000007 OpenMPI 4.1.0 on AArch64 throw invalid tag on large number*/
 
@@ -183,10 +192,10 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
         for (int rank = 1; rank < nranks; rank++) {
             mys_MPI_Status status;
             int needed = 0;
-            mys_MPI_Probe(rank, tag, comm, &status);
+            mys_MPI_Probe(rank, tag, _mys_log_G.comm, &status);
             mys_MPI_Get_count(&status, mys_MPI_CHAR, &needed);
             char *ptr = (needed > 4096) ? (char *)mys_malloc2(mys_arena_log, needed) : buffer;
-            mys_MPI_Recv(ptr, needed, mys_MPI_CHAR, rank, tag, comm, mys_MPI_STATUS_IGNORE);
+            mys_MPI_Recv(ptr, needed, mys_MPI_CHAR, rank, tag, _mys_log_G.comm, mys_MPI_STATUS_IGNORE);
 
             if (!broken) {
                 event.myrank = rank;
@@ -197,7 +206,7 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
             if (ptr != buffer)
                 mys_free2(mys_arena_log, ptr, needed);
         }
-        mys_MPI_Barrier(comm);
+        mys_MPI_Barrier(_mys_log_G.comm);
     } else {
         char buffer[4096];
         va_list vargs, vargs_test;
@@ -207,11 +216,11 @@ MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const cha
         va_end(vargs_test);
         char *ptr = (needed > 4096) ? (char *)mys_malloc2(mys_arena_log, needed) : buffer;
         vsnprintf(ptr, needed, fmt, vargs);
-        mys_MPI_Send(ptr, needed, mys_MPI_CHAR, 0, tag, comm);
+        mys_MPI_Send(ptr, needed, mys_MPI_CHAR, 0, tag, _mys_log_G.comm);
         if (ptr != buffer)
             mys_free2(mys_arena_log, ptr, needed);
         va_end(vargs);
-        mys_MPI_Barrier(comm); // We don't expect logging increase processes' nondeterministic
+        mys_MPI_Barrier(_mys_log_G.comm); // We don't expect logging increase processes' nondeterministic
     }
 
     mys_mutex_unlock(&_mys_log_G.lock);
@@ -440,6 +449,8 @@ _finished:
 MYS_PUBLIC void mys_rank_log_open(const char *callfile, int callline, const char *folder)
 {
     _mys_rank_log_init();
+    int myrank;
+    mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &myrank);
     size_t len = strnlen(folder, _MYS_FNAME_MAX);
     int index = _mys_rank_log_find_dest(folder, len);
     mys_mutex_lock(&_mys_rank_log_G.lock);
@@ -454,7 +465,7 @@ MYS_PUBLIC void mys_rank_log_open(const char *callfile, int callline, const char
         goto _finished;
     }
     char name[4096];
-    snprintf(name, sizeof(name), "%s/%06d.log", folder, mys_mpi_myrank());
+    snprintf(name, sizeof(name), "%s/%06d.log", folder, myrank);
     mys_ensure_dir(folder, 0777);
     if (index == -1) {
         // First time. Open with create mode
@@ -480,7 +491,7 @@ MYS_PUBLIC void mys_rank_log_open(const char *callfile, int callline, const char
     }
 
     mys_log(0, MYS_LOG_INFO, callfile, callline, "Opened rank log folder: %s", folder);
-    mys_mpi_barrier();
+    mys_MPI_Barrier(mys_MPI_COMM_WORLD);
 _finished:
     mys_mutex_unlock(&_mys_rank_log_G.lock);
 }
@@ -507,7 +518,7 @@ MYS_PUBLIC void mys_rank_log_close(const char *callfile, int callline, const cha
     _mys_rank_log_G.dests[index].file = NULL;
 
     mys_log(0, MYS_LOG_INFO, callfile, callline, "Closed rank log folder: %s (bytes wrote %zu, total wrote %zu)", folder, cur_wrote, tot_wrote);
-    mys_mpi_barrier();
+    mys_MPI_Barrier(mys_MPI_COMM_WORLD);
 _finished:
     mys_mutex_unlock(&_mys_rank_log_G.lock);
 }

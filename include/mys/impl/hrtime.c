@@ -82,14 +82,14 @@ MYS_PUBLIC void mys_hrreset()
 #endif
 }
 
-MYS_PUBLIC void mys_hrsync()
+MYS_PUBLIC void mys_hrsync(mys_MPI_Comm comm)
 {
 #if defined(MYS_HRTIMER_HAVE_AACH64)
-    mys_hrsync_aarch64();
+    mys_hrsync_aarch64(comm);
 #elif defined(MYS_HRTIMER_HAVE_POSIX)
-    mys_hrsync_posix();
+    mys_hrsync_posix(comm);
 #elif defined(MYS_HRTIMER_HAVE_MPI)
-    mys_hrsync_mpi();
+    mys_hrsync_mpi(comm);
 #else
 #error No default high resolution timer is available.
 #endif
@@ -131,11 +131,11 @@ MYS_PUBLIC void mys_hrreset_aarch64() {
     __asm__ __volatile__("mrs %0, CNTVCT_EL0" : "=r"(_mys_hrtime_aarch64_G.offset));
     _mys_hrtime_aarch64_G.inited = true;
 }
-MYS_PUBLIC void mys_hrsync_aarch64()
+MYS_PUBLIC void mys_hrsync_aarch64(mys_MPI_Comm comm)
 {
-    for (size_t i = 0; i < 8; i++) mys_mpi_barrier();
+    for (size_t i = 0; i < 8; i++) mys_MPI_Barrier(comm);
     mys_hrreset_aarch64();
-    for (size_t i = 0; i < 2; i++) mys_mpi_barrier();
+    for (size_t i = 0; i < 2; i++) mys_MPI_Barrier(comm);
 }
 #endif
 
@@ -206,11 +206,11 @@ MYS_PUBLIC void mys_hrreset_posix() {
 #endif
     _mys_hrtime_posix_G.inited = true;
 }
-MYS_PUBLIC void mys_hrsync_posix()
+MYS_PUBLIC void mys_hrsync_posix(mys_MPI_Comm comm)
 {
-    for (size_t i = 0; i < 8; i++) mys_mpi_barrier();
+    for (size_t i = 0; i < 8; i++) mys_MPI_Barrier(comm);
     mys_hrreset_posix();
-    for (size_t i = 0; i < 2; i++) mys_mpi_barrier();
+    for (size_t i = 0; i < 2; i++) mys_MPI_Barrier(comm);
 }
 #endif
 
@@ -248,10 +248,10 @@ MYS_PUBLIC void mys_hrreset_mpi() {
     _mys_hrtime_mpi_G.offset = mys_MPI_Wtime();
     _mys_hrtime_mpi_G.inited = true;
 }
-MYS_PUBLIC void mys_hrsync_mpi()
+MYS_PUBLIC void mys_hrsync_mpi(mys_MPI_Comm comm)
 {
-    for (size_t i = 0; i < 8; i++) mys_mpi_barrier();
+    for (size_t i = 0; i < 8; i++) mys_MPI_Barrier(comm);
     mys_hrreset_mpi();
-    for (size_t i = 0; i < 2; i++) mys_mpi_barrier();
+    for (size_t i = 0; i < 2; i++) mys_MPI_Barrier(comm);
 }
 #endif

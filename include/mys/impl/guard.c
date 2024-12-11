@@ -10,9 +10,11 @@
  */
 #include "../_config.h"
 #include "../errno.h"
+#include "../log.h"
 #include "../mpistubs.h"
 #include "../guard.h"
 #include "uthash_list.h"
+#include "uthash_hash.h"
 
 // https://troydhanson.github.io/uthash/utlist.html
 typedef struct _mys_guard_record_t {
@@ -116,8 +118,10 @@ static struct _mys_guard_G_t _mys_guard_G = {
 
 MYS_PUBLIC void mys_guard_begin(const char *type_name, size_t type_size, void *variable_ptr, const char *file, int line)
 {
+    int myrank;
+    mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &myrank);
     if (type_name == NULL) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Invalid type name (nil).");
+        mys_log(myrank, MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Invalid type name (nil).");
         exit(1);
     }
     _mys_guard_map_t *type_node = _mys_guard_map_find(_mys_guard_G.map, type_name);
@@ -126,7 +130,7 @@ MYS_PUBLIC void mys_guard_begin(const char *type_name, size_t type_size, void *v
     }
     _mys_guard_record_t *record = _mys_guard_records_append(&type_node->records, variable_ptr, type_size);
     if (record == NULL) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Cannot acquire type guard (%s).", type_name);
+        mys_log(myrank, MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Cannot acquire type guard (%s).", type_name);
         exit(1);
     }
     type_node->num_record += 1;
@@ -134,17 +138,19 @@ MYS_PUBLIC void mys_guard_begin(const char *type_name, size_t type_size, void *v
 
 MYS_PUBLIC void mys_guard_end(const char *type_name, size_t type_size, void *variable_ptr, const char *file, int line)
 {
+    int myrank;
+    mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &myrank);
     if (type_name == NULL) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Invalid type name (nil).");
+        mys_log(myrank, MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Invalid type name (nil).");
         exit(1);
     }
     _mys_guard_map_t *type_node = _mys_guard_map_find(_mys_guard_G.map, type_name);
     if (type_node == NULL) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Releasing type guard (%s) that doesn't exist.", type_name);
+        mys_log(myrank, MYS_LOG_FATAL, file, line, "(INTERNAL ERROR) Releasing type guard (%s) that doesn't exist.", type_name);
         exit(1);
     }
     if (_mys_guard_records_remove(&type_node->records, variable_ptr, type_size)) {
-        mys_log(mys_mpi_myrank(), MYS_LOG_FATAL, file, line, "Releasing type guard (%s) that didn't begin.", type_name);
+        mys_log(myrank, MYS_LOG_FATAL, file, line, "Releasing type guard (%s) that didn't begin.", type_name);
         exit(1);
     }
     type_node->num_record -= 1;

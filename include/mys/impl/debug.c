@@ -13,6 +13,7 @@
 #include "../mpistubs.h"
 #include "../debug.h"
 #include "../memory.h"
+#include "../misc.h"
 
 #define _MYS_DEBUG_STRIP_DEPTH 2
 #define _MYS_DEBUG_SIGNAL_MAX 64 // maximum signal to handle
@@ -32,6 +33,8 @@
 struct _mys_debug_G_t {
     mys_mutex_t lock;
     bool inited;
+    int myrank;
+    int nranks;
     int outfd;
     int use_color;
     int post_action;
@@ -64,6 +67,8 @@ struct _mys_debug_G_t {
 static struct _mys_debug_G_t _mys_debug_G = {
     .lock = MYS_MUTEX_INITIALIZER,
     .inited = false,
+    .myrank = 0,
+    .nranks = 1,
     .outfd = STDERR_FILENO,
     .use_color = 0,
     .post_action = MYS_DEBUG_ACTION_EXIT,
@@ -102,12 +107,14 @@ MYS_PUBLIC void mys_debug_init()
     // Make sure that backtrace(libgcc) is loaded before any signals are generated
     void* dummy = NULL;
     backtrace(&dummy, 1);
+    mys_mpi_ensure_init();
 
     mys_mutex_lock(&_mys_debug_G.lock);
     if (!_mys_debug_G.inited) {
+        mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &_mys_debug_G.myrank);
+        mys_MPI_Comm_size(mys_MPI_COMM_WORLD, &_mys_debug_G.nranks);
         _mys_debug_G.use_color = isatty(_mys_debug_G.outfd);
         memset(_mys_debug_G.message, 0, MYS_DEBUG_MESSAGE_MAX);
-
         _mys_debug_G.nsignals = 0;
         memset(_mys_debug_G.signals, 0, sizeof(int) * _MYS_DEBUG_SIGNAL_MAX);
         /***** Signal that terminate the process *****/
@@ -551,9 +558,7 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
     char bufout[_MYS_DEBUG_SBUF_SIZE];
     char buflog[_MYS_DEBUG_LBUF_SIZE];
     void *baddrs[_MYS_DEBUG_BACKTRACE_MAX];
-    int myrank = mys_mpi_myrank();
-    int nranks = mys_mpi_nranks();
-    int digits = mys_math_trunc(mys_math_log10(nranks)) + 1;
+    int digits = mys_math_trunc(mys_math_log10(_mys_debug_G.nranks)) + 1;
     digits = digits > 3 ? digits : 3;
     size_t loglen = 0;
     size_t logmax = sizeof(buflog);
@@ -605,16 +610,16 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
 
         int color = _mys_debug_G.use_color;
 
-        _DOFMT(color ? _YFMT1 : _NFMT1, digits, myrank);
+        _DOFMT(color ? _YFMT1 : _NFMT1, digits, _mys_debug_G.myrank);
         if (is_timeout) {
-            _DOFMT(color ? _YFMT3 : _NFMT3, digits, myrank, cause);
+            _DOFMT(color ? _YFMT3 : _NFMT3, digits, _mys_debug_G.myrank, cause);
         } else {
-            _DOFMT(color ? _YFMT2 : _NFMT2, digits, myrank, strsignal(signo), cause);
+            _DOFMT(color ? _YFMT2 : _NFMT2, digits, _mys_debug_G.myrank, strsignal(signo), cause);
         }
         if (_mys_debug_G.message[0] != '\0')
-            _DOFMT(color ? _YFMT3 : _NFMT3, digits, myrank, _mys_debug_G.message);
+            _DOFMT(color ? _YFMT3 : _NFMT3, digits, _mys_debug_G.myrank, _mys_debug_G.message);
         if (bsize == 0)
-            _DOFMT(color ? _YFMT4 : _NFMT4, digits, myrank);
+            _DOFMT(color ? _YFMT4 : _NFMT4, digits, _mys_debug_G.myrank);
 
         int collapsed = 0;
         for (int i = _MYS_DEBUG_STRIP_DEPTH; i < bsize; ++i) {
@@ -636,13 +641,13 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
                 continue;
             }
             _DOFMT("[F::%0*d CRASH] | %-*d %s at %s\n",
-                digits, myrank, bdigits, i - _MYS_DEBUG_STRIP_DEPTH, bsyms[i], bufout);
+                digits, _mys_debug_G.myrank, bdigits, i - _MYS_DEBUG_STRIP_DEPTH, bsyms[i], bufout);
             mys_prun_destroy(&run);
         }
         if (collapsed != 0)
-            _DOFMT(color ? _YFMT5 : _NFMT5, digits, myrank, collapsed);
+            _DOFMT(color ? _YFMT5 : _NFMT5, digits, _mys_debug_G.myrank, collapsed);
         free(bsyms);
-        _DOFMT(color ? _YFMT6 : _NFMT6, digits, myrank);
+        _DOFMT(color ? _YFMT6 : _NFMT6, digits, _mys_debug_G.myrank);
     }
 
 #undef _DOFMT

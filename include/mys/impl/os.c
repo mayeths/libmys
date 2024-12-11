@@ -368,8 +368,9 @@ MYS_PUBLIC const char *mys_procname()
 
 MYS_PUBLIC void mys_wait_flag(const char *file, int line, const char *flagfile)
 {
-    int myrank = mys_mpi_myrank();
-    int nranks = mys_mpi_nranks();
+    int myrank, nranks;
+    mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &myrank);
+    mys_MPI_Comm_size(mys_MPI_COMM_WORLD, &nranks);
     int digits = mys_math_trunc(mys_math_log10(nranks)) + 1;
     digits = digits > 3 ? digits : 3;
     if (myrank == 0) {
@@ -382,7 +383,7 @@ MYS_PUBLIC void mys_wait_flag(const char *file, int line, const char *flagfile)
     while (stat(flagfile, &fstat) == 0 && fstat.st_mtime <= last_modified)
         sleep(1);
 
-    mys_mpi_barrier();
+    mys_MPI_Barrier(mys_MPI_COMM_WORLD);
     if (myrank == 0) {
         fprintf(stdout, "OK\n");
         fflush(stdout);
