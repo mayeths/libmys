@@ -93,7 +93,7 @@
 #define ARCH_UNKNOWN
 #endif
 
-#if defined(COMPILER_GCC) || defined(COMPILER_CLANG)
+#if defined(COMPILER_GCC) && !defined(COMPILER_CLANG)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
@@ -103,7 +103,22 @@
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#ifdef OS_MACOS
+#define MYS_ATTR_OPTIMIZE_O3 /* Not available */
+#else
 #define MYS_ATTR_OPTIMIZE_O3 __attribute__((optimize("O3")))
+#endif
+#elif defined(COMPILER_CLANG)
+#define MYS_ATTR_EXPORT __attribute__((visibility("default")))
+#define MYS_ATTR_IMPORT __attribute__((visibility("default")))
+#define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
+#define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
+#define MYS_ATTR_NOINLINE __attribute__((noinline))
+#define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
+#define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
+#define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
 #elif defined(COMPILER_ICC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))

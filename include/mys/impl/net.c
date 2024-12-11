@@ -92,17 +92,12 @@ MYS_PUBLIC int mys_tcp_client(const char *server_addr, int server_port)
 
     int family = strchr(server_addr, ':') ? AF_INET6 : AF_INET;
 
-    if ((sock = socket(family, SOCK_STREAM, 0)) == -1) {
-        return -1;
-    }
-
     if (family == AF_INET) {
         struct sockaddr_in *addr_in = (struct sockaddr_in *)&addr;
         memset(addr_in, 0, sizeof(*addr_in));
         addr_in->sin_family = AF_INET;
         addr_in->sin_port = htons(server_port);
         if (inet_pton(AF_INET, server_addr, &addr_in->sin_addr) <= 0) {
-            close(sock);
             return -1;
         }
         addr_len = sizeof(*addr_in);
@@ -112,10 +107,15 @@ MYS_PUBLIC int mys_tcp_client(const char *server_addr, int server_port)
         addr_in6->sin6_family = AF_INET6;
         addr_in6->sin6_port = htons(server_port);
         if (inet_pton(AF_INET6, server_addr, &addr_in6->sin6_addr) <= 0) {
-            close(sock);
             return -1;
         }
         addr_len = sizeof(*addr_in6);
+    } else {
+        return -1;
+    }
+
+    if ((sock = socket(family, SOCK_STREAM, 0)) == -1) {
+        return -1;
     }
 
     if (connect(sock, (struct sockaddr *)&addr, addr_len) < 0) {
@@ -133,17 +133,12 @@ MYS_PUBLIC int mys_udp_server(const char *bind_addr, int bind_port)
     struct sockaddr_storage addr;
     socklen_t addr_len;
 
-    if ((sock = socket(family, SOCK_DGRAM, 0)) == -1) {
-        return -1;
-    }
-
     if (family == AF_INET) {
         struct sockaddr_in *addr_in = (struct sockaddr_in *)&addr;
         memset(addr_in, 0, sizeof(*addr_in));
         addr_in->sin_family = AF_INET;
         addr_in->sin_port = htons(bind_port);
         if (inet_pton(AF_INET, bind_addr, &addr_in->sin_addr) <= 0) {
-            close(sock);
             return -1;
         }
         addr_len = sizeof(*addr_in);
@@ -153,10 +148,15 @@ MYS_PUBLIC int mys_udp_server(const char *bind_addr, int bind_port)
         addr_in6->sin6_family = AF_INET6;
         addr_in6->sin6_port = htons(bind_port);
         if (inet_pton(AF_INET6, bind_addr, &addr_in6->sin6_addr) <= 0) {
-            close(sock);
             return -1;
         }
         addr_len = sizeof(*addr_in6);
+    } else {
+        return -1;
+    }
+
+    if ((sock = socket(family, SOCK_DGRAM, 0)) == -1) {
+        return -1;
     }
 
     if (bind(sock, (struct sockaddr *)&addr, addr_len) < 0) {
