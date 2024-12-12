@@ -93,7 +93,7 @@ MYS_STATIC void _mys_log_impl(int who, int level, const char *file, int line, co
     mys_mutex_unlock(&_mys_log_G.lock);
 }
 
-MYS_PUBLIC void mys_log(int who, int level, const char *file, int line, const char *fmt, ...)
+MYS_PUBLIC void mys_log_who(int who, int level, const char *file, int line, const char *fmt, ...)
 {
     va_list vargs;
     va_start(vargs, fmt);
@@ -441,15 +441,15 @@ MYS_PUBLIC void mys_rank_log(const char *callfile, int callline, const char *fol
     mys_mutex_lock(&_mys_rank_log_G.lock);
     callfile = (strrchr(callfile, '/') ? strrchr(callfile, '/') + 1 : callfile);
     if (index == -1) {
-        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Invoked mys_rank_log() with invalid folder: %s", folder);
+        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Invoked mys_ranklog_old() with invalid folder: %s", folder);
         goto _finished;
     }
     if (_mys_rank_log_G.dests[index].file == NULL) {
-        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Invoked mys_rank_log() with closed folder: %s", folder);
+        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Invoked mys_ranklog_old() with closed folder: %s", folder);
         goto _finished;
     }
     if (fmt == NULL) {
-        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Invoked mys_rank_log() with NULL format.");
+        mys_log_self(MYS_LOG_FATAL, callfile, callline, "Invoked mys_ranklog_old() with NULL format.");
         goto _finished;
     }
 
@@ -508,7 +508,7 @@ MYS_PUBLIC void mys_rank_log_open(const char *callfile, int callline, const char
         _mys_rank_log_G.dests[index].cur_wrote = 0;
     }
 
-    mys_log(0, MYS_LOG_INFO, callfile, callline, "Opened rank log folder: %s", folder);
+    mys_log_who(0, MYS_LOG_INFO, callfile, callline, "Opened rank log folder: %s", folder);
     mys_MPI_Barrier(mys_MPI_COMM_WORLD);
 _finished:
     mys_mutex_unlock(&_mys_rank_log_G.lock);
@@ -535,7 +535,7 @@ MYS_PUBLIC void mys_rank_log_close(const char *callfile, int callline, const cha
     fclose(_mys_rank_log_G.dests[index].file);
     _mys_rank_log_G.dests[index].file = NULL;
 
-    mys_log(0, MYS_LOG_INFO, callfile, callline, "Closed rank log folder: %s (bytes wrote %zu, total wrote %zu)", folder, cur_wrote, tot_wrote);
+    mys_log_who(0, MYS_LOG_INFO, callfile, callline, "Closed rank log folder: %s (bytes wrote %zu, total wrote %zu)", folder, cur_wrote, tot_wrote);
     mys_MPI_Barrier(mys_MPI_COMM_WORLD);
 _finished:
     mys_mutex_unlock(&_mys_rank_log_G.lock);

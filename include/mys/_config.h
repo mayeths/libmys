@@ -101,6 +101,7 @@
 #define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
+#define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #ifdef OS_MACOS

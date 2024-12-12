@@ -43,7 +43,7 @@ enum {
 /**
  * Print log message with 'TRACE' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define TLOG(who, fmt, ...)       mys_log((who), MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TLOG(who, fmt, ...)       mys_log_who((who), MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define TLOG_SELF(fmt, ...)       mys_log_self(MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define TLOG_ONCE(fmt, ...)       mys_log_once(MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
 #define TLOG_WHEN(cond, fmt, ...) mys_log_when((cond), MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
@@ -51,7 +51,7 @@ enum {
 /**
  * Print log message with 'DEBUG' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define DLOG(who, fmt, ...)       mys_log((who), MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define DLOG(who, fmt, ...)       mys_log_who((who), MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define DLOG_SELF(fmt, ...)       mys_log_self(MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define DLOG_ONCE(fmt, ...)       mys_log_once(MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
 #define DLOG_WHEN(cond, fmt, ...) mys_log_when((cond), MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
@@ -59,7 +59,7 @@ enum {
 /**
  * Print log message with 'INFO' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define ILOG(who, fmt, ...)       mys_log((who), MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define ILOG(who, fmt, ...)       mys_log_who((who), MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define ILOG_SELF(fmt, ...)       mys_log_self(MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define ILOG_ONCE(fmt, ...)       mys_log_once(MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
 #define ILOG_WHEN(cond, fmt, ...) mys_log_when((cond), MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
@@ -67,7 +67,7 @@ enum {
 /**
  * Print log message with 'WARN' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define WLOG(who, fmt, ...)       mys_log((who), MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define WLOG(who, fmt, ...)       mys_log_who((who), MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define WLOG_SELF(fmt, ...)       mys_log_self(MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define WLOG_ONCE(fmt, ...)       mys_log_once(MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
 #define WLOG_WHEN(cond, fmt, ...) mys_log_when((cond), MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
@@ -75,7 +75,7 @@ enum {
 /**
  * Print log message with 'ERROR' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define ELOG(who, fmt, ...)       mys_log((who), MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define ELOG(who, fmt, ...)       mys_log_who((who), MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define ELOG_SELF(fmt, ...)       mys_log_self(MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define ELOG_ONCE(fmt, ...)       mys_log_once(MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
 #define ELOG_WHEN(cond, fmt, ...) mys_log_when((cond), MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
@@ -83,7 +83,7 @@ enum {
 /**
  * Print log message with 'FATAL' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define FLOG(who, fmt, ...)       mys_log((who), MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define FLOG(who, fmt, ...)       mys_log_who((who), MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define FLOG_SELF(fmt, ...)       mys_log_self(MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define FLOG_ONCE(fmt, ...)       mys_log_once(MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
 #define FLOG_WHEN(cond, fmt, ...) mys_log_when((cond), MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
@@ -91,7 +91,7 @@ enum {
 /**
  * Print log message with 'RAW' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define RLOG(who, fmt, ...)       mys_log((who), MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define RLOG(who, fmt, ...)       mys_log_who((who), MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define RLOG_SELF(fmt, ...)       mys_log_self(MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define RLOG_ONCE(fmt, ...)       mys_log_once(MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
 #define RLOG_WHEN(cond, fmt, ...) mys_log_when((cond), MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
@@ -124,11 +124,11 @@ typedef struct {
 typedef void (*mys_log_handler_fn)(mys_log_event_t *event, const char *fmt, va_list vargs, void *udata);
 
 /////// log
-__attribute__((format(printf, 5, 6))) MYS_PUBLIC void mys_log(int who, int level, const char *file, int line, const char *fmt, ...);
-__attribute__((format(printf, 5, 6))) MYS_PUBLIC void mys_log_when(int cond, int level, const char *file, int line, const char *fmt, ...);
-__attribute__((format(printf, 4, 5))) MYS_PUBLIC void mys_log_self(int level, const char *file, int line, const char *fmt, ...);
-__attribute__((format(printf, 4, 5))) MYS_PUBLIC void mys_log_once(int level, const char *file, int line, const char *fmt, ...);
-__attribute__((format(printf, 4, 5))) MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const char *fmt, ...);
+MYS_ATTR_PRINTF(5, 6) MYS_PUBLIC void mys_log_who(int who, int level, const char *file, int line, const char *fmt, ...);
+MYS_ATTR_PRINTF(5, 6) MYS_PUBLIC void mys_log_when(int cond, int level, const char *file, int line, const char *fmt, ...);
+MYS_ATTR_PRINTF(4, 5) MYS_PUBLIC void mys_log_self(int level, const char *file, int line, const char *fmt, ...);
+MYS_ATTR_PRINTF(4, 5) MYS_PUBLIC void mys_log_once(int level, const char *file, int line, const char *fmt, ...);
+MYS_ATTR_PRINTF(4, 5) MYS_PUBLIC void mys_log_ordered(int level, const char *file, int line, const char *fmt, ...);
 MYS_PUBLIC int mys_log_add_handler(mys_log_handler_fn handler_fn, void *handler_udata);
 MYS_PUBLIC void mys_log_remove_handler(int handler_id);
 MYS_PUBLIC void mys_log_invoke_handlers(mys_log_event_t *event, const char *fmt, va_list vargs);
@@ -139,6 +139,7 @@ MYS_PUBLIC void mys_log_set_level(int level);
 MYS_PUBLIC void mys_log_silent(bool silent);
 MYS_PUBLIC const char* mys_log_level_string(int level);
 MYS_PUBLIC void mys_log_init();
+
 /////// rank log
 __attribute__((format(printf, 4, 5)))
 MYS_PUBLIC void mys_rank_log(const char *callfile, int callline, const char *folder, const char *fmt, ...);
