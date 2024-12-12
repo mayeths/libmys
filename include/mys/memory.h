@@ -74,8 +74,8 @@ MYS_PUBLIC void mys_arena_destroy(mys_arena_t **arena);
  */
 MYS_PUBLIC mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot);
 
-MYS_PUBLIC void* mys_malloc2(mys_arena_t *arena, size_t size);
-MYS_PUBLIC void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size);
+MYS_PUBLIC void* mys_malloc2(mys_arena_t *arena, size_t size) MYS_ATTR_MALLOC;
+MYS_PUBLIC void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size) MYS_ATTR_MALLOC;
 MYS_PUBLIC void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t size);
 MYS_PUBLIC void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size);
 MYS_PUBLIC void mys_free2(mys_arena_t *arena, void* ptr, size_t _size);

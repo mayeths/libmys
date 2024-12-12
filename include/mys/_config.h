@@ -102,6 +102,7 @@
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
 #define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
+#define MYS_ATTR_MALLOC __attribute__((malloc))
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #ifdef OS_MACOS
@@ -117,6 +118,8 @@
 #define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
+#define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
+#define MYS_ATTR_MALLOC __attribute__((malloc))
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
@@ -128,6 +131,8 @@
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
+#define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
+#define MYS_ATTR_MALLOC __attribute__((malloc))
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define MYS_ATTR_OPTIMIZE_O3 __attribute__((optimize("O3")))
@@ -139,6 +144,8 @@
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE /* No equivalent attribute */
 #define MYS_ATTR_ALWAYS_INLINE __forceinline__
+#define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
+#define MYS_ATTR_MALLOC /* No equivalent attribute */
 #define MYS_LIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
@@ -150,6 +157,8 @@
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE /* No equivalent attribute */
 #define MYS_ATTR_ALWAYS_INLINE /* No equivalent attribute */
+#define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
+#define MYS_ATTR_MALLOC /* No equivalent attribute */
 #define MYS_LIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
@@ -161,6 +170,8 @@
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE __declspec(noinline)
 #define MYS_ATTR_ALWAYS_INLINE __forceinline
+#define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
+#define MYS_ATTR_MALLOC /* No equivalent attribute */
 #define MYS_LIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
@@ -172,6 +183,8 @@
 #define MYS_ATTR_NO_INSTRUMENT
 #define MYS_ATTR_NOINLINE
 #define MYS_ATTR_ALWAYS_INLINE inline
+#define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
+#define MYS_ATTR_MALLOC /* No equivalent attribute */
 #define MYS_LIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
