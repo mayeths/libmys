@@ -431,7 +431,7 @@ MYS_STATIC int _mys_rank_log_find_dest(const char *folder, size_t len)
     return index;
 }
 
-MYS_PUBLIC void mys_rank_log(const char *callfile, int callline, const char *folder, const char *fmt, ...)
+MYS_PUBLIC void mys_ranklog_old(const char *callfile, int callline, const char *folder, const char *fmt, ...)
 {
     _mys_rank_log_init();
     va_list vargs;
@@ -464,7 +464,7 @@ _finished:
     mys_mutex_unlock(&_mys_rank_log_G.lock);
 }
 
-MYS_PUBLIC void mys_rank_log_open(const char *callfile, int callline, const char *folder)
+MYS_PUBLIC void mys_ranklog_open_old(const char *callfile, int callline, const char *folder)
 {
     _mys_rank_log_init();
     int myrank;
@@ -514,7 +514,7 @@ _finished:
     mys_mutex_unlock(&_mys_rank_log_G.lock);
 }
 
-MYS_PUBLIC void mys_rank_log_close(const char *callfile, int callline, const char *folder)
+MYS_PUBLIC void mys_ranklog_close_old(const char *callfile, int callline, const char *folder)
 {
     _mys_rank_log_init();
     size_t len = strnlen(folder, _MYS_FNAME_MAX);

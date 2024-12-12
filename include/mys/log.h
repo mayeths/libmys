@@ -105,9 +105,9 @@ RANKLOG("LOG.test", "solve time %f", solve_time);
 RANKLOG_CLOSE("LOG.test");
 ```
  */
-#define RANKLOG(folder, fmt, ...) mys_rank_log(__FILE__, __LINE__, folder, fmt, ##__VA_ARGS__)
-#define RANKLOG_OPEN(folder) mys_rank_log_open(__FILE__, __LINE__, folder) // Collective call
-#define RANKLOG_CLOSE(folder) mys_rank_log_close(__FILE__, __LINE__, folder) // Collective call
+#define RANKLOG_OPEN(folder) mys_ranklog_open_old(__FILE__, __LINE__, folder) // Collective call
+#define RANKLOG_CLOSE(folder) mys_ranklog_close_old(__FILE__, __LINE__, folder) // Collective call
+#define RANKLOG(folder, fmt, ...) mys_ranklog_old(__FILE__, __LINE__, folder, fmt, ##__VA_ARGS__)
 
 #define LOG_SILENT() mys_log_silent(true)
 #define LOG_UNSILENT() mys_log_silent(false)
@@ -141,10 +141,14 @@ MYS_PUBLIC const char* mys_log_level_string(int level);
 MYS_PUBLIC void mys_log_init();
 
 /////// rank log
-__attribute__((format(printf, 4, 5)))
-MYS_PUBLIC void mys_rank_log(const char *callfile, int callline, const char *folder, const char *fmt, ...);
-MYS_PUBLIC void mys_rank_log_open(const char *callfile, int callline, const char *folder);
-MYS_PUBLIC void mys_rank_log_close(const char *callfile, int callline, const char *folder);
+MYS_PUBLIC void mys_ranklog_open_old(const char *callfile, int callline, const char *folder);
+MYS_PUBLIC void mys_ranklog_close_old(const char *callfile, int callline, const char *folder);
+MYS_ATTR_PRINTF(4, 5) MYS_PUBLIC void mys_ranklog_old(const char *callfile, int callline, const char *folder, const char *fmt, ...);
+
+// typedef struct mys_ranklog_t mys_ranklog_t;
+// MYS_ATTR_PRINTF(1, 2) MYS_PUBLIC mys_ranklog_t *mys_ranklog_open(const char *file_fmt, ...);
+// MYS_PUBLIC void mys_rank_log_close(mys_ranklog_t **ranklog);
+// MYS_ATTR_PRINTF(2, 3) void mys_rank_log(mys_ranklog_t *ranklog, const char *log_fmt, ...);
 
 
 #define MCOLOR_NO        "\x1b[0m"
