@@ -33,8 +33,10 @@ static void _mys_shm_G_init()
     if (_mys_shm_G.inited == true)
         return;
     mys_mutex_lock(&_mys_shm_G.lock);
+    int myrank;
+    mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &myrank);
     {
-        if (mys_mpi_myrank() == 0)
+        if (myrank == 0)
             _mys_shm_G.program_id = getpid();
         _mys_MPI_Bcast(&_mys_shm_G.program_id, 1, mys_MPI_INT, 0, mys_MPI_COMM_WORLD);
     }
@@ -46,10 +48,12 @@ MYS_PUBLIC mys_shm_t mys_alloc_shared_memory(int owner_rank, size_t size)
 {
     _mys_shm_G_init();
     mys_mutex_lock(&_mys_shm_G.lock);
+    int myrank;
+    mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &myrank);
     mys_shm_t shm;
     snprintf(shm._name, sizeof(shm._name), "/mys_%d_%zu", _mys_shm_G.program_id, _mys_shm_G.counter);
     _mys_shm_G.counter += 1;
-    if (mys_mpi_myrank() == owner_rank) {
+    if (myrank == owner_rank) {
         shm._fd = shm_open(shm._name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
         shm._size = size;
         ftruncate(shm._fd, shm._size);

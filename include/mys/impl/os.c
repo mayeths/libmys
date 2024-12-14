@@ -411,8 +411,9 @@ MYS_PUBLIC const char *mys_get_affinity() {
 
 MYS_PUBLIC void mys_print_affinity(FILE *fd)
 {
-    int myrank = mys_mpi_myrank();
-    int nranks = mys_mpi_nranks();
+    int myrank, nranks;
+    mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &myrank);
+    mys_MPI_Comm_size(mys_MPI_COMM_WORLD, &nranks);
     for (int rank = 0; rank < nranks; rank++) {
 #ifdef _OPENMP
         #pragma omp parallel
@@ -441,7 +442,7 @@ MYS_PUBLIC void mys_print_affinity(FILE *fd)
                 }
             }
         }
-        mys_mpi_barrier();
+        mys_MPI_Barrier(mys_MPI_COMM_WORLD);
     }
 }
 
