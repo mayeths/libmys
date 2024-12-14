@@ -11,9 +11,9 @@
 #pragma once
 
 #define GRACEFUL_EXIT() do {                                 \
-    mys_mpi_barrier();                                       \
+    mys_MPI_Barrier(mys_MPI_COMM_WORLD);                     \
     DLOG(0, "Gracefully exit at %s:%d", __FILE__, __LINE__); \
-    mys_mpi_finalize();                                      \
+    mys_MPI_Finalize();                                      \
     exit(0);                                                 \
 } while (0)
 
