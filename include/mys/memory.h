@@ -38,7 +38,7 @@ MYS_PUBLIC mys_arena_t* mys_arena_log; // The arena used by mys_log
 MYS_PUBLIC mys_arena_t* mys_arena_pool; // The arena used by mys_pool
 MYS_PUBLIC mys_arena_t* mys_arena_debug; // The arena used by mys_debug
 MYS_PUBLIC mys_arena_t* mys_arena_format; // The arena used by mys_format
-MYS_PUBLIC mys_arena_t* mys_arena_mpiz; // The arena used by mys_mpiz
+MYS_PUBLIC mys_arena_t* mys_arena_commgroup; // The arena used by mys_commgroup
 MYS_PUBLIC mys_arena_t* mys_arena_os; // The arena used by mys_os
 MYS_PUBLIC mys_arena_t* mys_arena_stat; // The arena used by mys_statistic
 MYS_PUBLIC mys_arena_t* mys_arena_str; // The arena used by mys_string
