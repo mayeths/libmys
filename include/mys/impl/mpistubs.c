@@ -377,16 +377,6 @@ MYS_PUBLIC int mys_MPI_Allgather(void *sendbuf, int sendcount, mys_MPI_Datatype 
    return mys_MPI_SUCCESS;
 }
 
-MYS_PUBLIC int _mys_MPI_Bcast(void *buffer, int count, mys_MPI_Datatype datatype, int root, mys_MPI_Comm comm)
-{
-    (void)buffer;
-    (void)count;
-    (void)datatype;
-    (void)root;
-    (void)comm;
-    return mys_MPI_SUCCESS;
-}
-
 MYS_PUBLIC double mys_MPI_Wtime()
 {
 #ifdef POSIX_COMPLIANCE
@@ -494,11 +484,6 @@ MYS_PUBLIC int mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, mys_MP
 MYS_PUBLIC int mys_MPI_Allgather(void *sendbuf, int sendcount, mys_MPI_Datatype sendtype, void *recvbuf, int recvcount, mys_MPI_Datatype recvtype, mys_MPI_Comm comm)
 {
    return MPI_Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
-}
-
-MYS_PUBLIC int _mys_MPI_Bcast(void *buffer, int count, mys_MPI_Datatype datatype, int root, mys_MPI_Comm comm)
-{
-   return MPI_Bcast(buffer, count, datatype, root, comm);
 }
 
 MYS_PUBLIC double mys_MPI_Wtime()
