@@ -25,24 +25,15 @@ MYS_PUBLIC double mys_geometric_mean(double *arr, int n);
 MYS_PUBLIC double mys_standard_deviation(double *arr, int n);
 
 typedef struct mys_aggregate_t {
-    /* self value */
-    double self;
-    /* average value */
-    double avg;
-    /* sum of values */
-    double sum;
-    /* variance */
-    double var;
-    /* standard deviation */
-    double std;
-    /* maximum value */
-    double max;
-    /* minimum value */
-    double min;
-    /* rank containing maximum value */
-    int loc_max;
-    /* rank containing minimum value */
-    int loc_min;
+    double self; /* self value */
+    double avg;  /* average value */
+    double sum;  /* sum of values */
+    double var;  /* variance */
+    double std;  /* standard deviation */
+    double max;  /* maximum value */
+    double min;  /* minimum value */
+    int loc_max  /* rank containing maximum value */;
+    int loc_min; /* rank containing minimum value */
 } mys_aggregate_t;
 
 /**
@@ -70,26 +61,16 @@ MYS_PUBLIC void mys_aggregate_analysis_array(size_t n, double *values, mys_aggre
 
 
 typedef struct mys_boxplot_t {
-    // Top whisker position
-    double whishi;
-    // Third quartile (75th percentile)
-    double q3;
-    // Median (50th percentile)
-    double med;
-    // First quartile (25th percentile)
-    double q1;
-    // Bottom whisker position
-    double whislo;
-    // Interquartile range (q3-q1)
-    double iqr;
-    // Number of fliers
-    size_t n_fliers;
-    // Number of top fliers
-    size_t nt_fliers;
-    // Number of bottom fliers
-    size_t nb_fliers;
-    // Fliers (outliers) array. NULL if no fliers.
-    double *fliers;
+    double whishi;    /* Top whisker position */
+    double q3;        /* Third quartile (75th percentile) */
+    double med;       /* Median (50th percentile) */
+    double q1;        /* First quartile (25th percentile) */
+    double whislo;    /* Bottom whisker position */
+    double iqr;       /* Interquartile range (q3-q1) */
+    size_t n_fliers;  /* Number of fliers */
+    size_t nt_fliers; /* Number of top fliers */
+    size_t nb_fliers; /* Number of bottom fliers */
+    double *fliers;   /* Fliers (outliers) array. NULL if no fliers. */
 } mys_boxplot_t;
 
 /*
@@ -109,38 +90,6 @@ typedef struct mys_boxplot_t {
        o                 fliers (outliers) 离群值，超过上下四分位数1.5倍IQR的值，样式flierprops
  超过多少IQR倍数是不定的，看你自己的选择，1.5或者2或者5都行
 */
-
-/**
- * @brief Return statistics string used to draw a series of box and whisker plots using bxp.
- * 
- * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
- * 
- * @param values Data that will be represented in the boxplots
- * @param n Size of the data
- * @return char* JSON formatted string representing the boxplot statistics
- * 
- * @note The caller must free the returned string.
- */
-MYS_PUBLIC char *mys_boxplot(double *values, size_t n);
-
-/**
- * @brief Return statistics used to draw a series of box and whisker plots using bxp.
- * 
- * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
- * 
- * @param values Data that will be represented in the boxplots
- * @param n Size of the data
- * @return mys_boxplot_t* Pointer to structure containing the calculated boxplot statistics
- * 
- * @note The caller must free the returned structure using `mys_boxplot_destroy`.
- * 
- * @note Autorange: when the data are distributed such that the 25th and 75th percentiles are equal,
- * whis is set to (0, 100) such that the whisker ends are at the minimum and maximum of the data.
- * 
- * @note See matplotlib example in header file
- */
-MYS_PUBLIC mys_boxplot_t *mys_boxplot_create(double *values, size_t n);
-
 /*
 import numpy as np
 import matplotlib.pyplot as plt
@@ -173,6 +122,43 @@ ax1.bxp([opt_128, opt_256, opt_512, opt_1024], positions=[1.5, 3.5, 5.5, 7.5], b
 
 plt.show()
 */
+
+/**
+ * @brief Return statistics string used to draw a series of box and whisker plots using bxp.
+ * 
+ * See mys/statistic.h for example of how to use returned result in python matplotlib.
+ * 
+ * `ax.bxp([res])`
+ * 
+ * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
+ * 
+ * @param values Data that will be represented in the boxplots
+ * @param n Size of the data
+ * @return char* JSON formatted string representing the boxplot statistics
+ * 
+ * @note The caller must free the returned string.
+ */
+MYS_PUBLIC char *mys_boxplot(double *values, size_t n);
+
+/**
+ * @brief Return statistics used to draw a series of box and whisker plots using bxp.
+ * 
+ * `ax.bxp([res])`
+ * 
+ * See mys/statistic.h for example of how to use returned result in python matplotlib.
+ * 
+ * See matplotlib.cbook.boxplot_stats and matplotlib.bxp for details.
+ * 
+ * @param values Data that will be represented in the boxplots
+ * @param n Size of the data
+ * @return mys_boxplot_t* Pointer to structure containing the calculated boxplot statistics
+ * 
+ * @note The caller must free the returned structure using `mys_boxplot_destroy`.
+ * 
+ * @note Autorange: when the data are distributed such that the 25th and 75th percentiles are equal,
+ * whis is set to (0, 100) such that the whisker ends are at the minimum and maximum of the data.
+ */
+MYS_PUBLIC mys_boxplot_t *mys_boxplot_create(double *values, size_t n);
 
 /**
  * @brief Free the memory allocated for the boxplot statistics.
