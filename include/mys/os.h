@@ -201,12 +201,20 @@ MYS_PUBLIC void mys_stick_affinity();
 #endif
 
 /**
- * @brief Get the numa id where each page currently resides
+ * @brief Get the numa id where the page currently resides
  * 
  * @param ptr page pointer that hope to query (not necessary to be page aligned)
  * @return The numa id where the page resides, otherwise -1 on failed.
  */
 MYS_PUBLIC int mys_numa_query(void *ptr);
+/**
+ * @brief Get the NUMA id where all continuous pages reside
+ * 
+ * @param ptr page pointer that hope to query (not necessary to be page aligned)
+ * @param size size of the memory region to check
+ * @return The NUMA id where pages reside, otherwise -1 on failure or if pages span different NUMA nodes.
+ */
+MYS_PUBLIC int mys_numa_query_continuous(void *ptr, size_t size);
 /**
  * @brief Move a page to a specific numa node
  * 

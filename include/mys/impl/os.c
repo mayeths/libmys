@@ -490,6 +490,49 @@ MYS_PUBLIC int mys_numa_query(void *ptr)
     return status[0];
 }
 
+MYS_PUBLIC int mys_numa_query_continuous(void *ptr, size_t size)
+{
+    if (size == 0)
+        return -1;
+
+    long page_size = sysconf(_SC_PAGESIZE);
+    if (page_size == -1)
+        return -1;
+
+    uintptr_t page_mask = ~((uintptr_t)page_size - 1);
+    void *aligned_ptr = (void *)((uintptr_t)ptr & page_mask);
+    void *end_ptr = (void *)((uintptr_t)ptr + size);
+    uintptr_t real_size = (uintptr_t)end_ptr - (uintptr_t)aligned_ptr;
+    size_t num_pages = (real_size + page_size - 1) / page_size;
+    int last_numa = -1;
+
+    void **pages = (void **)malloc(num_pages * sizeof(void *));
+    int *statuses = (int *)malloc(num_pages * sizeof(int));
+    if (pages == NULL || statuses == NULL)
+        goto finished;
+
+    for (size_t i = 0; i < num_pages; i++) {
+        pages[i] = (void *)((uintptr_t)aligned_ptr + i * page_size);
+        statuses[i] = -1;
+    }
+
+    if (numa_move_pages(0, num_pages, pages, NULL, statuses, 0) != 0)
+        goto finished;
+
+    last_numa = statuses[0];
+    for (size_t i = 1; i < num_pages; i++) {
+        if (statuses[i] != last_numa) {
+            last_numa = -1;
+            break;
+        }
+    }
+
+finished:
+    if (pages) free(pages);
+    if (statuses) free(statuses);
+    return last_numa;
+}
+
 MYS_PUBLIC int mys_numa_move(void *ptr, int numa_id)
 {
     long page_size = sysconf(_SC_PAGESIZE);
