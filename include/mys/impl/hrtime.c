@@ -15,7 +15,7 @@
 
 MYS_PUBLIC const char *mys_hrname()
 {
-#if defined(MYS_HRTIMER_HAVE_AACH64)
+#if defined(MYS_HRTIMER_HAVE_AARCH64)
     return mys_hrname_aarch64();
 #elif defined(MYS_HRTIMER_HAVE_POSIX)
     return mys_hrname_posix();
@@ -29,7 +29,7 @@ MYS_PUBLIC const char *mys_hrname()
 MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrtick()
 {
-#if defined(MYS_HRTIMER_HAVE_AACH64)
+#if defined(MYS_HRTIMER_HAVE_AARCH64)
     return mys_hrtick_aarch64();
 #elif defined(MYS_HRTIMER_HAVE_POSIX)
     return mys_hrtick_posix();
@@ -43,7 +43,7 @@ MYS_PUBLIC uint64_t mys_hrtick()
 MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC uint64_t mys_hrfreq()
 {
-#if defined(MYS_HRTIMER_HAVE_AACH64)
+#if defined(MYS_HRTIMER_HAVE_AARCH64)
     return mys_hrfreq_aarch64();
 #elif defined(MYS_HRTIMER_HAVE_POSIX)
     return mys_hrfreq_posix();
@@ -57,7 +57,7 @@ MYS_PUBLIC uint64_t mys_hrfreq()
 MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC double mys_hrtime()
 {
-#if defined(MYS_HRTIMER_HAVE_AACH64)
+#if defined(MYS_HRTIMER_HAVE_AARCH64)
     return mys_hrtime_aarch64();
 #elif defined(MYS_HRTIMER_HAVE_POSIX)
     return mys_hrtime_posix();
@@ -71,7 +71,7 @@ MYS_PUBLIC double mys_hrtime()
 MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC void mys_hrreset()
 {
-#if defined(MYS_HRTIMER_HAVE_AACH64)
+#if defined(MYS_HRTIMER_HAVE_AARCH64)
     mys_hrreset_aarch64();
 #elif defined(MYS_HRTIMER_HAVE_POSIX)
     mys_hrreset_posix();
@@ -84,18 +84,20 @@ MYS_PUBLIC void mys_hrreset()
 
 MYS_PUBLIC void mys_hrsync(mys_MPI_Comm comm)
 {
-#if defined(MYS_HRTIMER_HAVE_AACH64)
-    mys_hrsync_aarch64(comm);
-#elif defined(MYS_HRTIMER_HAVE_POSIX)
-    mys_hrsync_posix(comm);
-#elif defined(MYS_HRTIMER_HAVE_MPI)
-    mys_hrsync_mpi(comm);
-#else
-#error No default high resolution timer is available.
+    for (size_t i = 0; i < 8; i++) mys_MPI_Barrier(comm);
+#if defined(MYS_HRTIMER_HAVE_AARCH64)
+    mys_hrreset_aarch64();
 #endif
+#if defined(MYS_HRTIMER_HAVE_POSIX)
+    mys_hrreset_posix();
+#endif
+#if defined(MYS_HRTIMER_HAVE_MPI)
+    mys_hrreset_mpi();
+#endif
+    for (size_t i = 0; i < 2; i++) mys_MPI_Barrier(comm);
 }
 
-#if defined(MYS_HRTIMER_HAVE_AACH64)
+#if defined(MYS_HRTIMER_HAVE_AARCH64)
 typedef struct _mys_hrtime_aarch64_G_t {
     bool inited;
     uint64_t offset;
@@ -130,12 +132,6 @@ MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC void mys_hrreset_aarch64() {
     __asm__ __volatile__("mrs %0, CNTVCT_EL0" : "=r"(_mys_hrtime_aarch64_G.offset));
     _mys_hrtime_aarch64_G.inited = true;
-}
-MYS_PUBLIC void mys_hrsync_aarch64(mys_MPI_Comm comm)
-{
-    for (size_t i = 0; i < 8; i++) mys_MPI_Barrier(comm);
-    mys_hrreset_aarch64();
-    for (size_t i = 0; i < 2; i++) mys_MPI_Barrier(comm);
 }
 #endif
 
@@ -206,12 +202,6 @@ MYS_PUBLIC void mys_hrreset_posix() {
 #endif
     _mys_hrtime_posix_G.inited = true;
 }
-MYS_PUBLIC void mys_hrsync_posix(mys_MPI_Comm comm)
-{
-    for (size_t i = 0; i < 8; i++) mys_MPI_Barrier(comm);
-    mys_hrreset_posix();
-    for (size_t i = 0; i < 2; i++) mys_MPI_Barrier(comm);
-}
 #endif
 
 #if defined(MYS_HRTIMER_HAVE_MPI)
@@ -247,11 +237,5 @@ MYS_ATTR_OPTIMIZE_O3
 MYS_PUBLIC void mys_hrreset_mpi() {
     _mys_hrtime_mpi_G.offset = mys_MPI_Wtime();
     _mys_hrtime_mpi_G.inited = true;
-}
-MYS_PUBLIC void mys_hrsync_mpi(mys_MPI_Comm comm)
-{
-    for (size_t i = 0; i < 8; i++) mys_MPI_Barrier(comm);
-    mys_hrreset_mpi();
-    for (size_t i = 0; i < 2; i++) mys_MPI_Barrier(comm);
 }
 #endif
