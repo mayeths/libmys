@@ -107,14 +107,14 @@ MYS_PUBLIC void mys_readable_size(char **ptr, size_t bytes, size_t precision)
 
 MYS_PUBLIC mys_string_t *mys_string_create()
 {
-    mys_string_t *str = (mys_string_t *)mys_malloc2(mys_arena_str, sizeof(mys_string_t));
+    mys_string_t *str = (mys_string_t *)mys_malloc2(MYS_ARENA_STR, sizeof(mys_string_t));
     if (!str)
         return NULL;
     str->capacity = 16;
     str->size = 0;
-    str->text = (char *)mys_malloc2(mys_arena_str, str->capacity);
+    str->text = (char *)mys_malloc2(MYS_ARENA_STR, str->capacity);
     if (!str->text) {
-        mys_free2(mys_arena_str, str, sizeof(mys_string_t));
+        mys_free2(MYS_ARENA_STR, str, sizeof(mys_string_t));
         return NULL;
     }
     str->text[0] = '\0';
@@ -126,8 +126,8 @@ MYS_PUBLIC void mys_string_destroy(mys_string_t **str)
 {
     if (str != NULL) {
         if ((*str)->text != NULL)
-            mys_free2(mys_arena_str, (*str)->text, (*str)->capacity);
-        mys_free2(mys_arena_str, *str, sizeof(mys_string_t));
+            mys_free2(MYS_ARENA_STR, (*str)->text, (*str)->capacity);
+        mys_free2(MYS_ARENA_STR, *str, sizeof(mys_string_t));
     }
     *str = NULL;
 }
@@ -139,7 +139,7 @@ MYS_STATIC ssize_t _mys_string_reallocate_if_needed(mys_string_t *str, size_t re
         while (new_capacity < str->size + required) {
             new_capacity *= 2; // Double the capacity
         }
-        char *new_text = (char *)mys_realloc2(mys_arena_str, str->text, new_capacity, str->capacity);
+        char *new_text = (char *)mys_realloc2(MYS_ARENA_STR, str->text, new_capacity, str->capacity);
         if (new_text == NULL)
             return -1;
         str->text = new_text;

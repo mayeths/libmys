@@ -81,10 +81,10 @@ MYS_PUBLIC mys_thread_local int mys_errno;
 /*
 mys_pool_block_t *allocate_block(size_t capacity)
 {
-    mys_pool_block_t* block = (mys_pool_block_t*)mys_malloc2(mys_arena_pool, sizeof(mys_pool_block_t));
+    mys_pool_block_t* block = (mys_pool_block_t*)mys_malloc2(MYS_ARENA_POOL, sizeof(mys_pool_block_t));
     MYS_RETIF(block == NULL, MYS_ENOMEM, NULL);
 
-    block->objects = (mys_pool_olist_t*)mys_malloc2(mys_arena_pool, capacity * sizeof(mys_pool_olist_t));
+    block->objects = (mys_pool_olist_t*)mys_malloc2(MYS_ARENA_POOL, capacity * sizeof(mys_pool_olist_t));
     MYS_GOTOIF(block->objects == NULL, MYS_ENOMEM, failed);
 
     {
@@ -98,8 +98,8 @@ mys_pool_block_t *allocate_block(size_t capacity)
     return block;
 failed:
     if (block) {
-        if (block->objects) mys_free2(mys_arena_pool, block->objects, capacity * sizeof(mys_pool_olist_t));
-        mys_free2(mys_arena_pool, block, sizeof(mys_pool_block_t));
+        if (block->objects) mys_free2(MYS_ARENA_POOL, block->objects, capacity * sizeof(mys_pool_olist_t));
+        mys_free2(MYS_ARENA_POOL, block, sizeof(mys_pool_block_t));
     }
 }
 
@@ -110,7 +110,7 @@ void deallocate_block(mys_pool_block_t* block)
     if (block->prev != NULL) block->prev->next = block->next;
     if (block->next != NULL) block->next->prev = block->prev;
 
-    mys_free2(mys_arena_pool, block->objects, capacity * sizeof(mys_pool_olist_t));
-    mys_free2(mys_arena_pool, block, sizeof(mys_pool_block_t));
+    mys_free2(MYS_ARENA_POOL, block->objects, capacity * sizeof(mys_pool_olist_t));
+    mys_free2(MYS_ARENA_POOL, block, sizeof(mys_pool_block_t));
 }
 */

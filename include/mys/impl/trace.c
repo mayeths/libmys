@@ -79,7 +79,7 @@ MYS_STATIC mys_trace_e1block_t *_mys_expand_trace_block(mys_trace_t *trace)
         (block->capacity < UINT32_MAX / 2) ? (block->capacity * 2) :
         block->capacity;
 
-    block = (mys_trace_e1block_t *)mys_malloc2(mys_arena_trace, sizeof(mys_trace_e1block_t));
+    block = (mys_trace_e1block_t *)mys_malloc2(MYS_ARENA_TRACE, sizeof(mys_trace_e1block_t));
     // DLOG(0, "Constructing block=%p cap=%u", block, capacity);
     // DLOG(0, "    Allocating block=%p %zu", block, sizeof(mys_trace_e1block_t));
     if (block == NULL)
@@ -87,9 +87,9 @@ MYS_STATIC mys_trace_e1block_t *_mys_expand_trace_block(mys_trace_t *trace)
 
     block->capacity = capacity;
     block->size = 0;
-    block->events = (mys_trace_event1_t *)mys_malloc2(mys_arena_trace, sizeof(mys_trace_event1_t) * capacity);
+    block->events = (mys_trace_event1_t *)mys_malloc2(MYS_ARENA_TRACE, sizeof(mys_trace_event1_t) * capacity);
     if (block->events == NULL) {
-        mys_free2(mys_arena_trace, block, sizeof(mys_trace_e1block_t));
+        mys_free2(MYS_ARENA_TRACE, block, sizeof(mys_trace_e1block_t));
         return NULL;
     }
     // DLOG(0, "    Allocating block->events=%p %zu", block->events, sizeof(mys_trace_event1_t) * capacity);
@@ -127,16 +127,16 @@ MYS_STATIC void _mys_destroy_trace_block(mys_trace_t *trace, mys_trace_e1block_t
     if (trace->e1block_tail == *block) trace->e1block_tail = prev;
 
     // DLOG(0, "    Freeing block->event=%p %zu", (*block)->events, sizeof(mys_trace_event1_t) * (*block)->capacity);
-    mys_free2(mys_arena_trace, (*block)->events, sizeof(mys_trace_event1_t) * (*block)->capacity);
+    mys_free2(MYS_ARENA_TRACE, (*block)->events, sizeof(mys_trace_event1_t) * (*block)->capacity);
     // DLOG(0, "    Freeing block=%p %zu", (*block), sizeof(mys_trace_e1block_t));
-    mys_free2(mys_arena_trace, (*block), sizeof(mys_trace_e1block_t));
+    mys_free2(MYS_ARENA_TRACE, (*block), sizeof(mys_trace_e1block_t));
     *block = NULL;
 }
 
 MYS_PUBLIC mys_trace_t *mys_trace_create()
 {
     mys_G_trace_init();
-    mys_trace_t *trace = (mys_trace_t *)mys_malloc2(mys_arena_trace, sizeof(mys_trace_t));
+    mys_trace_t *trace = (mys_trace_t *)mys_malloc2(MYS_ARENA_TRACE, sizeof(mys_trace_t));
     MYS_RETIF(trace == NULL, MYS_ENOMEM, NULL);
 
     trace->e1block_head = NULL;
@@ -167,7 +167,7 @@ MYS_PUBLIC void mys_trace_destroy(mys_trace_t **trace)
         _mys_destroy_trace_block(*trace, &block);
         block = next;
     }
-    mys_free2(mys_arena_trace, (*trace), sizeof(mys_trace_t));
+    mys_free2(MYS_ARENA_TRACE, (*trace), sizeof(mys_trace_t));
 }
 
 
@@ -180,7 +180,7 @@ MYS_PUBLIC mys_trace_iter_t *mys_trace_start_iter(mys_trace_t *trace)
         return NULL;
     }
 
-    mys_trace_iter_t *iter = (mys_trace_iter_t *)mys_malloc2(mys_arena_trace, sizeof(mys_trace_iter_t));
+    mys_trace_iter_t *iter = (mys_trace_iter_t *)mys_malloc2(MYS_ARENA_TRACE, sizeof(mys_trace_iter_t));
     if (iter == NULL) {
         return NULL;
     }
@@ -239,7 +239,7 @@ MYS_PUBLIC void mys_trace_interrupt_iter(mys_trace_t *trace, mys_trace_iter_t *i
     trace->being_iter = false;
     trace->e1_iter_last_block = NULL;
     trace->e1_iter_last_index = 0;
-    mys_free2(mys_arena_trace, iter, sizeof(mys_trace_iter_t));
+    mys_free2(MYS_ARENA_TRACE, iter, sizeof(mys_trace_iter_t));
 }
 
 MYS_ATTR_OPTIMIZE_O3

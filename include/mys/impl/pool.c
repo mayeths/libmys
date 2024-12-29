@@ -100,7 +100,7 @@ MYS_PUBLIC mys_pool_t* mys_pool_create2(size_t object_size, size_t initial_capac
 {
     MYS_RETIF(initial_capacity == 0, MYS_EINVAL, NULL);
 
-    mys_pool_t* pool = (mys_pool_t*)mys_malloc2(mys_arena_pool, sizeof(mys_pool_t));
+    mys_pool_t* pool = (mys_pool_t*)mys_malloc2(MYS_ARENA_POOL, sizeof(mys_pool_t));
     MYS_RETIF(pool == NULL, MYS_ENOMEM, NULL);
 
     pool->robj_size = object_size;
@@ -118,7 +118,7 @@ MYS_PUBLIC mys_pool_t* mys_pool_create2(size_t object_size, size_t initial_capac
 
 static void allocate_block(mys_pool_t* pool)
 {
-    mys_pool_block_t* block = (mys_pool_block_t*)mys_malloc2(mys_arena_pool, sizeof(mys_pool_block_t));
+    mys_pool_block_t* block = (mys_pool_block_t*)mys_malloc2(MYS_ARENA_POOL, sizeof(mys_pool_block_t));
     MYS_RETIF(block == NULL, MYS_ENOMEM);
     // DLOG(0, "    Allocate block %p", block);
 
@@ -126,10 +126,10 @@ static void allocate_block(mys_pool_t* pool)
     block->free = pool->block_capacity;
     block->acquired_count = 0;
 
-    block->memory = (uint8_t*)mys_aligned_alloc2(mys_arena_pool, sysconf(_SC_PAGE_SIZE), block->capacity * pool->mobj_size);
+    block->memory = (uint8_t*)mys_aligned_alloc2(MYS_ARENA_POOL, sysconf(_SC_PAGE_SIZE), block->capacity * pool->mobj_size);
     MYS_GOTOIF(block->memory == NULL, MYS_ENOMEM, failed);
 
-    block->objects = (mys_pool_olist_t*)mys_malloc2(mys_arena_pool, block->capacity * sizeof(mys_pool_olist_t));
+    block->objects = (mys_pool_olist_t*)mys_malloc2(MYS_ARENA_POOL, block->capacity * sizeof(mys_pool_olist_t));
     MYS_GOTOIF(block->objects == NULL, MYS_ENOMEM, failed);
 
     block->free_object_head = NULL;
@@ -157,9 +157,9 @@ static void allocate_block(mys_pool_t* pool)
     return;
 failed:
     if (block != NULL) {
-        if (block->objects != NULL) mys_free2(mys_arena_pool, block->objects, block->capacity * sizeof(mys_pool_olist_t));
-        if (block->memory != NULL) mys_free2(mys_arena_pool, block->memory, block->capacity * pool->mobj_size);
-        mys_free2(mys_arena_pool, block, sizeof(mys_pool_block_t));
+        if (block->objects != NULL) mys_free2(MYS_ARENA_POOL, block->objects, block->capacity * sizeof(mys_pool_olist_t));
+        if (block->memory != NULL) mys_free2(MYS_ARENA_POOL, block->memory, block->capacity * pool->mobj_size);
+        mys_free2(MYS_ARENA_POOL, block, sizeof(mys_pool_block_t));
     }
 }
 
@@ -175,9 +175,9 @@ MYS_STATIC void deallocate_block(mys_pool_t* pool, mys_pool_block_t* block)
     if (block->next != NULL) block->next->prev = block->prev;
 
     // DLOG(0, "    Deallocate block %p", block);
-    mys_free2(mys_arena_pool, block->objects, block->capacity * sizeof(mys_pool_olist_t));
-    mys_free2(mys_arena_pool, block->memory, block->capacity * pool->mobj_size);
-    mys_free2(mys_arena_pool, block, sizeof(mys_pool_block_t));
+    mys_free2(MYS_ARENA_POOL, block->objects, block->capacity * sizeof(mys_pool_olist_t));
+    mys_free2(MYS_ARENA_POOL, block->memory, block->capacity * pool->mobj_size);
+    mys_free2(MYS_ARENA_POOL, block, sizeof(mys_pool_block_t));
 }
 
 MYS_PUBLIC void mys_pool_destroy(mys_pool_t* *pool)
@@ -197,7 +197,7 @@ MYS_PUBLIC void mys_pool_destroy(mys_pool_t* *pool)
         deallocate_block((*pool), block);
         block = next_block;
     }
-    mys_free2(mys_arena_pool, *pool, sizeof(mys_pool_t));
+    mys_free2(MYS_ARENA_POOL, *pool, sizeof(mys_pool_t));
     *pool = NULL;
 }
 

@@ -30,20 +30,30 @@ typedef struct mys_arena_t {
     size_t alive; // memory bytes that being used
     size_t freed; // memory bytes that freed
     size_t total; // memory bytes that total allocated
-    bool _reged;
+    bool _registered; // internal use
 } mys_arena_t;
 
-// MYS_PUBLIC mys_arena_t* mys_arena_std; // The arena used by mys_malloc, mys_calloc, ..., mys_free
-MYS_PUBLIC mys_arena_t* mys_arena_log; // The arena used by mys_log
-MYS_PUBLIC mys_arena_t* mys_arena_pool; // The arena used by mys_pool
-MYS_PUBLIC mys_arena_t* mys_arena_debug; // The arena used by mys_debug
-MYS_PUBLIC mys_arena_t* mys_arena_format; // The arena used by mys_format
-MYS_PUBLIC mys_arena_t* mys_arena_commgroup; // The arena used by mys_commgroup
-MYS_PUBLIC mys_arena_t* mys_arena_os; // The arena used by mys_os
-MYS_PUBLIC mys_arena_t* mys_arena_stat; // The arena used by mys_statistic
-MYS_PUBLIC mys_arena_t* mys_arena_str; // The arena used by mys_string
-MYS_PUBLIC mys_arena_t* mys_arena_trace; // The arena used by mys_trace
-MYS_PUBLIC mys_arena_t* mys_arena_user; // The predefined arena available for user use
+MYS_PUBLIC mys_arena_t mys_predefined_arena_log;
+MYS_PUBLIC mys_arena_t mys_predefined_arena_pool;
+MYS_PUBLIC mys_arena_t mys_predefined_arena_debug;
+MYS_PUBLIC mys_arena_t mys_predefined_arena_format;
+MYS_PUBLIC mys_arena_t mys_predefined_arena_commgroup;
+MYS_PUBLIC mys_arena_t mys_predefined_arena_os;
+MYS_PUBLIC mys_arena_t mys_predefined_arena_stat;
+MYS_PUBLIC mys_arena_t mys_predefined_arena_str;
+MYS_PUBLIC mys_arena_t mys_predefined_arena_trace;
+MYS_PUBLIC mys_arena_t mys_predefined_arena_user;
+
+#define MYS_ARENA_LOG ((mys_arena_t *)&mys_predefined_arena_log) // The arena used by mys_log
+#define MYS_ARENA_POOL ((mys_arena_t *)&mys_predefined_arena_pool) // The arena used by mys_pool
+#define MYS_ARENA_DEBUG ((mys_arena_t *)&mys_predefined_arena_debug) // The arena used by mys_debug
+#define MYS_ARENA_FORMAT ((mys_arena_t *)&mys_predefined_arena_format) // The arena used by mys_format
+#define MYS_ARENA_COMMGROUP ((mys_arena_t *)&mys_predefined_arena_commgroup) // The arena used by mys_commgroup
+#define MYS_ARENA_OS ((mys_arena_t *)&mys_predefined_arena_os) // The arena used by mys_os
+#define MYS_ARENA_STAT ((mys_arena_t *)&mys_predefined_arena_stat) // The arena used by mys_statistic
+#define MYS_ARENA_STR ((mys_arena_t *)&mys_predefined_arena_str) // The arena used by mys_string
+#define MYS_ARENA_TRACE ((mys_arena_t *)&mys_predefined_arena_trace) // The arena used by mys_trace
+#define MYS_ARENA_USER ((mys_arena_t *)&mys_predefined_arena_user) // The predefined arena available for user use
 
 /**
  * @brief Create a new memory arena with the specified name.
@@ -52,6 +62,8 @@ MYS_PUBLIC mys_arena_t* mys_arena_user; // The predefined arena available for us
  *
  * @param name The name of the new memory arena.
  * @return A pointer to the newly created memory arena, or NULL if creation fails.
+ * 
+ * @note Normally, you may want to check `ASX_EQ_SIZET(arena->alive, 0, "Internal error: memory leaked happened in %s.", arena->name);`
  */
 MYS_PUBLIC mys_arena_t *mys_arena_create(const char *name);
 /**
@@ -79,6 +91,9 @@ MYS_PUBLIC void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size) MYS_
 MYS_PUBLIC void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t size);
 MYS_PUBLIC void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size);
 MYS_PUBLIC void mys_free2(mys_arena_t *arena, void* ptr, size_t _size);
+
+MYS_PUBLIC void mys_alloc_record(mys_arena_t *arena, size_t size);
+MYS_PUBLIC void mys_free_record(mys_arena_t *arena, size_t size);
 
 // For external use (using mys_arena_std)
 // MYS_PUBLIC void* mys_malloc(size_t size);

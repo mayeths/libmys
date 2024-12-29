@@ -153,7 +153,7 @@ MYS_PUBLIC void mys_debug_init()
         /***** Signal that continue the process if it's stopped *****/
         // _mys_debug_set_signal(SIGCONT, 0);   // P1990 | Continue executing
 
-        _mys_debug_G.stack_memory = (uint8_t *)mys_malloc2(mys_arena_debug, _MYS_DEBUG_STACK_SIZE);
+        _mys_debug_G.stack_memory = (uint8_t *)mys_malloc2(MYS_ARENA_DEBUG, _MYS_DEBUG_STACK_SIZE);
         memset(_mys_debug_G.stack_memory, 0, _MYS_DEBUG_STACK_SIZE);
 #ifndef OS_MACOS // macos lost backtrace if run signal handler on new stack
         stack_t *stack = &_mys_debug_G.stack;
@@ -183,7 +183,7 @@ MYS_PUBLIC void mys_debug_fini()
     mys_mutex_lock(&_mys_debug_G.lock);
     if (_mys_debug_G.inited) {
         _mys_debug_revert_all();
-        mys_free2(mys_arena_debug, _mys_debug_G.stack_memory, _MYS_DEBUG_STACK_SIZE);
+        mys_free2(MYS_ARENA_DEBUG, _mys_debug_G.stack_memory, _MYS_DEBUG_STACK_SIZE);
         _mys_debug_G.inited = false;
     }
     mys_mutex_unlock(&_mys_debug_G.lock);

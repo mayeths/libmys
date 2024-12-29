@@ -19,6 +19,10 @@
 #include <numa.h>
 #endif
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 // extern int kill(pid_t pid, int sig) __THROW;
 // extern char *strdup(const char *s) __THROW;
 // extern ssize_t readlink(const char *path, char *buf, size_t bufsize) __THROW;
@@ -35,7 +39,7 @@ static size_t _mys_readfd(char **buffer, size_t *buffer_size, int fd, bool enabl
             size_t old_buffer_size = *buffer_size;
             if (*buffer_size == 0)
                 *buffer_size = 64;
-            *buffer = (char *)mys_realloc2(mys_arena_log, NULL, *buffer_size, old_buffer_size);
+            *buffer = (char *)mys_realloc2(MYS_ARENA_OS, NULL, *buffer_size, old_buffer_size);
             if (*buffer == NULL)
                 goto finished;
         }
@@ -56,7 +60,7 @@ static size_t _mys_readfd(char **buffer, size_t *buffer_size, int fd, bool enabl
                     *buffer_size *= 2;
                 else
                     *buffer_size += threshold;
-                *buffer = (char *)mys_realloc2(mys_arena_log, *buffer, *buffer_size, old_buffer_size);
+                *buffer = (char *)mys_realloc2(MYS_ARENA_OS, *buffer, *buffer_size, old_buffer_size);
                 if (*buffer == NULL)
                     goto finished;
             }
@@ -249,12 +253,12 @@ MYS_PUBLIC mys_prun_t mys_prun_create2(const char *command, ...)
     va_start(vargs, command);
     va_copy(vargs_test, vargs);
     needed = vsnprintf(NULL, 0, command, vargs_test) + 1;
-    command_real = (char *)mys_malloc2(mys_arena_os, needed);
+    command_real = (char *)mys_malloc2(MYS_ARENA_OS, needed);
     vsnprintf(command_real, needed, command, vargs);
     va_end(vargs);
 
     mys_popen_t popen = mys_popen_create(command_real);
-    mys_free2(mys_arena_os, command_real, needed);
+    mys_free2(MYS_ARENA_OS, command_real, needed);
     if (!popen.alive)
         return prun;
 
@@ -273,8 +277,8 @@ MYS_PUBLIC void mys_prun_destroy(mys_prun_t *prun)
     if (prun == NULL || !prun->success)
         return;
     if (prun->_alloced) {
-        if (prun->out != NULL) mys_free2(mys_arena_log, prun->out, prun->_cap_out);
-        if (prun->err != NULL) mys_free2(mys_arena_log, prun->err, prun->_cap_err);
+        if (prun->out != NULL) mys_free2(MYS_ARENA_OS, prun->out, prun->_cap_out);
+        if (prun->err != NULL) mys_free2(MYS_ARENA_OS, prun->err, prun->_cap_err);
     }
     prun->out = NULL;
     prun->err = NULL;
@@ -301,7 +305,7 @@ MYS_PUBLIC bool mys_mkdir(const char *path, mode_t mode)
 MYS_PUBLIC bool mys_ensure_dir(const char *path, mode_t mode)
 {
     size_t len = strlen(path) + 1;
-    char *p = (char *)mys_malloc2(mys_arena_os, len);
+    char *p = (char *)mys_malloc2(MYS_ARENA_OS, len);
     memcpy(p, path, len);
     // char *p = strdup(path);
     char *pp = p;
@@ -318,20 +322,20 @@ MYS_PUBLIC bool mys_ensure_dir(const char *path, mode_t mode)
     if (success)
         success = mys_mkdir(path, mode);
     // free(p);
-    mys_free2(mys_arena_os, p, len);
+    mys_free2(MYS_ARENA_OS, p, len);
     return success;
 }
 
 MYS_PUBLIC bool mys_ensure_parent(const char *path, mode_t mode)
 {
     size_t len = strlen(path) + 1;
-    char *pathcopy = (char *)mys_malloc2(mys_arena_os, len);
+    char *pathcopy = (char *)mys_malloc2(MYS_ARENA_OS, len);
     memcpy(pathcopy, path, len);
     // char *pathcopy = strdup(path);
     char *dname = dirname(pathcopy);
     bool success = mys_ensure_dir(dname, mode);
     // free(pathcopy);
-    mys_free2(mys_arena_os, pathcopy, len);
+    mys_free2(MYS_ARENA_OS, pathcopy, len);
     return success;
 }
 
