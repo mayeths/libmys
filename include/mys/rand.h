@@ -215,7 +215,7 @@ MYS_STATIC void mys_rand_f32_array   (float    *array, size_t nelem, float    mi
  * 
  * @param buf: The destination buffer to fill with random characters.
  * @param nchar: The number of random characters to generate.
- * @param choices: The string containing possible characters to choose from.
+ * @param choices: The string containing possible characters to choose from, e.g., "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".
  * 
  * @note buf[nchar] will be set to '\0' to make sure it ends like C string.
  * 
