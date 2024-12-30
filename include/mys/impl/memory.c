@@ -137,12 +137,20 @@ MYS_PUBLIC mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
     return leaked;
 }
 
+#define MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size) do {       \
+    _mys_ensure_register_arena(arena);                      \
+    arena->alive += size;                                   \
+    arena->total += size;                                   \
+    AS_EQ_SIZET(arena->total, arena->alive + arena->freed); \
+    if (arena->peak < arena->alive)                         \
+        arena->peak = arena->alive;                         \
+} while (0)
 
 MYS_PUBLIC void* mys_malloc2(mys_arena_t *arena, size_t size)
 {
     void *p = malloc(size);
     if (p != NULL) {
-        mys_alloc_record(arena, size);
+        MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size);
     }
     return p;
 }
@@ -151,7 +159,7 @@ MYS_PUBLIC void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size)
 {
     void *p = calloc(count, size);
     if (p != NULL) {
-        mys_alloc_record(arena, size);
+        MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size);
     }
     return p;
 }
@@ -170,7 +178,7 @@ MYS_PUBLIC void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t
     #error Unsupported
 #endif
     if (p != NULL) {
-        mys_alloc_record(arena, size);
+        MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size);
     }
     return p;
 }
@@ -180,7 +188,7 @@ MYS_PUBLIC void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t
     void *p = realloc(ptr, size);
     if (p != NULL) {
         mys_free_record(arena, _old_size);
-        mys_alloc_record(arena, size);
+        MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size);
     }
     return p;
 }
@@ -195,13 +203,7 @@ MYS_PUBLIC void mys_free2(mys_arena_t *arena, void* ptr, size_t size)
 
 MYS_PUBLIC void mys_alloc_record(mys_arena_t *arena, size_t size)
 {
-    AS_NE_PTR(arena, NULL);
-    _mys_ensure_register_arena(arena);
-    arena->alive += size;
-    arena->total += size;
-    AS_EQ_SIZET(arena->total, arena->alive + arena->freed);
-    if (arena->peak < arena->alive)
-        arena->peak = arena->alive;
+    MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size);
 }
 
 MYS_PUBLIC void mys_free_record(mys_arena_t *arena, size_t size)
