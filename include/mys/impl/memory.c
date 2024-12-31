@@ -139,8 +139,8 @@ MYS_PUBLIC mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
 
 #define MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size) do {       \
     _mys_ensure_register_arena(arena);                      \
-    arena->alive += size;                                   \
-    arena->total += size;                                   \
+    arena->alive += (size);                                 \
+    arena->total += (size);                                 \
     AS_EQ_SIZET(arena->total, arena->alive + arena->freed); \
     if (arena->peak < arena->alive)                         \
         arena->peak = arena->alive;                         \
@@ -159,7 +159,7 @@ MYS_PUBLIC void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size)
 {
     void *p = calloc(count, size);
     if (p != NULL) {
-        MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size);
+        MAKE_GCC_HAPPY_ALLOC_RECORD(arena, count * size);
     }
     return p;
 }
