@@ -62,8 +62,13 @@ MYS_PUBLIC int mys_string_fmt(mys_string_t *str, const char *format, ...);
  */
 MYS_PUBLIC int mys_string_append(mys_string_t *str, const char *other);
 MYS_PUBLIC int mys_string_append_n(mys_string_t *str, const char *other, size_t len);
+MYS_PUBLIC int mys_string_append2(mys_string_t *str, mys_string_t *other);
 
+MYS_PUBLIC void mys_string_truncate(mys_string_t *str, size_t len);
+MYS_PUBLIC void mys_string_clear(mys_string_t *str);
 
+MYS_PUBLIC mys_string_t *mys_string_dup(const char *str2);
+MYS_PUBLIC mys_string_t *mys_string_dup_n(const char *str2, size_t len);
 
 MYS_PUBLIC ssize_t mys_parse_readable_size(const char *text);
 MYS_PUBLIC void mys_readable_size(char **ptr, size_t bytes, size_t precision);

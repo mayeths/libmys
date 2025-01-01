@@ -178,6 +178,13 @@ MYS_PUBLIC int mys_string_append(mys_string_t *str, const char *other)
     return mys_string_append_n(str, other, strlen(other));
 }
 
+MYS_PUBLIC int mys_string_append2(mys_string_t *str, mys_string_t *other)
+{
+    if (str == NULL || other == NULL || other->text == NULL)
+        return; // Handle null input
+    return mys_string_append_n(str, other->text, other->size);
+}
+
 MYS_PUBLIC int mys_string_append_n(mys_string_t *str, const char *other, size_t len)
 {
     if (_mys_string_reallocate_if_needed(str, len + 1/*'\0'*/) == -1)
@@ -189,6 +196,48 @@ MYS_PUBLIC int mys_string_append_n(mys_string_t *str, const char *other, size_t 
     return len + 1;
 }
 
+MYS_PUBLIC void mys_string_clear(mys_string_t *str)
+{
+    mys_string_truncate(str, 0);
+}
+
+MYS_PUBLIC void mys_string_truncate(mys_string_t *str, size_t len)
+{
+    if (len < str->size) {
+        // Truncate the string by adjusting its size
+        str->size = len;
+        str->text[len] = '\0'; // Null-terminate the string
+    } else if (len > str->size) {
+        // Extend the string if needed
+        if (_mys_string_reallocate_if_needed(str, len + 1/*'\0'*/) == -1) {
+            return; // Allocation failed, leave the string unchanged
+        }
+        // Fill the extended area with null characters
+        memset(str->text + str->size, '\0', len - str->size);
+        str->size = len;
+    }
+}
+
+MYS_PUBLIC mys_string_t *mys_string_dup(const char *str)
+{
+    return mys_string_dup_n(str, strlen(str));
+}
+
+MYS_PUBLIC mys_string_t *mys_string_dup_n(const char *str, size_t len)
+{
+    if (str == NULL)
+        return NULL; // Handle null input
+
+    mys_string_t *new_str = mys_string_create();
+    if (new_str == NULL)
+        return NULL; // Allocation failed
+
+    if (mys_string_append_n(new_str, str, len) == -1) {
+        mys_string_destroy(&new_str);
+        return NULL;
+    }
+    return new_str;
+}
 
 MYS_PUBLIC int mys_str_to_int(const char *str, int default_val)
 {
