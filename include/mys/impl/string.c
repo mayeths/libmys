@@ -181,7 +181,7 @@ MYS_PUBLIC int mys_string_append(mys_string_t *str, const char *other)
 MYS_PUBLIC int mys_string_append2(mys_string_t *str, mys_string_t *other)
 {
     if (str == NULL || other == NULL || other->text == NULL)
-        return; // Handle null input
+        return -1; // Handle null input
     return mys_string_append_n(str, other->text, other->size);
 }
 
