@@ -35,6 +35,7 @@ static int _mys_commgroup_sort_i4(const void* _a, const void* _b)
 
 MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(mys_MPI_Comm global_comm, int group_color, int group_key)
 {
+    AS_GE_INT(group_color, 0);
     mys_commgroup_t *group = (mys_commgroup_t *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(mys_commgroup_t));
     group->global_comm = global_comm;
     mys_MPI_Comm_size(group->global_comm, &group->global_nranks);
@@ -56,13 +57,16 @@ MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(mys_MPI_Comm global_comm, int g
     mys_MPI_Allgather(mys_MPI_IN_PLACE, 4, mys_MPI_INT, temp, 4, mys_MPI_INT, global_comm);
     qsort(temp, group->global_nranks, sizeof(int[4]), _mys_commgroup_sort_i4);
     group->_neighbors = (int *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(int) * group->group_num);
-    group->_rows = (int *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(int) * group->global_nranks);
-    group->_cols = (int *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(int) * group->global_nranks);
+    group->_group_ids = (int *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(int) * group->global_nranks);
+    group->_local_ranks = (int *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(int) * group->global_nranks);
     group->_brothers = (int *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(int) * group->local_nranks);
+    for (int i = 0; i < group->group_num; i++) group->_neighbors[i] = -1;
+    for (int i = 0; i < group->global_nranks; i++) group->_group_ids[i] = -1;
+    for (int i = 0; i < group->global_nranks; i++) group->_local_ranks[i] = -1;
+    for (int i = 0; i < group->local_nranks; i++) group->_brothers[i] = -1;
+
     int group_index = -1;
     int last_color = -1;
-    int neighbor_cnt = 0;
-    int brother_cnt = 0;
     for(int i = 0; i < group->global_nranks; i++) {
         int o_group_color = temp[i * 4 + 0];
         int o_local_rank  = temp[i * 4 + 1];
@@ -75,12 +79,12 @@ MYS_PUBLIC mys_commgroup_t *mys_commgroup_create(mys_MPI_Comm global_comm, int g
             group->group_id = group_index;
         }
         if (o_local_rank == group->local_myrank) {
-            group->_neighbors[neighbor_cnt++] = o_global_rank;
+            group->_neighbors[group_index] = o_global_rank;
         }
-        group->_rows[o_global_rank] = group_index;
-        group->_cols[o_global_rank] = o_local_rank;
+        group->_group_ids[o_global_rank] = group_index;
+        group->_local_ranks[o_global_rank] = o_local_rank;
         if (o_group_color == group_color) {
-            group->_brothers[brother_cnt++] = o_global_rank;
+            group->_brothers[o_local_rank] = o_global_rank;
         }
     }
     mys_free2(MYS_ARENA_COMMGROUP, temp, sizeof(int) * 4 * group->global_nranks);
@@ -95,8 +99,8 @@ MYS_PUBLIC void mys_commgroup_release(mys_commgroup_t *group)
     mys_MPI_Comm_free(&group->local_comm);
     mys_MPI_Comm_free(&group->inter_comm);
     mys_free2(MYS_ARENA_COMMGROUP, group->_neighbors, sizeof(int) * group->group_num);
-    mys_free2(MYS_ARENA_COMMGROUP, group->_rows, sizeof(int) * group->global_nranks);
-    mys_free2(MYS_ARENA_COMMGROUP, group->_cols, sizeof(int) * group->global_nranks);
+    mys_free2(MYS_ARENA_COMMGROUP, group->_group_ids, sizeof(int) * group->global_nranks);
+    mys_free2(MYS_ARENA_COMMGROUP, group->_local_ranks, sizeof(int) * group->global_nranks);
     mys_free2(MYS_ARENA_COMMGROUP, group->_brothers, sizeof(int) * group->local_nranks);
 }
 
@@ -145,7 +149,7 @@ MYS_PUBLIC int mys_query_group_id(mys_commgroup_t *group, int global_rank)
     if (global_rank < 0 || global_rank >= group->global_nranks)
         return -1;
     else
-        return group->_rows[global_rank];
+        return group->_group_ids[global_rank];
 }
 
 MYS_PUBLIC int mys_query_local_rank(mys_commgroup_t *group, int global_rank)
@@ -153,7 +157,7 @@ MYS_PUBLIC int mys_query_local_rank(mys_commgroup_t *group, int global_rank)
     if (global_rank < 0 || global_rank >= group->global_nranks)
         return -1;
     else
-        return group->_cols[global_rank];
+        return group->_local_ranks[global_rank];
 }
 
 MYS_PUBLIC int mys_query_brother(mys_commgroup_t *group, int local_rank)

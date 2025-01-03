@@ -32,8 +32,8 @@ typedef struct mys_commgroup_t
     int local_myrank;
     int local_nranks;
     mys_MPI_Comm inter_comm; // communicator for the same local_myrank among groups (ranks are ordered by group_id)
-    int *_rows; // size=global_nranks. _rows[global_rank] is the group to which the rank belongs
-    int *_cols; // size=global_nranks. _cols[global_rank] is the local_rank in group
+    int *_group_ids; // size=global_nranks. _group_ids[global_rank] is the group to which the rank belongs
+    int *_local_ranks; // size=global_nranks. _local_ranks[global_rank] is the local_rank in group
     int *_brothers; // size=local_nranks. _brothers[local_rank] is the global_rank of each group_member in the same group
     int *_neighbors; // size=group_num. _neighbors[group_id] is the global_rank of each group member that has the same local_myrank to me
 } mys_commgroup_t;
