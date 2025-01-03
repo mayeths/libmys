@@ -92,13 +92,27 @@ MYS_PUBLIC int mys_query_brother(mys_commgroup_t *group, int local_rank);
  */
 MYS_PUBLIC int mys_query_neighbor(mys_commgroup_t *group, int group_id);
 
-/* mpicc -I${MYS_DIR}/include a.c && mpirun -n 5 ./a.out 3
-#include <stdlib.h>
-#include <stdio.h>
-
+/*
+build: mpicc -I${MYS_DIR}/include a.c -lnuma -lrt
+run: salloc -w kp101 --exclusive mpirun -n 9 -rf ./a.rf ./a.out
+a.rf:
+rank 0=kp101 slot=0
+rank 1=kp101 slot=1
+rank 2=kp101 slot=2
+rank 3=kp101 slot=35
+rank 4=kp101 slot=100
+rank 5=kp101 slot=96
+rank 6=kp101 slot=97
+rank 7=kp101 slot=98
+rank 8=kp101 slot=99
+----------------- code
 #define MYS_IMPL
+#define MYS_ENABLE_NUMA
 #include <mys.h>
 #include <mpi.h>
+
+#include <stdlib.h>
+#include <stdio.h>
 
 int main(int argc, char **argv)
 {
@@ -113,29 +127,98 @@ int main(int argc, char **argv)
 
     mys_commgroup_t *commgroup = NULL;
     // commgroup = mys_commgroup_create_node(MPI_COMM_WORLD);
+    commgroup = mys_commgroup_create_numa(MPI_COMM_WORLD);
     // commgroup = mys_commgroup_create(MPI_COMM_WORLD, myrank, myrank);
     // if (myrank == 0) {
     //     commgroup = mys_commgroup_create(MPI_COMM_WORLD, 0, myrank);
     // } else {
     //     commgroup = mys_commgroup_create(MPI_COMM_WORLD, 1, myrank);
     // }
-    commgroup = mys_commgroup_create(MPI_COMM_WORLD, myrank < nranks / 2, myrank);
+    // commgroup = mys_commgroup_create(MPI_COMM_WORLD, myrank < nranks / 2, myrank);
 
-    if (commgroup->global_myrank == who) {
-        printf("Rank %d has %d friends\n", commgroup->global_myrank, commgroup->local_nranks);
-        printf("Node info:");
+    {
+        mys_string_t *local_rank_str = mys_string_create();
+        mys_string_fmt(local_rank_str, "query all ranks' local rank:");
+        for (int global_rank = 0; global_rank < commgroup->global_nranks; global_rank++) {
+            int local_rank = mys_query_local_rank(commgroup, global_rank);
+            mys_string_fmt(local_rank_str, " %d", local_rank);
+        }
+        ILOG_ORDERED("%s", local_rank_str->text);
+        mys_string_destroy(&local_rank_str);
+    }
+
+    {
+        mys_string_t *group_id_str = mys_string_create();
+        mys_string_fmt(group_id_str, "query all ranks' group id:");
         for (int global_rank = 0; global_rank < commgroup->global_nranks; global_rank++) {
             int group_id = mys_query_group_id(commgroup, global_rank);
-            printf(" %d", group_id);
+            mys_string_fmt(group_id_str, " %d", group_id);
         }
-        printf("\n");
+        ILOG_ORDERED("%s", group_id_str->text);
+        mys_string_destroy(&group_id_str);
+    }
+
+    {
+        mys_string_t *neighbor_str = mys_string_create();
+        mys_string_fmt(neighbor_str, "query neighbors' global rank:");
         for (int group_id = 0; group_id < commgroup->group_num; group_id++) {
             int neighbor = mys_query_neighbor(commgroup, group_id);
-            printf("Group %d neighbor is %d\n", group_id, neighbor);
+            mys_string_fmt(neighbor_str, " %d", neighbor);
         }
+        ILOG_ORDERED("%s", neighbor_str->text);
+        mys_string_destroy(&neighbor_str);
     }
+
+    {
+        mys_string_t *brother_str = mys_string_create();
+        mys_string_fmt(brother_str, "mys query brothers' global rank:");
+        for (int local_rank = 0; local_rank < commgroup->local_nranks; local_rank++) {
+            int global_rank = mys_query_brother(commgroup, local_rank);
+            mys_string_fmt(brother_str, " %d", global_rank);
+        }
+        ILOG_ORDERED("%s", brother_str->text);
+        mys_string_destroy(&brother_str);
+    }
+
     MPI_Barrier(MPI_COMM_WORLD);
     mys_commgroup_release(commgroup);
     MPI_Finalize();
 }
+----------------- example output
+[I::000 a.c:039] query all ranks' local rank: 0 1 2 0 4 0 1 2 3
+[I::001 a.c:039] query all ranks' local rank: 0 1 2 0 4 0 1 2 3
+[I::002 a.c:039] query all ranks' local rank: 0 1 2 0 4 0 1 2 3
+[I::003 a.c:039] query all ranks' local rank: 0 1 2 0 4 0 1 2 3
+[I::004 a.c:039] query all ranks' local rank: 0 1 2 0 4 0 1 2 3
+[I::005 a.c:039] query all ranks' local rank: 0 1 2 0 4 0 1 2 3
+[I::006 a.c:039] query all ranks' local rank: 0 1 2 0 4 0 1 2 3
+[I::007 a.c:039] query all ranks' local rank: 0 1 2 0 4 0 1 2 3
+[I::008 a.c:039] query all ranks' local rank: 0 1 2 0 4 0 1 2 3
+[I::000 a.c:050] query all ranks' group id: 0 0 0 1 2 2 2 2 2
+[I::001 a.c:050] query all ranks' group id: 0 0 0 1 2 2 2 2 2
+[I::002 a.c:050] query all ranks' group id: 0 0 0 1 2 2 2 2 2
+[I::003 a.c:050] query all ranks' group id: 0 0 0 1 2 2 2 2 2
+[I::004 a.c:050] query all ranks' group id: 0 0 0 1 2 2 2 2 2
+[I::005 a.c:050] query all ranks' group id: 0 0 0 1 2 2 2 2 2
+[I::006 a.c:050] query all ranks' group id: 0 0 0 1 2 2 2 2 2
+[I::007 a.c:050] query all ranks' group id: 0 0 0 1 2 2 2 2 2
+[I::008 a.c:050] query all ranks' group id: 0 0 0 1 2 2 2 2 2
+[I::000 a.c:061] query neighbors' global rank: 0 3 5
+[I::001 a.c:061] query neighbors' global rank: 1 -1 6
+[I::002 a.c:061] query neighbors' global rank: 2 -1 7
+[I::003 a.c:061] query neighbors' global rank: 0 3 5
+[I::004 a.c:061] query neighbors' global rank: -1 -1 4
+[I::005 a.c:061] query neighbors' global rank: 0 3 5
+[I::006 a.c:061] query neighbors' global rank: 1 -1 6
+[I::007 a.c:061] query neighbors' global rank: 2 -1 7
+[I::008 a.c:061] query neighbors' global rank: -1 -1 8
+[I::000 a.c:072] mys query brothers' global rank: 0 1 2
+[I::001 a.c:072] mys query brothers' global rank: 0 1 2
+[I::002 a.c:072] mys query brothers' global rank: 0 1 2
+[I::003 a.c:072] mys query brothers' global rank: 3
+[I::004 a.c:072] mys query brothers' global rank: 5 6 7 8 4
+[I::005 a.c:072] mys query brothers' global rank: 5 6 7 8 4
+[I::006 a.c:072] mys query brothers' global rank: 5 6 7 8 4
+[I::007 a.c:072] mys query brothers' global rank: 5 6 7 8 4
+[I::008 a.c:072] mys query brothers' global rank: 5 6 7 8 4
 */
