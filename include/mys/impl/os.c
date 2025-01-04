@@ -546,6 +546,120 @@ MYS_PUBLIC int mys_numa_move(void *ptr, int numa_id)
     int status[1] = { -1 };
     return numa_move_pages(0, 1, &aligned_ptr, nodes, status, 0);
 }
+
+MYS_PUBLIC int mys_current_cpu()
+{
+    return sched_getcpu();
+}
+
+MYS_PUBLIC int mys_current_numa()
+{
+    return numa_node_of_cpu(mys_current_cpu());
+}
+
+MYS_PUBLIC int mys_cpu_num()
+{
+    return (int)sysconf(_SC_NPROCESSORS_ONLN);
+}
+
+MYS_PUBLIC int mys_numa_num()
+{
+    int max_node = numa_max_node();
+    if (max_node < 0) {
+        perror("numa_max_node failed");
+        return -1;
+    }
+    return max_node + 1; // max_node is 0-based
+}
+
+MYS_PUBLIC int mys_numa_size(int numa)
+{
+    struct bitmask *cpumask = numa_allocate_cpumask();
+    if (!cpumask) {
+        perror("Failed to allocate cpumask");
+        return -1;
+    }
+
+    if (numa_node_to_cpus(numa, cpumask) != 0) {
+        perror("numa_node_to_cpus failed");
+        numa_free_cpumask(cpumask);
+        return -1;
+    }
+
+    int cpu_count = 0;
+    for (int cpu = 0; cpu < (int)cpumask->size; cpu++) {
+        if (numa_bitmask_isbitset(cpumask, cpu)) {
+            cpu_count++;
+        }
+    }
+
+    numa_free_cpumask(cpumask);
+    return cpu_count;
+}
+
+MYS_PUBLIC int mys_cpu_affinity_num(pid_t pid)
+{
+    struct bitmask *cpumask = numa_allocate_cpumask();
+
+    if (numa_sched_getaffinity(pid, cpumask) == -1) {
+        perror("numa_sched_getaffinity failed");
+        numa_free_cpumask(cpumask);
+        return -1;
+    }
+
+    int cpu_affinity_num = 0;
+
+    for (int cpu = 0; cpu < (int)cpumask->size; cpu++) {
+        if (numa_bitmask_isbitset(cpumask, cpu)) {
+            cpu_affinity_num += 1;
+        }
+    }
+
+    numa_free_cpumask(cpumask);
+    return cpu_affinity_num;
+}
+
+MYS_PUBLIC int mys_numa_affinity_num(pid_t pid)
+{
+    struct bitmask *cpumask = numa_allocate_cpumask();
+    if (numa_sched_getaffinity(pid, cpumask) == -1) {
+        perror("numa_sched_getaffinity failed");
+        numa_free_cpumask(cpumask);
+        return -1;
+    }
+
+    int *numas = (int *)malloc(sizeof(int) * cpumask->size);
+    if (!numas) {
+        perror("Memory allocation for NUMA nodes failed");
+        numa_free_cpumask(cpumask);
+        return -1;
+    }
+
+    int num_entries = 0;
+
+    for (int cpu = 0; cpu < (int)cpumask->size; cpu++) {
+        if (numa_bitmask_isbitset(cpumask, cpu)) {
+            int numa = numa_node_of_cpu(cpu);
+            if (numa >= 0) {
+                numas[num_entries++] = numa;
+            }
+        }
+    }
+
+    mys_sort_i32(numas, num_entries);
+
+    int numa_affinity_num = 0;
+    for (int i = 0; i < num_entries; i++) {
+        if (i == 0 || numas[i] != numas[i - 1]) {
+            numa_affinity_num += 1;
+        }
+    }
+
+    numa_free_cpumask(cpumask);
+    free(numas);
+    return numa_affinity_num;
+}
+
 #endif
 
 /* Safe string to numeric https://stackoverflow.com/a/18544436 */

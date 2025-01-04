@@ -200,6 +200,9 @@ MYS_PUBLIC void mys_print_affinity(FILE *fd);
 MYS_PUBLIC void mys_stick_affinity();
 #endif
 
+///////////////////////////////////
+// NUMA memory related functions
+///////////////////////////////////
 /**
  * @brief Get the numa id where the page currently resides
  * 
@@ -224,6 +227,55 @@ MYS_PUBLIC int mys_numa_query_continuous(void *ptr, size_t size);
  */
 MYS_PUBLIC int mys_numa_move(void *ptr, int numa_id);
 
+///////////////////////////////////
+// NUMA cpu related functions
+///////////////////////////////////
+
+/**
+ * @brief Get the index of the CPU currently being used by the calling thread.
+ *
+ * @return CPU index or -1 on failure.
+ */
+MYS_PUBLIC int mys_current_cpu();
+/**
+ * @brief Get the NUMA node index of the CPU currently being used by the calling thread.
+ *
+ * @return NUMA node index or -1 on failure.
+ */
+MYS_PUBLIC int mys_current_numa();
+/**
+ * @brief Get the number of CPUs available on the system.
+ *
+ * @return Number of online processors or -1 on failure.
+ */
+MYS_PUBLIC int mys_cpu_num();
+/**
+ * @brief Get the number of NUMA nodes in the system.
+ *
+ * @return Total number of NUMA nodes (1-based) or -1 on failure.
+ */
+MYS_PUBLIC int mys_numa_num();
+/**
+ * @brief Get the number of CPUs in a specified NUMA node.
+ *
+ * @param numa Index of the NUMA node to query.
+ * @return The number of CPUs in the NUMA node, or -1 on failure.
+ */
+MYS_PUBLIC int mys_numa_size(int numa);
+/**
+ * @brief Get the number of CPUs the specified process is allowed to run on.
+ *
+ * @param pid Process ID of the target process `getpid()`.
+ * @return Number of CPUs in the affinity mask or -1 on failure.
+ */
+MYS_PUBLIC int mys_cpu_affinity_num(pid_t pid);
+/**
+ * @brief Get the number of NUMA nodes a process's affinity spans.
+ *
+ * @param pid Process ID of the target process `getpid()`.
+ * @return Number of unique NUMA nodes in the affinity mask or -1 on failure.
+ */
+MYS_PUBLIC int mys_numa_affinity_num(pid_t pid);
 
 MYS_PUBLIC const char *mys_env_str(const char *name, const char *default_val);
 MYS_PUBLIC int mys_env_int(const char *name, int default_val);
