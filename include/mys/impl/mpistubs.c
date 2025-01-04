@@ -12,11 +12,38 @@
 #include "../errno.h"
 #include "../mpistubs.h"
 #include "../assert.h"
+// #include "uthash_hash.h"
 
 #ifdef MYS_NO_MPI
 /**************************************************/
 /* MPI stubs to generate serial codes without mpi */
 /**************************************************/
+
+// struct mys_MPI_Request_key {
+//     int count;
+//     mys_MPI_Datatype datatype;
+//     int tag;
+// };
+
+// typedef struct mys_MPI_Request_struct {
+//     mys_MPI_Request_key key;
+//     void *src;
+//     void *dst;
+//     _mys_UT_hash_handle hh;
+// } mys_MPI_Request_struct;
+
+// struct _mys_mpistubs_G {
+//     bool inited;
+//     mys_MPI_Request_struct *unresolved_requests;
+// };
+// static struct _mys_mpistubs_G _mys_mpistubs_g;
+
+// static void _mys_mpistubs_init()
+// {
+//     if (_mys_mpistubs_g.inited) return;
+//     _mys_mpistubs_g.unresolved_requests = NULL;
+//     _mys_mpistubs_g.inited = true;
+// }
 
 #include <string.h>
 #include <time.h>
@@ -29,6 +56,13 @@
 MYS_PUBLIC int mys_MPI_Initialized(int *flag)
 {
     *flag = 1;
+    return mys_MPI_SUCCESS;
+}
+
+MYS_PUBLIC int mys_MPI_Init(int *argc, char ***argv)
+{
+    (void)argc;
+    (void)argv;
     return mys_MPI_SUCCESS;
 }
 
@@ -125,6 +159,57 @@ MYS_PUBLIC int mys_MPI_Send(const void *buf, int count, mys_MPI_Datatype datatyp
     return mys_MPI_SUCCESS;
 }
 
+MYS_PUBLIC int mys_MPI_Irecv(void *buf, int count, mys_MPI_Datatype datatype, int source, int tag, mys_MPI_Comm comm, mys_MPI_Request *request)
+{
+    // _mys_mpistubs_init();
+    (void)buf;
+    (void)count;
+    (void)datatype;
+    (void)source;
+    (void)tag;
+    (void)comm;
+    (void)request;
+    // mys_MPI_Request_key key;
+    // key.count = count;
+    // key.datatype = datatype;
+    // key.tag = tag;
+    // mys_MPI_Request_struct *old_request;
+    // _HASH_FIND(hh, _mys_mpistubs_g.unresolved_requests, &key, sizeof(mys_MPI_Request_key), old_request);
+    // if (old_request != NULL) {
+    //     old_request->dst = buf;
+    //     return mys_MPI_SUCCESS;
+    // }
+
+    // mys_MPI_Request_struct *new_request = (mys_MPI_Request_struct *)malloc(sizeof(mys_MPI_Request_struct));
+    // new_request->key = key;
+    // new_request->src = NULL;
+    // new_request->dst = buf;
+    // _HASH_ADD(hh, _mys_mpistubs_g.unresolved_requests, key, sizeof(mys_MPI_Request_key), new_request);
+    // *request = new_request;
+    return mys_MPI_SUCCESS;
+}
+
+MYS_PUBLIC int mys_MPI_Isend(const void *buf, int count, mys_MPI_Datatype datatype, int dest, int tag, mys_MPI_Comm comm, mys_MPI_Request *request)
+{
+    // _mys_mpistubs_init();
+    (void)buf;
+    (void)count;
+    (void)datatype;
+    (void)dest;
+    (void)tag;
+    (void)comm;
+    (void)request;
+    return mys_MPI_SUCCESS;
+}
+
+MYS_PUBLIC int mys_MPI_Waitall(int count, mys_MPI_Request *array_of_requests, mys_MPI_Status *array_of_statuses)
+{
+    (void)count;
+    (void)array_of_requests;
+    (void)array_of_statuses;
+    return mys_MPI_SUCCESS;
+}
+
 MYS_PUBLIC int mys_MPI_Barrier(mys_MPI_Comm comm)
 {
     (void)comm;
@@ -139,6 +224,12 @@ MYS_PUBLIC int mys_MPI_Bcast(void *buffer, int count, mys_MPI_Datatype datatype,
     (void)root;
     (void)comm;
     return mys_MPI_SUCCESS;
+}
+
+MYS_PUBLIC int mys_MPI_Gather(void *sendbuf, int sendcount, mys_MPI_Datatype sendtype, void *recvbuf, int recvcount, mys_MPI_Datatype recvtype, int root, mys_MPI_Comm comm)
+{
+    (void)root;
+    return mys_MPI_Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
 }
 
 MYS_PUBLIC int mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, mys_MPI_Datatype datatype, mys_MPI_Op op, mys_MPI_Comm comm)
@@ -241,6 +332,50 @@ MYS_PUBLIC int mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, mys_MP
             struct _double_int_t { double d; int i; };
             struct _double_int_t *crecvbuf = (struct _double_int_t *)recvbuf;
             struct _double_int_t *csendbuf = (struct _double_int_t *)sendbuf;
+            for (i = 0; i < count; i++)
+            {
+                crecvbuf[i] = csendbuf[i];
+            }
+        }
+        break;
+
+        case mys_MPI_INT32_T:
+        {
+            int32_t *crecvbuf = (int32_t *)recvbuf;
+            int32_t *csendbuf = (int32_t *)sendbuf;
+            for (i = 0; i < count; i++)
+            {
+                crecvbuf[i] = csendbuf[i];
+            }
+        }
+        break;
+
+        case mys_MPI_INT64_T:
+        {
+            int64_t *crecvbuf = (int64_t *)recvbuf;
+            int64_t *csendbuf = (int64_t *)sendbuf;
+            for (i = 0; i < count; i++)
+            {
+                crecvbuf[i] = csendbuf[i];
+            }
+        }
+        break;
+
+        case mys_MPI_UINT32_T:
+        {
+            uint32_t *crecvbuf = (uint32_t *)recvbuf;
+            uint32_t *csendbuf = (uint32_t *)sendbuf;
+            for (i = 0; i < count; i++)
+            {
+                crecvbuf[i] = csendbuf[i];
+            }
+        }
+        break;
+
+        case mys_MPI_UINT64_T:
+        {
+            uint64_t *crecvbuf = (uint64_t *)recvbuf;
+            uint64_t *csendbuf = (uint64_t *)sendbuf;
             for (i = 0; i < count; i++)
             {
                 crecvbuf[i] = csendbuf[i];
@@ -368,6 +503,50 @@ MYS_PUBLIC int mys_MPI_Allgather(void *sendbuf, int sendcount, mys_MPI_Datatype 
         }
         break;
 
+        case mys_MPI_INT32_T:
+        {
+            int32_t *crecvbuf = (int32_t *)recvbuf;
+            int32_t *csendbuf = (int32_t *)sendbuf;
+            for (i = 0; i < sendcount; i++)
+            {
+                crecvbuf[i] = csendbuf[i];
+            }
+        }
+        break;
+
+        case mys_MPI_INT64_T:
+        {
+            int64_t *crecvbuf = (int64_t *)recvbuf;
+            int64_t *csendbuf = (int64_t *)sendbuf;
+            for (i = 0; i < sendcount; i++)
+            {
+                crecvbuf[i] = csendbuf[i];
+            }
+        }
+        break;
+
+        case mys_MPI_UINT32_T:
+        {
+            uint32_t *crecvbuf = (uint32_t *)recvbuf;
+            uint32_t *csendbuf = (uint32_t *)sendbuf;
+            for (i = 0; i < sendcount; i++)
+            {
+                crecvbuf[i] = csendbuf[i];
+            }
+        }
+        break;
+
+        case mys_MPI_UINT64_T:
+        {
+            uint64_t *crecvbuf = (uint64_t *)recvbuf;
+            uint64_t *csendbuf = (uint64_t *)sendbuf;
+            for (i = 0; i < sendcount; i++)
+            {
+                crecvbuf[i] = csendbuf[i];
+            }
+        }
+        break;
+
         default:
         {
             THROW_NOT_IMPL();
@@ -409,6 +588,11 @@ MYS_PUBLIC double mys_MPI_Wtime()
 MYS_PUBLIC int mys_MPI_Initialized(int *flag)
 {
     return MPI_Initialized(flag);
+}
+
+MYS_PUBLIC int mys_MPI_Init(int *argc, char ***argv)
+{
+    return MPI_Init(argc, argv);
 }
 
 MYS_PUBLIC int mys_MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
@@ -466,6 +650,21 @@ MYS_PUBLIC int mys_MPI_Send(const void *buf, int count, mys_MPI_Datatype datatyp
     return MPI_Send(buf, count, datatype, dest, tag, comm);
 }
 
+MYS_PUBLIC int mys_MPI_Irecv(void *buf, int count, mys_MPI_Datatype datatype, int source, int tag, mys_MPI_Comm comm, mys_MPI_Request *request)
+{
+    return MPI_Irecv(buf, count, datatype, source, tag, comm, request);
+}
+
+MYS_PUBLIC int mys_MPI_Isend(const void *buf, int count, mys_MPI_Datatype datatype, int dest, int tag, mys_MPI_Comm comm, mys_MPI_Request *request)
+{
+    return MPI_Isend(buf, count, datatype, dest, tag, comm, request);
+}
+
+MYS_PUBLIC int mys_MPI_Waitall(int count, mys_MPI_Request *array_of_requests, mys_MPI_Status *array_of_statuses)
+{
+    return MPI_Waitall(count, array_of_requests, array_of_statuses);
+}
+
 MYS_PUBLIC int mys_MPI_Barrier(mys_MPI_Comm comm)
 {
     return MPI_Barrier(comm);
@@ -474,6 +673,11 @@ MYS_PUBLIC int mys_MPI_Barrier(mys_MPI_Comm comm)
 MYS_PUBLIC int mys_MPI_Bcast(void *buffer, int count, mys_MPI_Datatype datatype, int root, mys_MPI_Comm comm)
 {
     return MPI_Bcast(buffer, count, datatype, root, comm);
+}
+
+MYS_PUBLIC int mys_MPI_Gather(void *sendbuf, int sendcount, mys_MPI_Datatype sendtype, void *recvbuf, int recvcount, mys_MPI_Datatype recvtype, int root, mys_MPI_Comm comm)
+{
+   return MPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
 }
 
 MYS_PUBLIC int mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, mys_MPI_Datatype datatype, mys_MPI_Op op, mys_MPI_Comm comm)

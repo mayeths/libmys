@@ -37,6 +37,14 @@ typedef int mys_MPI_Datatype;
 #define mys_MPI_BYTE          6
 #define mys_MPI_LONG_LONG_INT 9
 #define mys_MPI_DOUBLE_INT    10
+#define mys_MPI_INT32_T       11
+#define mys_MPI_INT64_T       12
+#define mys_MPI_UINT32_T      13
+#define mys_MPI_UINT64_T      14
+/////// MPI_Request
+struct mys_MPI_Request_struct;
+typedef mys_MPI_Request_struct *mys_MPI_Request;
+#define mys_MPI_REQUEST_NULL  ((mys_MPI_Request)0)
 /////// MPI_Op
 typedef int mys_MPI_Op;
 #define mys_MPI_SUM           0
@@ -81,6 +89,13 @@ typedef MPI_Datatype mys_MPI_Datatype;
 #define mys_MPI_REAL              MPI_REAL
 #define mys_MPI_COMPLEX           MPI_COMPLEX
 #define mys_MPI_DOUBLE_INT        MPI_DOUBLE_INT
+#define mys_MPI_INT32_T           MPI_INT32_T
+#define mys_MPI_INT64_T           MPI_INT64_T
+#define mys_MPI_UINT32_T          MPI_UINT32_T
+#define mys_MPI_UINT64_T          MPI_UINT64_T
+/////// MPI_Request
+typedef MPI_Request mys_MPI_Request;
+#define mys_MPI_REQUEST_NULL      MPI_REQUEST_NULL
 /////// MPI_Op
 typedef MPI_Op mys_MPI_Op;
 #define mys_MPI_MAX               MPI_MAX
@@ -102,6 +117,7 @@ typedef MPI_Status mys_MPI_Status;
 #endif
 
 //-------------------- MPI prototypes --------------------//
+MYS_PUBLIC int mys_MPI_Init(int *argc, char ***argv);
 MYS_PUBLIC int mys_MPI_Init_thread(int *argc, char ***argv, int required, int *provided);
 MYS_PUBLIC int mys_MPI_Initialized(int *flag);
 MYS_PUBLIC int mys_MPI_Finalize();
@@ -112,8 +128,12 @@ MYS_PUBLIC int mys_MPI_Comm_split_type(mys_MPI_Comm comm, int split_type, int ke
 MYS_PUBLIC int mys_MPI_Comm_free(mys_MPI_Comm *comm);
 MYS_PUBLIC int mys_MPI_Recv(void *buf, int count, mys_MPI_Datatype datatype, int source, int tag, mys_MPI_Comm comm, mys_MPI_Status *status);
 MYS_PUBLIC int mys_MPI_Send(const void *buf, int count, mys_MPI_Datatype datatype, int dest, int tag, mys_MPI_Comm comm);
+MYS_PUBLIC int mys_MPI_Irecv(void *buf, int count, mys_MPI_Datatype datatype, int source, int tag, mys_MPI_Comm comm, mys_MPI_Request *request);
+MYS_PUBLIC int mys_MPI_Isend(const void *buf, int count, mys_MPI_Datatype datatype, int dest, int tag, mys_MPI_Comm comm, mys_MPI_Request *request);
+MYS_PUBLIC int mys_MPI_Waitall(int count, mys_MPI_Request *array_of_requests, mys_MPI_Status *array_of_statuses);
 MYS_PUBLIC int mys_MPI_Barrier(mys_MPI_Comm comm);
 MYS_PUBLIC int mys_MPI_Bcast(void *buffer, int count, mys_MPI_Datatype datatype, int root, mys_MPI_Comm comm);
+MYS_PUBLIC int mys_MPI_Gather(void *sendbuf, int sendcount, mys_MPI_Datatype sendtype, void *recvbuf, int recvcount, mys_MPI_Datatype recvtype, int root, mys_MPI_Comm comm);
 MYS_PUBLIC int mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, mys_MPI_Datatype datatype, mys_MPI_Op op, mys_MPI_Comm comm);
 MYS_PUBLIC int mys_MPI_Allgather(void *sendbuf, int sendcount, mys_MPI_Datatype sendtype, void *recvbuf, int recvcount, mys_MPI_Datatype recvtype, mys_MPI_Comm comm);
 MYS_PUBLIC int mys_MPI_Probe(int source, int tag, mys_MPI_Comm comm, mys_MPI_Status *status);
