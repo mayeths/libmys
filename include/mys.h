@@ -84,6 +84,7 @@ extern "C" {
 #include "mys/string.h"
 #include "mys/thread.h"
 #include "mys/trace.h"
+#include "mys/table.h"
 // Third-Party Library (mys3)
 #include "mys3/cJSON/cJSON.h"
 #include "mys3/matrixmarket/mmio.h"
@@ -122,6 +123,7 @@ extern "C" {
 #include "mys/impl/mpistubs.c"
 #include "mys/impl/misc.c"
 #include "mys/impl/commgroup.c"
+#include "mys/impl/table.c"
 #ifndef MYS_DISABLE_DEBUG
 #include "mys/impl/debug.c"
 #endif
