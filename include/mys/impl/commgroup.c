@@ -145,6 +145,31 @@ MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_numa(mys_MPI_Comm global_comm)
 }
 #endif
 
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_dup(mys_commgroup_t *g)
+{
+    mys_commgroup_t *group = (mys_commgroup_t *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(mys_commgroup_t));
+    group->group_id = g->group_id;
+    group->group_num = g->group_num;
+    group->global_comm = g->global_comm;
+    group->global_myrank = g->global_myrank;
+    group->global_nranks = g->global_nranks;
+    mys_MPI_Comm_dup(g->local_comm, &group->local_comm);
+    group->local_myrank = g->local_myrank;
+    group->local_nranks = g->local_nranks;
+    mys_MPI_Comm_dup(g->inter_comm, &group->inter_comm);
+    group->_group_ids = (int *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(int) * group->global_nranks);
+    group->_local_ranks = (int *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(int) * group->global_nranks);
+    group->_brothers = (int *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(int) * group->local_nranks);
+    group->_neighbors = (int *)mys_malloc2(MYS_ARENA_COMMGROUP, sizeof(int) * group->group_num);
+    for (int i = 0; i < group->global_nranks; i++) group->_group_ids[i] = g->_group_ids[i];
+    for (int i = 0; i < group->global_nranks; i++) group->_local_ranks[i] = g->_local_ranks[i];
+    for (int i = 0; i < group->local_nranks; i++) group->_brothers[i] = g->_brothers[i];
+    for (int i = 0; i < group->group_num; i++) group->_neighbors[i] = g->_neighbors[i];
+
+    return group;
+}
+
+
 MYS_PUBLIC int mys_query_group_id(mys_commgroup_t *group, int global_rank)
 {
     if (global_rank < 0 || global_rank >= group->global_nranks)

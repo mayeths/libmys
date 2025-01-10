@@ -62,6 +62,11 @@ MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(mys_MPI_Comm global_comm);
  */
 MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_numa(mys_MPI_Comm global_comm);
 /**
+ * @brief Duplicate a commgroup
+ * @return The group handle
+ */
+MYS_PUBLIC mys_commgroup_t *mys_commgroup_dup(mys_commgroup_t *group);
+/**
  * @brief Release communication group information
  * @param group The group handle
  */

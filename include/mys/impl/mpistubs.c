@@ -113,6 +113,12 @@ MYS_PUBLIC int mys_MPI_Comm_split_type(mys_MPI_Comm comm, int split_type, int ke
     return mys_MPI_SUCCESS;
 }
 
+MYS_PUBLIC int mys_MPI_Comm_dup(mys_MPI_Comm comm, mys_MPI_Comm *newcomm)
+{
+    *newcomm = comm;
+    return mys_MPI_SUCCESS;
+}
+
 MYS_PUBLIC int mys_MPI_Comm_free(mys_MPI_Comm *comm)
 {
     (void)comm;
@@ -623,6 +629,11 @@ MYS_PUBLIC int mys_MPI_Comm_split(mys_MPI_Comm comm, int n, int m, mys_MPI_Comm 
 MYS_PUBLIC int mys_MPI_Comm_split_type(mys_MPI_Comm comm, int split_type, int key, MPI_Info info, mys_MPI_Comm *newcomm)
 {
     return MPI_Comm_split_type(comm, split_type, key, info, newcomm);
+}
+
+MYS_PUBLIC int mys_MPI_Comm_dup(mys_MPI_Comm comm, mys_MPI_Comm *newcomm)
+{
+    return MPI_Comm_dup(comm, newcomm);
 }
 
 MYS_PUBLIC int mys_MPI_Comm_free(mys_MPI_Comm *comm)

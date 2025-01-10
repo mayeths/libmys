@@ -42,8 +42,8 @@ typedef int mys_MPI_Datatype;
 #define mys_MPI_UINT32_T      13
 #define mys_MPI_UINT64_T      14
 /////// MPI_Request
-struct mys_MPI_Request_struct;
-typedef mys_MPI_Request_struct *mys_MPI_Request;
+typedef struct mys_MPI_Request_s mys_MPI_Request_s;
+typedef mys_MPI_Request_s *mys_MPI_Request;
 #define mys_MPI_REQUEST_NULL  ((mys_MPI_Request)0)
 /////// MPI_Op
 typedef int mys_MPI_Op;
@@ -125,6 +125,7 @@ MYS_PUBLIC int mys_MPI_Comm_rank(mys_MPI_Comm comm, int *rank);
 MYS_PUBLIC int mys_MPI_Comm_size(mys_MPI_Comm comm, int *size);
 MYS_PUBLIC int mys_MPI_Comm_split(mys_MPI_Comm comm, int n, int m, mys_MPI_Comm *comms);
 MYS_PUBLIC int mys_MPI_Comm_split_type(mys_MPI_Comm comm, int split_type, int key, mys_MPI_Info info, mys_MPI_Comm *newcomm);
+MYS_PUBLIC int mys_MPI_Comm_dup(mys_MPI_Comm comm, mys_MPI_Comm *newcomm);
 MYS_PUBLIC int mys_MPI_Comm_free(mys_MPI_Comm *comm);
 MYS_PUBLIC int mys_MPI_Recv(void *buf, int count, mys_MPI_Datatype datatype, int source, int tag, mys_MPI_Comm comm, mys_MPI_Status *status);
 MYS_PUBLIC int mys_MPI_Send(const void *buf, int count, mys_MPI_Datatype datatype, int dest, int tag, mys_MPI_Comm comm);
