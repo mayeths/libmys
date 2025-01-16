@@ -15,13 +15,17 @@
 #include "../memory.h"
 #include "../misc.h"
 
+#include "pmparser.c"
+
 #define _MYS_DEBUG_STRIP_DEPTH 2
 #define _MYS_DEBUG_SIGNAL_MAX 64 // maximum signal to handle
 #define _MYS_DEBUG_BACKTRACE_MAX 64 // maximum stack backtrace
 #define _MYS_DEBUG_SBUF_NUM  3 // addr2line bufcmd, addr2line bufout, cause
-#define _MYS_DEBUG_SBUF_SIZE 256ULL // for holding small message
+// #define _MYS_DEBUG_SBUF_SIZE 256ULL // for holding small message
+#define _MYS_DEBUG_SBUF_SIZE (4096ULL + 256ULL) // for holding small message
 #define _MYS_DEBUG_LBUF_SIZE 65536ULL // for holding the entire backtrace
-#define _MYS_DEBUG_ADDITIONAL_SIZE (128ULL * 1024) // preserve additional stack space
+// #define _MYS_DEBUG_ADDITIONAL_SIZE (128ULL * 1024) // preserve additional stack space
+#define _MYS_DEBUG_ADDITIONAL_SIZE (1ULL * 1024 * 1024) // preserve additional stack space
 #define _MYS_DEBUG_STACK_SIZE ( \
     (SIGSTKSZ) + \
     (_MYS_DEBUG_BACKTRACE_MAX * sizeof(void*)) + \
@@ -40,6 +44,7 @@ struct _mys_debug_G_t {
     int post_action;
     int max_frames;
     char message[MYS_DEBUG_MESSAGE_MAX];
+    mys_procmaps_t *procmaps;
     //
     int nsignals;
     int signals[_MYS_DEBUG_SIGNAL_MAX];
@@ -74,6 +79,7 @@ static struct _mys_debug_G_t _mys_debug_G = {
     .post_action = MYS_DEBUG_ACTION_EXIT,
     .max_frames = _MYS_DEBUG_BACKTRACE_MAX,
     .message = {},
+    .procmaps = NULL,
     .nsignals = 0,
     .signals = {},
     .stack_memory = NULL,
@@ -111,6 +117,13 @@ MYS_PUBLIC void mys_debug_init()
 
     mys_mutex_lock(&_mys_debug_G.lock);
     if (!_mys_debug_G.inited) {
+        _mys_debug_G.procmaps = mys_pmparser_parse(-1);
+        // mys_procmap_t *map = _mys_debug_G.procmaps->head;
+        // while (map) {
+        //     mys_pmparser_print(map, -1);
+        //     map = map->next;
+        // }
+
         mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &_mys_debug_G.myrank);
         mys_MPI_Comm_size(mys_MPI_COMM_WORLD, &_mys_debug_G.nranks);
         _mys_debug_G.use_color = isatty(_mys_debug_G.outfd);
@@ -183,6 +196,7 @@ MYS_PUBLIC void mys_debug_fini()
     mys_mutex_lock(&_mys_debug_G.lock);
     if (_mys_debug_G.inited) {
         _mys_debug_revert_all();
+        mys_pmparser_free(_mys_debug_G.procmaps);
         mys_free2(MYS_ARENA_DEBUG, _mys_debug_G.stack_memory, _MYS_DEBUG_STACK_SIZE);
         _mys_debug_G.inited = false;
     }
@@ -621,9 +635,34 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
         if (bsize == 0)
             _DOFMT(color ? _YFMT4 : _NFMT4, digits, _mys_debug_G.myrank);
 
+        struct stat self_st;
+        // memset(&self_st, 0, sizeof(self_st));
+        stat(self_exe, &self_st);
+
         int collapsed = 0;
         for (int i = _MYS_DEBUG_STRIP_DEPTH; i < bsize; ++i) {
-            snprintf(bufcmd, sizeof(bufcmd), "addr2line -e %s %p", self_exe, baddrs[i]);
+
+            const char *target = self_exe;
+            void *relative = baddrs[i];
+            mys_procmap_t *map = _mys_debug_G.procmaps->head;
+            while (map) {
+                if (baddrs[i] >= map->addr_start && baddrs[i] < map->addr_end) {
+                    struct stat st;
+                    if (stat(map->pathname, &st) == 0) {
+                        bool is_self_exe = (st.st_ino == self_st.st_ino && st.st_dev == self_st.st_dev);
+                        if (!is_self_exe) {
+                            target = map->pathname;
+                            relative = (void *)((uintptr_t)baddrs[i] - (uintptr_t)map->addr_start);
+                        }
+                    }
+                    break;
+                }
+                map = map->next;
+            }
+
+            snprintf(bufcmd, sizeof(bufcmd), "addr2line -e %s %p", target, relative);
+            // write(_mys_debug_G.outfd, bufcmd, strlen(bufcmd));
+            // write(_mys_debug_G.outfd, "\n", 1);
             mys_prun_t run = mys_prun_create(bufcmd, bufout, sizeof(bufout), NULL, 0);
             bool skip = false;
             for (size_t j = 0; j < _mys_debug_G.n_filters; j++) {
