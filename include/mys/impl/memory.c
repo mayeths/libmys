@@ -92,7 +92,6 @@ MYS_STATIC mys_arena_debugger_t *_mys_arena_debug_insert(mys_arena_debugger_t **
     node->ptr = ptr;
     node->size = size;
     node->ntrace = backtrace(node->backtrace, MYS_MAX_ARENA_TRACE);
-    mys_arena_debugger_t *old_node = _mys_arena_debug_find(head, ptr);
     _HASH_ADD_PTR(*head, ptr, node);
     return node;
 }
