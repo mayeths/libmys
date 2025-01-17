@@ -210,6 +210,7 @@ MYS_PUBLIC bool mys_popen_kill(mys_popen_t *popen, int signo)
 MYS_PUBLIC mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t max_out, char *buf_err, size_t max_err)
 {
     mys_prun_t prun;
+    prun.cmd = NULL;
     prun.out = buf_out;
     prun.err = buf_err;
     prun.len_out = 0;
@@ -217,6 +218,7 @@ MYS_PUBLIC mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t
     prun.retval = -1;
     prun.success = false;
     prun._alloced = false;
+    prun._cap_cmd = 0;
     prun._cap_out = max_out;
     prun._cap_err = max_err;
 
@@ -236,9 +238,8 @@ MYS_PUBLIC mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t
 
 MYS_PUBLIC mys_prun_t mys_prun_create2(const char *command, ...)
 {
-    char *command_real = NULL;
-    int needed = 0;
     mys_prun_t prun;
+    prun.cmd = NULL;
     prun.out = NULL;
     prun.err = NULL;
     prun.len_out = 0;
@@ -246,19 +247,19 @@ MYS_PUBLIC mys_prun_t mys_prun_create2(const char *command, ...)
     prun.retval = -1;
     prun.success = false;
     prun._alloced = true;
+    prun._cap_cmd = 0;
     prun._cap_out = 0;
     prun._cap_err = 0;
 
     va_list vargs, vargs_test;
     va_start(vargs, command);
     va_copy(vargs_test, vargs);
-    needed = vsnprintf(NULL, 0, command, vargs_test) + 1;
-    command_real = (char *)mys_malloc2(MYS_ARENA_OS, needed);
-    vsnprintf(command_real, needed, command, vargs);
+    prun._cap_cmd = vsnprintf(NULL, 0, command, vargs_test) + 1;
+    prun.cmd = (char *)mys_malloc2(MYS_ARENA_OS, prun._cap_cmd);
+    vsnprintf(prun.cmd, prun._cap_cmd, command, vargs);
     va_end(vargs);
 
-    mys_popen_t popen = mys_popen_create(command_real);
-    mys_free2(MYS_ARENA_OS, command_real, needed);
+    mys_popen_t popen = mys_popen_create(prun.cmd);
     if (!popen.alive)
         return prun;
 
@@ -277,6 +278,7 @@ MYS_PUBLIC void mys_prun_destroy(mys_prun_t *prun)
     if (prun == NULL || !prun->success)
         return;
     if (prun->_alloced) {
+        if (prun->cmd != NULL) mys_free2(MYS_ARENA_OS, prun->cmd, prun->_cap_cmd);
         if (prun->out != NULL) mys_free2(MYS_ARENA_OS, prun->out, prun->_cap_out);
         if (prun->err != NULL) mys_free2(MYS_ARENA_OS, prun->err, prun->_cap_err);
     }

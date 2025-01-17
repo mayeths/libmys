@@ -46,6 +46,7 @@
 ///////////////////////////////////
 
 typedef struct mys_prun_t {
+    char *cmd;
     char *out;
     char *err;
     size_t len_out;
@@ -53,6 +54,7 @@ typedef struct mys_prun_t {
     int retval;
     bool success; // if calling subprocess success
     bool _alloced;
+    size_t _cap_cmd;
     size_t _cap_out;
     size_t _cap_err;
 } mys_prun_t;
