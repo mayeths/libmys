@@ -10,21 +10,118 @@
  */
 #include "../_config.h"
 #include "../errno.h"
+#include "../assert.h"
 #include "../mpistubs.h"
+#include "../pmparser.h"
+#include "../os.h"
+#include "../string.h"
 #include "../memory.h"
+#include "uthash_hash.h"
 
-mys_arena_t mys_predefined_arena_log = { /*name=*/"mys_log", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false };
-mys_arena_t mys_predefined_arena_pool = { /*name=*/"mys_pool", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false };
-mys_arena_t mys_predefined_arena_debug = { /*name=*/"mys_debug", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false };
-mys_arena_t mys_predefined_arena_format = { /*name=*/"mys_format", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false };
-mys_arena_t mys_predefined_arena_commgroup = { /*name=*/"mys_commgroup", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false };
-mys_arena_t mys_predefined_arena_os = { /*name=*/"mys_os", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false };
-mys_arena_t mys_predefined_arena_stat = { /*name=*/"mys_statistic", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false };
-mys_arena_t mys_predefined_arena_str = { /*name=*/"mys_string", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false };
-mys_arena_t mys_predefined_arena_trace = { /*name=*/"mys_trace", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false };
-mys_arena_t mys_predefined_arena_user = { /*name=*/"user", /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false };
+#include <sys/stat.h>
+
+mys_arena_t mys_predefined_arena_log = MYS_ARENA_INITIALIZER("mys_log");
+mys_arena_t mys_predefined_arena_pool = MYS_ARENA_INITIALIZER("mys_pool");
+mys_arena_t mys_predefined_arena_debug = MYS_ARENA_INITIALIZER("mys_debug");
+mys_arena_t mys_predefined_arena_format = MYS_ARENA_INITIALIZER("mys_format");
+mys_arena_t mys_predefined_arena_commgroup = MYS_ARENA_INITIALIZER("mys_commgroup");
+mys_arena_t mys_predefined_arena_os = MYS_ARENA_INITIALIZER("mys_os");
+mys_arena_t mys_predefined_arena_stat = MYS_ARENA_INITIALIZER("mys_statistic");
+mys_arena_t mys_predefined_arena_str = MYS_ARENA_INITIALIZER("mys_string");
+mys_arena_t mys_predefined_arena_trace = MYS_ARENA_INITIALIZER("mys_trace");
+mys_arena_t mys_predefined_arena_user = MYS_ARENA_INITIALIZER("user");
 
 #define MYS_MAX_REGISTERED_ARENA 64
+
+#define MYS_MAX_ARENA_TRACE 16
+typedef struct mys_arena_debugger_t {
+    void *ptr;
+    size_t size;
+    void *backtrace[MYS_MAX_ARENA_TRACE];
+    int ntrace;
+    _mys_UT_hash_handle hh;
+} mys_arena_debugger_t;
+
+MYS_STATIC void _mys_arena_debug_get_stack(mys_arena_debugger_t *node, mys_string_t *str)
+{
+    const char *self_exe = mys_procname();
+    struct stat self_st;
+    stat(self_exe, &self_st);
+
+    mys_string_fmt(str, "    %p (%zu bytes):\n", node->ptr, node->size);
+
+    for (int i = 2; i < node->ntrace; i++) {
+        const char *target = self_exe;
+        void *relative = node->backtrace[i];
+        mys_procmaps_t *self = mys_pmparser_self();
+        mys_procmap_t *map = self->head;
+        while (map) {
+            if (node->backtrace[i] >= map->addr_start && node->backtrace[i] < map->addr_end) {
+                struct stat st;
+                if (stat(map->pathname, &st) == 0) {
+                    bool is_self_exe = (st.st_ino == self_st.st_ino && st.st_dev == self_st.st_dev);
+                    if (!is_self_exe) {
+                        target = map->pathname;
+                        relative = (void *)((uintptr_t)node->backtrace[i] - (uintptr_t)map->addr_start);
+                    }
+                }
+                break;
+            }
+            map = map->next;
+        }
+        mys_prun_t run = mys_prun_create2("addr2line -e %s %p", target, relative);
+        // DLOG(0, "cmd: %s", run.cmd);
+        // mys_string_fmt(str, " %s;", run.out);
+        mys_string_fmt(str, "        %s", run.out);
+        if (i < node->ntrace - 1)
+            mys_string_fmt(str, "\n");
+        mys_prun_destroy(&run);
+    }
+}
+
+MYS_STATIC mys_arena_debugger_t *_mys_arena_debug_find(mys_arena_debugger_t **head, void *ptr)
+{
+    mys_arena_debugger_t *node = NULL;
+    _HASH_FIND_PTR(*head, &ptr, node);
+    return node;
+}
+
+MYS_STATIC mys_arena_debugger_t *_mys_arena_debug_insert(mys_arena_debugger_t **head, void *ptr, size_t size)
+{
+    mys_arena_debugger_t *node = (mys_arena_debugger_t *)malloc(sizeof(mys_arena_debugger_t));
+    node->ptr = ptr;
+    node->size = size;
+    node->ntrace = backtrace(node->backtrace, MYS_MAX_ARENA_TRACE);
+    mys_arena_debugger_t *old_node = _mys_arena_debug_find(head, ptr);
+    _HASH_ADD_PTR(*head, ptr, node);
+    return node;
+}
+
+MYS_STATIC void _mys_arena_debug_delete(mys_arena_debugger_t **head, void *ptr, size_t size)
+{
+    mys_arena_debugger_t *node = _mys_arena_debug_find(head, ptr);
+    if (node != NULL) {
+        if (node->size != size) {
+            mys_string_t *str = mys_string_create();
+            mys_string_fmt(str, "pointer %p alloc %zu bytes but free %zu bytes. backtrace:\n", ptr, node->size, size);
+            _mys_arena_debug_get_stack(node, str);
+            FAILED("%s", str->text);
+            mys_string_destroy(&str);
+        }
+        _HASH_DEL(*head, node);
+        free(node);
+    }
+}
+
+MYS_STATIC void _mys_arena_debug_delete_all(mys_arena_debugger_t **head)
+{
+    mys_arena_debugger_t *node = NULL;
+    mys_arena_debugger_t *tmp = NULL;
+    _HASH_ITER(hh, *head, node, tmp) {
+        _HASH_DEL(*head, node);
+        free(node);
+    }
+}
 
 typedef struct _mys_memory_G_t {
     mys_mutex_t lock;
@@ -101,6 +198,11 @@ MYS_PUBLIC mys_arena_t *mys_arena_create(const char *name)
     arena->freed = 0;
     arena->total = 0;
     arena->_registered = false;
+    arena->_enable_debug = false;
+    arena->_debug_trace = NULL;
+    arena->_total_count = 0;
+    arena->_alive_count = 0;
+    arena->_freed_count = 0;
     _mys_ensure_register_arena(arena);
     return arena;
 }
@@ -110,9 +212,64 @@ MYS_PUBLIC void mys_arena_destroy(mys_arena_t **arena)
     AS_NE_PTR(arena, NULL);
     if (*arena == NULL)
         return;
+    if ((*arena)->_enable_debug) {
+        mys_arena_debugger_t **head = (mys_arena_debugger_t **)&(*arena)->_debug_trace;
+        _mys_arena_debug_delete_all(head);
+    }
     _mys_deregister_arena(*arena);
     free(*arena);
     *arena = NULL;
+}
+
+MYS_PUBLIC void mys_arena_set_debug(mys_arena_t *arena, bool val)
+{
+    if (val) {
+        mys_pmparser_init();
+    }
+    arena->_enable_debug = val;
+}
+
+MYS_PUBLIC void mys_arena_print_leaked(mys_arena_t *arena, size_t max_print)
+{
+    mys_string_t *str = mys_string_create();
+
+    if (arena->_enable_debug) {
+        mys_arena_debugger_t *head = (mys_arena_debugger_t *)arena->_debug_trace;
+        mys_arena_debugger_t *node = NULL;
+        mys_arena_debugger_t *tmp = NULL;
+        size_t num_hash;
+        num_hash = (size_t)_HASH_COUNT(head);
+        AS_EQ_SIZET(num_hash, arena->_alive_count);
+        mys_string_fmt(str, "arena %s alloc %zu, freed %zu, leaked %zu pointers:\n",
+            arena->name, arena->_total_count, arena->_freed_count, arena->_alive_count);
+        size_t count = 0;
+
+        _HASH_ITER(hh, head, node, tmp) {
+            _mys_arena_debug_get_stack(node, str);
+            mys_string_fmt(str, "\n");
+            count += 1;
+            if (count > max_print)
+                break;
+        }
+
+        if (count == 0) {
+            if (arena->alive > 0) {
+                mys_string_fmt(str,
+                    "    no leak pointer is found, "
+                    "but %zu bytes are still alive,"
+                    "please check your free calls.",
+                arena->alive);
+            } else {
+                mys_string_fmt(str, "    no leak pointer is found, %zu byte alive.", arena->alive);
+            }
+        }
+    } else {
+        mys_string_fmt(str, "arena %s is not set to debug mode", arena->name);
+    }
+
+    DLOG_SELF("%s", str->text);
+    mys_string_destroy(&str);
+
 }
 
 MYS_PUBLIC mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
@@ -146,11 +303,28 @@ MYS_PUBLIC mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
         arena->peak = arena->alive;                         \
 } while (0)
 
+#define DEBUG_INSERT(arena, ptr, size) do {                                  \
+    mys_arena_debugger_t **head = (mys_arena_debugger_t **)&arena->_debug_trace; \
+    if (arena->_enable_debug)                                                \
+        arena->_total_count += 1;                                            \
+        arena->_alive_count += 1;                                            \
+        _mys_arena_debug_insert(head, ptr, size);                            \
+} while (0)
+
+#define DEBUG_DELETE(arena, ptr, size) do {                                        \
+    mys_arena_debugger_t **head = (mys_arena_debugger_t **)&arena->_debug_trace; \
+    if (arena->_enable_debug)                                                \
+        arena->_alive_count -= 1;                                            \
+        arena->_freed_count += 1;                                            \
+        _mys_arena_debug_delete(head, ptr, size);                            \
+} while (0)
+
 MYS_PUBLIC void* mys_malloc2(mys_arena_t *arena, size_t size)
 {
     void *p = malloc(size);
     if (p != NULL) {
         MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size);
+        DEBUG_INSERT(arena, p, size);
     }
     return p;
 }
@@ -160,6 +334,7 @@ MYS_PUBLIC void* mys_calloc2(mys_arena_t *arena, size_t count, size_t size)
     void *p = calloc(count, size);
     if (p != NULL) {
         MAKE_GCC_HAPPY_ALLOC_RECORD(arena, count * size);
+        DEBUG_INSERT(arena, p, count * size);
     }
     return p;
 }
@@ -179,6 +354,7 @@ MYS_PUBLIC void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t
 #endif
     if (p != NULL) {
         MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size);
+        DEBUG_INSERT(arena, p, size);
     }
     return p;
 }
@@ -189,6 +365,8 @@ MYS_PUBLIC void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t
     if (p != NULL) {
         mys_free_record(arena, _old_size);
         MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size);
+        DEBUG_DELETE(arena, ptr, _old_size);
+        DEBUG_INSERT(arena, p, size);
     }
     return p;
 }
@@ -197,6 +375,7 @@ MYS_PUBLIC void mys_free2(mys_arena_t *arena, void* ptr, size_t size)
 {
     if (ptr != NULL) {
         mys_free_record(arena, size);
+        DEBUG_DELETE(arena, ptr, size);
     }
     free(ptr);
 }

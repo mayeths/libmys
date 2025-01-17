@@ -24,6 +24,13 @@
 #include "_config.h"
 #include "macro.h"
 
+// if (arena->alive != 0) {
+//     WLOG_SELF("Memory leaked happened in %s size %zu.", arena->name, arena->alive);
+//     mys_arena_print_leaked(arena, 10);
+// }
+
+typedef struct mys_arena_debugger_t mys_arena_debugger_t;
+
 typedef struct mys_arena_t {
     char name[32];
     size_t peak;  // memory bytes that peak alive
@@ -31,7 +38,14 @@ typedef struct mys_arena_t {
     size_t freed; // memory bytes that freed
     size_t total; // memory bytes that total allocated
     bool _registered; // internal use
+    bool _enable_debug; // internal use
+    mys_arena_debugger_t *_debug_trace; // internal use
+    size_t _total_count; // internal use
+    size_t _alive_count; // internal use
+    size_t _freed_count; // internal use
 } mys_arena_t;
+
+#define MYS_ARENA_INITIALIZER(name) { /*name=*/name, /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false, /*_enable_debug*/false, /*_debug_trace*/NULL, /*_total_count*/0, /*_alive_count*/0, /*_freed_count*/0 }
 
 MYS_PUBLIC mys_arena_t mys_predefined_arena_log;
 MYS_PUBLIC mys_arena_t mys_predefined_arena_pool;
@@ -75,6 +89,8 @@ MYS_PUBLIC mys_arena_t *mys_arena_create(const char *name);
  * @param arena A double pointer to the memory arena to be destroyed.
  */
 MYS_PUBLIC void mys_arena_destroy(mys_arena_t **arena);
+MYS_PUBLIC void mys_arena_set_debug(mys_arena_t *arena, bool val);
+MYS_PUBLIC void mys_arena_print_leaked(mys_arena_t *arena, size_t max_print);
 /**
  * @brief Find the next leaked memory arena after a given pivot.
  *
