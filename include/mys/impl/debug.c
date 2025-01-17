@@ -14,8 +14,7 @@
 #include "../debug.h"
 #include "../memory.h"
 #include "../misc.h"
-
-#include "pmparser.c"
+#include "../pmparser.h"
 
 #define _MYS_DEBUG_STRIP_DEPTH 2
 #define _MYS_DEBUG_SIGNAL_MAX 64 // maximum signal to handle
@@ -44,7 +43,6 @@ struct _mys_debug_G_t {
     int post_action;
     int max_frames;
     char message[MYS_DEBUG_MESSAGE_MAX];
-    mys_procmaps_t *procmaps;
     //
     int nsignals;
     int signals[_MYS_DEBUG_SIGNAL_MAX];
@@ -79,7 +77,6 @@ static struct _mys_debug_G_t _mys_debug_G = {
     .post_action = MYS_DEBUG_ACTION_EXIT,
     .max_frames = _MYS_DEBUG_BACKTRACE_MAX,
     .message = {},
-    .procmaps = NULL,
     .nsignals = 0,
     .signals = {},
     .stack_memory = NULL,
@@ -117,13 +114,7 @@ MYS_PUBLIC void mys_debug_init()
 
     mys_mutex_lock(&_mys_debug_G.lock);
     if (!_mys_debug_G.inited) {
-        _mys_debug_G.procmaps = mys_pmparser_parse(-1);
-        // mys_procmap_t *map = _mys_debug_G.procmaps->head;
-        // while (map) {
-        //     mys_pmparser_print(map, -1);
-        //     map = map->next;
-        // }
-
+        mys_pmparser_init();
         mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &_mys_debug_G.myrank);
         mys_MPI_Comm_size(mys_MPI_COMM_WORLD, &_mys_debug_G.nranks);
         _mys_debug_G.use_color = isatty(_mys_debug_G.outfd);
@@ -196,7 +187,6 @@ MYS_PUBLIC void mys_debug_fini()
     mys_mutex_lock(&_mys_debug_G.lock);
     if (_mys_debug_G.inited) {
         _mys_debug_revert_all();
-        mys_pmparser_free(_mys_debug_G.procmaps);
         mys_free2(MYS_ARENA_DEBUG, _mys_debug_G.stack_memory, _MYS_DEBUG_STACK_SIZE);
         _mys_debug_G.inited = false;
     }
@@ -644,7 +634,8 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
 
             const char *target = self_exe;
             void *relative = baddrs[i];
-            mys_procmap_t *map = _mys_debug_G.procmaps->head;
+            mys_procmaps_t *self = mys_pmparser_self();
+            mys_procmap_t *map = self->head;
             while (map) {
                 if (baddrs[i] >= map->addr_start && baddrs[i] < map->addr_end) {
                     struct stat st;

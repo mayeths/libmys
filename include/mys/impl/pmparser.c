@@ -9,93 +9,50 @@
  * https://opensource.org/licenses/MIT
  */
 #include "../_config.h"
+#include "../pmparser.h"
 #include "../errno.h"
 #include "../mpistubs.h"
 #include "../debug.h"
 #include "../memory.h"
 #include "../misc.h"
 
+static void _mys_pmparser_split_line(char*buf,char*addr1,char*addr2,char*perm, char* offset, char* device,char*inode,char* pathname);
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
+typedef struct
+{
+    bool inited;
+    mys_procmaps_t *self;
+} _mys_procmaps_G;
+
+static _mys_procmaps_G _mys_procmaps_g = {
+    .inited = false,
+    .self = NULL,
+};
+
+MYS_PUBLIC void mys_pmparser_init()
+{
+    if (_mys_procmaps_g.inited)
+        return;
+    _mys_procmaps_g.self = mys_pmparser_parse(-1);
+    // mys_procmap_t *map = _mys_procmaps_g->head;
+    // while (map) {
+    //     mys_pmparser_print(map, -1);
+    //     map = map->next;
+    // }
+    _mys_procmaps_g.inited = true;
+}
+
+MYS_PUBLIC mys_procmaps_t *mys_pmparser_self()
+{
+    return _mys_procmaps_g.self;
+}
+
 
 //maximum line length in a procmaps file
 #define PROCMAPS_LINE_MAX_LENGTH  (4096 + 100)
-/**
- * mys_procmap_t
- * @desc hold all the information about an area in the process's  VM
- */
-typedef struct mys_procmap_t {
-    void* addr_start; 	//< start address of the area
-    void* addr_end; 	//< end address
-    unsigned long length; //< size of the range
 
-    char perm[5];		//< permissions rwxp
-    short is_r;			//< rewrote of perm with short flags
-    short is_w;
-    short is_x;
-    short is_p;
-
-    long offset;	//< offset
-    char dev[12];	//< dev major:minor
-    int inode;		//< inode of the file that backs the area
-
-    char *pathname;		//< the path of the file that backs the area
-    //chained list
-    struct mys_procmap_t* next;		//<handler of the chinaed list
-} mys_procmap_t;
-
-/**
- * mys_procmaps_t
- * @desc holds iterating information
- */
-typedef struct mys_procmaps_t {
-    size_t size;
-    mys_procmap_t* head;
-    mys_procmap_t* current;
-} mys_procmaps_t;
-/**
- * mys_pmparser_parse
- * @param pid the process id whose memory map to be parser. the current process if pid<0
- * @return an iterator over all the nodes
- */
-MYS_PUBLIC mys_procmaps_t* mys_pmparser_parse(int pid);
-
-/**
- * mys_pmparser_next
- * @description move between areas
- * @param p_procmaps_it the iterator to move on step in the chained list
- * @return a procmaps structure filled with information about this VM area
- */
-MYS_PUBLIC mys_procmap_t* mys_pmparser_next(mys_procmaps_t* p_procmaps_it);
-/**
- * mys_pmparser_free
- * @description should be called at the end to free the resources
- * @param p_procmaps_it the iterator structure returned by mys_pmparser_parse
- */
-MYS_PUBLIC void mys_pmparser_free(mys_procmaps_t* p_procmaps_it);
-
-/**
- * _mys_pmparser_split_line
- * @description internal usage
- */
-static void _mys_pmparser_split_line(char*buf,char*addr1,char*addr2,char*perm, char* offset, char* device,char*inode,char* pathname);
-
-/**
- * mys_pmparser_print
- * @param map the head of the list
- * @order the order of the area to print, -1 to print everything
- */
-MYS_PUBLIC void mys_pmparser_print(mys_procmap_t* map,int order);
-
-
-MYS_PUBLIC mys_procmaps_t* mys_pmparser_parse(int pid){
+MYS_PUBLIC mys_procmaps_t* mys_pmparser_parse(int pid)
+{
     mys_procmaps_t* maps_it = (mys_procmaps_t*)malloc(sizeof(mys_procmaps_t));
     char maps_path[500];
     if(pid>=0 ){
