@@ -190,11 +190,24 @@
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
 #endif
 
-#if defined(MYS_IMPL)         // Make libmys with public visibility.
+
+#if defined(MYS_IMPL) && !defined(MYS_DECL)
+#define MYS_DECL
+#endif
+
+#if defined(MYS_IMPL_LOCAL) && !defined(MYS_DECL_LOCAL)
+#define MYS_DECL_LOCAL
+#endif
+
+#if !defined(MYS_DECL) && !defined(MYS_DECL_LOCAL)
+#define MYS_DECL
+#endif
+
+#if defined(MYS_DECL)         // Make libmys with public visibility.
 #define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_EXPORT extern
 #define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
 #define MYS_STATIC   MYS_ATTR_UNUSED static
-#elif defined(MYS_IMPL_LOCAL) // Make libmys with private visibility.
+#elif defined(MYS_DECL_LOCAL) // Make libmys with private visibility.
 #define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
 #define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
 #define MYS_STATIC   MYS_ATTR_UNUSED static
