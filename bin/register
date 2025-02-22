@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-VERSION="2023.03.20 4.1"
+VERSION="2025.02.22 4.2"
 
 import os
 import sys
@@ -20,6 +20,8 @@ mapper = {
     "bin64": "PATH",
     "lib": "LD_LIBRARY_PATH",
     "lib64": "LD_LIBRARY_PATH",
+    "lib/pkgconfig": "PKG_CONFIG_PATH",
+    "lib64/pkgconfig": "PKG_CONFIG_PATH",
     "include": None,
     "sbin": "PATH",
     #------
