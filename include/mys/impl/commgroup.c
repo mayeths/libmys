@@ -18,6 +18,69 @@
 #include <numa.h>
 #endif
 
+static int _mys_commgroup_sort_str(const void *a, const void *b)
+{
+    return strcmp(*(const char **)a, *(const char **)b);
+}
+
+#define _MAX_HOSTNAME_LEN 256
+static void _mys_commgroup_get_rank2node(mys_MPI_Comm comm, int *rank2node)
+{
+    int myrank, nranks;
+    char hostname[_MAX_HOSTNAME_LEN];
+
+    mys_MPI_Comm_rank(comm, &myrank);
+    mys_MPI_Comm_size(comm, &nranks);
+
+    gethostname(hostname, _MAX_HOSTNAME_LEN);
+
+    char *all_hostnames = (char *)mys_calloc2(MYS_ARENA_COMMGROUP, _MAX_HOSTNAME_LEN, nranks);
+    mys_MPI_Allgather(hostname, _MAX_HOSTNAME_LEN, mys_MPI_CHAR, all_hostnames, _MAX_HOSTNAME_LEN, mys_MPI_CHAR, comm);
+
+    char **unique_names = (char **)mys_calloc2(MYS_ARENA_COMMGROUP, sizeof(char *), nranks);
+    int unique_count = 0;
+
+    for (int i = 0; i < nranks; ++i) {
+        char *current_hostname = all_hostnames + i * _MAX_HOSTNAME_LEN;
+        int found = 0;
+        for (int j = 0; j < unique_count; ++j) {
+            if (strcmp(unique_names[j], current_hostname) == 0) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            unique_names[unique_count] = (char *)mys_calloc2(MYS_ARENA_COMMGROUP, _MAX_HOSTNAME_LEN, 1);
+            strcpy(unique_names[unique_count], current_hostname);
+            unique_count++;
+        }
+    }
+
+    qsort(unique_names, unique_count, sizeof(char *), _mys_commgroup_sort_str);
+
+    int *name2node = (int *)mys_calloc2(MYS_ARENA_COMMGROUP, sizeof(int), nranks);
+    for (int i = 0; i < unique_count; ++i) {
+        name2node[i] = i;
+    }
+
+    int mynode = -1;
+    for (int j = 0; j < unique_count; ++j) {
+        if (strcmp(unique_names[j], hostname) == 0) {
+            mynode = name2node[j];
+            break;
+        }
+    }
+    mys_MPI_Allgather(&mynode, 1, mys_MPI_INT, rank2node, 1, mys_MPI_INT, comm);
+
+    for (int i = 0; i < unique_count; ++i) {
+        mys_free2(MYS_ARENA_COMMGROUP, unique_names[i], _MAX_HOSTNAME_LEN);
+    }
+    mys_free2(MYS_ARENA_COMMGROUP, unique_names, sizeof(char *) * nranks);
+    mys_free2(MYS_ARENA_COMMGROUP, all_hostnames, _MAX_HOSTNAME_LEN * nranks);
+    mys_free2(MYS_ARENA_COMMGROUP, name2node, sizeof(int) * nranks);
+}
+#undef _MAX_HOSTNAME_LEN
+
 static int _mys_commgroup_sort_i4(const void* _a, const void* _b)
 {
     const int *a = (const int *)_a;
@@ -110,7 +173,13 @@ MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(mys_MPI_Comm global_comm)
     int global_nranks, global_myrank;
     mys_MPI_Comm_size(global_comm, &global_nranks);
     mys_MPI_Comm_rank(global_comm, &global_myrank);
-
+#if 1
+    int *rank2node = (int *)mys_calloc2(MYS_ARENA_COMMGROUP, sizeof(int), global_nranks);
+    _mys_commgroup_get_rank2node(global_comm, rank2node);
+    mys_commgroup_t *node_group = mys_commgroup_create(global_comm, rank2node[global_myrank], global_myrank);
+    mys_free2(MYS_ARENA_COMMGROUP, rank2node, sizeof(int) * global_nranks);
+    return node_group;
+#else
     mys_MPI_Comm local_comm = mys_MPI_COMM_NULL;
     int node_root = global_myrank;
     mys_MPI_Comm_split_type(global_comm, mys_MPI_COMM_TYPE_SHARED, global_myrank, mys_MPI_INFO_NULL, &local_comm);
@@ -118,6 +187,7 @@ MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(mys_MPI_Comm global_comm)
     mys_MPI_Comm_free(&local_comm);
 
     return mys_commgroup_create(global_comm, node_root, global_myrank);
+#endif
 }
 
 #ifdef MYS_ENABLE_NUMA
