@@ -568,6 +568,11 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
     size_t logmax = sizeof(buflog);
     bool is_timeout = _mys_debug_G.timeout_inited && signo == _mys_debug_G.timeout_signal && _mys_debug_G.timeout_reached;
 
+#ifndef MYS_DEBUG_CATCH_ABORT
+    if (code == SI_USER && !is_timeout) // prevent MPI_Abort printing
+        goto finished;
+#endif
+
     switch (signo) {
 #define _MYS_CASE_SIG(s, fmt, ...) s:                       \
         snprintf(cause, sizeof(cause), fmt, ##__VA_ARGS__); \
@@ -693,8 +698,10 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
 #undef _YFMT4
 #undef _YFMT5
 #undef _YFMT6
-    ssize_t written = write(_mys_debug_G.outfd, buflog, loglen);
-    (void)written;
+    write(_mys_debug_G.outfd, buflog, loglen);
+#ifndef MYS_DEBUG_CATCH_ABORT
+finished:
+#endif
     int post_action = _mys_debug_G.post_action;
     if (post_action == MYS_DEBUG_ACTION_EXIT) {
         // when there are a lot of ranks, immediately exit will
