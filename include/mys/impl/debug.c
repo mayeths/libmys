@@ -567,6 +567,7 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
     size_t loglen = 0;
     size_t logmax = sizeof(buflog);
     bool is_timeout = _mys_debug_G.timeout_inited && signo == _mys_debug_G.timeout_signal && _mys_debug_G.timeout_reached;
+    int post_action = 0;
 
 #ifndef MYS_DEBUG_CATCH_ABORT
     if (code == SI_USER && !is_timeout) // prevent MPI_Abort printing
@@ -702,7 +703,7 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
 #ifndef MYS_DEBUG_CATCH_ABORT
 finished:
 #endif
-    int post_action = _mys_debug_G.post_action;
+    post_action = _mys_debug_G.post_action;
     if (post_action == MYS_DEBUG_ACTION_EXIT) {
         // when there are a lot of ranks, immediately exit will
         // cause some of them failed to output information.
