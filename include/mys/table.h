@@ -52,7 +52,7 @@ typedef struct {
 // uint64_t send_bytes = 1024;
 // double tstart = 1e-3;
 // double tend = 2e-3;
-// mys_table_t *table = mys_table_create(MPI_COMM_WORLD, 4, "int32_t dest", "uint64_t send_byte", "double tstart", "double tend");
+// mys_table_t *table = mys_table_create(MPI_COMM_WORLD, 4, "int32_t dest", "uint64_t send_byte", "double%.6e tstart", "double%.6e tend");
 // for (size_t i = 0; i < num_dests; i++) {
 //     mys_table_append_cell(table, dests[i], send_bytes[i], tstarts[i], tends[i]);
 // }
