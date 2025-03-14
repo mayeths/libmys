@@ -98,6 +98,7 @@
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_USED __attribute__((used))
 #define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
@@ -115,6 +116,7 @@
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_USED __attribute__((used))
 #define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
@@ -128,6 +130,7 @@
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_USED __attribute__((used))
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
@@ -141,6 +144,7 @@
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_USED __attribute__((used))
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE /* No equivalent attribute */
 #define MYS_ATTR_ALWAYS_INLINE __forceinline__
@@ -154,6 +158,7 @@
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_USED __attribute__((used))
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE /* No equivalent attribute */
 #define MYS_ATTR_ALWAYS_INLINE /* No equivalent attribute */
@@ -167,6 +172,7 @@
 #define MYS_ATTR_IMPORT __declspec(dllimport)
 #define MYS_ATTR_LOCAL /* No equivalent attribute */
 #define MYS_ATTR_UNUSED /* No equivalent attribute */
+#define MYS_ATTR_USED /* No equivalent attribute */
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE __declspec(noinline)
 #define MYS_ATTR_ALWAYS_INLINE __forceinline
@@ -180,6 +186,7 @@
 #define MYS_ATTR_IMPORT
 #define MYS_ATTR_LOCAL
 #define MYS_ATTR_UNUSED
+#define MYS_ATTR_USED
 #define MYS_ATTR_NO_INSTRUMENT
 #define MYS_ATTR_NOINLINE
 #define MYS_ATTR_ALWAYS_INLINE inline
@@ -204,15 +211,18 @@
 #endif
 
 #if defined(MYS_DECL)         // Make libmys with public visibility.
-#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_EXPORT extern
+#define MYS_PUBLIC   MYS_ATTR_USED MYS_ATTR_EXPORT extern
+#define MYS_PUBVAR   MYS_ATTR_EXPORT extern
 #define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
 #define MYS_STATIC   MYS_ATTR_UNUSED static
 #elif defined(MYS_DECL_LOCAL) // Make libmys with private visibility.
-#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
+#define MYS_PUBLIC   MYS_ATTR_USED MYS_ATTR_LOCAL extern
+#define MYS_PUBVAR   MYS_ATTR_LOCAL extern
 #define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
 #define MYS_STATIC   MYS_ATTR_UNUSED static
 #else
-#define MYS_PUBLIC   MYS_ATTR_UNUSED MYS_ATTR_IMPORT extern
+#define MYS_PUBLIC   MYS_ATTR_USED MYS_ATTR_IMPORT extern
+#define MYS_PUBVAR   MYS_ATTR_IMPORT extern
 #define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
 #define MYS_STATIC   MYS_ATTR_UNUSED static
 #endif
