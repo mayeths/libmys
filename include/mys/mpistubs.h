@@ -121,6 +121,7 @@ MYS_PUBLIC int mys_MPI_Init(int *argc, char ***argv);
 MYS_PUBLIC int mys_MPI_Init_thread(int *argc, char ***argv, int required, int *provided);
 MYS_PUBLIC int mys_MPI_Initialized(int *flag);
 MYS_PUBLIC int mys_MPI_Finalize();
+MYS_PUBLIC int mys_MPI_Abort(mys_MPI_Comm comm, int errorcode);
 MYS_PUBLIC int mys_MPI_Comm_rank(mys_MPI_Comm comm, int *rank);
 MYS_PUBLIC int mys_MPI_Comm_size(mys_MPI_Comm comm, int *size);
 MYS_PUBLIC int mys_MPI_Comm_split(mys_MPI_Comm comm, int n, int m, mys_MPI_Comm *comms);

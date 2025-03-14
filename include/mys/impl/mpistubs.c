@@ -80,6 +80,13 @@ MYS_PUBLIC int mys_MPI_Finalize()
     return mys_MPI_SUCCESS;
 }
 
+MYS_PUBLIC int mys_MPI_Abort(mys_MPI_Comm comm, int errorcode)
+{
+    (void)comm;
+    exit(errorcode);
+    return mys_MPI_SUCCESS;
+}
+
 MYS_PUBLIC int mys_MPI_Comm_rank(mys_MPI_Comm comm, int *rank)
 {
     (void)comm;
@@ -609,6 +616,11 @@ MYS_PUBLIC int mys_MPI_Init_thread(int *argc, char ***argv, int required, int *p
 MYS_PUBLIC int mys_MPI_Finalize()
 {
     return MPI_Finalize();
+}
+
+MYS_PUBLIC int mys_MPI_Abort(mys_MPI_Comm comm, int errorcode)
+{
+    return MPI_Abort(comm, errorcode);
 }
 
 MYS_PUBLIC int mys_MPI_Comm_rank(mys_MPI_Comm comm, int *rank)
