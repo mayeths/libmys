@@ -31,6 +31,8 @@ etc/omz/custom/
 etc/omz/cache/
 etc/omz/log/
 
+HPCG-Benchmark*.txt
+hpcg*.txt
 
 # ext
 ext/*
