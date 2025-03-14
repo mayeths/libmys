@@ -47,16 +47,16 @@ typedef struct mys_arena_t {
 
 #define MYS_ARENA_INITIALIZER(name) { /*name=*/name, /*peak=*/0, /*alive=*/0, /*freed=*/0, /*total=*/0, /*_registered=*/false, /*_enable_debug*/false, /*_debug_trace*/NULL, /*_total_count*/0, /*_alive_count*/0, /*_freed_count*/0 }
 
-MYS_PUBLIC mys_arena_t mys_predefined_arena_log;
-MYS_PUBLIC mys_arena_t mys_predefined_arena_pool;
-MYS_PUBLIC mys_arena_t mys_predefined_arena_debug;
-MYS_PUBLIC mys_arena_t mys_predefined_arena_format;
-MYS_PUBLIC mys_arena_t mys_predefined_arena_commgroup;
-MYS_PUBLIC mys_arena_t mys_predefined_arena_os;
-MYS_PUBLIC mys_arena_t mys_predefined_arena_stat;
-MYS_PUBLIC mys_arena_t mys_predefined_arena_str;
-MYS_PUBLIC mys_arena_t mys_predefined_arena_trace;
-MYS_PUBLIC mys_arena_t mys_predefined_arena_user;
+MYS_PUBVAR mys_arena_t mys_predefined_arena_log;
+MYS_PUBVAR mys_arena_t mys_predefined_arena_pool;
+MYS_PUBVAR mys_arena_t mys_predefined_arena_debug;
+MYS_PUBVAR mys_arena_t mys_predefined_arena_format;
+MYS_PUBVAR mys_arena_t mys_predefined_arena_commgroup;
+MYS_PUBVAR mys_arena_t mys_predefined_arena_os;
+MYS_PUBVAR mys_arena_t mys_predefined_arena_stat;
+MYS_PUBVAR mys_arena_t mys_predefined_arena_str;
+MYS_PUBVAR mys_arena_t mys_predefined_arena_trace;
+MYS_PUBVAR mys_arena_t mys_predefined_arena_user;
 
 #define MYS_ARENA_LOG ((mys_arena_t *)&mys_predefined_arena_log) // The arena used by mys_log
 #define MYS_ARENA_POOL ((mys_arena_t *)&mys_predefined_arena_pool) // The arena used by mys_pool

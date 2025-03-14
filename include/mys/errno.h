@@ -22,7 +22,7 @@
  * @note 4. Any libmys function can alter the value in `mys_errno` before return, whether or not they detect errors.
  * @note 5. A few functions require the caller to preset errno to `0` and test it afterwards to see if an error was detected.
  */
-MYS_PUBLIC mys_thread_local int mys_errno;
+MYS_PUBVAR mys_thread_local int mys_errno;
 
 // `MYS_GOTOIF(arg1 == NULL, MYS_EINVAL, failed);`
 #define MYS_GOTOIF(errcond, errcode, label) do { \
