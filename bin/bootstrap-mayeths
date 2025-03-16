@@ -105,7 +105,7 @@ cd - >/dev/null
 tar -xf "$SOURCE_DIR/ncurses-6.2.tar.gz" -C "$MYS_MODDIR/CACHE"
 cd "$MYS_MODDIR/CACHE/ncurses-6.2"
 echo -e "\033[0;36mBuilding ncurses...\033[0m"
-(./configure --prefix="$MYS_MODDIR/BASE" && make -j && make install) >./stdout.log 2>./stderr.log
+(./configure --prefix="$MYS_MODDIR/BASE" CFLAGS="-fPIC" && make -j && make install) >./stdout.log 2>./stderr.log
 [[ $? -ne 0 ]] && echo -e "\033[0;31mFailed to build ncurses at $PWD. See stdout.log and stderr.log there.\033[0m" && exit 1
 cd - >/dev/null
 
