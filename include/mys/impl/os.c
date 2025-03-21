@@ -661,8 +661,7 @@ MYS_PUBLIC int mys_numa_affinity_num(pid_t pid)
     free(numas);
     return numa_affinity_num;
 }
-
-#endif
+#endif /*MYS_ENABLE_NUMA*/
 
 /* Safe string to numeric https://stackoverflow.com/a/18544436 */
 

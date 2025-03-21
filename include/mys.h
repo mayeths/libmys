@@ -80,6 +80,7 @@ extern "C" {
 #include "mys/pool.h"
 #include "mys/pmparser.h"
 #include "mys/rand.h"
+#include "mys/require.h"
 #include "mys/statistic.h"
 #include "mys/string.h"
 #include "mys/thread.h"
@@ -123,6 +124,7 @@ extern "C" {
 #include "mys/impl/trace.c"
 #include "mys/impl/mpistubs.c"
 #include "mys/impl/misc.c"
+#include "mys/impl/require.c"
 #include "mys/impl/commgroup.c"
 #include "mys/impl/table.c"
 #ifndef MYS_DISABLE_DEBUG

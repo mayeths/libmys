@@ -99,6 +99,7 @@
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
 #define MYS_ATTR_USED __attribute__((used))
+#define MYS_DEPRECATED(msg) __attribute__((__deprecated__(msg)))
 #define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
@@ -117,6 +118,7 @@
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
 #define MYS_ATTR_USED __attribute__((used))
+#define MYS_DEPRECATED(msg) __attribute__((__deprecated__(msg)))
 #define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
@@ -131,6 +133,7 @@
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
 #define MYS_ATTR_USED __attribute__((used))
+#define MYS_DEPRECATED(msg) __attribute__((__deprecated__(msg)))
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE __attribute__((noinline))
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
@@ -145,6 +148,7 @@
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
 #define MYS_ATTR_USED __attribute__((used))
+#define MYS_DEPRECATED(msg) __attribute__((__deprecated__(msg)))
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE /* No equivalent attribute */
 #define MYS_ATTR_ALWAYS_INLINE __forceinline__
@@ -159,6 +163,7 @@
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
 #define MYS_ATTR_UNUSED __attribute__((unused))
 #define MYS_ATTR_USED __attribute__((used))
+#define MYS_DEPRECATED(msg) __attribute__((__deprecated__(msg)))
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE /* No equivalent attribute */
 #define MYS_ATTR_ALWAYS_INLINE /* No equivalent attribute */
@@ -173,6 +178,7 @@
 #define MYS_ATTR_LOCAL /* No equivalent attribute */
 #define MYS_ATTR_UNUSED /* No equivalent attribute */
 #define MYS_ATTR_USED /* No equivalent attribute */
+#define MYS_DEPRECATED(msg) __declspec(deprecated(msg))
 #define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
 #define MYS_ATTR_NOINLINE __declspec(noinline)
 #define MYS_ATTR_ALWAYS_INLINE __forceinline
@@ -187,6 +193,7 @@
 #define MYS_ATTR_LOCAL
 #define MYS_ATTR_UNUSED
 #define MYS_ATTR_USED
+#define MYS_DEPRECATED(msg)
 #define MYS_ATTR_NO_INSTRUMENT
 #define MYS_ATTR_NOINLINE
 #define MYS_ATTR_ALWAYS_INLINE inline
