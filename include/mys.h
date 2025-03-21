@@ -9,7 +9,7 @@
  * https://opensource.org/licenses/MIT
  */
 #ifndef MYS_VERSION
-#define MYS_VERSION 202408L
+#define MYS_VERSION 202503L
 #endif
 
 #include "mys/_config.h"
