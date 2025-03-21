@@ -165,7 +165,7 @@ MYS_PUBLIC void mys_commgroup_release(mys_commgroup_t *group)
     mys_free2(MYS_ARENA_COMMGROUP, group->_group_ids, sizeof(int) * group->global_nranks);
     mys_free2(MYS_ARENA_COMMGROUP, group->_local_ranks, sizeof(int) * group->global_nranks);
     mys_free2(MYS_ARENA_COMMGROUP, group->_brothers, sizeof(int) * group->local_nranks);
-    free(group);
+    mys_free2(MYS_ARENA_COMMGROUP, group, sizeof(mys_commgroup_t));
 }
 
 MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(mys_MPI_Comm global_comm)
