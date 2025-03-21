@@ -42,6 +42,9 @@ typedef struct {
     int *attr_types;
     char **attr_formats;
     char **attr_names;
+    char *schema;
+    char **comments;
+    size_t num_comments;
     size_t cell_size;
     size_t num_cells;
     size_t capacity;
@@ -58,8 +61,10 @@ typedef struct {
 // }
 // mys_table_dump(table, "test.mystable");
 
-mys_table_t *mys_table_create(mys_MPI_Comm comm, size_t num_attrs, ...);
-void mys_table_destroy(mys_table_t **table);
-void mys_table_append_cell(mys_table_t *table, ...);
-void mys_table_dump(mys_table_t *table, const char *file_name);
+MYS_PUBLIC mys_table_t *mys_table_create(mys_MPI_Comm comm, size_t num_attrs, ...);
+MYS_PUBLIC void mys_table_destroy(mys_table_t **table);
+MYS_PUBLIC void mys_table_append_cell(mys_table_t *table, ...);
+MYS_PUBLIC void mys_table_set_schema(mys_table_t *table, const char *schema); // only rank 0 can set
+MYS_PUBLIC void mys_table_add_comment(mys_table_t *table, const char *comment); // only rank 0 can add
+MYS_PUBLIC void mys_table_dump(mys_table_t *table, const char *file_name);
 // void mys_table_dump_excel(mys_table_t *table, const char *file_name);

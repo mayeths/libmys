@@ -30,6 +30,9 @@ mys_table_t *mys_table_create(mys_MPI_Comm comm, size_t num_attrs, ...) {
     table->attr_types = (int *)malloc(num_attrs * sizeof(int));
     table->attr_formats = (char **)malloc(num_attrs * sizeof(char *));
     table->attr_names = (char **)malloc(num_attrs * sizeof(char *));
+    table->schema = NULL;
+    table->comments = NULL;
+    table->num_comments = 0;
     table->cell_size = 0;
     table->num_cells = 0;
     table->capacity = 0;
@@ -93,6 +96,12 @@ void mys_table_destroy(mys_table_t **table_ptr) {
     free(table->attr_names);
     free(table->attr_formats);
     free(table->attr_types);
+    if (table->schema) free(table->schema);
+    if (table->num_comments != 0) {
+        for (size_t i = 0; i < table->num_comments; i++)
+            free(table->comments[i]);
+        free(table->comments);
+    }
     free(table);
     *table_ptr = NULL;
 }
@@ -141,6 +150,22 @@ void mys_table_append_cell(mys_table_t *table, ...) {
     table->cells[table->num_cells++] = cell;
 }
 
+void mys_table_set_schema(mys_table_t *table, const char *schema)
+{
+    if (table->schema != NULL)
+        free(table->schema);
+    table->schema = strdup(schema);
+}
+
+MYS_PUBLIC void mys_table_add_comment(mys_table_t *table, const char *comment)
+{
+    char *new_comment = strdup(comment);
+    char **new_comments = (char **)realloc(table->comments, (table->num_comments + 1) * sizeof(char *));
+    new_comments[table->num_comments] = new_comment;
+    table->comments = new_comments;
+    table->num_comments++;
+}
+
 void mys_table_dump(mys_table_t *table, const char *file_name) {
     int myrank, nranks;
     mys_MPI_Comm_rank(table->comm, &myrank);
@@ -154,9 +179,19 @@ void mys_table_dump(mys_table_t *table, const char *file_name) {
             return;
         }
         // Write header
-        fprintf(file, "################################### Mayeths Table ##############################\n");
+        fprintf(file, "################################ Mayeths Table #################################\n");
         fprintf(file, "# Version 1\n");
+        for (size_t i = 0; i < table->num_comments; i++) {
+            fprintf(file, "# %s\n", table->comments[i]);
+        }
         fprintf(file, "################################################################################\n");
+        // Write meta
+        if (table->schema == NULL) {
+            fprintf(file, "[schema] none\n");
+        } else {
+            fprintf(file, "[schema] %s\n", table->schema);
+        }
+        fprintf(file, "[attributes] ");
         for (size_t i = 0; i < table->num_attrs; i++) {
             const char *attr_type;
             switch (table->attr_types[i]) {
