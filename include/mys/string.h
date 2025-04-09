@@ -71,7 +71,8 @@ MYS_PUBLIC mys_string_t *mys_string_dup(const char *str2);
 MYS_PUBLIC mys_string_t *mys_string_dup_n(const char *str2, size_t len);
 
 MYS_PUBLIC ssize_t mys_parse_readable_size(const char *text);
-MYS_PUBLIC void mys_readable_size(char **ptr, size_t bytes, size_t precision);
+MYS_PUBLIC void mys_to_readable_size(size_t bytes, size_t precision, char *buffer, size_t buflen);
+MYS_PUBLIC void mys_readable_size(char **ptr, size_t bytes, size_t precision) MYS_DEPRECATED("Use mys_to_readable_size instead");
 
 MYS_PUBLIC int mys_str_to_int(const char *str, int default_val);
 MYS_PUBLIC long mys_str_to_long(const char *str, long default_val);

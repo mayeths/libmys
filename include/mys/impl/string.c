@@ -91,6 +91,18 @@ MYS_PUBLIC ssize_t mys_parse_readable_size(const char *text)
 #undef Zbase
 }
 
+MYS_PUBLIC void mys_to_readable_size(size_t bytes, size_t precision, char *buffer, size_t buflen)
+{
+    int i = 0;
+    const char* units[] = {"Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+    double size = bytes;
+    while (size > 1024) {
+        size /= 1024;
+        i++;
+    }
+    snprintf(buffer, buflen, "%.*f %s", (int)precision, size, units[i]);
+}
+
 MYS_PUBLIC void mys_readable_size(char **ptr, size_t bytes, size_t precision)
 {
     int i = 0;
