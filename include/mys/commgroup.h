@@ -37,6 +37,7 @@ typedef struct mys_commgroup_t
     int *_local_ranks; // size=global_nranks. _local_ranks[global_rank] is the local_rank in group
     int *_brothers; // size=local_nranks. _brothers[local_rank] is the global_rank of each group_member in the same group
     int *_neighbors; // size=group_num. _neighbors[group_id] is the global_rank of each group member that has the same local_myrank to me
+    int *_group_sizes; // size=group_num. _group_sizes[group_id] is the size of the group
 } mys_commgroup_t;
 
 /**
@@ -101,6 +102,12 @@ MYS_PUBLIC int mys_query_brother(mys_commgroup_t *group, int local_rank);
  *      or that group doesn't has corresponding neighbor that has the same `local_myrank`
  */
 MYS_PUBLIC int mys_query_neighbor(mys_commgroup_t *group, int group_id);
+/**
+ * @brief Query the size of the group (Support querying rank in other group)
+ * @param group_id The groud id to be query
+ * @return The size of the group. -1 if provided invalid group_id
+ */
+MYS_PUBLIC int mys_query_group_size(mys_commgroup_t *group, int group_id);
 
 /*
 build: mpicc -I${MYS_DIR}/include a.c -lnuma -lrt
