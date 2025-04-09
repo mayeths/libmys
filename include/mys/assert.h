@@ -42,7 +42,7 @@
 #define _ASX(exp, fmt, ...) if (!(exp)) {           \
     int _rank_;                                     \
     mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &_rank_); \
-    mys_log_who(_rank_, MYS_LOG_FATAL,              \
+    mys_log_who(MYS_LOGGER_G, _rank_, MYS_LOG_FATAL,\
         __FILE__, __LINE__,                         \
         (fmt), ##__VA_ARGS__);                      \
     /*mys_MPI_Finalize();*/                         \
