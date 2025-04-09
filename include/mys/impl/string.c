@@ -198,10 +198,10 @@ MYS_PUBLIC int mys_string_append_n(mys_string_t *str, const char *other, size_t 
 
 MYS_PUBLIC void mys_string_clear(mys_string_t *str)
 {
-    mys_string_truncate(str, 0);
+    mys_string_resize(str, 0);
 }
 
-MYS_PUBLIC void mys_string_truncate(mys_string_t *str, size_t len)
+MYS_PUBLIC void mys_string_resize(mys_string_t *str, size_t len)
 {
     if (len < str->size) {
         // Truncate the string by adjusting its size
@@ -215,6 +215,7 @@ MYS_PUBLIC void mys_string_truncate(mys_string_t *str, size_t len)
         // Fill the extended area with null characters
         memset(str->text + str->size, '\0', len - str->size);
         str->size = len;
+        str->text[len] = '\0'; // Null-terminate the string
     }
 }
 

@@ -64,7 +64,7 @@ MYS_PUBLIC int mys_string_append(mys_string_t *str, const char *other);
 MYS_PUBLIC int mys_string_append_n(mys_string_t *str, const char *other, size_t len);
 MYS_PUBLIC int mys_string_append2(mys_string_t *str, mys_string_t *other);
 
-MYS_PUBLIC void mys_string_truncate(mys_string_t *str, size_t len);
+MYS_PUBLIC void mys_string_resize(mys_string_t *str, size_t len);
 MYS_PUBLIC void mys_string_clear(mys_string_t *str);
 
 MYS_PUBLIC mys_string_t *mys_string_dup(const char *str2);
