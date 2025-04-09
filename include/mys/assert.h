@@ -47,7 +47,7 @@
         (fmt), ##__VA_ARGS__);                      \
     /*mys_MPI_Finalize();*/                         \
     /*exit(0);*/                                    \
-    mys_MPI_Abort(mys_MPI_COMM_WORLD, 0);           \
+    mys_MPI_Abort(mys_MPI_COMM_WORLD, 1);           \
 }
 
 #define ASSERT(exp, fmt, ...) do { _ASX(exp, fmt, ##__VA_ARGS__);                   } while(0)
