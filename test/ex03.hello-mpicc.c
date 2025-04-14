@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#define OMPI_SKIP_MPICXX 1 // See https://github.com/open-mpi/ompi/issues/5157
 #include <mpi.h>
 
 #define MYS_IMPL
