@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mpi: [ 'mpich', 'openmpi', 'intelmpi']  # Test with MPICH, OpenMPI and IntelMPI
+        mpi: [ 'mpich', 'openmpi', 'intelmpi' ]  # Test with MPICH, OpenMPI and IntelMPI
     name: Test with ${{ matrix.mpi }}
     steps:
       - name: Checkout repository
@@ -33,3 +33,22 @@ jobs:
       #  run: |
       #    cd test
       #    mpiexec -n 2 ./test_executable  # Adjust the executable name and number of processes
+
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        mpi: [ 'mpich', 'openmpi' ]  # Test with MPICH and OpenMPI
+    name: Test with ${{ matrix.mpi }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up MPI (${{ matrix.mpi }})
+        uses: mpi4py/setup-mpi@v1
+        with:
+          mpi: ${{ matrix.mpi }}
+
+      - name: Navigate to test directory and run make
+        run: |
+          cd test
+          make
