@@ -362,14 +362,14 @@ MYS_PUBLIC void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t
 
 MYS_PUBLIC void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size)
 {
+    DEBUG_DELETE(arena, ptr, _old_size); // [debug] delete old record before realloc to make intel compiler happy
     void *new_ptr = realloc(ptr, size);
     if (new_ptr != NULL) {
-        if (ptr != new_ptr) {
-            DEBUG_DELETE(arena, ptr, _old_size);
-            DEBUG_INSERT(arena, new_ptr, size);
-        }
-        mys_free_record(arena, _old_size);
-        MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size);
+        DEBUG_INSERT(arena, new_ptr, size); // [debug] insert new record after realloc
+        mys_free_record(arena, _old_size); // record freed size
+        MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size); // record allocated size
+    } else {
+        DEBUG_INSERT(arena, ptr, _old_size); // [debug] realloc failed, restore old record
     }
     return new_ptr;
 }
