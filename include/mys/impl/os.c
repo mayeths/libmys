@@ -27,8 +27,7 @@
 // extern char *strdup(const char *s) __THROW;
 // extern ssize_t readlink(const char *path, char *buf, size_t bufsize) __THROW;
 
-
-static size_t _mys_readfd(char **buffer, size_t *buffer_size, int fd, bool enable_realloc)
+MYS_PUBLIC size_t mys_readfd(char **buffer, size_t *buffer_size, int fd, bool enable_realloc)
 {
     size_t read_size = 0;
 
@@ -226,8 +225,8 @@ MYS_PUBLIC mys_prun_t mys_prun_create(const char *command, char *buf_out, size_t
     if (!popen.alive)
         return prun;
 
-    prun.len_out = _mys_readfd(&prun.out, &prun._cap_out, popen.ofd, prun._alloced);
-    prun.len_err = _mys_readfd(&prun.err, &prun._cap_err, popen.efd, prun._alloced);
+    prun.len_out = mys_readfd(&prun.out, &prun._cap_out, popen.ofd, prun._alloced);
+    prun.len_err = mys_readfd(&prun.err, &prun._cap_err, popen.efd, prun._alloced);
     prun.len_out = _mys_cut_suffix_space(prun.out, prun.len_out);
     prun.len_err = _mys_cut_suffix_space(prun.err, prun.len_err);
     mys_popen_wait(&popen);
@@ -263,8 +262,8 @@ MYS_PUBLIC mys_prun_t mys_prun_create2(const char *command, ...)
     if (!popen.alive)
         return prun;
 
-    prun.len_out = _mys_readfd(&prun.out, &prun._cap_out, popen.ofd, prun._alloced);
-    prun.len_err = _mys_readfd(&prun.err, &prun._cap_err, popen.efd, prun._alloced);
+    prun.len_out = mys_readfd(&prun.out, &prun._cap_out, popen.ofd, prun._alloced);
+    prun.len_err = mys_readfd(&prun.err, &prun._cap_err, popen.efd, prun._alloced);
     prun.len_out = _mys_cut_suffix_space(prun.out, prun.len_out);
     prun.len_err = _mys_cut_suffix_space(prun.err, prun.len_err);
     mys_popen_wait(&popen);
