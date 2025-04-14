@@ -45,6 +45,7 @@
 #endif
 
 #ifndef MYS_NO_MPI
+#define OMPI_SKIP_MPICXX 1 // make C++ compiler happy about deprecated ompi_mpi_cxx_op_intercept. See https://github.com/open-mpi/ompi/issues/5157
 #include <mpi.h>  // intel mpiicpc throw error if mpi.h is include in extern "C"
 #endif
 
