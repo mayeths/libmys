@@ -302,20 +302,22 @@ MYS_PUBLIC mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
         arena->peak = arena->alive;                         \
 } while (0)
 
-#define DEBUG_INSERT(arena, ptr, size) do {                                  \
+#define DEBUG_INSERT(arena, ptr, size) do {                                      \
     mys_arena_debugger_t **head = (mys_arena_debugger_t **)&arena->_debug_trace; \
-    if (arena->_enable_debug)                                                \
-        arena->_total_count += 1;                                            \
-        arena->_alive_count += 1;                                            \
-        _mys_arena_debug_insert(head, ptr, size);                            \
+    if (arena->_enable_debug) {                                                  \
+        arena->_total_count += 1;                                                \
+        arena->_alive_count += 1;                                                \
+        _mys_arena_debug_insert(head, ptr, size);                                \
+    }                                                                            \
 } while (0)
 
-#define DEBUG_DELETE(arena, ptr, size) do {                                        \
+#define DEBUG_DELETE(arena, ptr, size) do {                                      \
     mys_arena_debugger_t **head = (mys_arena_debugger_t **)&arena->_debug_trace; \
-    if (arena->_enable_debug)                                                \
-        arena->_alive_count -= 1;                                            \
-        arena->_freed_count += 1;                                            \
-        _mys_arena_debug_delete(head, ptr, size);                            \
+    if (arena->_enable_debug) {                                                  \
+        arena->_alive_count -= 1;                                                \
+        arena->_freed_count += 1;                                                \
+        _mys_arena_debug_delete(head, ptr, size);                                \
+    }                                                                            \
 } while (0)
 
 MYS_PUBLIC void* mys_malloc2(mys_arena_t *arena, size_t size)
