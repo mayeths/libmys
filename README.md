@@ -1,16 +1,18 @@
 # Libmys: Mayeths' Library
 
-Mayeths' library for daily development (wow@mayeths.com).
+This is Mayeths' library for everyday coding (wow@mayeths.com, huanghp22@mails.tsinghua.edu.cn).
 
-I've put in a lot of effort to make this code portable, especially the C/C++ core in `include/mys`, which I use every day. It's designed to run across various systems and architectures, though there's no warranty. I use `-Wall -Wextra -Werror` to ensure usability, but many functions were written from scratch as needed. Bugs were fixed as they came up, meaning I only changed the code when I noticed something off. My primary development environment has shifted to macOS, with Linux for most remote development. This means the code has been thoroughly tested on POSIX-compliant systems.
+I've put a lot of effort into making this code easy to use on different systems. The main C/C++ part is in `include/mys`, which I use every day. It's designed to work on POSIX systems (Linux, macOS) and different CPUs (x86_64 and arm). Still, I can't promise everything works perfectly. I use strict compile options `-Wall -Wextra -Werror` and test it on Linux and macOS through GitHub Actions. I wrote many of the functions myself and fixed bugs as I found them, so not all parts were tested ahead of time. I mostly code on macOS and use Linux when working remotely, so the code works well on both systems.
 
-Libmys is licensed under the MIT license, including `include/mys`. Third-party code (`include/mys3` and any files indicating their original source) retains its original license, and users should check their licenses before using Libmys in a commercial environment.
+Libmys uses the MIT license, including everything in `include/mys`. Any third-party code (like `include/mys3` or files that show where they came from) keeps its original license. If you want to use Libmys in commercial projects, please check the licenses first.
 
-### The history of libmys
+### The story behind libmys
 
-I originally created this library to avoid repetitive and messy coding. As it grew, I realized it could include more than just C/C++ files. Now, it also houses config files, shell scripts, Python modules, and more. So, it has evolved beyond being just a simple C/C++ library.
+I first made this library to avoid writing the same messy code again and again. As time passed, I saw that it could be more than just C/C++ files. Now it also includes config files, shell scripts, Python code, and more. So it's not just a simple header-only library anymore.
 
-The first commit of libmys had just two header files, one for a C project and another for a C++ project. I loved copying and pasting them into different projects, using many static variables and functions. Over time, it's grown into a substantial repository, packed with both my code and code sourced from the internet.
+In the beginning, libmys only had two header files (one for C, and one for C++). I liked copying and pasting them into different projects, and they used a lot of static variables and functions. Over time, the library got much bigger, filled with both my own code and useful code I found online.
+
+The design philosophy comes from [stb](https://github.com/nothings/stb), a single-file public domain libraries for C/C++. stb use macro `STB_IMAGE_IMPLEMENTATION` to actually enable the function definitions. I use `MYS_IMPL` in a similar way.
 
 ### Setting up libmys
 
