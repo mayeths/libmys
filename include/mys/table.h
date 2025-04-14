@@ -33,7 +33,14 @@ enum {
 };
 
 typedef struct {
-    uint8_t values[0];  // Flexible array member
+    /*
+    * https://stackoverflow.com/a/247040
+    * Uses portable [1] array pattern instead of C99 [] because:
+    * 1. Need to support pre-C99 compilers
+    * 2. Want identical memory layout in C and C++
+    * 3. offsetof() handles alignment correctly
+    */
+    uint8_t values[1];  // Flexible array member
 } mys_table_cell_t;
 
 typedef struct {

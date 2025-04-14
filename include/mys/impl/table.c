@@ -113,7 +113,7 @@ void mys_table_append_cell(mys_table_t *table, ...) {
         table->cells = (mys_table_cell_t **)realloc(table->cells, table->capacity * sizeof(mys_table_cell_t *));
     }
 
-    mys_table_cell_t *cell = (mys_table_cell_t *)malloc(sizeof(mys_table_cell_t) + table->cell_size);
+    mys_table_cell_t *cell = (mys_table_cell_t *)malloc(offsetof(mys_table_cell_t, values) + table->cell_size);
 
     va_list args;
     va_start(args, table);

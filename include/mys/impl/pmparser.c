@@ -56,9 +56,9 @@ MYS_PUBLIC mys_procmaps_t* mys_pmparser_parse(int pid)
     mys_procmaps_t* maps_it = (mys_procmaps_t*)malloc(sizeof(mys_procmaps_t));
     char maps_path[500];
     if(pid>=0 ){
-        sprintf(maps_path,"/proc/%d/maps",pid);
+        snprintf(maps_path,sizeof(maps_path),"/proc/%d/maps",pid);
     }else{
-        sprintf(maps_path,"/proc/self/maps");
+        snprintf(maps_path,sizeof(maps_path),"/proc/self/maps");
     }
     FILE* file=fopen(maps_path,"r");
     if(!file){

@@ -362,14 +362,15 @@ MYS_PUBLIC void* mys_aligned_alloc2(mys_arena_t *arena, size_t alignment, size_t
 
 MYS_PUBLIC void* mys_realloc2(mys_arena_t *arena, void* ptr, size_t size, size_t _old_size)
 {
-    void *p = realloc(ptr, size);
-    if (p != NULL) {
+    void *old_ptr = ptr;
+    void *new_ptr = realloc(ptr, size);
+    if (new_ptr != NULL) {
         mys_free_record(arena, _old_size);
         MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size);
-        DEBUG_DELETE(arena, ptr, _old_size);
-        DEBUG_INSERT(arena, p, size);
+        DEBUG_DELETE(arena, old_ptr, _old_size);
+        DEBUG_INSERT(arena, new_ptr, size);
     }
-    return p;
+    return new_ptr;
 }
 
 MYS_PUBLIC void mys_free2(mys_arena_t *arena, void* ptr, size_t size)
