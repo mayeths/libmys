@@ -112,14 +112,14 @@ cd - >/dev/null
 tar -xf "$SOURCE_DIR/zsh-5.9.tar.xz" -C "$MYS_MODDIR/CACHE"
 cd "$MYS_MODDIR/CACHE/zsh-5.9"
 echo -e "\033[0;36mBuilding zsh...\033[0m"
-(./configure --prefix="$MYS_MODDIR/BASE" CFLAGS="-I$MYS_MODDIR/BASE/include" LDFLAGS="-L$MYS_MODDIR/BASE/lib" && make -j && make install) >./stdout.log 2>./stderr.log
+(./configure --prefix="$MYS_MODDIR/BASE" CFLAGS="-I$MYS_MODDIR/BASE/include -I$MYS_MODDIR/BASE/include/ncurses" LDFLAGS="-L$MYS_MODDIR/BASE/lib" && make -j && make install) >./stdout.log 2>./stderr.log
 [[ $? -ne 0 ]] && echo -e "\033[0;31mFailed to build zsh at $PWD. See stdout.log and stderr.log there.\033[0m" && exit 1
 cd - >/dev/null
 
 tar -xf "$SOURCE_DIR/tmux-3.3a.tar.gz" -C "$MYS_MODDIR/CACHE"
 cd "$MYS_MODDIR/CACHE/tmux-3.3a"
 echo -e "\033[0;36mBuilding tmux...\033[0m"
-(./configure --prefix="$MYS_MODDIR/BASE" CFLAGS="-I$MYS_MODDIR/BASE/include" LDFLAGS="-L$MYS_MODDIR/BASE/lib" && make -j && make install) >./stdout.log 2>./stderr.log
+(./configure --prefix="$MYS_MODDIR/BASE" CFLAGS="-I$MYS_MODDIR/BASE/include -I$MYS_MODDIR/BASE/include/ncurses" LDFLAGS="-L$MYS_MODDIR/BASE/lib" && make -j && make install) >./stdout.log 2>./stderr.log
 [[ $? -ne 0 ]] && echo -e "\033[0;31mFailed to build tmux at $PWD. See stdout.log and stderr.log there.\033[0m" && exit 1
 cd - >/dev/null
 
