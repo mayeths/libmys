@@ -7,12 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  test_linux:
+    name: Test with ${{ matrix.mpi }} on Linux
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mpi: [ 'mpich', 'openmpi', 'intelmpi' ]  # Test with MPICH, OpenMPI and IntelMPI
-    name: Test with ${{ matrix.mpi }}
+        mpi: [ 'mpich', 'openmpi', 'intelmpi' ]  # Test with MPICH, OpenMPI, and IntelMPI
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,18 +27,18 @@ jobs:
           cd test
           make
 
-      # Optional: Run the tests if the Makefile generates executables
-      # Replace 'test_executable' with the actual name of your test executable
+      # Optional: Run tests if Makefile generates executables
       # - name: Run tests
-      #  run: |
-      #    cd test
-      #    mpiexec -n 2 ./test_executable  # Adjust the executable name and number of processes
+      #   run: |
+      #     cd test
+      #     mpiexec -n 2 ./test_executable
 
+  test_macos:
+    name: Test with ${{ matrix.mpi }} on macOS
     runs-on: macos-latest
     strategy:
       matrix:
         mpi: [ 'mpich', 'openmpi' ]  # Test with MPICH and OpenMPI
-    name: Test with ${{ matrix.mpi }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
