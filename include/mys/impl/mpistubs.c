@@ -600,122 +600,218 @@ MYS_PUBLIC double mys_MPI_Wtime()
 
 MYS_PUBLIC int mys_MPI_Initialized(int *flag)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Initialized(flag);
+#else
     return MPI_Initialized(flag);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Init(int *argc, char ***argv)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Init(argc, argv);
+#else
     return MPI_Init(argc, argv);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Init_thread(argc, argv, required, provided);
+#else
     return MPI_Init_thread(argc, argv, required, provided);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Finalize()
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Finalize();
+#else
     return MPI_Finalize();
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Abort(mys_MPI_Comm comm, int errorcode)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Abort(comm, errorcode);
+#else
     return MPI_Abort(comm, errorcode);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Comm_rank(mys_MPI_Comm comm, int *rank)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Comm_rank(comm, rank);
+#else
     return MPI_Comm_rank(comm, rank);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Comm_size(mys_MPI_Comm comm, int *size)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Comm_size(comm, size);
+#else
     return MPI_Comm_size(comm, size);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Comm_split(mys_MPI_Comm comm, int n, int m, mys_MPI_Comm *comms)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Comm_split(comm, n, m, comms);
+#else
     return MPI_Comm_split(comm, n, m, comms);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Comm_split_type(mys_MPI_Comm comm, int split_type, int key, MPI_Info info, mys_MPI_Comm *newcomm)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Comm_split_type(comm, split_type, key, info, newcomm);
+#else
     return MPI_Comm_split_type(comm, split_type, key, info, newcomm);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Comm_dup(mys_MPI_Comm comm, mys_MPI_Comm *newcomm)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Comm_dup(comm, newcomm);
+#else
     return MPI_Comm_dup(comm, newcomm);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Comm_free(mys_MPI_Comm *comm)
 {
+#ifdef MYS_USE_PMPI
+   return PMPI_Comm_free(comm);
+#else
    return MPI_Comm_free(comm);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Probe(int source, int tag, mys_MPI_Comm comm, mys_MPI_Status *status)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Probe(source, tag, comm, status);
+#else
     return MPI_Probe(source, tag, comm, status);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Get_count(mys_MPI_Status *status, mys_MPI_Datatype datatype, int *count)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Get_count(status, datatype, count);
+#else
     return MPI_Get_count(status, datatype, count);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Recv(void *buf, int count, mys_MPI_Datatype datatype, int source, int tag, mys_MPI_Comm comm, mys_MPI_Status *status)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Recv(buf, count, datatype, source, tag, comm, status);
+#else
     return MPI_Recv(buf, count, datatype, source, tag, comm, status);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Send(const void *buf, int count, mys_MPI_Datatype datatype, int dest, int tag, mys_MPI_Comm comm)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Send(buf, count, datatype, dest, tag, comm);
+#else
     return MPI_Send(buf, count, datatype, dest, tag, comm);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Irecv(void *buf, int count, mys_MPI_Datatype datatype, int source, int tag, mys_MPI_Comm comm, mys_MPI_Request *request)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
+#else
     return MPI_Irecv(buf, count, datatype, source, tag, comm, request);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Isend(const void *buf, int count, mys_MPI_Datatype datatype, int dest, int tag, mys_MPI_Comm comm, mys_MPI_Request *request)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
+#else
     return MPI_Isend(buf, count, datatype, dest, tag, comm, request);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Waitall(int count, mys_MPI_Request *array_of_requests, mys_MPI_Status *array_of_statuses)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Waitall(count, array_of_requests, array_of_statuses);
+#else
     return MPI_Waitall(count, array_of_requests, array_of_statuses);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Barrier(mys_MPI_Comm comm)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Barrier(comm);
+#else
     return MPI_Barrier(comm);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Bcast(void *buffer, int count, mys_MPI_Datatype datatype, int root, mys_MPI_Comm comm)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Bcast(buffer, count, datatype, root, comm);
+#else
     return MPI_Bcast(buffer, count, datatype, root, comm);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Gather(void *sendbuf, int sendcount, mys_MPI_Datatype sendtype, void *recvbuf, int recvcount, mys_MPI_Datatype recvtype, int root, mys_MPI_Comm comm)
 {
+#ifdef MYS_USE_PMPI
+   return PMPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
+#else
    return MPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Allreduce(void *sendbuf, void *recvbuf, int count, mys_MPI_Datatype datatype, mys_MPI_Op op, mys_MPI_Comm comm)
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
+#else
     return MPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
+#endif
 }
 
 MYS_PUBLIC int mys_MPI_Allgather(void *sendbuf, int sendcount, mys_MPI_Datatype sendtype, void *recvbuf, int recvcount, mys_MPI_Datatype recvtype, mys_MPI_Comm comm)
 {
+#ifdef MYS_USE_PMPI
+   return PMPI_Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+#else
    return MPI_Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+#endif
 }
 
 MYS_PUBLIC double mys_MPI_Wtime()
 {
+#ifdef MYS_USE_PMPI
+    return PMPI_Wtime();
+#else
     return MPI_Wtime();
+#endif
 }
 
 #endif // MYS_NO_MPI
