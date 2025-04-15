@@ -27,6 +27,7 @@
 // extern char *strdup(const char *s) __THROW;
 // extern ssize_t readlink(const char *path, char *buf, size_t bufsize) __THROW;
 
+#if 0 // this version doesn't has null terminator handling
 MYS_PUBLIC size_t mys_readfd(char **buffer, size_t *buffer_size, int fd, bool enable_realloc)
 {
     size_t read_size = 0;
@@ -76,6 +77,105 @@ MYS_PUBLIC size_t mys_readfd(char **buffer, size_t *buffer_size, int fd, bool en
 finished:
     return read_size;
 }
+#else
+MYS_PUBLIC size_t mys_readfd(char **buffer, size_t *buffer_size, int fd, bool enable_realloc)
+{
+    size_t read_size = 0;
+    bool needs_null_terminator = false;
+
+    if (*buffer == NULL) {
+        if (!enable_realloc) {
+            return 0;
+        } else {
+            size_t old_buffer_size = *buffer_size;
+            if (*buffer_size == 0)
+                *buffer_size = 4096;
+            *buffer = (char *)mys_realloc2(MYS_ARENA_OS, NULL, *buffer_size, old_buffer_size);
+            if (*buffer == NULL)
+                return 0;
+        }
+    }
+
+    while (1) {
+        size_t remaining = *buffer_size - read_size;
+        if (remaining <= 1) { // Always leave room for null terminator if we might need it
+            if (!enable_realloc) {
+                needs_null_terminator = true;
+                break; // Buffer full, but we'll add null terminator later
+            }
+
+            size_t new_size;
+            if (*buffer_size <= (SIZE_MAX / 2)) {
+                new_size = *buffer_size * 2;
+            } else {
+                if (*buffer_size == SIZE_MAX - 1) { // Leave room for null terminator
+                    needs_null_terminator = true;
+                    break;
+                }
+                new_size = SIZE_MAX - 1; // Reserve space for null terminator
+            }
+
+            char *new_buffer = (char *)mys_realloc2(MYS_ARENA_OS, *buffer, new_size, *buffer_size);
+            if (new_buffer == NULL) {
+                needs_null_terminator = true;
+                break;
+            }
+
+            *buffer = new_buffer;
+            *buffer_size = new_size;
+            remaining = *buffer_size - read_size;
+        }
+
+        ssize_t bytes_read = read(fd, *buffer + read_size, remaining - 1); // Leave space for null
+        
+        if (bytes_read < 0) {
+            // Read error
+            if (read_size > 0) {
+                needs_null_terminator = true;
+            }
+            break;
+        }
+        
+        if (bytes_read == 0) {
+            // EOF reached
+            needs_null_terminator = true;
+            break;
+        }
+
+        read_size += (size_t)bytes_read;
+    }
+
+    // Ensure null termination if we read any data
+    if (needs_null_terminator) {
+        if (read_size < *buffer_size) {
+            // There's room, just add null terminator
+            (*buffer)[read_size] = '\0';
+        } else if (enable_realloc) {
+            // Need to realloc to add null terminator
+            char *new_buffer = (char *)mys_realloc2(MYS_ARENA_OS, *buffer, read_size + 1, *buffer_size);
+            if (new_buffer) {
+                *buffer = new_buffer;
+                *buffer_size = read_size + 1;
+                (*buffer)[read_size] = '\0';
+            } else {
+                // Realloc failed, fallback: truncate
+                if (*buffer_size > 0) {
+                    (*buffer)[*buffer_size - 1] = '\0';
+                    read_size = *buffer_size - 1;
+                }
+            }
+        } else {
+            // No realloc allowed, try to fit null terminator
+            if (*buffer_size > 0) {
+                (*buffer)[*buffer_size - 1] = '\0';
+                read_size = *buffer_size - 1;
+            }
+        }
+    }
+
+    return read_size;
+}
+#endif
 
 static size_t _mys_cut_suffix_space(char *buf, size_t len)
 {
