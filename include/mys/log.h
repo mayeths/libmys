@@ -136,6 +136,7 @@ MYS_PUBLIC const char *mys_log_get_name(mys_log_t *logger);
 
 MYS_PUBLIC int mys_log_add_handler(mys_log_t *logger, mys_log_handler_fn handler_fn, void *handler_udata);
 MYS_PUBLIC void mys_log_remove_handler(mys_log_t *logger, int handler_id);
+MYS_PUBLIC void mys_log_clear_handler(mys_log_t *logger);
 MYS_PUBLIC void mys_log_invoke_handlers(mys_log_t *logger, mys_log_event_t *event, const char *fmt, va_list vargs);
 MYS_PUBLIC mys_MPI_Comm mys_log_get_comm(mys_log_t *logger);
 MYS_PUBLIC void mys_log_set_comm(mys_log_t *logger, mys_MPI_Comm comm);

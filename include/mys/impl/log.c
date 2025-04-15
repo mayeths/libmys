@@ -301,6 +301,13 @@ MYS_PUBLIC void mys_log_remove_handler(mys_log_t *logger, int handler_id)
     mys_mutex_unlock(&logger->lock);
 }
 
+MYS_PUBLIC void mys_log_clear_handler(mys_log_t *logger)
+{
+    mys_mutex_lock(&logger->lock);
+    logger->num_handlers = 0;
+    mys_mutex_unlock(&logger->lock);
+}
+
 MYS_PUBLIC void mys_log_invoke_handlers(mys_log_t *logger, mys_log_event_t *event, const char *fmt, va_list vargs)
 {
     for (int i = 0; i < logger->num_handlers; i++) {
