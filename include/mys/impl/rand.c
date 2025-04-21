@@ -169,12 +169,15 @@ MYS_PUBLIC float mys_rand_f32(float mi, float ma) {
     return mi + v01 * (ma - mi); // [mi, ma] due to IEEE 754 rounding
 }
 
-MYS_PUBLIC void mys_rand_str(char *buf, size_t nchar, const char *choices) {
+MYS_PUBLIC void mys_rand_str(void *buf, size_t nchar, const char *choices) {
+    if (buf == NULL || choices == NULL)
+        return;
+    char *c_buf = (char *)buf;
     size_t choices_length = strlen(choices);
     for (size_t i = 0; i < nchar; i++) {
         size_t random_index = mys_rand_u64(0, choices_length - 1);
-        buf[i] = choices[random_index];
+        c_buf[i] = choices[random_index];
     }
     // Null-terminate the string
-    buf[nchar] = '\0';
+    c_buf[nchar] = '\0';
 }

@@ -231,7 +231,7 @@ MYS_STATIC void mys_rand_f32_array   (float    *array, size_t nelem, float    mi
  * 
  * All mixed: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
  */
-MYS_PUBLIC void mys_rand_str(char *buf, size_t nchar, const char *choices);
+MYS_PUBLIC void mys_rand_str(void *buf, size_t nchar, const char *choices);
 
 ///////////////////////
 
