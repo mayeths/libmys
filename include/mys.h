@@ -61,6 +61,7 @@ extern "C" {
 #include "mys/atomic.h"
 #include "mys/base64.h"
 #include "mys/checkpoint.h"
+#include "mys/color.h"
 #ifndef MYS_DISABLE_DEBUG // if you use inte compiler like icc, then this may helps
 #include "mys/debug.h"
 #endif
@@ -70,6 +71,7 @@ extern "C" {
 #include "mys/hash.h"
 #include "mys/hrtime.h"
 #include "mys/log.h"
+#include "mys/ranklog.h"
 #include "mys/macro.h"
 #include "mys/memory.h"
 #include "mys/mpistubs.h"
@@ -109,6 +111,7 @@ extern "C" {
 #include "mys/impl/format.c"
 #include "mys/impl/rand.c"
 #include "mys/impl/log.c"
+#include "mys/impl/ranklog.c"
 #include "mys/impl/hrtime.c"
 #include "mys/impl/os.c"
 #include "mys/impl/linalg.c"

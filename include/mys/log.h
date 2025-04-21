@@ -10,8 +10,6 @@
  */
 #pragma once
 
-// #define MYS_LOG_DISABLE_STDOUT_HANDLER
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -23,11 +21,9 @@
 #include "_config.h"
 #include "mpistubs.h"
 #include "macro.h"
+#include "color.h"
 #include "thread.h"
 #include "math.h"
-
-
-////// API
 
 enum {
     MYS_LOG_TRACE,
@@ -43,71 +39,62 @@ enum {
 /**
  * Print log message with 'TRACE' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define TLOG(who, fmt, ...)       mys_log_who(MYS_LOGGER_G, (who), MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TLOG(rank, fmt, ...)      mys_log_rank(MYS_LOGGER_G, (rank), MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TLOG_WHEN(when, fmt, ...) mys_log_when(MYS_LOGGER_G, (when), MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define TLOG_SELF(fmt, ...)       mys_log_self(MYS_LOGGER_G, MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define TLOG_ONCE(fmt, ...)       mys_log_once(MYS_LOGGER_G, MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
-#define TLOG_WHEN(cond, fmt, ...) mys_log_when(MYS_LOGGER_G, (cond), MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define TLOG_ORDERED(fmt, ...)    mys_log_ordered(MYS_LOGGER_G, MYS_LOG_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'DEBUG' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define DLOG(who, fmt, ...)       mys_log_who(MYS_LOGGER_G, (who), MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define DLOG(rank, fmt, ...)      mys_log_rank(MYS_LOGGER_G, (rank), MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define DLOG_WHEN(when, fmt, ...) mys_log_when(MYS_LOGGER_G, (when), MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define DLOG_SELF(fmt, ...)       mys_log_self(MYS_LOGGER_G, MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define DLOG_ONCE(fmt, ...)       mys_log_once(MYS_LOGGER_G, MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
-#define DLOG_WHEN(cond, fmt, ...) mys_log_when(MYS_LOGGER_G, (cond), MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define DLOG_ORDERED(fmt, ...)    mys_log_ordered(MYS_LOGGER_G, MYS_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'INFO' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define ILOG(who, fmt, ...)       mys_log_who(MYS_LOGGER_G, (who), MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define ILOG(rank, fmt, ...)      mys_log_rank(MYS_LOGGER_G, (rank), MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define ILOG_WHEN(when, fmt, ...) mys_log_when(MYS_LOGGER_G, (when), MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define ILOG_SELF(fmt, ...)       mys_log_self(MYS_LOGGER_G, MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define ILOG_ONCE(fmt, ...)       mys_log_once(MYS_LOGGER_G, MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
-#define ILOG_WHEN(cond, fmt, ...) mys_log_when(MYS_LOGGER_G, (cond), MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define ILOG_ORDERED(fmt, ...)    mys_log_ordered(MYS_LOGGER_G, MYS_LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'WARN' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define WLOG(who, fmt, ...)       mys_log_who(MYS_LOGGER_G, (who), MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define WLOG(rank, fmt, ...)      mys_log_rank(MYS_LOGGER_G, (rank), MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define WLOG_WHEN(when, fmt, ...) mys_log_when(MYS_LOGGER_G, (when), MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define WLOG_SELF(fmt, ...)       mys_log_self(MYS_LOGGER_G, MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define WLOG_ONCE(fmt, ...)       mys_log_once(MYS_LOGGER_G, MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
-#define WLOG_WHEN(cond, fmt, ...) mys_log_when(MYS_LOGGER_G, (cond), MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define WLOG_ORDERED(fmt, ...)    mys_log_ordered(MYS_LOGGER_G, MYS_LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'ERROR' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define ELOG(who, fmt, ...)       mys_log_who(MYS_LOGGER_G, (who), MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define ELOG(rank, fmt, ...)      mys_log_rank(MYS_LOGGER_G, (rank), MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define ELOG_WHEN(when, fmt, ...) mys_log_when(MYS_LOGGER_G, (when), MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define ELOG_SELF(fmt, ...)       mys_log_self(MYS_LOGGER_G, MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define ELOG_ONCE(fmt, ...)       mys_log_once(MYS_LOGGER_G, MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
-#define ELOG_WHEN(cond, fmt, ...) mys_log_when(MYS_LOGGER_G, (cond), MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define ELOG_ORDERED(fmt, ...)    mys_log_ordered(MYS_LOGGER_G, MYS_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'FATAL' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define FLOG(who, fmt, ...)       mys_log_who(MYS_LOGGER_G, (who), MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define FLOG(rank, fmt, ...)      mys_log_rank(MYS_LOGGER_G, (rank), MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define FLOG_WHEN(when, fmt, ...) mys_log_when(MYS_LOGGER_G, (when), MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define FLOG_SELF(fmt, ...)       mys_log_self(MYS_LOGGER_G, MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define FLOG_ONCE(fmt, ...)       mys_log_once(MYS_LOGGER_G, MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
-#define FLOG_WHEN(cond, fmt, ...) mys_log_when(MYS_LOGGER_G, (cond), MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define FLOG_ORDERED(fmt, ...)    mys_log_ordered(MYS_LOGGER_G, MYS_LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 /**
  * Print log message with 'RAW' level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, RAW)
  */
-#define RLOG(who, fmt, ...)       mys_log_who(MYS_LOGGER_G, (who), MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define RLOG(rank, fmt, ...)      mys_log_rank(MYS_LOGGER_G, (rank), MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define RLOG_WHEN(when, fmt, ...) mys_log_when(MYS_LOGGER_G, (when), MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define RLOG_SELF(fmt, ...)       mys_log_self(MYS_LOGGER_G, MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define RLOG_ONCE(fmt, ...)       mys_log_once(MYS_LOGGER_G, MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__) // once (__FILE__, __LINE__)
-#define RLOG_WHEN(cond, fmt, ...) mys_log_when(MYS_LOGGER_G, (cond), MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define RLOG_ORDERED(fmt, ...)    mys_log_ordered(MYS_LOGGER_G, MYS_LOG_RAW, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
-/**
- * Print log message separately to a file named 'rank:6d.log' within the folder, like to folder/000001.log
-```c
-RANKLOG_OPEN("LOG.test");
-RANKLOG("LOG.test", "setup time %f", setup_time);
-RANKLOG("LOG.test", "solve time %f", solve_time);
-RANKLOG_CLOSE("LOG.test");
-```
- */
-#define RANKLOG_OPEN(folder) mys_ranklog_open_old(__FILE__, __LINE__, folder) // Collective call
-#define RANKLOG_CLOSE(folder) mys_ranklog_close_old(__FILE__, __LINE__, folder) // Collective call
-#define RANKLOG(folder, fmt, ...) mys_ranklog_old(__FILE__, __LINE__, folder, fmt, ##__VA_ARGS__)
+
+
+/////////////
 
 typedef struct mys_log_t mys_log_t;
 MYS_PUBVAR mys_log_t mys_predefined_logger;
@@ -124,9 +111,10 @@ typedef struct {
 
 typedef void (*mys_log_handler_fn)(mys_log_t *logger, mys_log_event_t *event, const char *fmt, va_list vargs, void *udata);
 
-/////// log
-MYS_ATTR_PRINTF(6, 7) MYS_PUBLIC void mys_log_who(mys_log_t *logger, int who, int level, const char *file, int line, const char *fmt, ...);
-MYS_ATTR_PRINTF(6, 7) MYS_PUBLIC void mys_log_when(mys_log_t *logger, int cond, int level, const char *file, int line, const char *fmt, ...);
+/////////////
+
+MYS_ATTR_PRINTF(6, 7) MYS_PUBLIC void mys_log_rank(mys_log_t *logger, int rank, int level, const char *file, int line, const char *fmt, ...);
+MYS_ATTR_PRINTF(6, 7) MYS_PUBLIC void mys_log_when(mys_log_t *logger, int when, int level, const char *file, int line, const char *fmt, ...);
 MYS_ATTR_PRINTF(5, 6) MYS_PUBLIC void mys_log_self(mys_log_t *logger, int level, const char *file, int line, const char *fmt, ...);
 MYS_ATTR_PRINTF(5, 6) MYS_PUBLIC void mys_log_once(mys_log_t *logger, int level, const char *file, int line, const char *fmt, ...);
 MYS_ATTR_PRINTF(5, 6) MYS_PUBLIC void mys_log_ordered(mys_log_t *logger, int level, const char *file, int line, const char *fmt, ...);
@@ -149,33 +137,3 @@ MYS_PUBLIC void mys_log_silent(mys_log_t *logger, bool silent);
 MYS_PUBLIC void mys_log_stdio_handler1(mys_log_t *logger, mys_log_event_t *event, const char *fmt, va_list vargs, void *udata);
 // <mys_predefined_logger::000 ex01.hello-gcc.c:012> Test ILOG function
 MYS_PUBLIC void mys_log_stdio_handler2(mys_log_t *logger, mys_log_event_t *event, const char *fmt, va_list vargs, void *udata);
-
-/////// rank log
-MYS_PUBLIC void mys_ranklog_open_old(const char *callfile, int callline, const char *folder);
-MYS_PUBLIC void mys_ranklog_close_old(const char *callfile, int callline, const char *folder);
-MYS_ATTR_PRINTF(4, 5) MYS_PUBLIC void mys_ranklog_old(const char *callfile, int callline, const char *folder, const char *fmt, ...);
-
-// typedef struct mys_ranklog_t mys_ranklog_t;
-// MYS_ATTR_PRINTF(1, 2) MYS_PUBLIC mys_ranklog_t *mys_ranklog_open(const char *file_fmt, ...);
-// MYS_PUBLIC void mys_rank_log_close(mys_ranklog_t **ranklog);
-// MYS_ATTR_PRINTF(2, 3) void mys_rank_log(mys_ranklog_t *ranklog, const char *log_fmt, ...);
-
-
-#define MCOLOR_NO        "\x1b[0m"
-#define MCOLOR_BOLD      "\x1b[1m"
-#define MCOLOR_BLACK     "\x1b[30m"
-#define MCOLOR_RED       "\x1b[31m"
-#define MCOLOR_GREEN     "\x1b[32m"
-#define MCOLOR_YELLO     "\x1b[33m"
-#define MCOLOR_BLUE      "\x1b[34m"
-#define MCOLOR_PURPLE    "\x1b[35m"
-#define MCOLOR_CYAN      "\x1b[36m"
-#define MCOLOR_GRAY      "\x1b[37m"
-#define MCOLOR_B_BLACK   "\x1b[40m"
-#define MCOLOR_B_RED     "\x1b[41m"
-#define MCOLOR_B_GREEN   "\x1b[42m"
-#define MCOLOR_B_YELLOW  "\x1b[43m"
-#define MCOLOR_B_BLUE    "\x1b[44m"
-#define MCOLOR_B_MAGENTA "\x1b[45m"
-#define MCOLOR_B_CYAN    "\x1b[46m"
-#define MCOLOR_B_WHITE   "\x1b[47m"

@@ -39,15 +39,15 @@
 
 /* Runtime Assertion */
 // Use exit(0) here to prevent activing MPI signal handler that print lots of messy things.
-#define _ASX(exp, fmt, ...) if (!(exp)) {           \
-    int _rank_;                                     \
-    mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &_rank_); \
-    mys_log_who(MYS_LOGGER_G, _rank_, MYS_LOG_FATAL,\
-        __FILE__, __LINE__,                         \
-        (fmt), ##__VA_ARGS__);                      \
-    /*mys_MPI_Finalize();*/                         \
-    /*exit(0);*/                                    \
-    mys_MPI_Abort(mys_MPI_COMM_WORLD, 1);           \
+#define _ASX(exp, fmt, ...) if (!(exp)) {             \
+    int _rank_;                                       \
+    mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &_rank_);   \
+    mys_log_rank(MYS_LOGGER_G, _rank_, MYS_LOG_FATAL, \
+        __FILE__, __LINE__,                           \
+        (fmt), ##__VA_ARGS__);                        \
+    /*mys_MPI_Finalize();*/                           \
+    /*exit(0);*/                                      \
+    mys_MPI_Abort(mys_MPI_COMM_WORLD, 1);             \
 }
 
 #define ASSERT(exp, fmt, ...) do { _ASX(exp, fmt, ##__VA_ARGS__);                   } while(0)
