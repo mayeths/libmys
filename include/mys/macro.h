@@ -54,6 +54,6 @@
 #define MYS_ALIGN_DOWN(n, alignment) (((n)                  ) & ~((alignment) - 1))
 
 // Round up integer n to the nearest multiple of width.
-#define MYS_ROUND_UP(n, width)   (((n) + (width) - 1) / (width) * (width))
+#define MYS_ROUND_UP(n, width)   ((((n) + (width) - 1) / (width)) * (width))
 // Round down integer n to the nearest multiple of width.
-#define MYS_ROUND_DOWN(n, width) (((n)              ) / (width) * (width))
+#define MYS_ROUND_DOWN(n, width) ((((n)              ) / (width)) * (width))
