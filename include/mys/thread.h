@@ -64,6 +64,7 @@ typedef struct mys_mutex_t mys_mutex_t;
 MYS_PUBLIC int mys_mutex_init(mys_mutex_t *lock);
 MYS_PUBLIC int mys_mutex_destroy(mys_mutex_t *lock);
 MYS_PUBLIC int mys_mutex_lock(mys_mutex_t *lock);
+MYS_PUBLIC int mys_mutex_trylock(mys_mutex_t *lock);
 MYS_PUBLIC int mys_mutex_unlock(mys_mutex_t *lock);
 
 /* gcc -Wall -Wextra -O3 -I${MYS_DIR}/include -g -fopenmp a.c && ./a.out 4999

@@ -41,6 +41,11 @@ MYS_PUBLIC int mys_mutex_lock(mys_mutex_t *lock)
     return pthread_mutex_lock(lock);
 }
 
+MYS_PUBLIC int mys_mutex_trylock(mys_mutex_t *lock)
+{
+    return pthread_mutex_trylock(lock);
+}
+
 MYS_PUBLIC int mys_mutex_unlock(mys_mutex_t *lock)
 {
     return pthread_mutex_unlock(lock);
@@ -73,6 +78,22 @@ MYS_PUBLIC int mys_mutex_lock(mys_mutex_t *lock)
         oval = __MYS_MUTEX_IDLE;
     }
     return 0;
+}
+
+MYS_PUBLIC int mys_mutex_trylock(mys_mutex_t *lock)
+{
+    uint32_t tid = mys_thread_id();
+    uint32_t expected = __MYS_MUTEX_IDLE;
+    if (mys_atomic_compare_exchange(&lock->tid, &expected, &tid, MYS_ATOMIC_ACQUIRE, MYS_ATOMIC_RELAXED)) {
+        return 0;
+    }
+
+    if (expected == tid)
+        return EDEADLK;
+    if (expected == __MYS_MUTEX_INVALID)
+        return EINVAL;
+
+    return EBUSY; // already owned by other thread
 }
 
 MYS_PUBLIC int mys_mutex_unlock(mys_mutex_t *lock)
