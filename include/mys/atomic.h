@@ -186,7 +186,16 @@
 #define mys_atomic_or_fetch(ptr, val, memorder) __atomic_or_fetch  (ptr, val, memorder) // `(*ptr)|=val; return *ptr;` All memory orders are valid
 #define mys_atomic_nand_fetch(ptr, val, memorder) __atomic_nand_fetch(ptr, val, memorder) // `(*ptr)=~(*ptr&val); return *ptr;` All memory orders are valid
 
+/**************************************************/
+/* atomic arithmetic operations                   */
+/**************************************************/
 
+#define mys_atomic_add(ptr, val, memorder) do { __atomic_fetch_add (ptr, val, memorder); } while (0) // `(*ptr)+=val;` All memory orders are valid
+#define mys_atomic_sub(ptr, val, memorder) do { __atomic_fetch_sub (ptr, val, memorder); } while (0) // `(*ptr)-=val;` All memory orders are valid
+#define mys_atomic_and(ptr, val, memorder) do { __atomic_fetch_and (ptr, val, memorder); } while (0) // `(*ptr)&=val;` All memory orders are valid
+#define mys_atomic_xor(ptr, val, memorder) do { __atomic_fetch_xor (ptr, val, memorder); } while (0) // `(*ptr)^=val;` All memory orders are valid
+#define mys_atomic_or(ptr, val, memorder) do { __atomic_fetch_or  (ptr, val, memorder); } while (0) // `(*ptr)|=val;` All memory orders are valid
+#define mys_atomic_nand(ptr, val, memorder) do { __atomic_fetch_nand(ptr, val, memorder); } while (0) // `(*ptr)=~(*ptr&valr;` All memory orders are valid
 
 /* https://groups.google.com/g/lock-free/c/Nescdq-8qVM/m/0LfqxmG27sUJ
 ----------- ACQUIRE & RELEASE
