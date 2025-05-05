@@ -103,20 +103,6 @@ MYS_PUBLIC void mys_to_readable_size(size_t bytes, size_t precision, char *buffe
     snprintf(buffer, buflen, "%.*f %s", (int)precision, size, units[i]);
 }
 
-MYS_PUBLIC void mys_readable_size(char **ptr, size_t bytes, size_t precision)
-{
-    int i = 0;
-    const char* units[] = {"Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
-    double size = bytes;
-    while (size > 1024) {
-        size /= 1024;
-        i++;
-    }
-    int len = snprintf(NULL, 0, "%.*f %s", (int)precision, size, units[i]) + 1; /*%.*f*/
-    *ptr = (char *)malloc(sizeof(char) * len);
-    snprintf(*ptr, len, "%.*f %s", (int)precision, size, units[i]);
-}
-
 MYS_PUBLIC mys_string_t *mys_string_create()
 {
     mys_string_t *str = (mys_string_t *)mys_malloc2(MYS_ARENA_STR, sizeof(mys_string_t));
