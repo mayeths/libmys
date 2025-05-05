@@ -196,6 +196,7 @@ MYS_PUBLIC bool mys_ensure_dir(const char *path, mode_t mode);
 MYS_PUBLIC bool mys_ensure_parent(const char *path, mode_t mode);
 MYS_PUBLIC int mys_busysleep(double seconds);
 MYS_PUBLIC const char *mys_procname();
+MYS_PUBLIC const char *mys_hostname();
 MYS_PUBLIC void mys_wait_flag(const char *file, int line, const char *flagfile);
 MYS_PUBLIC size_t mys_readfd(char **buffer, size_t *buffer_size, int fd, bool enable_realloc);
 #if defined(OS_LINUX)

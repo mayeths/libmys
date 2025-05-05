@@ -471,6 +471,20 @@ MYS_PUBLIC const char *mys_procname()
 #endif
 }
 
+MYS_PUBLIC const char *mys_hostname()
+{
+#if defined(OS_LINUX) || defined(OS_BSD)
+    static char host[128] = { '\0' };
+    if (host[0] == '\0') {
+        gethostname(host, sizeof(host) - 1);
+    }
+    return host;
+#else
+    return NULL;
+#endif
+}
+
+
 MYS_PUBLIC void mys_wait_flag(const char *file, int line, const char *flagfile)
 {
     int myrank, nranks;
