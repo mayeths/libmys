@@ -25,7 +25,6 @@
 #include "macro.h"
 #include "thread.h"
 #include "string.h"
-#include "require.h"
 
 #if defined(POSIX_COMPLIANCE)
 #include <unistd.h>
@@ -208,7 +207,6 @@ MYS_PUBLIC void mys_stick_affinity();
 ///////////////////////////////////
 // NUMA memory related functions
 ///////////////////////////////////
-#ifdef MYS_ENABLE_NUMA
 /**
  * @brief Get the numa id where the page currently resides
  * 
@@ -282,18 +280,6 @@ MYS_PUBLIC int mys_cpu_affinity_num(pid_t pid);
  * @return Number of unique NUMA nodes in the affinity mask or -1 on failure.
  */
 MYS_PUBLIC int mys_numa_affinity_num(pid_t pid);
-#else
-#define mys_numa_query(ptr) mys_numa_capability_is_not_available("mys_numa_query", __FILE__, __LINE__)
-#define mys_numa_query_continuous(ptr, size) mys_numa_capability_is_not_available("mys_numa_query_continuous", __FILE__, __LINE__)
-#define mys_numa_move(ptr, numa_id) mys_numa_capability_is_not_available("mys_numa_move", __FILE__, __LINE__)
-#define mys_current_cpu() mys_numa_capability_is_not_available("mys_current_cpu", __FILE__, __LINE__)
-#define mys_current_numa() mys_numa_capability_is_not_available("mys_current_numa", __FILE__, __LINE__)
-#define mys_cpu_num() mys_numa_capability_is_not_available("mys_cpu_num", __FILE__, __LINE__)
-#define mys_numa_num() mys_numa_capability_is_not_available("mys_numa_num", __FILE__, __LINE__)
-#define mys_numa_size(numa) mys_numa_capability_is_not_available("mys_numa_size", __FILE__, __LINE__)
-#define mys_cpu_affinity_num(pid) mys_numa_capability_is_not_available("mys_cpu_affinity_num", __FILE__, __LINE__)
-#define mys_numa_affinity_num(pid) mys_numa_capability_is_not_available("mys_numa_affinity_num", __FILE__, __LINE__)
-#endif
 
 MYS_PUBLIC const char *mys_env_str(const char *name, const char *default_val);
 MYS_PUBLIC int mys_env_int(const char *name, int default_val);

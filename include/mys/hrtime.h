@@ -21,6 +21,12 @@
 #include "mpistubs.h"
 #include "thread.h"
 
+// MYS_PUBLIC mys_clock_t mys_predefined_clock;
+// MYS_PUBLIC mys_clock_t *mys_create_clock(const char *clock_name);
+// MYS_PUBLIC void mys_clock_reset(mys_clock_t *clock); // reset time offset to now
+// MYS_PUBLIC void mys_clock_sync(mys_clock_t *clock, mys_MPI_Comm comm); // sync and reset time offset with all processes in comm
+// MYS_PUBLIC void mys_clock_set_dilation(mys_clock_t *clock, double dilation); // e.g., 0.25x slow motion
+
 /**
  * @brief Get the name of the default high-resolution timer
  * 

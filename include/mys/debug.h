@@ -15,7 +15,6 @@
 #include "_config.h"
 #include "os.h"
 #include "log.h"
-#include "require.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,17 +70,12 @@ MYS_PUBLIC int mys_debug_clear_signal(int signo);
 MYS_PUBLIC void mys_debug_set_message(const char *fmt, ...);
 MYS_PUBLIC void mys_debug_clear_message();
 
-#ifdef MYS_ENABLE_DEBUG_TIMEOUT
 // To enable this functionality, you have to
 // 1) Add `#define MYS_ENABLE_DEBUG_TIMEOUT` before `#include mys.h`
 // 2) Add `-lrt` to compiler for using `timer_create()`, `timer_settime()`, and `timer_delete()`
 MYS_PUBLIC void _mys_debug_set_timeout(double timeout, const char *file, int line);
 MYS_PUBLIC void mys_debug_clear_timeout();
 #define mys_debug_set_timeout(timeout_sec) _mys_debug_set_timeout(timeout_sec, __FILE__, __LINE__)
-#else
-#define mys_debug_set_timeout(t) mys_debug_timeout_capability_is_not_available("mys_debug_set_timeout", __FILE__, __LINE__)
-#define mys_debug_clear_timeout() mys_debug_timeout_capability_is_not_available("mys_debug_clear_timeout", __FILE__, __LINE__)
-#endif
 
 
 /**

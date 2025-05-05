@@ -12,7 +12,6 @@
 
 #include "_config.h"
 #include "mpistubs.h"
-#include "require.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -62,11 +61,7 @@ MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_node(mys_MPI_Comm global_comm);
  * 
  * @note This routine require MYS_ENABLE_NUMA.
  */
-#ifdef MYS_ENABLE_NUMA
 MYS_PUBLIC mys_commgroup_t *mys_commgroup_create_numa(mys_MPI_Comm global_comm);
-#else
-#define mys_commgroup_create_numa(global_comm) mys_numa_capability_is_not_available("mys_commgroup_create_numa", __FILE__, __LINE__)
-#endif
 /**
  * @brief Duplicate a commgroup
  * @return The group handle
