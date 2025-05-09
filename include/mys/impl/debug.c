@@ -673,6 +673,7 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
                 }
             }
             if (skip) {
+                mys_prun_destroy(&run);
                 collapsed += 1;
                 continue;
             }
