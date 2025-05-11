@@ -60,6 +60,7 @@ extern "C" {
 #include "mys/assert.h"
 #include "mys/atomic.h"
 #include "mys/base64.h"
+#include "mys/backtrace.h"
 #include "mys/checkpoint.h"
 #include "mys/color.h"
 #ifndef MYS_DISABLE_DEBUG // if you use inte compiler like icc, then this may helps
@@ -106,6 +107,7 @@ extern "C" {
 #include "mys/impl/uthash_hash.h"
 #include "mys/impl/uthash_list.h"
 #include "mys/impl/algorithm.c"
+#include "mys/impl/backtrace.c"
 #include "mys/impl/errno.c"
 #include "mys/impl/format.c"
 #include "mys/impl/rand.c"

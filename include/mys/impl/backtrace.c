@@ -8,9 +8,9 @@
  * 
  * https://opensource.org/licenses/MIT
  */
-#include "_private.h"
 #include "../backtrace.h"
 #include "../memory.h"
+#include "../pmparser.h"
 #include "../os.h"
 
 #include <execinfo.h>
@@ -19,54 +19,54 @@
 #include <string.h>
 #include <unistd.h>
 
-MYS_PUBLIC int mys_backtrace(mys_backtrace_t *buffer, int max_depth) {
-    void *addresses[128];
-    int depth = backtrace(addresses, max_depth);
-    // char **symbols = backtrace_symbols(addresses, depth);
+MYS_PUBLIC int mys_backtrace(void **addrs, int max_depth)
+{
+    if (addrs == NULL || max_depth <= 0) {
+        return 0;
+    }
+    int depth = backtrace(addrs, max_depth);
+    for (int i = 0; i < depth - 1; ++i) {
+        addrs[i] = addrs[i + 1];
+    }
+    return depth - 1;
+}
 
-    // if (symbols == NULL) {
-    //     return -1;  // Failed to get symbols
-    // }
+MYS_PUBLIC void mys_backtrace_source(void *addr, char *source, size_t max_size)
+{
+    const char *self_exe = mys_procname();
+    struct stat self_st;
+    stat(self_exe, &self_st);
 
-    for (int i = 0; i < depth; ++i) {
-        buffer[i].pc = addresses[i];
-        const char *self_exe = mys_procname();
-        char bufcmd[256];
-        snprintf(bufcmd, sizeof(bufcmd), "addr2line -e %s %p", self_exe, addresses[i]);
-        mys_prun_t run = mys_prun_create(bufcmd, buffer[i].source, sizeof(buffer[i].source), NULL, 0);
-        mys_prun_destroy(&run);
-
-        // // Extract function name and source file information
-        // Dl_info dlinfo;
-        // if (dladdr(addresses[i], &dlinfo) && dlinfo.dli_sname) {
-        //     // Demangle the function name if possible
-        //     int status = 0;
-        //     char *demangled = abi::__cxa_demangle(dlinfo.dli_sname, NULL, NULL, &status);
-        //     if (status == 0 && demangled != NULL) {
-        //         strncpy(buffer[i].symbol, demangled, sizeof(buffer[i].symbol) - 1);
-        //         free(demangled);
-        //     } else {
-        //         strncpy(buffer[i].symbol, dlinfo.dli_sname, sizeof(buffer[i].symbol) - 1);
-        //     }
-        //     buffer[i].symbol[sizeof(buffer[i].symbol) - 1] = '\0';
-        // } else {
-        //     strncpy(buffer[i].symbol, symbols[i], sizeof(buffer[i].symbol) - 1);
-        //     buffer[i].symbol[sizeof(buffer[i].symbol) - 1] = '\0';
-        // }
-
-        // if (dlinfo.dli_fname) {
-        //     strncpy(buffer[i].source_file, dlinfo.dli_fname, sizeof(buffer[i].source_file) - 1);
-        //     buffer[i].source_file[sizeof(buffer[i].source_file) - 1] = '\0';
-        // } else {
-        //     buffer[i].source_file[0] = '\0';
-        // }
-
-        // buffer[i].function = dlinfo.dli_saddr;
-
-        // Source line is typically not available through dladdr, so we set it to -1
-        // buffer[i].source_line = -1;
+    const char *target = self_exe;
+    void *relative = addr;
+    mys_procmaps_t *self = mys_pmparser_self();
+    mys_procmap_t *map = self->head;
+    while (map) {
+        if (addr >= map->addr_start && addr < map->addr_end) {
+            struct stat st;
+            if (stat(map->pathname, &st) == 0) {
+                bool is_self_exe = (st.st_ino == self_st.st_ino && st.st_dev == self_st.st_dev);
+                if (!is_self_exe) {
+                    target = map->pathname;
+                    relative = (void *)((uintptr_t)addr - (uintptr_t)map->addr_start);
+                }
+            }
+            break;
+        }
+        map = map->next;
     }
 
-    // free(symbols);
-    return depth;
+    char bufcmd[1024];
+    snprintf(bufcmd, sizeof(bufcmd), "addr2line -e %s %p", target, relative);
+    mys_prun_t run = mys_prun_create(bufcmd, source, max_size, NULL, 0);
+    mys_prun_destroy(&run);
+}
+
+MYS_PUBLIC void mys_backtrace_symbol(void *addr, char *symbol, size_t max_size)
+{
+    // use backtrace_symbols()
+    char **bsyms = backtrace_symbols(&addr, 1);
+    strncpy(symbol, bsyms[0], max_size - 1);
+    symbol[max_size - 1] = '\0';
+    free(bsyms);
 }

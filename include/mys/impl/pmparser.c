@@ -44,6 +44,8 @@ MYS_PUBLIC void mys_pmparser_init()
 
 MYS_PUBLIC mys_procmaps_t *mys_pmparser_self()
 {
+    if (!_mys_procmaps_g.inited)
+        mys_pmparser_init();
     return _mys_procmaps_g.self;
 }
 
