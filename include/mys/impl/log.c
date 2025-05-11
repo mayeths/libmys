@@ -132,33 +132,64 @@ MYS_PUBLIC void mys_log_rank(mys_log_t *logger, int rank, int level, const char 
 {
     va_list vargs;
     va_start(vargs, fmt);
-    _mys_log_impl(logger, rank, level, file, line, fmt, vargs);
+    mys_log_rank_v(logger, rank, level, file, line, fmt, vargs);
     va_end(vargs);
 }
 
 MYS_PUBLIC void mys_log_when(mys_log_t *logger, int when, int level, const char *file, int line, const char *fmt, ...)
 {
-    if (when == 0)
-        return;
-    int myrank;
-    mys_MPI_Comm_rank(logger->comm, &myrank);
     va_list vargs;
     va_start(vargs, fmt);
-    _mys_log_impl(logger, myrank, level, file, line, fmt, vargs);
+    mys_log_when_v(logger, when, level, file, line, fmt, vargs);
     va_end(vargs);
 }
 
 MYS_PUBLIC void mys_log_self(mys_log_t *logger, int level, const char *file, int line, const char *fmt, ...)
 {
-    int myrank;
-    mys_MPI_Comm_rank(logger->comm, &myrank);
     va_list vargs;
     va_start(vargs, fmt);
-    _mys_log_impl(logger, myrank, level, file, line, fmt, vargs);
+    mys_log_self_v(logger, level, file, line, fmt, vargs);
     va_end(vargs);
 }
 
 MYS_PUBLIC void mys_log_once(mys_log_t *logger, int level, const char *file, int line, const char *fmt, ...)
+{
+    va_list vargs;
+    va_start(vargs, fmt);
+    mys_log_once_v(logger, level, file, line, fmt, vargs);
+    va_end(vargs);
+}
+
+MYS_PUBLIC void mys_log_ordered(mys_log_t *logger, int level, const char *file, int line, const char *fmt, ...)
+{
+    va_list vargs;
+    va_start(vargs, fmt);
+    mys_log_ordered_v(logger, level, file, line, fmt, vargs);
+    va_end(vargs);
+}
+
+MYS_PUBLIC void mys_log_rank_v(mys_log_t *logger, int rank, int level, const char *file, int line, const char *fmt, va_list vargs)
+{
+    _mys_log_impl(logger, rank, level, file, line, fmt, vargs);
+}
+
+MYS_PUBLIC void mys_log_when_v(mys_log_t *logger, int when, int level, const char *file, int line, const char *fmt, va_list vargs)
+{
+    if (when == 0)
+        return;
+    int myrank;
+    mys_MPI_Comm_rank(logger->comm, &myrank);
+    _mys_log_impl(logger, myrank, level, file, line, fmt, vargs);
+}
+
+MYS_PUBLIC void mys_log_self_v(mys_log_t *logger, int level, const char *file, int line, const char *fmt, va_list vargs)
+{
+    int myrank;
+    mys_MPI_Comm_rank(logger->comm, &myrank);
+    _mys_log_impl(logger, myrank, level, file, line, fmt, vargs);
+}
+
+MYS_PUBLIC void mys_log_once_v(mys_log_t *logger, int level, const char *file, int line, const char *fmt, va_list vargs)
 {
     // log only once at "file:line".
     _mys_log_once_t *entry = NULL, *new_entry = NULL;
@@ -183,14 +214,10 @@ MYS_PUBLIC void mys_log_once(mys_log_t *logger, int level, const char *file, int
 
     int myrank;
     mys_MPI_Comm_rank(logger->comm, &myrank);
-    va_list vargs;
-    va_start(vargs, fmt);
     _mys_log_impl(logger, myrank, level, file, line, fmt, vargs);
-    va_end(vargs);
 }
 
-
-MYS_PUBLIC void mys_log_ordered(mys_log_t *logger, int level, const char *file, int line, const char *fmt, ...)
+MYS_PUBLIC void mys_log_ordered_v(mys_log_t *logger, int level, const char *file, int line, const char *fmt, va_list vargs)
 {
     mys_mutex_lock(&logger->lock);
     if (logger->silent == true) {
@@ -218,10 +245,7 @@ MYS_PUBLIC void mys_log_ordered(mys_log_t *logger, int level, const char *file, 
             event.no_vargs = true;
             broken = true;
         }
-        va_list vargs;
-        va_start(vargs, fmt);
         mys_log_invoke_handlers(logger, &event, fmt, vargs);
-        va_end(vargs);
         char buffer[4096];
         for (int rank = 1; rank < nranks; rank++) {
             mys_MPI_Status status;
@@ -243,8 +267,7 @@ MYS_PUBLIC void mys_log_ordered(mys_log_t *logger, int level, const char *file, 
         mys_MPI_Barrier(logger->comm);
     } else {
         char buffer[4096];
-        va_list vargs, vargs_test;
-        va_start(vargs, fmt);
+        va_list vargs_test;
         va_copy(vargs_test, vargs);
         int needed = vsnprintf(NULL, 0, fmt, vargs_test) + 1;
         va_end(vargs_test);
@@ -253,7 +276,6 @@ MYS_PUBLIC void mys_log_ordered(mys_log_t *logger, int level, const char *file, 
         mys_MPI_Send(ptr, needed, mys_MPI_CHAR, 0, tag, logger->comm);
         if (ptr != buffer)
             mys_free2(MYS_ARENA_LOG, ptr, needed);
-        va_end(vargs);
         mys_MPI_Barrier(logger->comm); // We don't expect logging increase processes' nondeterministic
     }
 

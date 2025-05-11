@@ -112,24 +112,33 @@ typedef struct {
 typedef void (*mys_log_handler_fn)(mys_log_t *logger, mys_log_event_t *event, const char *fmt, va_list vargs, void *udata);
 
 /////////////
+MYS_PUBLIC mys_log_t *mys_log_create(const char *name);
+MYS_PUBLIC void mys_log_destroy(mys_log_t **logger);
+MYS_PUBLIC const char *mys_log_get_name(mys_log_t *logger);
 
 MYS_ATTR_PRINTF(6, 7) MYS_PUBLIC void mys_log_rank(mys_log_t *logger, int rank, int level, const char *file, int line, const char *fmt, ...);
 MYS_ATTR_PRINTF(6, 7) MYS_PUBLIC void mys_log_when(mys_log_t *logger, int when, int level, const char *file, int line, const char *fmt, ...);
 MYS_ATTR_PRINTF(5, 6) MYS_PUBLIC void mys_log_self(mys_log_t *logger, int level, const char *file, int line, const char *fmt, ...);
 MYS_ATTR_PRINTF(5, 6) MYS_PUBLIC void mys_log_once(mys_log_t *logger, int level, const char *file, int line, const char *fmt, ...);
 MYS_ATTR_PRINTF(5, 6) MYS_PUBLIC void mys_log_ordered(mys_log_t *logger, int level, const char *file, int line, const char *fmt, ...);
-MYS_PUBLIC mys_log_t *mys_log_create(const char *name);
-MYS_PUBLIC void mys_log_destroy(mys_log_t **logger);
-MYS_PUBLIC const char *mys_log_get_name(mys_log_t *logger);
+
+MYS_PUBLIC void mys_log_rank_v(mys_log_t *logger, int rank, int level, const char *file, int line, const char *fmt, va_list vargs);
+MYS_PUBLIC void mys_log_when_v(mys_log_t *logger, int when, int level, const char *file, int line, const char *fmt, va_list vargs);
+MYS_PUBLIC void mys_log_self_v(mys_log_t *logger, int level, const char *file, int line, const char *fmt, va_list vargs);
+MYS_PUBLIC void mys_log_once_v(mys_log_t *logger, int level, const char *file, int line, const char *fmt, va_list vargs);
+MYS_PUBLIC void mys_log_ordered_v(mys_log_t *logger, int level, const char *file, int line, const char *fmt, va_list vargs);
 
 MYS_PUBLIC int mys_log_add_handler(mys_log_t *logger, mys_log_handler_fn handler_fn, void *handler_udata);
 MYS_PUBLIC void mys_log_remove_handler(mys_log_t *logger, int handler_id);
 MYS_PUBLIC void mys_log_clear_handler(mys_log_t *logger);
 MYS_PUBLIC void mys_log_invoke_handlers(mys_log_t *logger, mys_log_event_t *event, const char *fmt, va_list vargs);
+
 MYS_PUBLIC mys_MPI_Comm mys_log_get_comm(mys_log_t *logger);
 MYS_PUBLIC void mys_log_set_comm(mys_log_t *logger, mys_MPI_Comm comm);
+
 MYS_PUBLIC void mys_log_set_level(mys_log_t *logger, int level);
 MYS_PUBLIC int mys_log_get_level(mys_log_t *logger);
+
 MYS_PUBLIC const char* mys_log_level_string(int level);
 MYS_PUBLIC void mys_log_silent(mys_log_t *logger, bool silent);
 
