@@ -19,26 +19,30 @@
 #include "log.h"
 
 
-/* Compile-time Assertion */
+/////////////////////////////////////////////////////////
+// Part 1: Static Assertion
+/////////////////////////////////////////////////////////
 
 #ifndef STATIC_ASSERT
 #if defined(__cplusplus) || defined(static_assert)
+// Directly use C11 _Static_assert
 #define STATIC_ASSERT(expr, diagnostic) static_assert(expr, diagnostic)
 #else
+// Use ersatz _Static_assert from glibc
 /** glibc: misc/sys/cdefs.h
  * [commit] 3999d26ead93990b244ada078073fb58fb8bb5be
  * > Add ersatz _Static_assert on older C hosts
  * Define a substitute, if on a pre-C11 C platform
  * that is not known to support _Static_assert.
  */
-#define STATIC_ASSERT(expr, diagnostic) \
-    extern int (*__Static_assert_function (void)) \
-      [!!sizeof (struct { int emit_error_if_static_assert_failed: (expr) ? 2 : -1; })]
-#endif
-#endif
+#define STATIC_ASSERT(expr, diagnostic) extern int (*__Static_assert_function (void)) [!!sizeof (struct { int emit_error_if_static_assert_failed: (expr) ? 2 : -1; })]
+#endif // defined(__cplusplus) || defined(static_assert)
+#endif // STATIC_ASSERT
 
-/* Runtime Assertion */
-#define _ASX(exp, fmt, ...) if (!(exp)) { _mys_runtime_assert_failed(__FILE__, __LINE__, (fmt), ##__VA_ARGS__); }
+
+/////////////////////////////////////////////////////////
+// Part 2: Runtime Assertion
+/////////////////////////////////////////////////////////
 
 MYS_ATTR_NORETURN
 MYS_ATTR_PRINTF(3, 4)
@@ -56,13 +60,7 @@ MYS_STATIC void _mys_runtime_assert_failed(const char *file, int line, const cha
     MYS_UNREACHABLE();
 }
 
-#define ASSERT(exp, fmt, ...) do { _ASX(exp, fmt, ##__VA_ARGS__);                   } while(0)
-#define ABORT(code)           do { _ASX(false, "Abort by demand. (code %d)", code); } while(0)
-#define FAILED(fmt, ...)      do { _ASX(false, fmt, ##__VA_ARGS__);                 } while(0)
-#define THROW_NOT_IMPL()      do { _ASX(false, "Not implemented.");                 } while(0)
-#define CHKRET(fncall)        do { const int   _v_ = fncall; _ASX(_v_ == 0,    "Expect (%s) return 0 but %d.",        #fncall, _v_); } while (0) /* Validate return value */
-#define CHKPTR(fncall)        do { const void *_v_ = fncall; _ASX(_v_ != NULL, "Expect (%s) return non-NULL but %p.", #fncall, _v_); } while (0) /* Validate pointer */
-
+#define _ASX(exp, fmt, ...) if (!(exp)) { _mys_runtime_assert_failed(__FILE__, __LINE__, (fmt), ##__VA_ARGS__); }
 #define _ASX_1(typ, exp, expect, actual, fmt, ...) do { \
     const typ _e0_ = exp;                               \
     _ASX(_e0_,                                          \
@@ -82,6 +80,14 @@ MYS_STATIC void _mys_runtime_assert_failed(const char *file, int line, const cha
         #exp1, #op1, #exp2, #op2, #exp3,                                               \
         _e1_, #op1, _e2_, #op2, _e3_, ##__VA_ARGS__);                                  \
 } while (0)
+
+// High-level APIs
+#define ASSERT(exp, fmt, ...) do { _ASX(exp, fmt, ##__VA_ARGS__);                   } while(0)
+#define ABORT(code)           do { _ASX(false, "Abort by demand. (code %d)", code); } while(0)
+#define FAILED(fmt, ...)      do { _ASX(false, fmt, ##__VA_ARGS__);                 } while(0)
+#define THROW_NOT_IMPL()      do { _ASX(false, "Not implemented.");                 } while(0)
+#define CHKRET(fncall)        do { const int   _v_ = fncall; _ASX(_v_ == 0,    "Expect (%s) return 0 but %d.",        #fncall, _v_); } while (0) /* Validate return value */
+#define CHKPTR(fncall)        do { const void *_v_ = fncall; _ASX(_v_ != NULL, "Expect (%s) return non-NULL but %p.", #fncall, _v_); } while (0) /* Validate pointer */
 
 #define AS_TRUE(exp)             _ASX_1(bool, exp, "true", "false", "")
 #define AS_FALSE(exp)            _ASX_1(bool, exp, "false", "true", "")
