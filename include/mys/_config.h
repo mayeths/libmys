@@ -204,34 +204,32 @@
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
 #endif
 
-
-#if defined(MYS_IMPL) && !defined(MYS_DECL)
-#define MYS_DECL
-#endif
-
-#if defined(MYS_IMPL_LOCAL) && !defined(MYS_DECL_LOCAL)
-#define MYS_DECL_LOCAL
-#endif
-
 #if !defined(MYS_DECL) && !defined(MYS_DECL_LOCAL)
 #define MYS_DECL
 #endif
 
-#if defined(MYS_DECL)         // Make libmys with public visibility.
+#if defined(MYS_IMPL) && !defined(MYS_DECL)
+#undef MYS_DECL_LOCAL
+#define MYS_DECL
+#endif
+
+#if defined(MYS_IMPL_LOCAL) && !defined(MYS_DECL_LOCAL)
+#undef MYS_DECL
+#define MYS_DECL_LOCAL
+#endif
+
+#if defined(MYS_DECL)         // Use libmys definition that have public visibility.
 #define MYS_PUBLIC   MYS_ATTR_USED MYS_ATTR_EXPORT extern
 #define MYS_PUBVAR   MYS_ATTR_EXPORT extern
 #define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
 #define MYS_STATIC   MYS_ATTR_UNUSED static
-#elif defined(MYS_DECL_LOCAL) // Make libmys with private visibility.
+#elif defined(MYS_DECL_LOCAL) // Use libmys definition that have private visibility.
 #define MYS_PUBLIC   MYS_ATTR_USED MYS_ATTR_LOCAL extern
 #define MYS_PUBVAR   MYS_ATTR_LOCAL extern
 #define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
 #define MYS_STATIC   MYS_ATTR_UNUSED static
 #else
-#define MYS_PUBLIC   MYS_ATTR_USED MYS_ATTR_IMPORT extern
-#define MYS_PUBVAR   MYS_ATTR_IMPORT extern
-#define MYS_INTERNAL MYS_ATTR_UNUSED MYS_ATTR_LOCAL extern
-#define MYS_STATIC   MYS_ATTR_UNUSED static
+#error Internal error: MYS_DECL or MYS_DECL_LOCAL must be defined
 #endif
 
 
