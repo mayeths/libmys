@@ -40,7 +40,9 @@
 /* Runtime Assertion */
 #define _ASX(exp, fmt, ...) if (!(exp)) { _mys_runtime_assert_failed(__FILE__, __LINE__, (fmt), ##__VA_ARGS__); }
 
-static void _mys_runtime_assert_failed(const char *file, int line, const char *fmt, ...)
+MYS_ATTR_NORETURN
+MYS_ATTR_PRINTF(3, 4)
+MYS_STATIC void _mys_runtime_assert_failed(const char *file, int line, const char *fmt, ...)
 {
     int myrank;
     mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &myrank);
@@ -51,6 +53,7 @@ static void _mys_runtime_assert_failed(const char *file, int line, const char *f
     /*mys_MPI_Finalize();*/
     /*exit(0);*/ // Use exit(0) to prevent activing MPI signal handler that print lots of messy things.
     mys_MPI_Abort(mys_MPI_COMM_WORLD, 1);
+    MYS_UNREACHABLE();
 }
 
 #define ASSERT(exp, fmt, ...) do { _ASX(exp, fmt, ##__VA_ARGS__);                   } while(0)

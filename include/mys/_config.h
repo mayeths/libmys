@@ -105,8 +105,10 @@
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
 #define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
 #define MYS_ATTR_MALLOC __attribute__((malloc))
+#define MYS_ATTR_NORETURN __attribute__((noreturn))
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define MYS_UNREACHABLE() __builtin_unreachable()
 #ifdef OS_MACOS
 #define MYS_ATTR_OPTIMIZE_O3 /* Not available */
 #else
@@ -124,8 +126,10 @@
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
 #define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
 #define MYS_ATTR_MALLOC __attribute__((malloc))
+#define MYS_ATTR_NORETURN __attribute__((noreturn))
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define MYS_UNREACHABLE() __builtin_unreachable()
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
 #elif defined(COMPILER_ICC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
@@ -139,8 +143,10 @@
 #define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
 #define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
 #define MYS_ATTR_MALLOC __attribute__((malloc))
+#define MYS_ATTR_NORETURN __attribute__((noreturn))
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define MYS_UNREACHABLE() __builtin_unreachable()
 #define MYS_ATTR_OPTIMIZE_O3 __attribute__((optimize("O3")))
 #elif defined(COMPILER_NVCC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
@@ -154,8 +160,10 @@
 #define MYS_ATTR_ALWAYS_INLINE __forceinline__
 #define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
 #define MYS_ATTR_MALLOC /* No equivalent attribute */
+#define MYS_ATTR_NORETURN /* No equivalent attribute */
 #define MYS_LIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
+#define MYS_UNREACHABLE() /* No equivalent attribute */
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
 #elif defined(COMPILER_SWCC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
@@ -169,8 +177,10 @@
 #define MYS_ATTR_ALWAYS_INLINE /* No equivalent attribute */
 #define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
 #define MYS_ATTR_MALLOC /* No equivalent attribute */
+#define MYS_ATTR_NORETURN /* No equivalent attribute */
 #define MYS_LIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
+#define MYS_UNREACHABLE() /* No equivalent attribute */
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
 #elif defined(COMPILER_MSVC)
 #define MYS_ATTR_EXPORT __declspec(dllexport)
@@ -184,8 +194,10 @@
 #define MYS_ATTR_ALWAYS_INLINE __forceinline
 #define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
 #define MYS_ATTR_MALLOC /* No equivalent attribute */
+#define MYS_ATTR_NORETURN /* No equivalent attribute */
 #define MYS_LIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
+#define MYS_UNREACHABLE() /* No equivalent attribute */
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
 #else /* Fallback for unknown compilers */
 #define MYS_ATTR_EXPORT
@@ -199,8 +211,10 @@
 #define MYS_ATTR_ALWAYS_INLINE inline
 #define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
 #define MYS_ATTR_MALLOC /* No equivalent attribute */
+#define MYS_ATTR_NORETURN /* No equivalent attribute */
 #define MYS_LIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
+#define MYS_UNREACHABLE() /* No equivalent attribute */
 #define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
 #endif
 
