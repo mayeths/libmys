@@ -148,10 +148,19 @@ MYS_STATIC ssize_t _mys_string_reallocate_if_needed(mys_string_t *str, size_t re
 
 MYS_PUBLIC int mys_string_fmt(mys_string_t *str, const char *format, ...)
 {
+    int written;
+    va_list vargs;
+    va_start(vargs, format);
+    written = mys_string_fmt_v(str, format, vargs);
+    va_end(vargs);
+    return written;
+}
+
+MYS_PUBLIC int mys_string_fmt_v(mys_string_t *str, const char *format, va_list vargs)
+{
     int written = -1;
     int needed = 0;
-    va_list vargs, vargs_copy;
-    va_start(vargs, format);
+    va_list vargs_copy;
 
     if (str == NULL || format == NULL)
         goto finish;
@@ -167,9 +176,9 @@ MYS_PUBLIC int mys_string_fmt(mys_string_t *str, const char *format, ...)
     written = vsnprintf(str->text + str->size, str->capacity - str->size, format, vargs);
     str->size += written;
 finish:
-    va_end(vargs);
     return written;
 }
+
 
 MYS_PUBLIC int mys_string_append(mys_string_t *str, const char *other)
 {

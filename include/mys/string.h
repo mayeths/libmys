@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <float.h>
+#include <unistd.h>
 
 #include "_config.h"
 
@@ -51,7 +52,9 @@ MYS_PUBLIC void mys_string_destroy(mys_string_t **str);
  * 
  * @note this routine will automatically extend the size of string if necessary.
  */
+MYS_ATTR_PRINTF(2, 3)
 MYS_PUBLIC int mys_string_fmt(mys_string_t *str, const char *format, ...);
+MYS_PUBLIC int mys_string_fmt_v(mys_string_t *str, const char *format, va_list vargs);
 /**
  * @brief Append other string to the end of `str.text`
  * 
