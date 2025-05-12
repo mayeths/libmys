@@ -56,7 +56,7 @@ MYS_PUBLIC void mys_backtrace_source(void *addr, char *source, size_t max_size)
         map = map->next;
     }
 
-    char bufcmd[1024];
+    static char bufcmd[1024];
     snprintf(bufcmd, sizeof(bufcmd), "addr2line -e %s %p", target, relative);
     mys_prun_t run = mys_prun_create(bufcmd, source, max_size, NULL, 0);
     mys_prun_destroy(&run);

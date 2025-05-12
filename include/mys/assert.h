@@ -16,8 +16,11 @@
 
 #include "_config.h"
 #include "mpistubs.h"
+#include "string.h"
+#include "backtrace.h"
 #include "log.h"
 
+#define MYS_ENABLE_ASSERT_BACKTRACE
 
 /////////////////////////////////////////////////////////
 // Part 1: Static Assertion
@@ -44,19 +47,58 @@
 // Part 2: Runtime Assertion
 /////////////////////////////////////////////////////////
 
+// MYS_ATTR_NORETURN
+// MYS_ATTR_PRINTF(3, 4)
+// MYS_STATIC void _mys_runtime_assert_failed(const char *file, int line, const char *fmt, ...)
+// {
+//     int myrank;
+//     mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &myrank);
+//     va_list vargs;
+//     va_start(vargs, fmt);
+//     mys_log_rank_v(MYS_LOGGER_G, myrank, MYS_LOG_FATAL, file, line, fmt, vargs);
+//     va_end(vargs);
+//     mys_MPI_Abort(mys_MPI_COMM_WORLD, 1);
+//     MYS_UNREACHABLE();
+// }
+
+MYS_ATTR_NOINLINE
 MYS_ATTR_NORETURN
 MYS_ATTR_PRINTF(3, 4)
 MYS_STATIC void _mys_runtime_assert_failed(const char *file, int line, const char *fmt, ...)
 {
     int myrank;
     mys_MPI_Comm_rank(mys_MPI_COMM_WORLD, &myrank);
-    va_list vargs;
-    va_start(vargs, fmt);
-    mys_log_rank_v(MYS_LOGGER_G, myrank, MYS_LOG_FATAL, file, line, fmt, vargs);
-    va_end(vargs);
-    /*mys_MPI_Finalize();*/
-    /*exit(0);*/ // Use exit(0) to prevent activing MPI signal handler that print lots of messy things.
+    mys_string_t *str = mys_string_create();
+    {
+        va_list vargs;
+        va_start(vargs, fmt);
+        mys_string_fmt_v(str, fmt, vargs);
+        va_end(vargs);
+    }
+    #ifdef MYS_ENABLE_ASSERT_BACKTRACE
+    {
+        // See _mys_arena_debug_get_stack in impl/memory.c
+        const int max_depth = 16;
+        void *addrs[max_depth];
+        int depth = mys_backtrace(addrs, max_depth);
+        for (int i = 1; i < depth; ++i) {
+            void *addr = addrs[i];
+            static char source[512];
+            mys_backtrace_source(addr, source, sizeof(source));
+            if (i < depth - 1) {
+                mys_string_fmt(str, "\n    [%16p] %s", addr, source);
+            } else {
+                if (strncmp(source, ":?", sizeof(source)) != 0)
+                    mys_string_fmt(str, "\n    %s", source);
+            }
+        }
+    }
+    #endif
+    mys_log_rank(MYS_LOGGER_G, myrank, MYS_LOG_FATAL, file, line, str->text);
+    mys_string_destroy(&str);
     mys_MPI_Abort(mys_MPI_COMM_WORLD, 1);
+    // mys_MPI_Finalize();
+    // exit(0); // Use exit(0) to prevent activing MPI signal handler that print lots of messy things.
     MYS_UNREACHABLE();
 }
 
