@@ -20,7 +20,7 @@
 #include "backtrace.h"
 #include "log.h"
 
-#define MYS_ENABLE_ASSERT_BACKTRACE
+// #define MYS_ENABLE_ASSERT_BACKTRACE
 
 /////////////////////////////////////////////////////////
 // Part 1: Static Assertion
