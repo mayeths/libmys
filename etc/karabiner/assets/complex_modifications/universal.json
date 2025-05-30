@@ -518,9 +518,7 @@
                             "description": "WHEN IS Internal Keyboard",
                             "identifiers": [
                                 {
-                                    "vendor_id": 1452,
-                                    "product_id": 833,
-                                    "location_id": 43,
+                                    "is_built_in_keyboard": true,
                                     "is_keyboard": true
                                 }
                             ]
@@ -552,9 +550,7 @@
                             "description": "WHEN IS External Keyboard",
                             "identifiers": [
                                 {
-                                    "vendor_id": 1452,
-                                    "product_id": 833,
-                                    "location_id": 43,
+                                    "is_built_in_keyboard": true,
                                     "is_keyboard": true
                                 }
                             ]
@@ -607,9 +603,7 @@
                             "description": "WHEN IS Internal Keyboard",
                             "identifiers": [
                                 {
-                                    "vendor_id": 1452,
-                                    "product_id": 833,
-                                    "location_id": 43,
+                                    "is_built_in_keyboard": true,
                                     "is_keyboard": true
                                 }
                             ]
@@ -641,9 +635,7 @@
                             "description": "WHEN IS External Keyboard",
                             "identifiers": [
                                 {
-                                    "vendor_id": 1452,
-                                    "product_id": 833,
-                                    "location_id": 43,
+                                    "is_built_in_keyboard": true,
                                     "is_keyboard": true
                                 }
                             ]
@@ -1305,9 +1297,7 @@
                             "description": "WHEN IS External Keyboard",
                             "identifiers": [
                                 {
-                                    "vendor_id": 1452,
-                                    "product_id": 833,
-                                    "location_id": 43,
+                                    "is_built_in_keyboard": true,
                                     "is_keyboard": true
                                 }
                             ]
@@ -1340,9 +1330,7 @@
                             "description": "WHEN IS Internal Keyboard",
                             "identifiers": [
                                 {
-                                    "vendor_id": 1452,
-                                    "product_id": 833,
-                                    "location_id": 43,
+                                    "is_built_in_keyboard": true,
                                     "is_keyboard": true
                                 }
                             ]
@@ -1444,9 +1432,7 @@
                             "description": "WHEN IS External Keyboard",
                             "identifiers": [
                                 {
-                                    "vendor_id": 1452,
-                                    "product_id": 833,
-                                    "location_id": 43,
+                                    "is_built_in_keyboard": true,
                                     "is_keyboard": true
                                 }
                             ]
@@ -1486,9 +1472,7 @@
                             "description": "WHEN IS Internal Keyboard",
                             "identifiers": [
                                 {
-                                    "vendor_id": 1452,
-                                    "product_id": 833,
-                                    "location_id": 43,
+                                    "is_built_in_keyboard": true,
                                     "is_keyboard": true
                                 }
                             ]
