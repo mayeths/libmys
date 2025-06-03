@@ -295,7 +295,7 @@
             ]
         },
         {
-            "description": "[UNI][Super Backspace and Delete] Super + U => Backspace, Super + I => Delete",
+            "description": "[UNI][Super Backspace and Delete] Super + U => Backspace, Super + I => Delete (Check 'Use Option as Meta key' in Terminal Profiles Keyboard Setting)",
             "manipulators": [
                 {
                     "type": "basic",
