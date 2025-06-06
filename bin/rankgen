@@ -41,7 +41,18 @@ class Kunpeng920Config(DefaultConfig):
         self.key = "KP"
         self.desc = "Kunpeng ARM 6426"
 
-CONFIGS = [YanchengConfig(), Kunpeng920Config()]
+class QHAMDConfig(DefaultConfig):
+    def __init__(self):
+        super().__init__()
+        self.nodelist = "qhcn[001-300]"
+        self.sockets_per_node = 2
+        self.numas_per_socket = 4
+        self.cores_per_numa = 8
+        #
+        self.key = "QHAMD"
+        self.desc = "Qinghai Intel Xeon CPU Max 9462"
+
+CONFIGS = [YanchengConfig(), Kunpeng920Config(), QHAMDConfig()]
 
 QUIET = False
 def eprint(text, end='\n', force=False):
