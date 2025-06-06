@@ -1,14 +1,19 @@
-[[ -n "$MYS_DIR" ]] || MYS_DIR=$(dirname $(dirname "${BASH_SOURCE[0]:-$0}"))
+if [[ -z "$MYS_DIR" ]]; then
+    ETC_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    MYS_DIR="$( cd "$( dirname "${ETC_DIR}" )" && pwd )"
+fi
 
 source $MYS_DIR/script/sh-functions.sh
 MYS_SHELL=$(mys_find_shell)
 [[ "$MYS_SHELL" == "bash" ]] && source $MYS_DIR/etc/bashrc
 [[ "$MYS_SHELL" == "zsh"  ]] && source $MYS_DIR/etc/zshrc
 
-command -v realpath >/dev/null 2>&1 || realpath() { mys_realpath "$@" }
-rpath() {
-    realpath "$@"
-}
+if ! command -v realpath >/dev/null 2>&1; then
+    # bash function cannot fold to one line with braces
+    realpath() {
+            mys_realpath "$@"
+    }
+fi
 
 env_prepend PATH "$MYS_DIR/bin"
 env_prepend PYTHONPATH "$MYS_DIR/python"
@@ -33,25 +38,19 @@ if [[ -n "$MYS_MODDIR" ]]; then
     # __ensured_prepend__ MANPATH "$MYS_MODDIR/BASE/share/man"
 fi
 
-#------ Load necessary scripts
-mys_load_script "$MYS_DIR/script/welcome-to-may-world.sh"
-
 #------ Set environment variables
-# export EDITOR=nvim
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONSTARTUP="$MYS_DIR/etc/python/unify.py"
 [[ $HISTSIZE -ge 50000 ]] || export HISTSIZE=50000
 [[ $HISTFILESIZE -ge 50000 ]] || export HISTFILESIZE=50000
 [[ $SAVEHIST -ge 50000 ]] || export SAVEHIST=50000
-locale -a | grep -q "en_US.UTF-8" && export LANG="en_US.UTF-8" LC_ALL="en_US.UTF-8"
-locale -a | grep -q "en_US.utf8"  && export LANG="en_US.utf8"  LC_ALL="en_US.utf8"
+locale -a 2>/dev/null | grep -q "en_US.UTF-8" && export LANG="en_US.UTF-8" LC_ALL="en_US.UTF-8"
+locale -a 2>/dev/null | grep -q "en_US.utf8"  && export LANG="en_US.utf8"  LC_ALL="en_US.utf8"
 
 #------ Alias with mys_backup_command
 #       The problem of builtin alias is we can't use it inside script
 command -v code >/dev/null 2>&1 || alias code="invoke-vscode"
-command -v h >/dev/null 2>&1 || alias h="history"
-command -v hs >/dev/null 2>&1 || alias hs="history | grep"
-command -v hsi >/dev/null 2>&1 || alias hsi="history | grep -i"
+command -v ll >/dev/null 2>&1 || alias ll="ls -lh --color=auto"
 tmux() {
     # TMUX_CONF is detected in tmux.conf
     local conf="$MYS_DIR/etc/omt/tmux.conf"
