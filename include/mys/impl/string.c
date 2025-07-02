@@ -120,6 +120,22 @@ MYS_PUBLIC mys_string_t *mys_string_create()
     return str;
 }
 
+MYS_PUBLIC mys_string_t *mys_string_create2(const char *initial_fmt, ...)
+{
+    mys_string_t *str = mys_string_create();
+    if (str == NULL)
+        return NULL; // Allocation failed
+    va_list vargs;
+    va_start(vargs, initial_fmt);
+    int written = mys_string_fmt_v(str, initial_fmt, vargs);
+    va_end(vargs);
+    if (written < 0) {
+        mys_string_destroy(&str);
+        return NULL; // Formatting failed
+    }
+    return str;
+}
+
 MYS_PUBLIC void mys_string_destroy(mys_string_t **str)
 {
     if (str != NULL) {

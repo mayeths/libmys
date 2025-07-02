@@ -37,6 +37,7 @@ typedef struct mys_string_t {
  * `mys_string_t *str = mys_string_create(); printf("%s\\n", str->text);`
  */
 MYS_PUBLIC mys_string_t *mys_string_create();
+MYS_PUBLIC mys_string_t *mys_string_create2(const char *initial_fmt, ...);
 /**
  * @brief Destroy a string manager
  * 
