@@ -228,7 +228,7 @@ MYS_PUBLIC void mys_log_ordered_v(mys_log_t *logger, int level, const char *file
     mys_MPI_Comm_rank(logger->comm, &myrank);
     mys_MPI_Comm_size(logger->comm, &nranks);
 
-    const int tag = 65521; /*100000007 OpenMPI 4.1.0 on AArch64 throw invalid tag on large number*/
+    const int tag = 2717; /*OpenMPI 4.1.0 on AArch64 throw invalid tag on large tag, e.g, 100000007*/
 
     if (myrank == 0) {
         mys_log_event_t event;
