@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        intel_compiler: [2025.1]
+        intel_compiler: [2021.16, 2025.1]
         intel_mpi: [2021.16]
 
     steps:
