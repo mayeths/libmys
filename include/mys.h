@@ -37,9 +37,6 @@
 #define _XOPEN_SOURCE 700
 #endif
 
-#ifdef COMPILER_ICC
-#warning Using intel compiler you may need to define MYS_DISABLE_DEBUG macro for now. Sorry for this inconvenient.
-#endif
 #ifdef KERNEL_BSD
 #define MYS_DISABLE_DEBUG
 #endif
