@@ -38,6 +38,7 @@ jobs:
       - name: Verify Intel oneAPI compilers & MPI
         run: |
           source /opt/intel/oneapi/setvars.sh
+          printenv >> $GITHUB_ENV
           echo "PATH='$PATH'"
           echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'"
           echo "icc: $(which icc 2>/dev/null || echo not found)"
@@ -52,16 +53,15 @@ jobs:
           icpx --version || true
           mpiicc --version || true
           mpiicpc --version || true
+          mpirun --version || true
 
       - name: Build tests in test/ folder
         run: |
-          source /opt/intel/oneapi/setvars.sh
           cd test
           make CC=icx CXX=icpx MPICC=mpiicc MPICXX=mpiicpc
 
       - name: Run tests in test/ folder
         run: |
-          source /opt/intel/oneapi/setvars.sh
           cd test
           ./ex01.hello-gcc.exe
           ./ex02.hello-g++.exe
