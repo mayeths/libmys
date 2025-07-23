@@ -38,26 +38,26 @@ jobs:
       - name: Verify Intel oneAPI compilers & MPI
         run: |
           source /opt/intel/oneapi/setvars.sh
-          echo $PATH
-          echo $LD_LIBRARY_PATH
-          which icc || echo "icc not found"
-          which icpc || echo "icpc not found"
-          which icx || echo "icx not found"
-          which icpx || echo "icpx not found"
-          which mpiicc || echo "mpiicc not found"
-          which mpiicpc || echo "mpiicpc not found"
-          icc --version || echo "FAILED: icc --version"
-          icpc --version || echo "FAILED: icpc --version"
-          icx --version || echo "FAILED: icx --version"
-          icpx --version || echo "FAILED: icpx --version"
-          mpiicc --version || echo "FAILED: mpiicc --version"
-          mpiicpc --version || echo "FAILED: mpiicpc --version"
+          echo "PATH='$PATH'"
+          echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'"
+          echo "icc: $(which icc 2>/dev/null || echo not found)"
+          echo "icpc: $(which icpc 2>/dev/null || echo not found)"
+          echo "icx: $(which icx 2>/dev/null || echo not found)"
+          echo "icpx: $(which icpx 2>/dev/null || echo not found)"
+          echo "mpiicc: $(which mpiicc 2>/dev/null || echo not found)"
+          echo "mpiicpc: $(which mpiicpc 2>/dev/null || echo not found)"
+          icc --version || true
+          icpc --version || true
+          icx --version || true
+          icpx --version || true
+          mpiicc --version || true
+          mpiicpc --version || true
 
       - name: Build tests in test/ folder
         run: |
           source /opt/intel/oneapi/setvars.sh
           cd test
-          make CC=icc CXX=icpc MPICC=mpiicc MPICXX=mpiicpc
+          make CC=icx CXX=icpx MPICC=mpiicc MPICXX=mpiicpc
 
       - name: Run tests in test/ folder
         run: |
