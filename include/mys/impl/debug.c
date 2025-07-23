@@ -67,6 +67,8 @@ struct _mys_debug_G_t {
     char **filters;
 };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 static struct _mys_debug_G_t _mys_debug_G = {
     .lock = MYS_MUTEX_INITIALIZER,
     .inited = false,
@@ -76,9 +78,9 @@ static struct _mys_debug_G_t _mys_debug_G = {
     .use_color = 0,
     .post_action = MYS_DEBUG_ACTION_EXIT,
     .max_frames = _MYS_DEBUG_BACKTRACE_MAX,
-    .message = {},
+    .message = { 0 },
     .nsignals = 0,
-    .signals = {},
+    .signals = { 0 },
     .stack_memory = NULL,
     .stack = {},
     .old_stack = {},
@@ -97,6 +99,7 @@ static struct _mys_debug_G_t _mys_debug_G = {
     .cap_filters = 0,
     .filters = NULL,
 };
+#pragma GCC diagnostic pop
 
 MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *context);
 MYS_STATIC void _mys_debug_revert_all();
