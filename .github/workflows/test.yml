@@ -9,24 +9,35 @@ on:
   workflow_dispatch:
 
 jobs:
-  test_linux_intel:
+  test-linux-intel:
     name: Test with IntelMPI on Linux
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        oneapi-compiler: [2025.1]
+        oneapi-mpi: [2021.16]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Intel oneAPI compiler & MPI
-        uses: oneapi-src/oneapi-ci@v2025.2.0_update
-        with:
-          components: |
-            intel-oneapi-compiler-dpcpp-cpp
-            intel-oneapi-mpi
-
-      - name: Verify compiler and MPI
+      - name: Prepare Intel Apt repository
+        timeout-minutes: 5
         run: |
-          source /opt/intel/oneapi/setvars.sh
+          curl -sS -L https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt-get update -o Dir::Etc::sourcelist="sources.list.d/oneAPI.list" -o APT::Get::List-Cleanup="0"
+
+      - name: Install Intel oneAPI compilers & MPI
+        timeout-minutes: 5
+        run: |
+          sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-${{ matrix.oneapi-compiler }}
+          sudo apt-get install --no-install-recommends intel-oneapi-mpi-${{ matrix.oneapi-mpi }}
+
+      - name: Verify Intel oneAPI compilers & MPI
+        run: |
+          source /opt/intel/oneapi/${{ matrix.oneapi-compiler }}/oneapi-vars.sh
+          source /opt/intel/oneapi/${{ matrix.oneapi-mpi }}/oneapi-vars.sh
           which icc
           which icpc
           which icx
@@ -37,16 +48,20 @@ jobs:
           icpc --version
           mpiicc --version
           mpiicpc --version
+          echo $PATH
+          echo $LD_LIBRARY_PATH
 
       - name: Build tests in test/ folder
         run: |
-          source /opt/intel/oneapi/setvars.sh
+          source /opt/intel/oneapi/${{ matrix.oneapi-compiler }}/oneapi-vars.sh
+          source /opt/intel/oneapi/${{ matrix.oneapi-mpi }}/oneapi-vars.sh
           cd test
           make
 
       - name: Run tests in test/ folder
         run: |
-          source /opt/intel/oneapi/setvars.sh
+          source /opt/intel/oneapi/${{ matrix.oneapi-compiler }}/oneapi-vars.sh
+          source /opt/intel/oneapi/${{ matrix.oneapi-mpi }}/oneapi-vars.sh
           cd test
           ./ex01.hello-gcc.exe
           ./ex02.hello-g++.exe
