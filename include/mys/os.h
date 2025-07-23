@@ -34,10 +34,10 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <libgen.h>
-#elif defined(OS_WINDOWS)
+#elif defined(KERNEL_WINDOWS)
 #include <windows.h>
 #endif
-#if defined(OS_LINUX)
+#if defined(KERNEL_LINUX)
 #include <sched.h>
 #endif
 
@@ -202,7 +202,7 @@ MYS_PUBLIC const char *mys_procname();
 MYS_PUBLIC const char *mys_hostname();
 MYS_PUBLIC void mys_wait_flag(const char *file, int line, const char *flagfile);
 MYS_PUBLIC size_t mys_readfd(char **buffer, size_t *buffer_size, int fd, bool enable_realloc);
-#if defined(OS_LINUX)
+#if defined(KERNEL_LINUX)
 MYS_PUBLIC const char *mys_get_affinity();
 MYS_PUBLIC void mys_print_affinity(FILE *fd);
 MYS_PUBLIC void mys_stick_affinity();

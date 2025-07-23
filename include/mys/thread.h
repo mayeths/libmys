@@ -28,6 +28,10 @@
 #define mys_thread_local __thread
 #elif defined(COMPILER_ICC)
 #define mys_thread_local __thread
+#elif defined(COMPILER_ICX)
+#define mys_thread_local __thread
+#elif defined(COMPILER_NVCC)
+#define mys_thread_local __thread
 #elif defined(COMPILER_MSVC)
 #define mys_thread_local __declspec(thread)
 #elif __STDC_VERSION__ >= 201112 && !defined(__STDC_NO_THREADS__)

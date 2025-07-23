@@ -20,14 +20,14 @@
 #error Require GNU C99 or higher. Consider removing -std or use -std=gnu99 in compiler command line arguments
 // #elif !defined(__cplusplus) && defined(__STRICT_ANSI__)
 // #error Require GNU C instead of ANSI C or ISO C. Consider removing -ansi or change -std=c99 to -std=gnu99 in compiler command line arguments
-#elif !defined(OS_LINUX) && !defined(OS_MACOS) && !defined(OS_FREEBSD)
+#elif !defined(KERNEL_LINUX) && !defined(KERNEL_MACOS) && !defined(KERNEL_BSD)
 #error Port me
 #else
 
-#if defined(OS_LINUX) && !defined(_GNU_SOURCE)
+#if defined(KERNEL_LINUX) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE 1
 #endif
-#if defined(OS_MACOS) && !defined(_DARWIN_C_SOURCE)
+#if defined(KERNEL_MACOS) && !defined(_DARWIN_C_SOURCE)
 #define _DARWIN_C_SOURCE 1
 #endif
 #ifndef _POSIX_C_SOURCE
@@ -40,7 +40,7 @@
 #ifdef COMPILER_ICC
 #warning Using intel compiler you may need to define MYS_DISABLE_DEBUG macro for now. Sorry for this inconvenient.
 #endif
-#ifdef OS_OS_FREEBSD
+#ifdef KERNEL_BSD
 #define MYS_DISABLE_DEBUG
 #endif
 

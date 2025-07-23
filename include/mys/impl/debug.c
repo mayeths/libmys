@@ -162,7 +162,7 @@ MYS_PUBLIC void mys_debug_init()
 
         _mys_debug_G.stack_memory = (uint8_t *)mys_malloc2(MYS_ARENA_DEBUG, _MYS_DEBUG_STACK_SIZE);
         memset(_mys_debug_G.stack_memory, 0, _MYS_DEBUG_STACK_SIZE);
-#ifndef OS_MACOS // macos lost backtrace if run signal handler on new stack
+#ifndef KERNEL_MACOS // macos lost backtrace if run signal handler on new stack
         stack_t *stack = &_mys_debug_G.stack;
         stack_t *old_stack = &_mys_debug_G.old_stack;
         stack->ss_sp = _mys_debug_G.stack_memory;
@@ -747,7 +747,7 @@ MYS_PUBLIC void _mys_debug_set_timeout(double timeout, const char *file, int lin
         new_action.sa_sigaction = _mys_debug_signal_handler;
         new_action.sa_flags = SA_SIGINFO | SA_ONSTACK;
         sigemptyset(&new_action.sa_mask);
-#ifdef OS_MACOS
+#ifdef KERNEL_MACOS
         _mys_debug_G.timeout_signal = SIGUSR2;
 #else
         _mys_debug_G.timeout_signal = SIGRTMIN + 1;
@@ -850,7 +850,7 @@ MYS_PUBLIC void mys_debug_del_stack_filter(const char *match_str)
 }
 
 
-#ifdef OS_MACOS
+#ifdef KERNEL_MACOS
 
 MYS_STATIC void _timer_cancel(void *arg)
 {
@@ -946,4 +946,4 @@ MYS_STATIC int timer_delete(timer_t tim)
     return (0);
 }
 
-#endif // OS_MACOS
+#endif // KERNEL_MACOS

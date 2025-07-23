@@ -437,7 +437,7 @@ MYS_PUBLIC void mys_free_record(mys_arena_t *arena, size_t size)
 //     // return mys_free2(mys_arena_std, ptr, size);
 // }
 
-#if defined(OS_LINUX) && defined(MYS_ENABLE_SHM)
+#if defined(KERNEL_LINUX) && defined(MYS_ENABLE_SHM)
 struct _mys_shm_G_t {
     bool inited;
     mys_mutex_t lock;
