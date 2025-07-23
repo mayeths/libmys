@@ -40,12 +40,24 @@ jobs:
           source /opt/intel/oneapi/setvars.sh
           echo $PATH
           echo $LD_LIBRARY_PATH
+          which icc || echo "icc not found"
+          which icpc || echo "icpc not found"
+          which icx || echo "icx not found"
+          which icpx || echo "icpx not found"
+          which mpiicc || echo "mpiicc not found"
+          which mpiicpc || echo "mpiicpc not found"
+          icc --version || echo "FAILED: icc --version"
+          icpc --version || echo "FAILED: icpc --version"
+          icx --version || echo "FAILED: icx --version"
+          icpx --version || echo "FAILED: icpx --version"
+          mpiicc --version || echo "FAILED: mpiicc --version"
+          mpiicpc --version || echo "FAILED: mpiicpc --version"
 
       - name: Build tests in test/ folder
         run: |
           source /opt/intel/oneapi/setvars.sh
           cd test
-          make
+          make CC=icc CXX=icpc MPICC=mpiicc MPICXX=mpiicpc
 
       - name: Run tests in test/ folder
         run: |
