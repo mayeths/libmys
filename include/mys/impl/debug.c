@@ -571,6 +571,7 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
     size_t logmax = sizeof(buflog);
     bool is_timeout = _mys_debug_G.timeout_inited && signo == _mys_debug_G.timeout_signal && _mys_debug_G.timeout_reached;
     int post_action = 0;
+    ssize_t write_ret = 0;
 
 #ifndef MYS_DEBUG_CATCH_ABORT
     if (code == SI_USER && !is_timeout) // prevent MPI_Abort printing
@@ -703,8 +704,8 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
 #undef _YFMT4
 #undef _YFMT5
 #undef _YFMT6
-    ssize_t ret = write(_mys_debug_G.outfd, buflog, loglen);
-    (void)ret; // do nothing, just for Werror=unused-result
+    write_ret = write(_mys_debug_G.outfd, buflog, loglen);
+    (void)write_ret; // do nothing, just for Werror=unused-result
 #ifndef MYS_DEBUG_CATCH_ABORT
 finished:
 #endif
