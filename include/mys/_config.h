@@ -106,6 +106,8 @@
 #define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
 #define MYS_ATTR_MALLOC __attribute__((malloc))
 #define MYS_ATTR_NORETURN __attribute__((noreturn))
+#define MYS_ATTR_CONSTRUCTOR __attribute__((constructor))
+#define MYS_ATTR_DESTRUCTOR __attribute__((destructor))
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define MYS_UNREACHABLE() __builtin_unreachable()
@@ -127,6 +129,8 @@
 #define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
 #define MYS_ATTR_MALLOC __attribute__((malloc))
 #define MYS_ATTR_NORETURN __attribute__((noreturn))
+#define MYS_ATTR_CONSTRUCTOR __attribute__((constructor))
+#define MYS_ATTR_DESTRUCTOR __attribute__((destructor))
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define MYS_UNREACHABLE() __builtin_unreachable()
@@ -144,6 +148,8 @@
 #define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
 #define MYS_ATTR_MALLOC __attribute__((malloc))
 #define MYS_ATTR_NORETURN __attribute__((noreturn))
+#define MYS_ATTR_CONSTRUCTOR __attribute__((constructor))
+#define MYS_ATTR_DESTRUCTOR __attribute__((destructor))
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define MYS_UNREACHABLE() __builtin_unreachable()
@@ -155,16 +161,18 @@
 #define MYS_ATTR_UNUSED __attribute__((unused))
 #define MYS_ATTR_USED __attribute__((used))
 #define MYS_DEPRECATED(msg) __attribute__((__deprecated__(msg)))
-#define MYS_ATTR_NO_INSTRUMENT /* No equivalent attribute */
-#define MYS_ATTR_NOINLINE /* No equivalent attribute */
-#define MYS_ATTR_ALWAYS_INLINE __forceinline__
-#define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
-#define MYS_ATTR_MALLOC /* No equivalent attribute */
-#define MYS_ATTR_NORETURN /* No equivalent attribute */
-#define MYS_LIKELY(x) (x) /* No equivalent attribute */
-#define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
-#define MYS_UNREACHABLE() /* No equivalent attribute */
-#define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
+#define MYS_ATTR_NO_INSTRUMENT /* no equivalent */
+#define MYS_ATTR_NOINLINE __attribute__((noinline))  // host only
+#define MYS_ATTR_ALWAYS_INLINE __forceinline__       // device only
+#define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
+#define MYS_ATTR_MALLOC __attribute__((malloc))
+#define MYS_ATTR_NORETURN __attribute__((noreturn))
+#define MYS_CONSTRUCTOR __attribute__((constructor)) // host only
+#define MYS_DESTRUCTOR __attribute__((destructor))   // host only
+#define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
+#define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define MYS_UNREACHABLE() __builtin_unreachable()
+#define MYS_ATTR_OPTIMIZE_O3 /* no equivalent */
 #elif defined(COMPILER_SWCC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
@@ -178,6 +186,8 @@
 #define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
 #define MYS_ATTR_MALLOC /* No equivalent attribute */
 #define MYS_ATTR_NORETURN /* No equivalent attribute */
+#define MYS_CONSTRUCTOR /* No equivalent attribute */
+#define MYS_DESTRUCTOR /* No equivalent attribute */
 #define MYS_LIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNREACHABLE() /* No equivalent attribute */
@@ -195,6 +205,8 @@
 #define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
 #define MYS_ATTR_MALLOC /* No equivalent attribute */
 #define MYS_ATTR_NORETURN /* No equivalent attribute */
+#define MYS_CONSTRUCTOR /* No equivalent attribute */
+#define MYS_DESTRUCTOR /* No equivalent attribute */
 #define MYS_LIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNREACHABLE() /* No equivalent attribute */
@@ -212,6 +224,8 @@
 #define MYS_ATTR_PRINTF(i, j) /* No equivalent attribute */
 #define MYS_ATTR_MALLOC /* No equivalent attribute */
 #define MYS_ATTR_NORETURN /* No equivalent attribute */
+#define MYS_CONSTRUCTOR /* No equivalent attribute */
+#define MYS_DESTRUCTOR /* No equivalent attribute */
 #define MYS_LIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNLIKELY(x) (x) /* No equivalent attribute */
 #define MYS_UNREACHABLE() /* No equivalent attribute */
