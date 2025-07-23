@@ -14,24 +14,25 @@
 #include "../memory.h"
 #include "../format.h"
 
-typedef struct mys_fmtrun_t {
-    mys_fmt_pass pass_fn;
-    char *pass_spec;
-} mys_fmtrun_t;
-
-typedef struct mys_fmtex_t {
-    mys_fmtrun_t *runs;
-    size_t nrun;
-} mys_fmtex_t;
+typedef struct mys_fmtrun_t mys_fmtrun_t;
 
 #define MYS_FORMATER_MAX_PASSES 8
 
-typedef struct mys_fmter_t {
+struct mys_fmter_t {
     size_t npass;
     char *pass_names[MYS_FORMATER_MAX_PASSES];
     mys_fmt_pass pass_fns[MYS_FORMATER_MAX_PASSES];
-} mys_fmter_t;
+};
 
+struct mys_fmtex_t {
+    mys_fmtrun_t *runs;
+    size_t nrun;
+};
+
+struct mys_fmtrun_t {
+    mys_fmt_pass pass_fn;
+    char *pass_spec;
+};
 
 ///// fmter
 

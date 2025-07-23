@@ -34,13 +34,13 @@ mys_arena_t mys_predefined_arena_user = MYS_ARENA_INITIALIZER("user");
 #define MYS_MAX_REGISTERED_ARENA 64
 
 #define MYS_MAX_ARENA_TRACE 16
-typedef struct mys_arena_debugger_t {
+struct mys_arena_debugger_t {
     void *ptr;
     size_t size;
     void *backtrace[MYS_MAX_ARENA_TRACE];
     int ntrace;
     _mys_UT_hash_handle hh;
-} mys_arena_debugger_t;
+};
 
 MYS_STATIC void _mys_arena_debug_get_stack(mys_arena_debugger_t *node, mys_string_t *str)
 {

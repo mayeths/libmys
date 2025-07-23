@@ -22,7 +22,7 @@ typedef struct {
     _mys_UT_hash_handle hh;
 } _mys_log_once_t;
 
-typedef struct mys_log_t {
+struct mys_log_t {
     bool inited;
     const char *name;
     mys_mutex_t lock;
@@ -37,7 +37,7 @@ typedef struct mys_log_t {
     } handlers[MYS_LOG_MAX_HANDLER];
     int handler_id_counter;
     int num_handlers;
-} mys_log_t;
+};
 
 mys_log_t mys_predefined_logger = {
     .inited = true,

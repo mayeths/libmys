@@ -59,7 +59,7 @@ typedef struct mys_pool_block_t {
     struct mys_pool_block_t* next;
 } mys_pool_block_t;
 
-typedef struct mys_pool_t {
+struct mys_pool_t {
     size_t robj_size;
     size_t pobj_size;
     size_t mobj_size;
@@ -69,7 +69,7 @@ typedef struct mys_pool_t {
     struct mys_pool_block_t* free_block_tail;
     struct mys_pool_block_t* full_block_head;
     struct mys_pool_block_t* full_block_tail;
-} mys_pool_t;
+};
 
 static mys_pool_object_t* _mys_pool_get_object(mys_pool_t* pool, mys_pool_block_t* block, size_t i)
 {

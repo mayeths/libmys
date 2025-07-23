@@ -25,7 +25,7 @@ typedef struct mys_trace_e1block_t {
     uint32_t size;
 } mys_trace_e1block_t;
 
-typedef struct mys_trace_t {
+struct mys_trace_t {
     struct mys_trace_e1block_t *e1block_head;
     struct mys_trace_e1block_t *e1block_tail;
     uint64_t e1_total_capacity;
@@ -33,7 +33,7 @@ typedef struct mys_trace_t {
     bool being_iter;
     struct mys_trace_e1block_t *e1_iter_last_block;
     uint32_t e1_iter_last_index;
-} mys_trace_t;
+};
 
 typedef struct _mys_trace_G_t {
     bool inited;

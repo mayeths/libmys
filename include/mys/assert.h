@@ -94,7 +94,7 @@ MYS_STATIC void _mys_runtime_assert_failed(const char *file, int line, const cha
         }
     }
     #endif
-    mys_log_rank(MYS_LOGGER_G, myrank, MYS_LOG_FATAL, file, line, str->text);
+    mys_log_rank(MYS_LOGGER_G, myrank, MYS_LOG_FATAL, file, line, "%s", str->text);
     mys_string_destroy(&str);
     mys_MPI_Abort(mys_MPI_COMM_WORLD, 1);
     // mys_MPI_Finalize();
