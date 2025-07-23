@@ -119,29 +119,30 @@ void mys_table_append_cell(mys_table_t *table, ...) {
     va_start(args, table);
     size_t offset = 0;
     for (size_t i = 0; i < table->num_attrs; i++) {
+        uintptr_t ptr = (uintptr_t)cell->values + offset;
         switch (table->attr_types[i]) {
             case MYS_TABLE_ATTR_INT32_T:
-                *(int32_t *)(cell->values + offset) = va_arg(args, int);
+                *(int32_t *)ptr = va_arg(args, int);
                 offset += sizeof(int32_t);
                 break;
             case MYS_TABLE_ATTR_INT64_T:
-                *(int64_t *)(cell->values + offset) = va_arg(args, int64_t);
+                *(int64_t *)ptr = va_arg(args, int64_t);
                 offset += sizeof(int64_t);
                 break;
             case MYS_TABLE_ATTR_UINT32_T:
-                *(uint32_t *)(cell->values + offset) = va_arg(args, unsigned int);
+                *(uint32_t *)ptr = va_arg(args, unsigned int);
                 offset += sizeof(uint32_t);
                 break;
             case MYS_TABLE_ATTR_UINT64_T:
-                *(uint64_t *)(cell->values + offset) = va_arg(args, uint64_t);
+                *(uint64_t *)ptr = va_arg(args, uint64_t);
                 offset += sizeof(uint64_t);
                 break;
             case MYS_TABLE_ATTR_FLOAT:
-                *(float *)(cell->values + offset) = (float)va_arg(args, double);
+                *(float *)ptr = (float)va_arg(args, double); // ‘float’ is promoted to ‘double’ in va_arg, therefore va_arg(args, double)
                 offset += sizeof(float);
                 break;
             case MYS_TABLE_ATTR_DOUBLE:
-                *(double *)(cell->values + offset) = va_arg(args, double);
+                *(double *)ptr = va_arg(args, double);
                 offset += sizeof(double);
                 break;
         }
@@ -286,7 +287,8 @@ void mys_table_dump(mys_table_t *table, const char *file_name) {
     const char *fmt = (table->attr_formats[j] != NULL)        \
         ? table->attr_formats[j]                              \
         : default_fmt;                                        \
-    fprintf(file, fmt, *(type *)(tmp_cell->values + offset)); \
+    uintptr_t ptr = (uintptr_t)tmp_cell->values + offset;     \
+    fprintf(file, fmt, *(type *)ptr);                         \
     offset += sizeof(type);                                   \
 } while (0)
 
