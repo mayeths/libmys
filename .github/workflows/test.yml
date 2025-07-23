@@ -11,12 +11,11 @@ on:
 
 jobs:
   test-linux-intel:
-    name: Test with IntelMPI on Linux
+    name: Test with ${{ matrix.intel_compiler_type }} and intelmpi on Linux
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        intel_compiler: ['2021.4.0', '2025.2']
-        intel_mpi: ['2021.9.0']
+        intel_compiler_type: ['icc', 'icx']
 
     steps:
       - name: Checkout repository
@@ -29,15 +28,23 @@ jobs:
           echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt-get update -o Dir::Etc::sourcelist="sources.list.d/oneAPI.list" -o APT::Get::List-Cleanup="0"
 
-      - name: Install Intel compilers & MPI
+      - name: Install Intel classic icc compiler
+        if:   ${{ matrix.intel_compiler_type == 'icc' }}
         timeout-minutes: 5
-        run: |
-          sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-${{ matrix.intel_compiler }}
-          sudo apt-get install --no-install-recommends intel-oneapi-mpi-${{ matrix.intel_mpi }} intel-oneapi-mpi-devel-${{ matrix.intel_mpi }}
-          ls /opt/intel/oneapi /opt/intel/oneapi/compiler /opt/intel/oneapi/mpi
+        run: sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.1.0
 
-      - name: Verify Intel compilers & MPI
+      - name: Install Intel modern icx compiler
+        if:   ${{ matrix.intel_compiler_type == 'icx' }}
+        timeout-minutes: 5
+        run: sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-2025.2
+
+      - name: Install Intel MPI
+        timeout-minutes: 5
+        run: sudo apt-get install --no-install-recommends intel-oneapi-mpi-2021.9.0 intel-oneapi-mpi-devel-2021.9.0
+
+      - name: Verify Intel compiler & MPI
         run: |
+          ls /opt/intel/oneapi /opt/intel/oneapi/compiler /opt/intel/oneapi/mpi
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
           echo "PATH='$PATH'"
@@ -57,23 +64,23 @@ jobs:
           echo "[Check mpiicpc version]" && mpiicpc --version 2>/dev/null || echo "not found"
           echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
 
-      - name: Setup Intel modern compiler
-        if:   ${{ matrix.intel_compiler == '2025.2' }}
-        run: |
-          echo "I_MPI_CC=icx" >> $GITHUB_ENV
-          echo "I_MPI_CXX=icpx" >> $GITHUB_ENV
-          echo "TEST_CC=icx" >> $GITHUB_ENV
-          echo "TEST_CXX=icpx" >> $GITHUB_ENV
-          echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
-          echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
-
-      - name: Setup Intel classic compiler
-        if:   ${{ matrix.intel_compiler == '2021.4.0' }}
+      - name: Setup Intel classic icc compiler
+        if:   ${{ matrix.intel_compiler_type == 'icc' }}
         run: |
           echo "I_MPI_CC=icc" >> $GITHUB_ENV
           echo "I_MPI_CXX=icpc" >> $GITHUB_ENV
           echo "TEST_CC=icc" >> $GITHUB_ENV
           echo "TEST_CXX=icpc" >> $GITHUB_ENV
+          echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
+
+      - name: Setup Intel modern icx compiler
+        if:   ${{ matrix.intel_compiler_type == 'icx' }}
+        run: |
+          echo "I_MPI_CC=icx" >> $GITHUB_ENV
+          echo "I_MPI_CXX=icpx" >> $GITHUB_ENV
+          echo "TEST_CC=icx" >> $GITHUB_ENV
+          echo "TEST_CXX=icpx" >> $GITHUB_ENV
           echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
           echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
 
