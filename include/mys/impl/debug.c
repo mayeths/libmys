@@ -703,7 +703,8 @@ MYS_STATIC void _mys_debug_signal_handler(int signo, siginfo_t *info, void *cont
 #undef _YFMT4
 #undef _YFMT5
 #undef _YFMT6
-    (void)write(_mys_debug_G.outfd, buflog, loglen);
+    ssize_t ret = write(_mys_debug_G.outfd, buflog, loglen);
+    (void)ret; // do nothing, just for Werror=unused-result
 #ifndef MYS_DEBUG_CATCH_ABORT
 finished:
 #endif
