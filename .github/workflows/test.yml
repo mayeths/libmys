@@ -47,13 +47,14 @@ jobs:
           echo "[Verify icpx path] $(which icpx 2>/dev/null || echo not found)"
           echo "[Verify mpiicc path] $(which mpiicc 2>/dev/null || echo not found)"
           echo "[Verify mpiicpc path] $(which mpiicpc 2>/dev/null || echo not found)"
-          echo "[Check icc version]" && icc --version || echo "icc not found"
-          echo "[Check icpc version]" && icpc --version || echo "icpc not found"
-          echo "[Check icx version]" && icx --version || echo "icx not found"
-          echo "[Check icpx version]" && icpx --version || echo "icpx not found"
-          echo "[Check mpiicc version]" && mpiicc --version || echo "mpiicc not found"
-          echo "[Check mpiicpc version]" && mpiicpc --version || echo "mpiicpc not found"
-          echo "[Check mpirun version]" && mpirun --version || echo "mpirun not found"
+          echo "[Verify mpirun path] $(which mpirun 2>/dev/null || echo not found)"
+          echo "[Check icc version]" && icc --version 2>/dev/null || echo "not found"
+          echo "[Check icpc version]" && icpc --version 2>/dev/null || echo "not found"
+          echo "[Check icx version]" && icx --version 2>/dev/null || echo "not found"
+          echo "[Check icpx version]" && icpx --version 2>/dev/null || echo "not found"
+          echo "[Check mpiicc version]" && mpiicc --version 2>/dev/null || echo "not found"
+          echo "[Check mpiicpc version]" && mpiicpc --version 2>/dev/null || echo "not found"
+          echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
 
       - name: Build tests in test/ folder
         run: |
