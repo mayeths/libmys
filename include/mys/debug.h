@@ -74,8 +74,10 @@ MYS_PUBLIC void mys_debug_clear_message();
 // 1) Add `#define MYS_ENABLE_DEBUG_TIMEOUT` before `#include mys.h`
 // 2) Add `-lrt` to compiler for using `timer_create()`, `timer_settime()`, and `timer_delete()`
 MYS_PUBLIC void _mys_debug_set_timeout(double timeout, const char *file, int line);
+MYS_PUBLIC void _mys_debug_set_timeout_env(const char *env_name, const char *file, int line);
 MYS_PUBLIC void mys_debug_clear_timeout();
 #define mys_debug_set_timeout(timeout_sec) _mys_debug_set_timeout(timeout_sec, __FILE__, __LINE__)
+#define mys_debug_set_timeout_env(env_name) _mys_debug_set_timeout_env(env_name, __FILE__, __LINE__)
 
 
 /**

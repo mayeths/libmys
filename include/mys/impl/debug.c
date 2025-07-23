@@ -782,6 +782,14 @@ MYS_PUBLIC void _mys_debug_set_timeout(double timeout, const char *file, int lin
     _mys_debug_G.timeout = timeout;
 }
 
+MYS_PUBLIC void _mys_debug_set_timeout_env(const char *env_name, const char *file, int line)
+{
+    int timeout = mys_env_i32(env_name, 0);
+    if (timeout != 0) {
+        _mys_debug_set_timeout(timeout, file, line);
+    }
+}
+
 MYS_PUBLIC void mys_debug_clear_timeout()
 {
     if (!_mys_debug_G.timeout_inited) {
