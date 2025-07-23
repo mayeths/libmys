@@ -4,8 +4,7 @@ name: Test Code in include/mys
 
 on:
   push:
-    branches:
-      - '**'
+    branches: [ '**' ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -16,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        intel_compiler: [2021.4.0, 2025.2]
-        intel_mpi: [2021.9.0]
+        intel_compiler: ['2021.4.0', '2025.2']
+        intel_mpi: ['2021.9.0']
 
     steps:
       - name: Checkout repository
@@ -59,7 +58,7 @@ jobs:
           echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
 
       - name: Setup Intel modern compiler
-        if:   ${{ matrix.intel_compiler == 2025.2 }}
+        if:   ${{ matrix.intel_compiler == '2025.2' }}
         run: |
           echo "I_MPI_CC=icx" >> $GITHUB_ENV
           echo "I_MPI_CXX=icpx" >> $GITHUB_ENV
@@ -69,7 +68,7 @@ jobs:
           echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
 
       - name: Setup Intel classic compiler
-        if:   ${{ matrix.intel_compiler == 2021.4.0 }}
+        if:   ${{ matrix.intel_compiler == '2021.4.0' }}
         run: |
           echo "I_MPI_CC=icc" >> $GITHUB_ENV
           echo "I_MPI_CXX=icpc" >> $GITHUB_ENV
