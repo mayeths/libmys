@@ -1,5 +1,7 @@
 name: Test Code in include/mys
 
+# Check https://oneapi-src.github.io/oneapi-ci/ for all available intel oneAPI components version
+
 on:
   push:
     branches:
@@ -14,8 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        intel_compiler: [2021.16, 2025.1]
-        intel_mpi: [2021.16]
+        intel_compiler: [2021.4.0, 2025.2]
+        intel_mpi: [2021.9.0]
 
     steps:
       - name: Checkout repository
@@ -57,7 +59,7 @@ jobs:
           echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
 
       - name: Setup Intel modern compiler
-        if:   ${{ matrix.intel_compiler == 2025.1 }}
+        if:   ${{ matrix.intel_compiler == 2025.2 }}
         run: |
           echo "I_MPI_CC=icx" >> $GITHUB_ENV
           echo "I_MPI_CXX=icpx" >> $GITHUB_ENV
@@ -67,7 +69,7 @@ jobs:
           echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
 
       - name: Setup Intel classic compiler
-        if:   ${{ matrix.intel_compiler == 2021.16 }}
+        if:   ${{ matrix.intel_compiler == 2021.4.0 }}
         run: |
           echo "I_MPI_CC=icc" >> $GITHUB_ENV
           echo "I_MPI_CXX=icpc" >> $GITHUB_ENV
@@ -77,11 +79,66 @@ jobs:
           echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
 
       - name: Build tests in test/ folder
+        timeout-minutes: 5
         run: |
           cd test
           make
 
       - name: Run tests in test/ folder
+        timeout-minutes: 5
+        run: |
+          cd test
+          ./ex01.hello-gcc.exe
+          ./ex02.hello-g++.exe
+          mpirun -n 2 ./ex03.hello-mpicc.exe
+          mpirun -n 2 ./ex04.hello-mpic++.exe
+
+  test-linux-gcc:
+    name: Test with GCC and ${{ matrix.mpi }} on Linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mpi: [ 'mpich', 'openmpi' ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install ${{ matrix.mpi }} MPI
+        uses: mpi4py/setup-mpi@v1
+        with:
+          mpi: ${{ matrix.mpi }}
+
+      - name: Verify GCC compilers & ${{ matrix.mpi }} MPI
+        run: |
+          echo "PATH='$PATH'"
+          echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'"
+          echo "[Verify gcc path] $(which gcc 2>/dev/null || echo not found)"
+          echo "[Verify g++ path] $(which g++ 2>/dev/null || echo not found)"
+          echo "[Verify mpicc path] $(which mpicc 2>/dev/null || echo not found)"
+          echo "[Verify mpic++ path] $(which mpic++ 2>/dev/null || echo not found)"
+          echo "[Verify mpirun path] $(which mpirun 2>/dev/null || echo not found)"
+          echo "[Check gcc version]" && gcc --version 2>/dev/null || echo "not found"
+          echo "[Check g++ version]" && g++ --version 2>/dev/null || echo "not found"
+          echo "[Check mpicc version]" && mpicc --version 2>/dev/null || echo "not found"
+          echo "[Check mpic++ version]" && mpic++ --version 2>/dev/null || echo "not found"
+          echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
+
+      - name: Setup GCC compilers & ${{ matrix.mpi }} MPI
+        run: |
+          echo "TEST_CC=gcc" >> $GITHUB_ENV
+          echo "TEST_CXX=g++" >> $GITHUB_ENV
+          echo "TEST_MPICC=mpicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpic++" >> $GITHUB_ENV
+
+      - name: Build tests in test/ folder
+        timeout-minutes: 5
+        run: |
+          cd test
+          make
+
+      - name: Run tests in test/ folder
+        timeout-minutes: 5
         run: |
           cd test
           ./ex01.hello-gcc.exe
