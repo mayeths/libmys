@@ -33,16 +33,11 @@ jobs:
         run: |
           sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-${{ matrix.oneapi-compiler }}
           sudo apt-get install --no-install-recommends intel-oneapi-mpi-${{ matrix.oneapi-mpi }}
-
-      - name: List Intel oneAPI folder
-        run: |
-          ls /opt/intel/oneapi
-          ls /opt/intel/oneapi/*
+          ls /opt/intel/oneapi /opt/intel/oneapi/compiler /opt/intel/oneapi/mpi
 
       - name: Verify Intel oneAPI compilers & MPI
         run: |
-          source /opt/intel/oneapi/${{ matrix.oneapi-compiler }}/oneapi-vars.sh
-          source /opt/intel/oneapi/${{ matrix.oneapi-mpi }}/oneapi-vars.sh
+          source /opt/intel/oneapi/setvars.sh
           which icc
           which icpc
           which icx
@@ -58,15 +53,13 @@ jobs:
 
       - name: Build tests in test/ folder
         run: |
-          source /opt/intel/oneapi/${{ matrix.oneapi-compiler }}/oneapi-vars.sh
-          source /opt/intel/oneapi/${{ matrix.oneapi-mpi }}/oneapi-vars.sh
+          source /opt/intel/oneapi/setvars.sh
           cd test
           make
 
       - name: Run tests in test/ folder
         run: |
-          source /opt/intel/oneapi/${{ matrix.oneapi-compiler }}/oneapi-vars.sh
-          source /opt/intel/oneapi/${{ matrix.oneapi-mpi }}/oneapi-vars.sh
+          source /opt/intel/oneapi/setvars.sh
           cd test
           ./ex01.hello-gcc.exe
           ./ex02.hello-g++.exe
