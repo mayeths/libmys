@@ -32,7 +32,7 @@ jobs:
         timeout-minutes: 5
         run: |
           sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-${{ matrix.oneapi-compiler }}
-          sudo apt-get install --no-install-recommends intel-oneapi-mpi-${{ matrix.oneapi-mpi }}
+          sudo apt-get install --no-install-recommends intel-oneapi-mpi-${{ matrix.oneapi-mpi }} intel-oneapi-mpi-devel-${{ matrix.oneapi-mpi }}
           ls /opt/intel/oneapi /opt/intel/oneapi/compiler /opt/intel/oneapi/mpi
 
       - name: Verify Intel oneAPI compilers & MPI
@@ -41,19 +41,19 @@ jobs:
           printenv >> $GITHUB_ENV
           echo "PATH='$PATH'"
           echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'"
-          echo "icc: $(which icc 2>/dev/null || echo not found)"
-          echo "icpc: $(which icpc 2>/dev/null || echo not found)"
-          echo "icx: $(which icx 2>/dev/null || echo not found)"
-          echo "icpx: $(which icpx 2>/dev/null || echo not found)"
-          echo "mpiicc: $(which mpiicc 2>/dev/null || echo not found)"
-          echo "mpiicpc: $(which mpiicpc 2>/dev/null || echo not found)"
-          icc --version || true
-          icpc --version || true
-          icx --version || true
-          icpx --version || true
-          mpiicc --version || true
-          mpiicpc --version || true
-          mpirun --version || true
+          echo "[Verify icc path] $(which icc 2>/dev/null || echo not found)"
+          echo "[Verify icpc path] $(which icpc 2>/dev/null || echo not found)"
+          echo "[Verify icx path] $(which icx 2>/dev/null || echo not found)"
+          echo "[Verify icpx path] $(which icpx 2>/dev/null || echo not found)"
+          echo "[Verify mpiicc path] $(which mpiicc 2>/dev/null || echo not found)"
+          echo "[Verify mpiicpc path] $(which mpiicpc 2>/dev/null || echo not found)"
+          echo "[Check icc version]" && icc --version || echo "icc not found"
+          echo "[Check icpc version]" && icpc --version || echo "icpc not found"
+          echo "[Check icx version]" && icx --version || echo "icx not found"
+          echo "[Check icpx version]" && icpx --version || echo "icpx not found"
+          echo "[Check mpiicc version]" && mpiicc --version || echo "mpiicc not found"
+          echo "[Check mpiicpc version]" && mpiicpc --version || echo "mpiicpc not found"
+          echo "[Check mpirun version]" && mpirun --version || echo "mpirun not found"
 
       - name: Build tests in test/ folder
         run: |
