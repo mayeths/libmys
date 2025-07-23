@@ -56,17 +56,25 @@ jobs:
           echo "[Check mpiicpc version]" && mpiicpc --version 2>/dev/null || echo "not found"
           echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
 
-      - name: Setup Intel oneAPI MPI
+      - name: Setup Intel modern compiler
         if:   ${{ matrix.intel_compiler == 2025.1 }}
         run: |
-          echo "I_MPI_CC=icx I_MPI_CXX=icpx" >> $GITHUB_ENV
-          echo "TEST_CC=icx TEST_CXX=icpx TEST_MPICC=mpiicc TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
+          echo "I_MPI_CC=icx" >> $GITHUB_ENV
+          echo "I_MPI_CXX=icpx" >> $GITHUB_ENV
+          echo "TEST_CC=icx" >> $GITHUB_ENV
+          echo "TEST_CXX=icpx" >> $GITHUB_ENV
+          echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
 
-      - name: Setup Intel classic MPI
+      - name: Setup Intel classic compiler
         if:   ${{ matrix.intel_compiler == 2021.16 }}
         run: |
-          echo "I_MPI_CC=icc I_MPI_CXX=icpc" >> $GITHUB_ENV
-          echo "TEST_CC=icc TEST_CXX=icpc TEST_MPICC=mpiicc TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
+          echo "I_MPI_CC=icc" >> $GITHUB_ENV
+          echo "I_MPI_CXX=icpc" >> $GITHUB_ENV
+          echo "TEST_CC=icc" >> $GITHUB_ENV
+          echo "TEST_CXX=icpc" >> $GITHUB_ENV
+          echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
 
       - name: Build tests in test/ folder
         run: |
