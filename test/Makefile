@@ -1,12 +1,12 @@
-CC = gcc
-CXX = g++
-MPICC = mpicc
-MPICXX = mpicxx # mpicxx is defined in both Intel/Open MPI
+CC?=gcc
+CXX?=g++
+MPICC?=mpicc
+MPICXX?=mpicxx
 
 MYS_DIR ?= ..
 
-CFLAGS = -Wall -Wextra -Werror -g -I$(MYS_DIR)/include
-CXXFLAGS = -Wall -Wextra -Werror -g -std=c++11 -I$(MYS_DIR)/include
+CFLAGS ?= -std=gnu99 -Wall -Wextra -Werror -g -I$(MYS_DIR)/include
+CXXFLAGS ?= -std=c++11 -Wall -Wextra -Werror -g -I$(MYS_DIR)/include
 LFLAGS = 
 
 EXAMPLES=\
