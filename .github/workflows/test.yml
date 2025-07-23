@@ -38,16 +38,6 @@ jobs:
       - name: Verify Intel oneAPI compilers & MPI
         run: |
           source /opt/intel/oneapi/setvars.sh
-          which icc
-          which icpc
-          which icx
-          which icpx
-          which mpiicc
-          which mpiicpc
-          icc --version
-          icpc --version
-          mpiicc --version
-          mpiicpc --version
           echo $PATH
           echo $LD_LIBRARY_PATH
 
