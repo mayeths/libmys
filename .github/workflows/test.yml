@@ -9,12 +9,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  test_linux:
-    name: Test with ${{ matrix.mpi }} on Linux
+  test_linux_intel:
+    name: Test with IntelMPI on Linux
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mpi: [ 'mpich', 'openmpi', 'intelmpi' ]  # Test with MPICH, OpenMPI, and IntelMPI
+        mpi: [ 'intelmpi' ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,33 +24,23 @@ jobs:
         with:
           mpi: ${{ matrix.mpi }}
 
-      - name: Navigate to test directory and run make
+      - name: Print environment
         run: |
-          cd test
+          which mpirun
+          which mpiicc
+          which mpiicpc
+          mpiicc --version
+          mpiicpc --version
+
+      - name: Build tests in test/ folder
+        run: |
+          cd test/
           make
 
-      # Optional: Run tests if Makefile generates executables
-      # - name: Run tests
-      #   run: |
-      #     cd test
-      #     mpiexec -n 2 ./test_executable
-
-  test_macos:
-    name: Test with ${{ matrix.mpi }} on macOS
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        mpi: [ 'mpich', 'openmpi' ]  # Test with MPICH and OpenMPI
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up MPI (${{ matrix.mpi }})
-        uses: mpi4py/setup-mpi@v1
-        with:
-          mpi: ${{ matrix.mpi }}
-
-      - name: Navigate to test directory and run make
+      - name: Run tests in test/ folder
         run: |
-          cd test
-          make
+          cd test/
+          ./ex01.hello-gcc.exe
+          ./ex02.hello-g++.exe
+          mpirun -n 2 ./ex03.hello-mpicc.exe
+          mpirun -n 2 ./ex04.hello-mpic++.exe
