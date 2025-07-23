@@ -34,6 +34,11 @@ jobs:
           sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-${{ matrix.oneapi-compiler }}
           sudo apt-get install --no-install-recommends intel-oneapi-mpi-${{ matrix.oneapi-mpi }}
 
+      - name: List Intel oneAPI folder
+        run: |
+          ls /opt/intel/oneapi
+          ls /opt/intel/oneapi/*
+
       - name: Verify Intel oneAPI compilers & MPI
         run: |
           source /opt/intel/oneapi/${{ matrix.oneapi-compiler }}/oneapi-vars.sh
