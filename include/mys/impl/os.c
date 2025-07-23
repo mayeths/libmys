@@ -387,6 +387,28 @@ MYS_PUBLIC void mys_prun_destroy(mys_prun_t *prun)
     prun->len_err = 0;
 }
 
+MYS_PUBLIC bool mys_path_is_exists(const char *path)
+{
+    struct stat st;
+    return stat(path, &st) == 0;
+}
+
+MYS_PUBLIC bool mys_path_is_file(const char *path)
+{
+    struct stat st;
+    return stat(path, &st) == 0 && S_ISREG(st.st_mode);
+}
+
+MYS_PUBLIC bool mys_path_is_symlink(const char *path) {
+    struct stat st;
+    return lstat(path, &st) == 0 && S_ISLNK(st.st_mode);
+}
+
+MYS_PUBLIC bool mys_path_is_dir(const char *path)
+{
+    struct stat st;
+    return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+}
 
 MYS_PUBLIC bool mys_mkdir(const char *path, mode_t mode)
 {

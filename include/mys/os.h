@@ -159,6 +159,10 @@ MYS_PUBLIC bool mys_popen_kill(mys_popen_t *popen, int signo);
 ///////////////////////////////////
 // File system related functions
 ///////////////////////////////////
+MYS_PUBLIC bool mys_path_is_exists(const char *path);
+MYS_PUBLIC bool mys_path_is_file(const char *path);
+MYS_PUBLIC bool mys_path_is_symlink(const char *path);
+MYS_PUBLIC bool mys_path_is_dir(const char *path);
 /**
  * @brief Make directory
  * 
