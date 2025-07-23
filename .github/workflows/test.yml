@@ -12,34 +12,42 @@ jobs:
   test_linux_intel:
     name: Test with IntelMPI on Linux
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        mpi: [ 'intelmpi' ]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up MPI (${{ matrix.mpi }})
-        uses: mpi4py/setup-mpi@v1
+      - name: Install Intel oneAPI compiler & MPI
+        uses: oneapi-src/oneapi-ci@v0.2.0
         with:
-          mpi: ${{ matrix.mpi }}
+          components: |
+            intel-oneapi-compiler-dpcpp-cpp
+            intel-oneapi-mpi
 
-      - name: Print environment
+      - name: Verify compiler and MPI
         run: |
-          which mpirun
+          source /opt/intel/oneapi/setvars.sh
+          which icc
+          which icpc
+          which icx
+          which icpx
           which mpiicc
           which mpiicpc
+          icc --version
+          icpc --version
           mpiicc --version
           mpiicpc --version
 
       - name: Build tests in test/ folder
         run: |
-          cd test/
+          source /opt/intel/oneapi/setvars.sh
+          cd test
           make
 
       - name: Run tests in test/ folder
         run: |
-          cd test/
+          source /opt/intel/oneapi/setvars.sh
+          cd test
           ./ex01.hello-gcc.exe
           ./ex02.hello-g++.exe
           mpirun -n 2 ./ex03.hello-mpicc.exe
