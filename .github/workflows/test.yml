@@ -14,8 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        oneapi-compiler: [2025.1]
-        oneapi-mpi: [2021.16]
+        intel_compiler: [2025.1]
+        intel_mpi: [2021.16]
 
     steps:
       - name: Checkout repository
@@ -31,8 +31,8 @@ jobs:
       - name: Install Intel compilers & MPI
         timeout-minutes: 5
         run: |
-          sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-${{ matrix.oneapi-compiler }}
-          sudo apt-get install --no-install-recommends intel-oneapi-mpi-${{ matrix.oneapi-mpi }} intel-oneapi-mpi-devel-${{ matrix.oneapi-mpi }}
+          sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-${{ matrix.intel_compiler }}
+          sudo apt-get install --no-install-recommends intel-oneapi-mpi-${{ matrix.intel_mpi }} intel-oneapi-mpi-devel-${{ matrix.intel_mpi }}
           ls /opt/intel/oneapi /opt/intel/oneapi/compiler /opt/intel/oneapi/mpi
 
       - name: Verify Intel compilers & MPI
@@ -57,13 +57,13 @@ jobs:
           echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
 
       - name: Setup Intel oneAPI MPI
-        if:   ${{ oneapi-compiler == 2025.1 }}
+        if:   ${{ matrix.intel_compiler == 2025.1 }}
         run: |
           echo "I_MPI_CC=icx I_MPI_CXX=icpx" >> $GITHUB_ENV
           echo "TEST_CC=icx TEST_CXX=icpx TEST_MPICC=mpiicc TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
 
       - name: Setup Intel classic MPI
-        if:   ${{ oneapi-compiler == 2021.16 }}
+        if:   ${{ matrix.intel_compiler == 2021.16 }}
         run: |
           echo "I_MPI_CC=icc I_MPI_CXX=icpc" >> $GITHUB_ENV
           echo "TEST_CC=icc TEST_CXX=icpc TEST_MPICC=mpiicc TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
