@@ -255,15 +255,15 @@ jobs:
           echo "[Verify mpic++ path] $(which mpic++ 2>/dev/null || echo not found)"
           echo "[Verify mpirun path] $(which mpirun 2>/dev/null || echo not found)"
           if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
-            gcc --version || echo "gcc not found"
-            g++ --version || echo "g++ not found"
+            echo "[Check gcc version]" && gcc --version 2>/dev/null || echo "not found"
+            echo "[Check g++ version]" && g++ --version 2>/dev/null || echo "not found"
           elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
-            clang --version || echo "clang not found"
-            clang++ --version || echo "clang++ not found"
+            echo "[Check clang version]" && clang --version 2>/dev/null || echo "not found"
+            echo "[Check clang++ version]" && clang++ --version 2>/dev/null || echo "not found"
           fi
-          mpicc --version || echo "mpicc not found"
-          mpic++ --version || echo "mpic++ not found"
-          mpirun --version || echo "mpirun not found"
+          echo "[Check mpicc version]" && mpicc --version 2>/dev/null || echo "not found"
+          echo "[Check mpic++ version]" && mpic++ --version 2>/dev/null || echo "not found"
+          echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
 
       - name: Build tests in test/ folder
         timeout-minutes: 10
