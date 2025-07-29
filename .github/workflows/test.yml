@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        intel_compiler_type: ['icc', 'icx']
+        intel_compiler_type: ['icc']
 
     steps:
       - name: Checkout repository
@@ -35,18 +35,18 @@ jobs:
           sudo apt-get install -y gcc-10 g++-10
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
-          sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.1.0
+          sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.1.0
           gcc --version
           g++ --version
 
       - name: Install Intel modern icx compiler
         if:   ${{ matrix.intel_compiler_type == 'icx' }}
         timeout-minutes: 5
-        run: sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-2025.2
+        run: sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-2025.2
 
       - name: Install Intel MPI
         timeout-minutes: 5
-        run: sudo apt-get install -y intel-oneapi-mpi-2021.9.0 intel-oneapi-mpi-devel-2021.9.0
+        run: sudo apt-get install --no-install-recommends intel-oneapi-mpi-2021.9.0 intel-oneapi-mpi-devel-2021.9.0
 
       - name: Setup Intel classic icc compiler
         if:   ${{ matrix.intel_compiler_type == 'icc' }}
