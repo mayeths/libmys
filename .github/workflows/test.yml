@@ -1,4 +1,4 @@
-name: Compile and test libmys/include/mys
+name: (Github Action) Compile and test libmys/include/mys
 
 # Check https://oneapi-src.github.io/oneapi-ci/ for all available intel oneAPI components version
 
