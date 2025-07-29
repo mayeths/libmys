@@ -46,6 +46,22 @@ jobs:
         timeout-minutes: 5
         run: sudo apt-get install --no-install-recommends intel-oneapi-mpi-2021.9.0 intel-oneapi-mpi-devel-2021.9.0
 
+      - name: Setup ${{ matrix.intel_compiler }} compiler & Intel MPI
+        run: |
+          if [[ "${{ matrix.intel_compiler }}" == "icc" ]]; then
+            echo "I_MPI_CC=icc" >> $GITHUB_ENV
+            echo "I_MPI_CXX=icpc" >> $GITHUB_ENV
+            echo "TEST_CC=icc" >> $GITHUB_ENV
+            echo "TEST_CXX=icpc" >> $GITHUB_ENV
+          elif [[ "${{ matrix.intel_compiler }}" == "icx" ]]; then
+            echo "I_MPI_CC=icx" >> $GITHUB_ENV
+            echo "I_MPI_CXX=icpx" >> $GITHUB_ENV
+            echo "TEST_CC=icx" >> $GITHUB_ENV
+            echo "TEST_CXX=icpx" >> $GITHUB_ENV
+          fi
+          echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
+
       - name: Verify ${{ matrix.intel_compiler }} compiler & Intel MPI
         run: |
           ls /opt/intel/oneapi /opt/intel/oneapi/compiler /opt/intel/oneapi/mpi
@@ -73,22 +89,6 @@ jobs:
           echo "[Check mpiicc version]" && mpiicc --version 2>/dev/null || echo "not found"
           echo "[Check mpiicpc version]" && mpiicpc --version 2>/dev/null || echo "not found"
           echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
-
-      - name: Setup ${{ matrix.intel_compiler }} compiler & Intel MPI
-        run: |
-          if [[ "${{ matrix.intel_compiler }}" == "icc" ]]; then
-            echo "I_MPI_CC=icc" >> $GITHUB_ENV
-            echo "I_MPI_CXX=icpc" >> $GITHUB_ENV
-            echo "TEST_CC=icc" >> $GITHUB_ENV
-            echo "TEST_CXX=icpc" >> $GITHUB_ENV
-          elif [[ "${{ matrix.intel_compiler }}" == "icx" ]]; then
-            echo "I_MPI_CC=icx" >> $GITHUB_ENV
-            echo "I_MPI_CXX=icpx" >> $GITHUB_ENV
-            echo "TEST_CC=icx" >> $GITHUB_ENV
-            echo "TEST_CXX=icpx" >> $GITHUB_ENV
-          fi
-          echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
-          echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
 
       - name: Build tests in test/ folder
         timeout-minutes: 5
@@ -133,6 +133,26 @@ jobs:
         with:
           mpi: ${{ matrix.mpi }}
 
+      - name: Setup ${{ matrix.compiler }} compiler & ${{ matrix.mpi }} MPI
+        run: |
+          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            echo "OMPI_CC=gcc" >> $GITHUB_ENV
+            echo "OMPI_CXX=g++" >> $GITHUB_ENV
+            echo "MPICH_CC=gcc" >> $GITHUB_ENV
+            echo "MPICH_CXX=g++" >> $GITHUB_ENV
+            echo "TEST_CC=gcc" >> $GITHUB_ENV
+            echo "TEST_CXX=g++" >> $GITHUB_ENV
+          elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
+            echo "OMPI_CC=clang" >> $GITHUB_ENV
+            echo "OMPI_CXX=clang++" >> $GITHUB_ENV
+            echo "MPICH_CC=clang" >> $GITHUB_ENV
+            echo "MPICH_CXX=clang++" >> $GITHUB_ENV
+            echo "TEST_CC=clang" >> $GITHUB_ENV
+            echo "TEST_CXX=clang++" >> $GITHUB_ENV
+          fi
+          echo "TEST_MPICC=mpicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpic++" >> $GITHUB_ENV
+
       - name: Verify ${{ matrix.compiler }} compiler & ${{ matrix.mpi }} MPI
         run: |
           echo "PATH='$PATH'"
@@ -157,18 +177,6 @@ jobs:
           echo "[Check mpicc version]" && mpicc --version 2>/dev/null || echo "not found"
           echo "[Check mpic++ version]" && mpic++ --version 2>/dev/null || echo "not found"
           echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
-
-      - name: Setup ${{ matrix.compiler }} compiler & ${{ matrix.mpi }} MPI
-        run: |
-          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
-            echo "TEST_CC=gcc" >> $GITHUB_ENV
-            echo "TEST_CXX=g++" >> $GITHUB_ENV
-          elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
-            echo "TEST_CC=clang" >> $GITHUB_ENV
-            echo "TEST_CXX=clang++" >> $GITHUB_ENV
-          fi
-          echo "TEST_MPICC=mpicc" >> $GITHUB_ENV
-          echo "TEST_MPICXX=mpic++" >> $GITHUB_ENV
 
       - name: Build tests in test/ folder
         timeout-minutes: 5
