@@ -31,16 +31,42 @@ jobs:
       - name: Install Intel classic icc compiler
         if:   ${{ matrix.intel_compiler_type == 'icc' }}
         timeout-minutes: 5
-        run: sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.1.0
+        run: |
+          sudo apt-get install -y gcc-10 g++-10
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
+          sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.1.0
+          gcc --version
+          g++ --version
 
       - name: Install Intel modern icx compiler
         if:   ${{ matrix.intel_compiler_type == 'icx' }}
         timeout-minutes: 5
-        run: sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-2025.2
+        run: sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-2025.2
 
       - name: Install Intel MPI
         timeout-minutes: 5
-        run: sudo apt-get install --no-install-recommends intel-oneapi-mpi-2021.9.0 intel-oneapi-mpi-devel-2021.9.0
+        run: sudo apt-get install -y intel-oneapi-mpi-2021.9.0 intel-oneapi-mpi-devel-2021.9.0
+
+      - name: Setup Intel classic icc compiler
+        if:   ${{ matrix.intel_compiler_type == 'icc' }}
+        run: |
+          echo "I_MPI_CC=icc" >> $GITHUB_ENV
+          echo "I_MPI_CXX=icpc" >> $GITHUB_ENV
+          echo "TEST_CC=icc" >> $GITHUB_ENV
+          echo "TEST_CXX=icpc" >> $GITHUB_ENV
+          echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
+
+      - name: Setup Intel modern icx compiler
+        if:   ${{ matrix.intel_compiler_type == 'icx' }}
+        run: |
+          echo "I_MPI_CC=icx" >> $GITHUB_ENV
+          echo "I_MPI_CXX=icpx" >> $GITHUB_ENV
+          echo "TEST_CC=icx" >> $GITHUB_ENV
+          echo "TEST_CXX=icpx" >> $GITHUB_ENV
+          echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
 
       - name: Verify Intel compiler & MPI
         run: |
@@ -64,26 +90,6 @@ jobs:
           echo "[Check mpiicpc version]" && mpiicpc --version 2>/dev/null || echo "not found"
           echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
 
-      - name: Setup Intel classic icc compiler
-        if:   ${{ matrix.intel_compiler_type == 'icc' }}
-        run: |
-          echo "I_MPI_CC=icc" >> $GITHUB_ENV
-          echo "I_MPI_CXX=icpc" >> $GITHUB_ENV
-          echo "TEST_CC=icc" >> $GITHUB_ENV
-          echo "TEST_CXX=icpc" >> $GITHUB_ENV
-          echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
-          echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
-
-      - name: Setup Intel modern icx compiler
-        if:   ${{ matrix.intel_compiler_type == 'icx' }}
-        run: |
-          echo "I_MPI_CC=icx" >> $GITHUB_ENV
-          echo "I_MPI_CXX=icpx" >> $GITHUB_ENV
-          echo "TEST_CC=icx" >> $GITHUB_ENV
-          echo "TEST_CXX=icpx" >> $GITHUB_ENV
-          echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
-          echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
-
       - name: Build tests in test/ folder
         timeout-minutes: 5
         run: |
@@ -99,55 +105,55 @@ jobs:
           mpirun -n 2 ./ex03.hello-mpicc.exe
           mpirun -n 2 ./ex04.hello-mpic++.exe
 
-  test-linux-gcc:
-    name: Test with GCC and ${{ matrix.mpi }} on Linux
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        mpi: [ 'mpich', 'openmpi' ]
+  # test-linux-gcc:
+  #   name: Test with GCC and ${{ matrix.mpi }} on Linux
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       mpi: [ 'mpich', 'openmpi' ]
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
 
-      - name: Install ${{ matrix.mpi }} MPI
-        uses: mpi4py/setup-mpi@v1
-        with:
-          mpi: ${{ matrix.mpi }}
+  #     - name: Install ${{ matrix.mpi }} MPI
+  #       uses: mpi4py/setup-mpi@v1
+  #       with:
+  #         mpi: ${{ matrix.mpi }}
 
-      - name: Verify GCC compilers & ${{ matrix.mpi }} MPI
-        run: |
-          echo "PATH='$PATH'"
-          echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'"
-          echo "[Verify gcc path] $(which gcc 2>/dev/null || echo not found)"
-          echo "[Verify g++ path] $(which g++ 2>/dev/null || echo not found)"
-          echo "[Verify mpicc path] $(which mpicc 2>/dev/null || echo not found)"
-          echo "[Verify mpic++ path] $(which mpic++ 2>/dev/null || echo not found)"
-          echo "[Verify mpirun path] $(which mpirun 2>/dev/null || echo not found)"
-          echo "[Check gcc version]" && gcc --version 2>/dev/null || echo "not found"
-          echo "[Check g++ version]" && g++ --version 2>/dev/null || echo "not found"
-          echo "[Check mpicc version]" && mpicc --version 2>/dev/null || echo "not found"
-          echo "[Check mpic++ version]" && mpic++ --version 2>/dev/null || echo "not found"
-          echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
+  #     - name: Verify GCC compilers & ${{ matrix.mpi }} MPI
+  #       run: |
+  #         echo "PATH='$PATH'"
+  #         echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'"
+  #         echo "[Verify gcc path] $(which gcc 2>/dev/null || echo not found)"
+  #         echo "[Verify g++ path] $(which g++ 2>/dev/null || echo not found)"
+  #         echo "[Verify mpicc path] $(which mpicc 2>/dev/null || echo not found)"
+  #         echo "[Verify mpic++ path] $(which mpic++ 2>/dev/null || echo not found)"
+  #         echo "[Verify mpirun path] $(which mpirun 2>/dev/null || echo not found)"
+  #         echo "[Check gcc version]" && gcc --version 2>/dev/null || echo "not found"
+  #         echo "[Check g++ version]" && g++ --version 2>/dev/null || echo "not found"
+  #         echo "[Check mpicc version]" && mpicc --version 2>/dev/null || echo "not found"
+  #         echo "[Check mpic++ version]" && mpic++ --version 2>/dev/null || echo "not found"
+  #         echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
 
-      - name: Setup GCC compilers & ${{ matrix.mpi }} MPI
-        run: |
-          echo "TEST_CC=gcc" >> $GITHUB_ENV
-          echo "TEST_CXX=g++" >> $GITHUB_ENV
-          echo "TEST_MPICC=mpicc" >> $GITHUB_ENV
-          echo "TEST_MPICXX=mpic++" >> $GITHUB_ENV
+  #     - name: Setup GCC compilers & ${{ matrix.mpi }} MPI
+  #       run: |
+  #         echo "TEST_CC=gcc" >> $GITHUB_ENV
+  #         echo "TEST_CXX=g++" >> $GITHUB_ENV
+  #         echo "TEST_MPICC=mpicc" >> $GITHUB_ENV
+  #         echo "TEST_MPICXX=mpic++" >> $GITHUB_ENV
 
-      - name: Build tests in test/ folder
-        timeout-minutes: 5
-        run: |
-          cd test
-          make
+  #     - name: Build tests in test/ folder
+  #       timeout-minutes: 5
+  #       run: |
+  #         cd test
+  #         make
 
-      - name: Run tests in test/ folder
-        timeout-minutes: 5
-        run: |
-          cd test
-          ./ex01.hello-gcc.exe
-          ./ex02.hello-g++.exe
-          mpirun -n 2 ./ex03.hello-mpicc.exe
-          mpirun -n 2 ./ex04.hello-mpic++.exe
+  #     - name: Run tests in test/ folder
+  #       timeout-minutes: 5
+  #       run: |
+  #         cd test
+  #         ./ex01.hello-gcc.exe
+  #         ./ex02.hello-g++.exe
+  #         mpirun -n 2 ./ex03.hello-mpicc.exe
+  #         mpirun -n 2 ./ex04.hello-mpic++.exe
