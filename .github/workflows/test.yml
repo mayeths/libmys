@@ -211,7 +211,7 @@ jobs:
         run: |
           brew update
           if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
-            brew install gcc
+            brew install gcc@15
           elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
             echo "Clang is preinstalled on macOS"
           fi
@@ -224,12 +224,12 @@ jobs:
       - name: Setup ${{ matrix.compiler }} compiler & ${{ matrix.mpi }} MPI
         run: |
           if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
-            echo "TEST_CC=gcc" >> $GITHUB_ENV
-            echo "TEST_CXX=g++" >> $GITHUB_ENV
-            echo "OMPI_CC=gcc" >> $GITHUB_ENV
-            echo "OMPI_CXX=g++" >> $GITHUB_ENV
-            echo "MPICH_CC=gcc" >> $GITHUB_ENV
-            echo "MPICH_CXX=g++" >> $GITHUB_ENV
+            echo "TEST_CC=gcc-15" >> $GITHUB_ENV
+            echo "TEST_CXX=g++-15" >> $GITHUB_ENV
+            echo "OMPI_CC=gcc-15" >> $GITHUB_ENV
+            echo "OMPI_CXX=g++-15" >> $GITHUB_ENV
+            echo "MPICH_CC=gcc-15" >> $GITHUB_ENV
+            echo "MPICH_CXX=g++-15" >> $GITHUB_ENV
           elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
             echo "TEST_CC=clang" >> $GITHUB_ENV
             echo "TEST_CXX=clang++" >> $GITHUB_ENV
@@ -245,8 +245,8 @@ jobs:
         run: |
           echo "PATH='$PATH'"
           if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
-            echo "[Verify gcc path] $(which gcc 2>/dev/null || echo not found)"
-            echo "[Verify g++ path] $(which g++ 2>/dev/null || echo not found)"
+            echo "[Verify gcc path] $(which gcc-15 2>/dev/null || echo not found)"
+            echo "[Verify g++ path] $(which g++-15 2>/dev/null || echo not found)"
           elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
             echo "[Verify clang path] $(which clang 2>/dev/null || echo not found)"
             echo "[Verify clang++ path] $(which clang++ 2>/dev/null || echo not found)"
@@ -255,8 +255,8 @@ jobs:
           echo "[Verify mpic++ path] $(which mpic++ 2>/dev/null || echo not found)"
           echo "[Verify mpirun path] $(which mpirun 2>/dev/null || echo not found)"
           if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
-            echo "[Check gcc version]" && gcc --version 2>/dev/null || echo "not found"
-            echo "[Check g++ version]" && g++ --version 2>/dev/null || echo "not found"
+            echo "[Check gcc version]" && gcc-15 --version 2>/dev/null || echo "not found"
+            echo "[Check g++ version]" && g++-15 --version 2>/dev/null || echo "not found"
           elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
             echo "[Check clang version]" && clang --version 2>/dev/null || echo "not found"
             echo "[Check clang++ version]" && clang++ --version 2>/dev/null || echo "not found"
