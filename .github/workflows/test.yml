@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        intel_compiler_type: ['icc']
+        intel_compiler_type: ['icc', 'icx']
 
     steps:
       - name: Checkout repository
@@ -105,55 +105,55 @@ jobs:
           mpirun -n 2 ./ex03.hello-mpicc.exe
           mpirun -n 2 ./ex04.hello-mpic++.exe
 
-  # test-linux-gcc:
-  #   name: Test with GCC and ${{ matrix.mpi }} on Linux
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       mpi: [ 'mpich', 'openmpi' ]
+  test-linux-gcc:
+    name: Test with GCC and ${{ matrix.mpi }} on Linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mpi: [ 'mpich', 'openmpi' ]
 
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  #     - name: Install ${{ matrix.mpi }} MPI
-  #       uses: mpi4py/setup-mpi@v1
-  #       with:
-  #         mpi: ${{ matrix.mpi }}
+      - name: Install ${{ matrix.mpi }} MPI
+        uses: mpi4py/setup-mpi@v1
+        with:
+          mpi: ${{ matrix.mpi }}
 
-  #     - name: Verify GCC compilers & ${{ matrix.mpi }} MPI
-  #       run: |
-  #         echo "PATH='$PATH'"
-  #         echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'"
-  #         echo "[Verify gcc path] $(which gcc 2>/dev/null || echo not found)"
-  #         echo "[Verify g++ path] $(which g++ 2>/dev/null || echo not found)"
-  #         echo "[Verify mpicc path] $(which mpicc 2>/dev/null || echo not found)"
-  #         echo "[Verify mpic++ path] $(which mpic++ 2>/dev/null || echo not found)"
-  #         echo "[Verify mpirun path] $(which mpirun 2>/dev/null || echo not found)"
-  #         echo "[Check gcc version]" && gcc --version 2>/dev/null || echo "not found"
-  #         echo "[Check g++ version]" && g++ --version 2>/dev/null || echo "not found"
-  #         echo "[Check mpicc version]" && mpicc --version 2>/dev/null || echo "not found"
-  #         echo "[Check mpic++ version]" && mpic++ --version 2>/dev/null || echo "not found"
-  #         echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
+      - name: Verify GCC compilers & ${{ matrix.mpi }} MPI
+        run: |
+          echo "PATH='$PATH'"
+          echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'"
+          echo "[Verify gcc path] $(which gcc 2>/dev/null || echo not found)"
+          echo "[Verify g++ path] $(which g++ 2>/dev/null || echo not found)"
+          echo "[Verify mpicc path] $(which mpicc 2>/dev/null || echo not found)"
+          echo "[Verify mpic++ path] $(which mpic++ 2>/dev/null || echo not found)"
+          echo "[Verify mpirun path] $(which mpirun 2>/dev/null || echo not found)"
+          echo "[Check gcc version]" && gcc --version 2>/dev/null || echo "not found"
+          echo "[Check g++ version]" && g++ --version 2>/dev/null || echo "not found"
+          echo "[Check mpicc version]" && mpicc --version 2>/dev/null || echo "not found"
+          echo "[Check mpic++ version]" && mpic++ --version 2>/dev/null || echo "not found"
+          echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
 
-  #     - name: Setup GCC compilers & ${{ matrix.mpi }} MPI
-  #       run: |
-  #         echo "TEST_CC=gcc" >> $GITHUB_ENV
-  #         echo "TEST_CXX=g++" >> $GITHUB_ENV
-  #         echo "TEST_MPICC=mpicc" >> $GITHUB_ENV
-  #         echo "TEST_MPICXX=mpic++" >> $GITHUB_ENV
+      - name: Setup GCC compilers & ${{ matrix.mpi }} MPI
+        run: |
+          echo "TEST_CC=gcc" >> $GITHUB_ENV
+          echo "TEST_CXX=g++" >> $GITHUB_ENV
+          echo "TEST_MPICC=mpicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpic++" >> $GITHUB_ENV
 
-  #     - name: Build tests in test/ folder
-  #       timeout-minutes: 5
-  #       run: |
-  #         cd test
-  #         make
+      - name: Build tests in test/ folder
+        timeout-minutes: 5
+        run: |
+          cd test
+          make
 
-  #     - name: Run tests in test/ folder
-  #       timeout-minutes: 5
-  #       run: |
-  #         cd test
-  #         ./ex01.hello-gcc.exe
-  #         ./ex02.hello-g++.exe
-  #         mpirun -n 2 ./ex03.hello-mpicc.exe
-  #         mpirun -n 2 ./ex04.hello-mpic++.exe
+      - name: Run tests in test/ folder
+        timeout-minutes: 5
+        run: |
+          cd test
+          ./ex01.hello-gcc.exe
+          ./ex02.hello-g++.exe
+          mpirun -n 2 ./ex03.hello-mpicc.exe
+          mpirun -n 2 ./ex04.hello-mpic++.exe
