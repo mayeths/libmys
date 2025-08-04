@@ -1,56 +1,281 @@
-name: Test Code in include/mys
+name: (Github Action) Compile and test libmys/include/mys
+
+# Check https://oneapi-src.github.io/oneapi-ci/ for all available intel oneAPI components version
 
 on:
   push:
-    branches:
-      - '**'
+    branches: [ '**' ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  test_linux:
-    name: Test with ${{ matrix.mpi }} on Linux
+  test-linux-intel:
+    name: Test with ${{ matrix.compiler }} and intelmpi on Linux
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mpi: [ 'mpich', 'openmpi', 'intelmpi' ]  # Test with MPICH, OpenMPI, and IntelMPI
+        compiler: ['icc', 'icx']
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up MPI (${{ matrix.mpi }})
-        uses: mpi4py/setup-mpi@v1
-        with:
-          mpi: ${{ matrix.mpi }}
+      - name: Prepare Intel Apt repository
+        timeout-minutes: 10
+        run: |
+          curl -sS -L https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt-get update -o Dir::Etc::sourcelist="sources.list.d/oneAPI.list" -o APT::Get::List-Cleanup="0"
 
-      - name: Navigate to test directory and run make
+      - name: Install Intel classic icc compiler
+        if:   ${{ matrix.compiler == 'icc' }}
+        timeout-minutes: 10
+        run: |
+          sudo apt-get install -y gcc-10 g++-10
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
+          sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.1.0
+
+      - name: Install Intel modern icx compiler
+        if:   ${{ matrix.compiler == 'icx' }}
+        timeout-minutes: 10
+        run: sudo apt-get install --no-install-recommends intel-oneapi-compiler-dpcpp-cpp-2025.2
+
+      - name: Install Intel MPI
+        timeout-minutes: 10
+        run: sudo apt-get install --no-install-recommends intel-oneapi-mpi-2021.9.0 intel-oneapi-mpi-devel-2021.9.0
+
+      - name: Setup ${{ matrix.compiler }} compiler & Intel MPI
+        run: |
+          if [[ "${{ matrix.compiler }}" == "icc" ]]; then
+            echo "I_MPI_CC=icc" >> $GITHUB_ENV
+            echo "I_MPI_CXX=icpc" >> $GITHUB_ENV
+            echo "TEST_CC=icc" >> $GITHUB_ENV
+            echo "TEST_CXX=icpc" >> $GITHUB_ENV
+          elif [[ "${{ matrix.compiler }}" == "icx" ]]; then
+            echo "I_MPI_CC=icx" >> $GITHUB_ENV
+            echo "I_MPI_CXX=icpx" >> $GITHUB_ENV
+            echo "TEST_CC=icx" >> $GITHUB_ENV
+            echo "TEST_CXX=icpx" >> $GITHUB_ENV
+          fi
+          echo "TEST_MPICC=mpiicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpiicpc" >> $GITHUB_ENV
+
+      - name: Verify ${{ matrix.compiler }} compiler & Intel MPI
+        run: |
+          ls /opt/intel/oneapi /opt/intel/oneapi/compiler /opt/intel/oneapi/mpi
+          source /opt/intel/oneapi/setvars.sh
+          printenv >> $GITHUB_ENV
+          echo "PATH='$PATH'"
+          echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'"
+          if [[ "${{ matrix.compiler }}" == "icc" ]]; then
+            echo "[Verify icc path] $(which icc 2>/dev/null || echo not found)"
+            echo "[Verify icpc path] $(which icpc 2>/dev/null || echo not found)"
+          elif [[ "${{ matrix.compiler }}" == "icx" ]]; then
+            echo "[Verify icx path] $(which icx 2>/dev/null || echo not found)"
+            echo "[Verify icpx path] $(which icpx 2>/dev/null || echo not found)"
+          fi
+          echo "[Verify mpiicc path] $(which mpiicc 2>/dev/null || echo not found)"
+          echo "[Verify mpiicpc path] $(which mpiicpc 2>/dev/null || echo not found)"
+          echo "[Verify mpirun path] $(which mpirun 2>/dev/null || echo not found)"
+          if [[ "${{ matrix.compiler }}" == "icc" ]]; then
+            echo "[Check icc version]" && icc --version 2>/dev/null || echo "not found"
+            echo "[Check icpc version]" && icpc --version 2>/dev/null || echo "not found"
+          elif [[ "${{ matrix.compiler }}" == "icx" ]]; then
+            echo "[Check icx version]" && icx --version 2>/dev/null || echo "not found"
+            echo "[Check icpx version]" && icpx --version 2>/dev/null || echo "not found"
+          fi
+          echo "[Check mpiicc version]" && mpiicc --version 2>/dev/null || echo "not found"
+          echo "[Check mpiicpc version]" && mpiicpc --version 2>/dev/null || echo "not found"
+          echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
+
+      - name: Build tests in test/ folder
+        timeout-minutes: 10
         run: |
           cd test
           make
 
-      # Optional: Run tests if Makefile generates executables
-      # - name: Run tests
-      #   run: |
-      #     cd test
-      #     mpiexec -n 2 ./test_executable
+      - name: Run tests in test/ folder
+        timeout-minutes: 10
+        run: |
+          cd test
+          ./ex01.hello-gcc.exe
+          ./ex02.hello-g++.exe
+          mpirun -n 2 ./ex03.hello-mpicc.exe
+          mpirun -n 2 ./ex04.hello-mpic++.exe
 
-  test_macos:
-    name: Test with ${{ matrix.mpi }} on macOS
+  test-linux-gcc:
+    name: Test with ${{ matrix.compiler }} and ${{ matrix.mpi }} on Linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [ 'gcc', 'clang' ]
+        mpi: [ 'mpich', 'openmpi' ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install ${{ matrix.compiler }} compiler
+        timeout-minutes: 10
+        run: |
+          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y gcc g++
+          elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y clang
+          fi
+
+      - name: Install ${{ matrix.mpi }} MPI
+        timeout-minutes: 10
+        uses: mpi4py/setup-mpi@v1
+        with:
+          mpi: ${{ matrix.mpi }}
+
+      - name: Setup ${{ matrix.compiler }} compiler & ${{ matrix.mpi }} MPI
+        run: |
+          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            echo "OMPI_CC=gcc" >> $GITHUB_ENV
+            echo "OMPI_CXX=g++" >> $GITHUB_ENV
+            echo "MPICH_CC=gcc" >> $GITHUB_ENV
+            echo "MPICH_CXX=g++" >> $GITHUB_ENV
+            echo "TEST_CC=gcc" >> $GITHUB_ENV
+            echo "TEST_CXX=g++" >> $GITHUB_ENV
+          elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
+            echo "OMPI_CC=clang" >> $GITHUB_ENV
+            echo "OMPI_CXX=clang++" >> $GITHUB_ENV
+            echo "MPICH_CC=clang" >> $GITHUB_ENV
+            echo "MPICH_CXX=clang++" >> $GITHUB_ENV
+            echo "TEST_CC=clang" >> $GITHUB_ENV
+            echo "TEST_CXX=clang++" >> $GITHUB_ENV
+          fi
+          echo "TEST_MPICC=mpicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpic++" >> $GITHUB_ENV
+
+      - name: Verify ${{ matrix.compiler }} compiler & ${{ matrix.mpi }} MPI
+        run: |
+          echo "PATH='$PATH'"
+          echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'"
+          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            echo "[Verify gcc path] $(which gcc 2>/dev/null || echo not found)"
+            echo "[Verify g++ path] $(which g++ 2>/dev/null || echo not found)"
+          elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
+            echo "[Verify clang path] $(which clang 2>/dev/null || echo not found)"
+            echo "[Verify clang++ path] $(which clang++ 2>/dev/null || echo not found)"
+          fi
+          echo "[Verify mpicc path] $(which mpicc 2>/dev/null || echo not found)"
+          echo "[Verify mpic++ path] $(which mpic++ 2>/dev/null || echo not found)"
+          echo "[Verify mpirun path] $(which mpirun 2>/dev/null || echo not found)"
+          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            echo "[Check gcc version]" && gcc --version 2>/dev/null || echo "not found"
+            echo "[Check g++ version]" && g++ --version 2>/dev/null || echo "not found"
+          elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
+            echo "[Check clang version]" && clang --version 2>/dev/null || echo "not found"
+            echo "[Check clang++ version]" && clang++ --version 2>/dev/null || echo "not found"
+          fi
+          echo "[Check mpicc version]" && mpicc --version 2>/dev/null || echo "not found"
+          echo "[Check mpic++ version]" && mpic++ --version 2>/dev/null || echo "not found"
+          echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
+
+      - name: Build tests in test/ folder
+        timeout-minutes: 10
+        run: |
+          cd test
+          make
+
+      - name: Run tests in test/ folder
+        timeout-minutes: 10
+        run: |
+          cd test
+          ./ex01.hello-gcc.exe
+          ./ex02.hello-g++.exe
+          mpirun -n 2 ./ex03.hello-mpicc.exe
+          mpirun -n 2 ./ex04.hello-mpic++.exe
+
+  test-macos-gcc:
+    name: Test with ${{ matrix.compiler }} and ${{ matrix.mpi }} on macOS
     runs-on: macos-latest
     strategy:
       matrix:
-        mpi: [ 'mpich', 'openmpi' ]  # Test with MPICH and OpenMPI
+        compiler: [ 'gcc', 'clang' ]
+        mpi: [ 'mpich', 'openmpi' ]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up MPI (${{ matrix.mpi }})
-        uses: mpi4py/setup-mpi@v1
-        with:
-          mpi: ${{ matrix.mpi }}
+      - name: Install ${{ matrix.compiler }} compiler
+        timeout-minutes: 10
+        run: |
+          brew update
+          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            brew install gcc@15
+          elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
+            echo "Clang is preinstalled on macOS"
+          fi
 
-      - name: Navigate to test directory and run make
+      - name: Install ${{ matrix.mpi }} MPI
+        timeout-minutes: 10
+        run: |
+          brew install ${{ matrix.mpi }}
+
+      - name: Setup ${{ matrix.compiler }} compiler & ${{ matrix.mpi }} MPI
+        run: |
+          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            echo "TEST_CC=gcc-15" >> $GITHUB_ENV
+            echo "TEST_CXX=g++-15" >> $GITHUB_ENV
+            echo "OMPI_CC=gcc-15" >> $GITHUB_ENV
+            echo "OMPI_CXX=g++-15" >> $GITHUB_ENV
+            echo "MPICH_CC=gcc-15" >> $GITHUB_ENV
+            echo "MPICH_CXX=g++-15" >> $GITHUB_ENV
+          elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
+            echo "TEST_CC=clang" >> $GITHUB_ENV
+            echo "TEST_CXX=clang++" >> $GITHUB_ENV
+            echo "OMPI_CC=clang" >> $GITHUB_ENV
+            echo "OMPI_CXX=clang++" >> $GITHUB_ENV
+            echo "MPICH_CC=clang" >> $GITHUB_ENV
+            echo "MPICH_CXX=clang++" >> $GITHUB_ENV
+          fi
+          echo "TEST_MPICC=mpicc" >> $GITHUB_ENV
+          echo "TEST_MPICXX=mpic++" >> $GITHUB_ENV
+
+      - name: Verify ${{ matrix.compiler }} compiler & ${{ matrix.mpi }} MPI
+        run: |
+          echo "PATH='$PATH'"
+          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            echo "[Verify gcc path] $(which gcc-15 2>/dev/null || echo not found)"
+            echo "[Verify g++ path] $(which g++-15 2>/dev/null || echo not found)"
+          elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
+            echo "[Verify clang path] $(which clang 2>/dev/null || echo not found)"
+            echo "[Verify clang++ path] $(which clang++ 2>/dev/null || echo not found)"
+          fi
+          echo "[Verify mpicc path] $(which mpicc 2>/dev/null || echo not found)"
+          echo "[Verify mpic++ path] $(which mpic++ 2>/dev/null || echo not found)"
+          echo "[Verify mpirun path] $(which mpirun 2>/dev/null || echo not found)"
+          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            echo "[Check gcc version]" && gcc-15 --version 2>/dev/null || echo "not found"
+            echo "[Check g++ version]" && g++-15 --version 2>/dev/null || echo "not found"
+          elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
+            echo "[Check clang version]" && clang --version 2>/dev/null || echo "not found"
+            echo "[Check clang++ version]" && clang++ --version 2>/dev/null || echo "not found"
+          fi
+          echo "[Check mpicc version]" && mpicc --version 2>/dev/null || echo "not found"
+          echo "[Check mpic++ version]" && mpic++ --version 2>/dev/null || echo "not found"
+          echo "[Check mpirun version]" && mpirun --version 2>/dev/null || echo "not found"
+
+      - name: Build tests in test/ folder
+        timeout-minutes: 10
         run: |
           cd test
           make
+
+      - name: Run tests in test/ folder
+        timeout-minutes: 10
+        run: |
+          cd test
+          ./ex01.hello-gcc.exe
+          ./ex02.hello-g++.exe
+          mpirun -n 2 ./ex03.hello-mpicc.exe
+          mpirun -n 2 ./ex04.hello-mpic++.exe

@@ -110,7 +110,7 @@ MYS_PUBLIC void mys_debug_del_stack_filter(const char *match_str);
 
 
 
-#ifdef OS_MACOS
+#ifdef KERNEL_MACOS
 #include <dispatch/dispatch.h>
 #include <mach/boolean.h>
 #include <stdbool.h>

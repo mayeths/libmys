@@ -474,7 +474,7 @@ MYS_PUBLIC int mys_busysleep(double seconds)
 
 MYS_PUBLIC const char *mys_procname()
 {
-#if defined(OS_LINUX)
+#if defined(KERNEL_LINUX)
     static char exe[128] = { '\0' };
     if (exe[0] == '\0') {
         int ret = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
@@ -487,7 +487,7 @@ MYS_PUBLIC const char *mys_procname()
         }
     }
     return exe;
-#elif defined(OS_BSD)
+#elif defined(KERNEL_MACOS)
     const char *getprogname(void);
     return getprogname();
 #endif
@@ -495,7 +495,7 @@ MYS_PUBLIC const char *mys_procname()
 
 MYS_PUBLIC const char *mys_hostname()
 {
-#if defined(OS_LINUX) || defined(OS_BSD)
+#if defined(KERNEL_LINUX) || defined(KERNEL_MACOS)
     static char host[128] = { '\0' };
     if (host[0] == '\0') {
         gethostname(host, sizeof(host) - 1);

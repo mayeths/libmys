@@ -16,7 +16,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <limits.h>
-#ifdef OS_LINUX
+#ifdef KERNEL_LINUX
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -122,7 +122,7 @@ MYS_PUBLIC void mys_free_record(mys_arena_t *arena, size_t size);
 /* Cache clean */
 MYS_PUBLIC void mys_cache_flush(size_t nbytes);
 
-#if defined(OS_LINUX) && defined(MYS_ENABLE_SHM)
+#if defined(KERNEL_LINUX) && defined(MYS_ENABLE_SHM)
 typedef struct mys_shm_t {
     void *mem;
     size_t _size;

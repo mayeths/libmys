@@ -49,7 +49,7 @@
 #include <time.h>
 #ifdef POSIX_COMPLIANCE
 #include <sys/time.h>
-#elif defined(OS_WINDOWS)
+#elif defined(KERNEL_WINDOWS)
 #include <windows.h>
 #endif
 
@@ -581,7 +581,7 @@ MYS_PUBLIC double mys_MPI_Wtime()
     gettimeofday(&tv, NULL);
     return (double)tv.tv_sec + ((double)tv.tv_usec / 1000000.0);
 #endif
-#elif defined(OS_WINDOWS)
+#elif defined(KERNEL_WINDOWS)
     LARGE_INTEGER frequency;
     LARGE_INTEGER counter;
     QueryPerformanceFrequency(&frequency);

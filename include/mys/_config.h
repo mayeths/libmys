@@ -11,64 +11,54 @@
 #pragma once
 
 /* https://github.com/abseil/abseil.github.io/blob/master/docs/cpp/platforms/macros.md */
+/* https://gitlab-preprod.in2p3.fr/campagne/AngPow/-/tree/v1.15.7/inc/boost/config */
 
 /* Compiler Detection */
 #if defined(__GNUC__)
-#define COMPILER_NAME "GCC"
 #define COMPILER_GCC
-#elif defined(__clang__)
-#define COMPILER_NAME "Clang"
+#endif
+#if defined(__clang__)
 #define COMPILER_CLANG
-#define COMPILER_GCC
-#elif defined(__INTEL_COMPILER)
-#define COMPILER_NAME "ICC"
+#endif
+#if defined(__INTEL_COMPILER)
 #define COMPILER_ICC
-#elif defined(_MSC_VER)
-#define COMPILER_NAME "MSVC"
-#define COMPILER_MSVC
-#elif defined(__CYGWIN__)
-#define COMPILER_NAME "CYGWIN"
-#define COMPILER_CYGWIN
-#elif defined(__NVCC__)
-#define COMPILER_NAME "NVCC"
+#endif
+#if defined(__INTEL_LLVM_COMPILER)
+#define COMPILER_ICX
+#endif
+#if defined(__NVCC__)
 #define COMPILER_NVCC
-#elif defined(__sw_64__)
-#define COMPILER_NAME "SWCC"
+#endif
+#if defined(__sw_64__)
 #define COMPILER_SWCC
-#else
-#define COMPILER_NAME "Unknown"
-#define COMPILER_UNKNOWN
+#endif
+#if defined(_MSC_VER)
+#define COMPILER_MSVC
+#endif
+#if defined(__CYGWIN__)
+#define COMPILER_CYGWIN
 #endif
 
-/* OS Detection */
+/* Kernel Detection */
 #if defined(__linux__)
-#define OS_NAME "Linux"
-#define OS_LINUX
-#elif defined(__ANDROID__)
-#define OS_NAME "Android"
-#define OS_ANDROID
-#define OS_LINUX
-#elif defined(__FreeBSD__)
-#define OS_NAME "FreeBSD"
-#define OS_FREEBSD
-#define OS_BSD
-#elif defined(__OpenBSD__)
-#define OS_NAME "OpenBSD"
-#define OS_OPENBSD
-#define OS_BSD
-#elif defined(__APPLE__)
-#define OS_NAME "MacOS"
-#define OS_MACOS
-#define OS_BSD
-#elif defined(_WIN32)
-#define OS_NAME "Windows"
-#define OS_WINDOWS
-#else
-#define OS_NAME "Unknown"
-#define OS_UNKNOWN
+#define KERNEL_NAME "Linux"
+#define KERNEL_LINUX
+#endif
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#define KERNEL_NAME "BSD"
+#define KERNEL_BSD
+#endif
+#if defined(__APPLE__)
+#define KERNEL_NAME "MacOS"
+#define KERNEL_MACOS
+#endif
+#if defined(_WIN32)
+#define KERNEL_NAME "Windows"
+#define KERNEL_WINDOWS
 #endif
 
-#if defined(OS_LINUX) || defined(OS_BSD)
+/* POSIX Compliance Detection */
+#if defined(KERNEL_LINUX) || defined(KERNEL_BSD) || defined(KERNEL_MACOS)
 #define POSIX_COMPLIANCE
 #endif
 
@@ -88,12 +78,9 @@
 #elif defined(__sw_64__)
 #define ARCH_NAME "Sunway"
 #define ARCH_SUNWAY
-#else
-#define ARCH_NAME "Unknown"
-#define ARCH_UNKNOWN
 #endif
 
-#if defined(COMPILER_GCC) && !defined(COMPILER_CLANG)
+#if defined(COMPILER_GCC) && !defined(COMPILER_CLANG) && !defined(COMPILER_ICC) && !defined(COMPILER_ICX) && !defined(COMPILER_NVCC) && !defined(COMPILER_SWCC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
@@ -111,12 +98,8 @@
 #define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define MYS_UNREACHABLE() __builtin_unreachable()
-#ifdef OS_MACOS
-#define MYS_ATTR_OPTIMIZE_O3 /* Not available */
-#else
 #define MYS_ATTR_OPTIMIZE_O3 __attribute__((optimize("O3")))
-#endif
-#elif defined(COMPILER_CLANG)
+#elif defined(COMPILER_CLANG) && !defined(COMPILER_ICX) && !defined(COMPILER_NVCC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
 #define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
@@ -154,6 +137,25 @@
 #define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define MYS_UNREACHABLE() __builtin_unreachable()
 #define MYS_ATTR_OPTIMIZE_O3 __attribute__((optimize("O3")))
+#elif defined(COMPILER_ICX)
+#define MYS_ATTR_EXPORT __attribute__((visibility("default")))
+#define MYS_ATTR_IMPORT __attribute__((visibility("default")))
+#define MYS_ATTR_LOCAL  __attribute__((visibility("hidden")))
+#define MYS_ATTR_UNUSED __attribute__((unused))
+#define MYS_ATTR_USED __attribute__((used))
+#define MYS_DEPRECATED(msg) __attribute__((__deprecated__(msg)))
+#define MYS_ATTR_NO_INSTRUMENT __attribute__((no_instrument_function))
+#define MYS_ATTR_NOINLINE __attribute__((noinline))
+#define MYS_ATTR_ALWAYS_INLINE __attribute__((always_inline)) inline
+#define MYS_ATTR_PRINTF(i, j) __attribute__((format(printf, i, j)))
+#define MYS_ATTR_MALLOC __attribute__((malloc))
+#define MYS_ATTR_NORETURN __attribute__((noreturn))
+#define MYS_ATTR_CONSTRUCTOR __attribute__((constructor))
+#define MYS_ATTR_DESTRUCTOR __attribute__((destructor))
+#define MYS_LIKELY(x) __builtin_expect(!!(x), 1)
+#define MYS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define MYS_UNREACHABLE() __builtin_unreachable()
+#define MYS_ATTR_OPTIMIZE_O3 /* No equivalent attribute */
 #elif defined(COMPILER_NVCC)
 #define MYS_ATTR_EXPORT __attribute__((visibility("default")))
 #define MYS_ATTR_IMPORT __attribute__((visibility("default")))
