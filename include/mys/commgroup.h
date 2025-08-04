@@ -21,6 +21,12 @@
 #include <unistd.h>
 #include <sched.h>
 
+// TODO: FIXME: Do the following change:
+// 1. mys_commgroup_release(mys_commgroup_t *group) change to mys_commgroup_destroy(mys_commgroup_t **group)
+// 2. mys_query_brother() change to mys_query_global_rank(), otherwise the following code will be hard to understand:
+//     int leader_node_rank = mys_query_brother(numa_group, 0);
+//     int leader_global_rank = mys_query_brother(node_group, leader_node_rank);
+
 typedef struct mys_commgroup_t
 {
     int group_id; // nonnegative counting sequence (0,1,2,3,...,group_num-1)

@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <limits.h>
 #ifdef OS_LINUX
