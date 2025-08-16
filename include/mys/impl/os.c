@@ -462,6 +462,14 @@ MYS_PUBLIC bool mys_ensure_parent(const char *path, mode_t mode)
     return success;
 }
 
+MYS_PUBLIC int mys_sleep_seconds(double seconds)
+{
+    struct timespec req, rem;
+    req.tv_sec = (time_t)seconds;
+    req.tv_nsec = (long)((seconds - req.tv_sec) * 1e9);
+    return nanosleep(&req, &rem);
+}
+
 MYS_PUBLIC int mys_busysleep(double seconds)
 {
     double t_start = mys_hrtime();

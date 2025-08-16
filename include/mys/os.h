@@ -197,6 +197,7 @@ MYS_PUBLIC bool mys_ensure_dir(const char *path, mode_t mode);
  * @note Intermediate directories are created with permission bits of “rwxrwxrwx” (0777)
  */
 MYS_PUBLIC bool mys_ensure_parent(const char *path, mode_t mode);
+MYS_PUBLIC int mys_sleep(double seconds);
 MYS_PUBLIC int mys_busysleep(double seconds);
 MYS_PUBLIC const char *mys_procname();
 MYS_PUBLIC const char *mys_hostname();
