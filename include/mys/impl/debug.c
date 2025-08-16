@@ -792,6 +792,21 @@ MYS_PUBLIC void _mys_debug_set_timeout_env(const char *env_name, const char *fil
     }
 }
 
+MYS_PUBLIC void _mys_debug_restart_timeout(const char *file, int line)
+{
+    if (!_mys_debug_G.inited) {
+        printf("call mys_debug_init() before mys_debug_restart_timeout()\n");
+        exit(1);
+    }
+    if (!_mys_debug_G.timeout_inited) {
+        printf("call _mys_debug_set_timeout() before mys_debug_restart_timeout()\n");
+        exit(1);
+    }
+    double timeout = _mys_debug_G.timeout;
+    mys_debug_clear_timeout();
+    _mys_debug_set_timeout(timeout, file, line);
+}
+
 MYS_PUBLIC void mys_debug_clear_timeout()
 {
     if (!_mys_debug_G.timeout_inited) {
