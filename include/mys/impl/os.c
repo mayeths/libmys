@@ -462,7 +462,7 @@ MYS_PUBLIC bool mys_ensure_parent(const char *path, mode_t mode)
     return success;
 }
 
-MYS_PUBLIC int mys_sleep_seconds(double seconds)
+MYS_PUBLIC int mys_sleep(double seconds)
 {
     struct timespec req, rem;
     req.tv_sec = (time_t)seconds;
