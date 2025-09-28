@@ -273,7 +273,7 @@ MYS_PUBLIC void mys_arena_print_leaked(mys_arena_t *arena, size_t max_print)
 
 MYS_PUBLIC mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
 {
-    mys_arena_t *leaked = NULL;
+    mys_arena_t *leaked_arena = NULL;
     mys_mutex_lock(&_mys_memory_G.lock);
     {
         bool passed_pivot = (pivot == NULL) ? true : false;
@@ -281,7 +281,7 @@ MYS_PUBLIC mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
             mys_arena_t *arena = _mys_memory_G.registered_arenas[i];
             bool leaked = arena->alive != 0;
             if (passed_pivot && leaked) {
-                leaked = arena;
+                leaked_arena = arena;
                 break;
             }
             if (arena == pivot) {
@@ -290,7 +290,7 @@ MYS_PUBLIC mys_arena_t *mys_arena_next_leaked(mys_arena_t *pivot)
         }
     }
     mys_mutex_unlock(&_mys_memory_G.lock);
-    return leaked;
+    return leaked_arena;
 }
 
 #define MAKE_GCC_HAPPY_ALLOC_RECORD(arena, size) do {       \
