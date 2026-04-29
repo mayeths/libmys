@@ -24,7 +24,7 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v2
 
       - name: Install build dependencies (Linux)
         if: runner.os == 'Linux'
@@ -73,11 +73,10 @@ jobs:
           ls -lh "${{ runner.temp }}/prebuilt-${{ matrix.arch }}.tar.gz"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v2
         with:
           name: prebuilt-${{ matrix.arch }}
           path: ${{ runner.temp }}/prebuilt-${{ matrix.arch }}.tar.gz
-          retention-days: 7
 
   release:
     needs: build
@@ -86,10 +85,9 @@ jobs:
       contents: write
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v2
         with:
           path: artifacts/
-          merge-multiple: true
 
       - name: Generate release tag
         id: tag
@@ -124,4 +122,4 @@ jobs:
             xargs rm -f < manifests/<tool>.txt
             rm manifests/<tool>.txt
             ```
-          files: artifacts/*.tar.gz
+          files: artifacts/**/*.tar.gz
