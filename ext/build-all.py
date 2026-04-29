@@ -35,9 +35,9 @@ PACKAGES = [
 
     {"name": "utf8proc", "version": "2.9.0", "order": 1, "link": "static",
      "url": "https://github.com/JuliaStrings/utf8proc/releases/download/v2.9.0/utf8proc-2.9.0.tar.gz",
-     "platforms": ["linux-x86_64", "linux-arm64", "macos-arm64"]},
+     "platforms": ["macos-arm64"]},
 
-    {"name": "tmux", "version": "3.5a", "order": 2, "link": "static", "depends": ["ncurses", "libevent", "utf8proc"],
+    {"name": "tmux", "version": "3.5a", "order": 2, "link": "static", "depends": ["ncurses", "libevent"],
      "url": "https://github.com/tmux/tmux/releases/download/3.5a/tmux-3.5a.tar.gz",
      "platforms": ["linux-x86_64", "linux-arm64", "macos-arm64"]},
 
