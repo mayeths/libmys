@@ -3,7 +3,7 @@ name: Build prebuilt ext tools
 on:
   push:
     paths: ['ext/**']
-    branches: [main]
+    branches: [main, test-actions]
   workflow_dispatch:
 
 jobs:
