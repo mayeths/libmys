@@ -34,10 +34,6 @@ etc/omz/log/
 HPCG-Benchmark*.txt
 hpcg*.txt
 
-# ext
-ext/*
-!ext/download-*.sh
-!ext/build-*.sh
 
 # HPCB/HPCG
 HPCB/HPCG/bin/
