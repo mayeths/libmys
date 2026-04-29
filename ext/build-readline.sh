@@ -2,13 +2,13 @@
 source "$(dirname "$0")/common.sh"
 
 download_and_extract "$URL"
-cd "$BUILD_DIR"/zsh-*
+cd "$BUILD_DIR"/readline-*
 
 ./configure --prefix="$PREFIX" \
+    --disable-shared \
     --enable-multibyte \
-    --with-tcsetpgrp \
+    --with-curses \
     CPPFLAGS="$(get_cppflags) -I${PREFIX}/include/ncursesw" \
-    LDFLAGS="$(get_static_ldflags) -L${PREFIX}/lib" \
-    LIBS="-lncursesw"
+    LDFLAGS="$(get_static_ldflags)"
 make -j"$JOBS"
 make install

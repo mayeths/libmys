@@ -1,0 +1,127 @@
+name: Build prebuilt ext tools
+
+on:
+  push:
+    paths: ['ext/**']
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            container: quay.io/pypa/manylinux2014_x86_64
+            arch: linux-x86_64
+          - runner: ubuntu-24.04-arm
+            container: quay.io/pypa/manylinux2014_aarch64
+            arch: linux-arm64
+          - runner: macos-latest
+            arch: macos-arm64
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          yum install -y cmake3 autoconf automake libtool pkgconfig \
+            gettext-devel curl-devel openssl-devel expat-devel zlib-devel \
+            unzip perl-ExtUtils-MakeMaker
+          ln -sf /usr/bin/cmake3 /usr/local/bin/cmake
+
+      - name: Install build dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install autoconf automake libtool pkg-config cmake libevent
+
+      - name: Build all packages
+        env:
+          PREFIX: ${{ runner.temp }}/prebuilt
+          MACOSX_DEPLOYMENT_TARGET: '11.0'
+        run: |
+          if command -v python3 &>/dev/null; then
+            PYTHON=python3
+          else
+            PYTHON=$(ls /opt/python/cp3*/bin/python3 2>/dev/null | sort -V | tail -1)
+          fi
+          echo "Using: $($PYTHON --version 2>&1)"
+          echo "GCC:   $(gcc --version | head -1)"
+          $PYTHON ext/build-all.py --force
+
+      - name: Verify glibc compatibility (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "=== GLIBC version requirements ==="
+          for bin in "${{ runner.temp }}/prebuilt/bin/"*; do
+            [ -f "$bin" ] || continue
+            if file "$bin" | grep -q ELF; then
+              max=$(objdump -T "$bin" 2>/dev/null | grep -oP 'GLIBC_\K[0-9.]+' | sort -V | tail -1)
+              [ -n "$max" ] && printf "  %-25s GLIBC_%s\n" "$(basename "$bin")" "$max"
+            fi
+          done
+
+      - name: Package tarball
+        run: |
+          rm -rf "${{ runner.temp }}/prebuilt/_build"
+          tar czf "${{ runner.temp }}/prebuilt-${{ matrix.arch }}.tar.gz" \
+            -C "${{ runner.temp }}/prebuilt" .
+          echo "--- Package size ---"
+          ls -lh "${{ runner.temp }}/prebuilt-${{ matrix.arch }}.tar.gz"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prebuilt-${{ matrix.arch }}
+          path: ${{ runner.temp }}/prebuilt-${{ matrix.arch }}.tar.gz
+          retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: true
+
+      - name: Generate release tag
+        id: tag
+        run: echo "name=ext-$(date -u +%Y%m%d-%H%M%S)" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: "Prebuilt ext tools (${{ steps.tag.outputs.name }})"
+          body: |
+            Prebuilt development tools for multiple platforms.
+            Built from commit ${{ github.sha }}.
+
+            | Platform | File |
+            |----------|------|
+            | Linux x86_64 | `prebuilt-linux-x86_64.tar.gz` |
+            | Linux arm64  | `prebuilt-linux-arm64.tar.gz` |
+            | macOS arm64  | `prebuilt-macos-arm64.tar.gz` |
+
+            ### Usage
+            ```bash
+            mkdir -p ~/prebuilt && cd ~/prebuilt
+            tar xzf prebuilt-<platform>.tar.gz
+            export PATH="$HOME/prebuilt/bin:$PATH"
+            ```
+
+            ### Selective uninstall
+            Each tool has a manifest in `manifests/`. To remove a specific tool:
+            ```bash
+            cd ~/prebuilt
+            xargs rm -f < manifests/<tool>.txt
+            rm manifests/<tool>.txt
+            ```
+          files: artifacts/*.tar.gz
