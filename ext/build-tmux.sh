@@ -13,6 +13,8 @@ CONFIGURE_ARGS="$CONFIGURE_ARGS --enable-utf8proc"
 ./configure $CONFIGURE_ARGS \
     CPPFLAGS="$(get_cppflags) -I${PREFIX}/include/ncursesw" \
     LDFLAGS="$(get_static_ldflags)" \
+    LIBUTF8PROC_CFLAGS="-I${PREFIX}/include" \
+    LIBUTF8PROC_LIBS="-L${PREFIX}/lib -lutf8proc" \
     LIBS="-lncursesw"
 make -j"$JOBS"
 make install

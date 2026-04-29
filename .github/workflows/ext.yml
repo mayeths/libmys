@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Build in manylinux container (Linux)
         if: runner.os == 'Linux'
