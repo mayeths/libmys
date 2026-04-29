@@ -4,6 +4,7 @@ source "$(dirname "$0")/common.sh"
 download_and_extract "$URL"
 cd "$BUILD_DIR"/libevent-*
 
+CFLAGS="${CFLAGS:+$CFLAGS }-fPIC" \
 ./configure --prefix="$PREFIX" \
     --disable-shared \
     --disable-openssl \

@@ -4,6 +4,8 @@ source "$(dirname "$0")/common.sh"
 download_and_extract "$URL"
 cd "$BUILD_DIR"/ncurses-*
 
+CFLAGS="${CFLAGS:+$CFLAGS }-fPIC" \
+CXXFLAGS="${CXXFLAGS:+$CXXFLAGS }-fPIC" \
 ./configure --prefix="$PREFIX" \
     --with-shared=no \
     --with-static=yes \

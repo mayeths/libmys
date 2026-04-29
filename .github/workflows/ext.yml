@@ -37,11 +37,13 @@ jobs:
               sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo 2>/dev/null || true
               sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/*.repo 2>/dev/null || true
               sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo 2>/dev/null || true
-              yum install -y cmake3 autoconf automake libtool pkgconfig \
+              yum install -y autoconf automake libtool pkgconfig \
                 gettext-devel curl-devel openssl-devel expat-devel zlib-devel \
                 unzip perl-ExtUtils-MakeMaker
-              ln -sf /usr/bin/cmake3 /usr/local/bin/cmake
               PYTHON=$(ls /opt/python/cp3*/bin/python3 2>/dev/null | sort -V | tail -1)
+              PIP=$(dirname $PYTHON)/pip
+              $PIP install cmake
+              ln -sf $(dirname $PYTHON)/cmake /usr/local/bin/cmake
               echo "Using: $($PYTHON --version 2>&1)"
               echo "GCC:   $(gcc --version | head -1)"
               cd /workspace
