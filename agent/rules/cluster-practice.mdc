@@ -1,0 +1,27 @@
+---
+alwaysApply: true
+---
+
+## 集群 Practice
+
+当用户要求操作远程集群或具名 SSH host 时，agent 必须先识别目标集群，并查找对应的集群 practice（以 agent skill 形式存在），然后按照对应 practice 与远程集群交互。
+
+不同集群的 practice 是该集群操作方式的权威来源。agent 必须优先并严格遵守已有的集群 practice，而不是使用其他默认习惯。practice 覆盖以下内容：
+
+- 机器连接方式
+- 环境初始化方式（module / conda / venv / CUDA / MPI）
+- home / work / scratch / project 路径
+- 作业提交与调度系统（queue / partition）
+- 集群使用规则与限制
+- 代理和网络配置
+- 安全规则
+
+### 执行流程
+
+在运行远程命令之前，agent 必须：
+
+1. 从历史对话、用户消息、项目上下文等信息中识别目标集群。
+2. 找到该集群对应的 practice / skill。
+3. 阅读并遵守该 practice 中的连接、环境、路径、调度和安全规则。
+4. 按照该 practice 完成连接和环境初始化。
+5. 执行用户请求的远程命令。

@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+---
+
+- General: Think in your primary language; prefer responding in the user's language (like Chinese).
+- Task Planning: Draft all plans and execution steps in Chinese unless specified otherwise.
+- Auto Execution: Do not compile, run, test, or execute project code unless explicitly instructed by the user. If commands are needed, provide them for the user to run manually instead.
+- Code Styles and Constraints:
+  (1) Enforce a maximum line length of around 140 characters (excluding LaTeX files).
+  (2) Avoid unnecessary line breaks, keep individual lines concise yet highly readable.
+  (3) Generate minimal, focused, and concise comments. Avoid lengthy or redundant explanations.
