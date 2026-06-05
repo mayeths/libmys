@@ -13,6 +13,10 @@ CURSOR_HOME="${CURSOR_HOME:-$HOME/.cursor}"
 CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 
+mkdir -p "$CURSOR_HOME"
+mkdir -p "$CLAUDE_HOME"
+mkdir -p "$CODEX_HOME"
+
 DRY_RUN=0; FORCE=0; UNLINK=0
 for arg in "$@"; do
   case "$arg" in
@@ -29,9 +33,9 @@ done
 # MODE=items : symlink each entry inside agent/SRC_SUBDIR into TARGET dir.
 # Add/remove lines freely.
 MAPPINGS=(
-  "skills|dir|$CURSOR_HOME/skills"
-  "skills|dir|$CLAUDE_HOME/skills"
-  "skills|dir|$CODEX_HOME/skills"
+  "skills|items|$CURSOR_HOME/skills"
+  "skills|items|$CLAUDE_HOME/skills"
+  "skills|items|$CODEX_HOME/skills"
 
   # Cursor global rules: a bootstrap User Rule reads ~/.cursor/rules/*.mdc.
   "rules|items|$CURSOR_HOME/rules"
@@ -69,6 +73,32 @@ unlink_one() { # src target
   fi
 }
 
+ensure_item_dest_dir() { # src_dir dest
+  local src_dir="$1" dest="$2"
+  if [ -L "$dest" ]; then
+    local cur; cur="$(readlink "$dest")"
+    if [ "$cur" = "$src_dir" ]; then
+      if [ "$UNLINK" -eq 1 ]; then
+        log "  rm   $dest"; run "rm '$dest'"
+        return
+      fi
+      log "  fix  $dest (was whole-folder symlink -> $cur)"
+      run "rm '$dest'"
+      log "  mkdir $dest"
+      run "mkdir -p '$dest'"
+      return
+    fi
+    log "  WARN $dest is a symlink to $cur; skipped"
+    return 1
+  fi
+
+  [ -d "$dest" ] || {
+    [ "$UNLINK" -eq 1 ] && return 0
+    log "  mkdir $dest"
+    run "mkdir -p '$dest'"
+  }
+}
+
 # --- main loop ---------------------------------------------------------------
 for entry in "${MAPPINGS[@]}"; do
   sub="${entry%%|*}"; rest="${entry#*|}"; mode="${rest%%|*}"; dest="${rest#*|}"
@@ -88,7 +118,7 @@ for entry in "${MAPPINGS[@]}"; do
   items=("$src_dir"/*)
   shopt -u nullglob
   if [ ${#items[@]} -eq 0 ]; then log "  (empty)"; continue; fi
-  [ -d "$dest" ] || { [ "$UNLINK" -eq 1 ] || { log "  mkdir $dest"; run "mkdir -p '$dest'"; }; }
+  ensure_item_dest_dir "$(abspath "$src_dir")" "$dest" || continue
   for item in "${items[@]}"; do
     base="$(basename "$item")"
     [ "$base" = ".gitkeep" ] && continue
