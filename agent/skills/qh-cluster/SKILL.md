@@ -44,7 +44,7 @@ tmux capture-pane -t AIQH:cmd1 -p -S -120 | tail -n 80
 
 如果没有看到 `__AIQH_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
 
-## 加载环境
+## 工作环境
 
 QH 使用共享账号 `xuewei`（组 `xuewei_group`）。始终使用登录默认的 `bash`。常用目录：
 
@@ -65,7 +65,9 @@ source /online1/xuewei_group/xuewei/huanghp/set_env
 
 `set_env` 会：把 `HOME` 切到个人目录并 `cd` 过去、`source` 个人 `libmys/etc/profile`、`module purge` 后加载 `intel/gcc/13.2.0`、`intel/openmpi/4.1.6/gcc13.2.0`、`intel/cmake/3.26.3`、`intel/python/3.9.19`。这是默认编译/运行环境，无需再手动逐个 `module load`。
 
-如确需其他软件，再用 `module load` 追加（Lmod，模块树 `/apps/support/modulefiles`，Intel 节点用 `intel/*`、AMD 节点用 `amd/*`，`module avail` 查看完整列表）。使用 `scp` / `rsync` 时不要依赖 `~`，应使用绝对路径。
+如确需其他软件，再用 `module load` 追加（Lmod，模块树 `/apps/support/modulefiles`，Intel 节点用 `intel/*`、AMD 节点用 `amd/*`，`module avail` 查看完整列表）。
+
+一般使用`rsync`传输文件（除非明确指示，否则不使用`--delete`）。使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。
 
 ## 作业提交与调度系统
 

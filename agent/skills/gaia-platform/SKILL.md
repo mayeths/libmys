@@ -49,7 +49,7 @@ tmux capture-pane -t AIGAIA:cmd1 -p -S -120 | tail -n 80
 
 如果没有看到 `__AIGAIA_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
 
-## 工作路径与计算节点
+## 工作环境与计算节点
 
 GAIA 的工作路径是：
 
@@ -107,7 +107,7 @@ GAIA 使用个人账号 `haopengh`，默认 shell 为 `bash`，家目录为：
 默认 `.bashrc` 只设置少量别名、`ENROOT_CONFIG_PATH=$HOME/.config/enroot`、`ngc-cli` 和 `$HOME/.local/bin`。默认没有已加载 module。
 如需 CUDA、MPI、NCCL、Python、容器等环境，先在计算节点上确认现有模块或项目脚本，不要假设登录节点和计算节点环境完全一致。
 
-使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。涉及工作区内容时优先在计算节点确认 `~/gaia-fs` 的真实路径与可用性。
+一般使用`rsync`传输文件（除非明确指示，否则不使用`--delete`）。使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。涉及工作区内容时优先在计算节点确认 `~/gaia-fs` 的真实路径与可用性。
 
 ## 作业提交与调度系统
 

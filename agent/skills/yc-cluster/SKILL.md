@@ -44,7 +44,7 @@ tmux capture-pane -t AIYC:cmd1 -p -S -120 | tail -n 80
 
 如果没有看到 `__AIYC_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
 
-## 加载环境
+## 工作环境
 
 共享账号为 `xuew`，个人环境家目录是：
 
@@ -58,7 +58,7 @@ tmux capture-pane -t AIYC:cmd1 -p -S -120 | tail -n 80
 xuew@psn002 ~ ❯
 ```
 
-使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。
+一般使用`rsync`传输文件（除非明确指示，否则不使用`--delete`）。使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。
 
 ## 作业提交与调度系统
 

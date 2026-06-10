@@ -44,7 +44,7 @@ tmux capture-pane -t AIKP:cmd1 -p -S -120 | tail -n 80
 
 如果没有看到 `__AIKP_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
 
-## 加载环境
+## 工作环境
 
 KP 使用个人账号 `huanghp`，家目录为：
 
@@ -64,7 +64,7 @@ KP 使用个人账号 `huanghp`，家目录为：
 [huanghp@kunpeng-master ~]$
 ```
 
-使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。
+一般使用`rsync`传输文件（除非明确指示，否则不使用`--delete`）。使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。
 
 ## 作业提交与调度系统
 

@@ -1,4 +1,5 @@
 ---
+description: 
 alwaysApply: true
 ---
 
@@ -25,3 +26,7 @@ alwaysApply: true
 3. 阅读并遵守该 practice 中的连接、环境、路径、调度和安全规则。
 4. 按照该 practice 完成连接和环境初始化。
 5. 执行用户请求的远程命令。
+
+### 项目同步
+
+一般使用 `rsync` （不使用`--delete`）进行同步项目文件。同步时，先检查项目根目录的`.vscode/sftp.json`配置文件是否有目标集群的工作路径，否则需询问用户。
