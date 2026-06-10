@@ -1,5 +1,5 @@
 ---
-name: gaia-platform
+name: cluster-gaia
 description: >-
   GAIA Slurm GPU 平台操作规范。适用于 ssh host `gaia`、`dgx-gaia-*`，以及用户要求在 GAIA 上运行、构建、测试、查看内容的场景。
 ---
@@ -96,7 +96,7 @@ tmux send-keys -t AIGAIA:node1 'cd ~/gaia-fs; echo __AIGAIA_NODE_READY__' Enter
 其中 `<allocated-dgx-gaia-node>` 应替换为 `salloc` 输出中的节点名，例如 `dgx-gaia-14`。本机 SSH 配置已为 `dgx-gaia-*` 设置通过 `gaia`
 跳板连接。如需确认当前 allocation，可在登录节点运行 `squeue -u $(whoami)`。
 
-## 加载环境
+## 工作环境
 
 GAIA 使用个人账号 `haopengh`，默认 shell 为 `bash`，家目录为：
 

@@ -1,5 +1,5 @@
 ---
-name: kp-cluster
+name: cluster-kp
 description: >-
   KP 鲲鹏 Slurm 集群操作规范。适用于 ssh host `kp`，以及用户要求在 kp 上运行、构建、测试、查看内容的场景。
 ---

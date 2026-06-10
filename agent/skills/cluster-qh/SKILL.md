@@ -1,5 +1,5 @@
 ---
-name: qh-cluster
+name: cluster-qh
 description: >-
   QH Slurm 集群操作规范。适用于 ssh host `qh`，以及用户要求在 qh 上运行、构建、测试、查看内容的场景。
 ---

@@ -1,5 +1,5 @@
 ---
-name: yc-cluster
+name: cluster-yc
 description: >-
   YC 盐城 Slurm 集群操作规范。适用于 ssh host `yc`，以及用户要求在 yc 上运行、构建、测试、查看内容的场景。
 ---
