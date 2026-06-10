@@ -147,6 +147,7 @@ srun --mpi=pmix \
 CPU: x86_64, 2 sockets × 56 cores/socket × 2 threads/core = 224 logical CPUs/node
 内存: 约 2,060,000 MB/node
 OS: Ubuntu 内核 5.15.0-88-generic
+GPU: H100*8, 每个GPU拥有80GB HBM3和400Gb/sec(4X NDR)
 Features: h100, liquid
 Slurm GRES: (null)
 ```
