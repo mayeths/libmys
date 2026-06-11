@@ -113,6 +113,7 @@ GAIA 使用个人账号 `haopengh`，默认 shell 为 `bash`，家目录为：
 
 本平台使用 Slurm 管理。默认分区为 `GAIA`，节点范围为 `dgx-gaia-[09-63]`。`salloc` window 用于持有 allocation；真正工作应通过 SSH 进入
 分配到的计算节点执行。若没有比较明确的指定时间，默认按 30 分钟申请。
+作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。
 
 常用查询：
 
@@ -125,7 +126,7 @@ squeue -u $(whoami)
 资源申请示例：
 
 ```bash
-salloc -p GAIA -N 1 --exclusive --time=0:30:00
+salloc -p GAIA -N 1 --exclusive -J test.huanghaopeng --time=0:30:00
 ```
 
 根据任务需求可调整 GPU 数量、节点数和时间。不要在没有用户确认的情况下长时间占用大量节点。
