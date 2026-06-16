@@ -70,7 +70,10 @@ KP 使用个人账号 `huanghp`，家目录为：
 
 本集群使用 Slurm 管理。登录节点 `kunpeng-master` 只用于轻量操作，不要在登录节点运行 benchmark、MPI/OpenMP、训练、推理或长时间重负载任务。
 
-`salloc` 返回的 shell 仍在登录节点，只是持有 allocation；真正运行到计算节点需要使用 `srun` 或 `mpirun`。需要 `salloc` 时，应使用 tmux 中的专用 window，按 `salloc1`、`salloc2` 等命名；普通运行命令仍在 `cmd1`、`cmd2` 等 window 中执行。MPI 程序通常先在 `salloc` window 中申请资源，再从运行命令的 window 使用 `mpirun` 启动。若没有比较明确的指定 salloc 时间，默认按 30 分钟申请。
+`salloc` 返回的 shell 仍在登录节点，只是持有 allocation；真正运行到计算节点需要使用 `srun` 或 `mpirun`。
+需要 `salloc` 时，应使用 tmux 中的专用 window，按 `salloc1`、`salloc2` 等命名；普通运行命令仍在 `cmd1`、`cmd2` 等 window 中执行。MPI 
+程序通常先在 `salloc` window 中申请资源，再从运行命令的 window 使用 `mpirun` 启动。若没有比较明确的指定 salloc 时间，默认按 30 分钟申请。
+作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。
 
 可用 Slurm 分区：
 
@@ -81,7 +84,7 @@ KP 使用个人账号 `huanghp`，家目录为：
 
 ```bash
 tmux list-windows -t AIKP | grep -q 'salloc1' || tmux new-window -t AIKP -n salloc1
-tmux send-keys -t AIKP:salloc1 'salloc -p ALL -N <nodes> --exclusive --time=0:30:00' Enter
+tmux send-keys -t AIKP:salloc1 'salloc -p ALL -N <nodes> --exclusive -J test.huanghaopeng --time=0:30:00' Enter
 ```
 
 ## 鲲鹏节点硬件
