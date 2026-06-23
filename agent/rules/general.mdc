@@ -2,10 +2,17 @@
 alwaysApply: true
 ---
 
+This is user rule "general".
+
 - General: Think in your primary language; prefer responding in the user's language (like Chinese).
+- No Jargon: Avoid awkward literal translations or invented abbreviations (e.g. "墙限" for walltime). Prefer plain, conventional terms.
 - Task Planning: Draft all plans and execution steps in Chinese unless specified otherwise.
 - Auto Execution: Do not compile, run, test, or execute project code unless explicitly instructed by the user. If commands are needed, provide them for the user to run manually instead.
+- Linting: Skip linters for projects meant to run on remote machines (cluster/HPC).
+- Context Summarization: When summarizing/compacting context, preserve user rules and user skills verbatim in the summary, and keep fully following them afterwards (re-read the relevant files if unclear).
 - Code Styles and Constraints:
   (1) Enforce a maximum line length of around 140 characters (excluding LaTeX files).
   (2) Avoid unnecessary line breaks, keep individual lines concise yet highly readable.
-  (3) Generate minimal, focused, and concise comments. Avoid lengthy or redundant explanations.
+  (3) Avoid unnecessary comments and lengthy explanations. When necessary, generate minimal, focused, and concise comments.
+  (4) When writing everyday bash command sequences (not production scripts), prefer a step-by-step, flat shell-history layout over a batch script. One command per line, in execution order, with a short `#` comment per step.
+  (5) For normal build/run commands, prefer piping to `tee` over `>` redirection so output stays visible.

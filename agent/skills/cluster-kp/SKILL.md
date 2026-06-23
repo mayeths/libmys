@@ -4,6 +4,8 @@ description: >-
   KP 鲲鹏 Slurm 集群操作规范。适用于 ssh host `kp`，以及用户要求在 kp 上运行、构建、测试、查看内容的场景。
 ---
 
+This is user skill "cluster-kp".
+
 # KP 集群 Practice
 
 本文档只描述 KP 集群的平台操作方式，不包含具体项目规则。KP 是基于华为鲲鹏 920（aarch64）的 openEuler + Slurm 集群。
@@ -73,7 +75,7 @@ KP 使用个人账号 `huanghp`，家目录为：
 `salloc` 返回的 shell 仍在登录节点，只是持有 allocation；真正运行到计算节点需要使用 `srun` 或 `mpirun`。
 需要 `salloc` 时，应使用 tmux 中的专用 window，按 `salloc1`、`salloc2` 等命名；普通运行命令仍在 `cmd1`、`cmd2` 等 window 中执行。MPI 
 程序通常先在 `salloc` window 中申请资源，再从运行命令的 window 使用 `mpirun` 启动。若没有比较明确的指定 salloc 时间，默认按 30 分钟申请。
-作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。
+作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。作业无特殊要求，一律使用`--exclusive`。
 
 可用 Slurm 分区：
 
