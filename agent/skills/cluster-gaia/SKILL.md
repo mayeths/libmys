@@ -4,6 +4,8 @@ description: >-
   GAIA Slurm GPU 平台操作规范。适用于 ssh host `gaia`、`dgx-gaia-*`，以及用户要求在 GAIA 上运行、构建、测试、查看内容的场景。
 ---
 
+This is user skill "cluster-gaia".
+
 # GAIA 平台 Practice
 
 本文档只描述 GAIA 平台的操作方式，不包含具体项目规则。GAIA 是 NVIDIA 内部 Ubuntu 22.04 + Slurm GPU 平台，登录节点为
@@ -113,7 +115,7 @@ GAIA 使用个人账号 `haopengh`，默认 shell 为 `bash`，家目录为：
 
 本平台使用 Slurm 管理。默认分区为 `GAIA`，节点范围为 `dgx-gaia-[09-63]`。`salloc` window 用于持有 allocation；真正工作应通过 SSH 进入
 分配到的计算节点执行。若没有比较明确的指定时间，默认按 30 分钟申请。
-作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。
+作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。作业无特殊要求，一律使用`--exclusive`。
 
 常用查询：
 

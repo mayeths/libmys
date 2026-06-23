@@ -3,30 +3,32 @@ description:
 alwaysApply: true
 ---
 
-## 集群 Practice
+This is user rule "cluster-practice".
 
-当用户要求操作远程集群或具名 SSH host 时，agent 必须先识别目标集群，并查找对应的集群 practice（以 agent skill 形式存在），然后按照对应 practice 与远程集群交互。
+## Cluster Practice
 
-不同集群的 practice 是该集群操作方式的权威来源。agent 必须优先并严格遵守已有的集群 practice，而不是使用其他默认习惯。practice 覆盖以下内容：
+When the user asks to operate a remote cluster or a named SSH host, the agent must first identify the target cluster, locate the corresponding cluster practice (which exists as an agent skill), and then interact with the remote cluster according to that practice.
 
-- 机器连接方式
-- 环境初始化方式（module / conda / venv / CUDA / MPI）
-- home / work / scratch / project 路径
-- 作业提交与调度系统（queue / partition）
-- 集群使用规则与限制
-- 代理和网络配置
-- 安全规则
+Each cluster's practice is the authoritative source for how to operate that cluster. The agent must prioritize and strictly follow the existing cluster practice instead of relying on other default habits. A practice covers:
 
-### 执行流程
+- How to connect to the machine
+- How to initialize the environment (module / conda / venv / CUDA / MPI)
+- home / work / scratch / project paths
+- Job submission and scheduler (queue / partition)
+- Cluster usage rules and limits
+- Proxy and network configuration
+- Security rules
 
-在运行远程命令之前，agent 必须：
+### Execution Flow
 
-1. 从历史对话、用户消息、项目上下文等信息中识别目标集群。
-2. 找到该集群对应的 practice / skill。
-3. 阅读并遵守该 practice 中的连接、环境、路径、调度和安全规则。
-4. 按照该 practice 完成连接和环境初始化。
-5. 执行用户请求的远程命令。
+Before running any remote command, the agent must:
 
-### 项目同步
+1. Identify the target cluster from conversation history, user messages, project context, etc.
+2. Find the practice / skill for that cluster.
+3. Read and follow its connection, environment, path, scheduling, and security rules.
+4. Connect and initialize the environment as described by the practice.
+5. Execute the user's requested remote command.
 
-一般使用 `rsync` （不使用`--delete`）进行同步项目文件。同步时，先检查项目根目录的`.vscode/sftp.json`配置文件是否有目标集群的工作路径，否则需询问用户。
+### Project Sync
+
+Generally use `rsync` (without `--delete`) to sync project files. Before syncing, check the project root's `.vscode/sftp.json` for the target cluster's working path; if it is missing, ask the user.

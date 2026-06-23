@@ -4,6 +4,8 @@ description: >-
   QH Slurm 集群操作规范。适用于 ssh host `qh`，以及用户要求在 qh 上运行、构建、测试、查看内容的场景。
 ---
 
+This is user skill "cluster-qh".
+
 # QH 集群 Practice
 
 本文档只描述 QH 集群的平台操作方式，不包含具体项目规则。QH 是 Rocky Linux 8.9（x86_64）+ Slurm 的异构集群，含 Intel Xeon Max（HBM）与 AMD EPYC 两类节点。
@@ -76,7 +78,7 @@ source /online1/xuewei_group/xuewei/huanghp/set_env
 `salloc` 返回的 shell 仍在登录节点，只是持有 allocation；
 真正运行到计算节点需要使用 `srun` 或 `mpirun`。需要 `salloc` 时，应使用 tmux 中的专用 window，按 `salloc1`、`salloc2` 等命名；
 普通运行命令仍在 `cmd1`、`cmd2` 等 window 中执行。MPI 程序通常先在 `salloc` window 中申请资源，再从运行命令的 window 使用 `mpirun` 启动。若没有比较明确的指定 salloc 时间，默认按 30 分钟申请。
-作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。
+作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。作业无特殊要求，一律使用`--exclusive`。
 
 可用 Slurm 分区：
 

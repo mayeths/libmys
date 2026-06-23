@@ -5,6 +5,8 @@ description: >-
   以及用户要求在 shuguang 上运行、构建、测试、查看内容的场景。
 ---
 
+This is user skill "cluster-shuguang".
+
 # 曙光 Shuguang 平台 Practice
 
 本文档只描述曙光平台的操作方式，不包含具体项目规则。这是国家超算互联网核心节点【分区一】（郑州）的 Sugon OS 8.9 + Slurm 集群，计算节点搭载
@@ -37,8 +39,7 @@ tmux send-keys -t AISG:cmd1 'ssh shuguang' Enter
 
 不要在已经进入曙光时重复执行 `ssh shuguang`，以免产生嵌套 SSH。若平台长时间无响应，通常说明网络或登录连接已中断，需要重新连接。
 
-登录入口是负载均衡，多台登录节点（实测会落到 `zz-login01`、`zz-login02` 等），各节点 host key 不同。
-注意因为落点会变，多个 `ssh` 可能落到不同登录节点，但只要持有 Slurm allocation，从任一登录节点都能 `ssh` 进所分配的计算节点。
+登录入口是负载均衡，多台登录节点（ssh config已经设置强制`zz-login04`，该登录节点可以访问`/work2`），各节点 host key 不同。
 
 ## 网页登录与 SSH 密钥
 
@@ -83,7 +84,7 @@ tmux capture-pane -t AISG:cmd1 -p -S -120 | tail -n 80
 ```
 
 `scnethpc2615` 是**多人共享账号**，账号根目录 `/work2/share/scnethpc2615/` 下各人有自己的子目录（如 `huanghaopeng`、`mxyu` 等）。本人的工作与算例统一放在 `/work2/share/scnethpc2615/huanghaopeng`。
-`work2` 据厂家反馈比默认 home 目录稳定（默认目录有已知问题）。**`/work2` 只在计算节点挂载，登录节点访问不到**
+`work2` 据厂家反馈比默认 home 目录稳定（默认目录有已知问题）。**`/work2` 只在计算节点与zz-login04登录节点挂载，其他所有登录节点访问不到**
 
 默认工作流：
 
@@ -103,7 +104,7 @@ tmux capture-pane -t AISG:salloc1 -p | tail -n 30
 确认 `salloc1` 已在曙光登录节点 prompt 后再申请资源（分区见下文）：
 
 ```bash
-tmux send-keys -t AISG:salloc1 'salloc -p hpctest06 -N 1 --time=0:30:00' Enter
+tmux send-keys -t AISG:salloc1 'salloc -p hpctest06 -N 1 --gres=dcu:8 --time=0:30:00' Enter
 ```
 
 看到分配到节点后，在单独 window 进入该计算节点（曙光需先回到登录节点再 `ssh <node>`，无 ProxyJump）：
@@ -137,14 +138,8 @@ export MYS_DIR=/work2/share/scnethpc2615/huanghaopeng/project/libmys
 一般使用 `rsync` 传输文件（除非明确指示，否则不使用 `--delete`）。使用 `scp`/`rsync` 时不要依赖 `~`，应使用绝对路径。`.vscode/sftp.json` 暂无曙光配置，
 配置同步前需与用户确认目标路径。
 
-**rsync/scp 到 `/work2`（经计算节点跳板）**：`/work2` 只在计算节点挂载，登录节点没有，所以不能直接传到登录节点。流程是「先有一个 salloc 出来的计算节点，
-再直接从本机经登录节点跳板 rsync 到该计算节点」：
-
-1. 在 tmux `salloc1` 里保持一个 allocation（见下文调度小节），`squeue -u $(whoami)` 拿到节点名（如 `n12r3n01`）。
-2. 本机 `~/.ssh/config` 已配 `Host n*r*n*`（`ProxyJump shuguang` + 跳过 host key），可直接以节点名为目标传输：
-
 ```bash
-rsync -avP /本地/路径 n12r3n01:/work2/share/scnethpc2615/huanghaopeng/
+rsync -avP /本地/路径 shuguang:/work2/share/scnethpc2615/huanghaopeng/
 # 等价：scp / ssh n12r3n01 也都走同一跳板规则
 ```
 
@@ -196,7 +191,7 @@ MPI 选择：本机互连是曙光自研 **SHCA 400G**（非 Mellanox），DTK S
 本平台使用 Slurm 管理。`salloc` 返回的 shell 仍在登录节点，只是持有 allocation；真正运行到计算节点需 `ssh` 进入节点或用 `srun`/`mpirun`。
 需要 `salloc` 时使用 tmux 专用 window（`salloc1`、`salloc2`），普通运行命令在 `cmd1`/`cmd2`。若没有明确指定时间，默认按 30 分钟申请。
 
-作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。
+作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。作业无特殊要求，一律使用`--exclusive`。
 
 分区情况：
 
@@ -216,7 +211,7 @@ sacctmgr -p show assoc user=$(whoami) format=account,partition,qos
 资源申请示例：
 
 ```bash
-salloc -p hpctest06 -N 1 --exclusive -J test.huanghaopeng --time=0:30:00
+salloc -p hpctest06 -N 1 --exclusive -J test.huanghaopeng --gres=dcu:8 --time=0:30:00
 ```
 
 节点状态经常变化，运行前以 `sinfo` 为准，避开 `drain`/`down` 节点。不要在没有用户确认的情况下长时间占用大量节点。

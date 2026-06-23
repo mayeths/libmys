@@ -4,6 +4,8 @@ description: >-
   EOS 集群操作规范。适用于 ssh host `eos`，以及用户要求在 EOS 上运行、构建、测试、查看内容的场景。
 ---
 
+This is user skill "cluster-eos".
+
 # EOS 平台 Practice
 
 本文档只描述 EOS 平台的操作方式，不包含具体项目规则。EOS 是 NVIDIA 内部 x86_64 Ubuntu + Slurm 平台，已确认可通过
@@ -90,6 +92,7 @@ sshare -U
 
 EOS 使用 fairshare 管理作业优先级，提交作业前可用 `sshare -U` 查看当前用户的 fairshare 信息。申请 Slurm 资源时必须使用账号
 `hw_nresearch_snoise`；作业名按平台要求使用 `hw_nresearch_snoise-<user>.<jobname>` 形式，例如 `hw_nresearch_snoise-hhp.test`。
+作业无特殊要求，一律使用`--exclusive`。
 
 交互式申请命令模板：
 
