@@ -9,10 +9,13 @@ This is user rule "general".
 - Task Planning: Draft all plans and execution steps in Chinese unless specified otherwise.
 - Auto Execution: Do not compile, run, test, or execute project code unless explicitly instructed by the user. If commands are needed, provide them for the user to run manually instead.
 - Linting: Skip linters for projects meant to run on remote machines (cluster/HPC).
-- Context Summarization: When summarizing/compacting context, preserve user rules and user skills verbatim in the summary, and keep fully following them afterwards (re-read the relevant files if unclear).
+- Context Summarization: When summarizing/compacting context, preserve user rules and user skills verbatim in the summary, and keep fully following them afterwards (re-read the relevant files after you summarize).
 - Code Styles and Constraints:
   (1) Enforce a maximum line length of around 140 characters (excluding LaTeX files).
   (2) Avoid unnecessary line breaks, keep individual lines concise yet highly readable.
   (3) Avoid unnecessary comments and lengthy explanations. When necessary, generate minimal, focused, and concise comments.
-  (4) When writing everyday bash command sequences (not production scripts), prefer a step-by-step, flat shell-history layout over a batch script. One command per line, in execution order, with a short `#` comment per step.
-  (5) For normal build/run commands, prefer piping to `tee` over `>` redirection so output stays visible.
+  (4) Naming: avoid cryptic abbreviations and single-letter names. Conventional single letters are fine where idiomatic: loop indices `i`/`j`/`k`, grid/coordinate axes `x`/`y`/`z`, matrix dimensions `m`/`n`. Otherwise use descriptive and meaningful names (e.g. `length` not `L`, `count` not `C`, `num_nodes` not `N`); when in doubt, prefer descriptive and meaningful names.
+  (5) Shell commands and scripts:
+      - One-off command sequences (not production scripts): prefer a step-by-step, flat shell-history layout over a batch script — one command per line, in execution order, with a short `#` comment per step.
+      - Batch/standalone scripts: aim for Python-like readability, i.e. clear structured control flow over terse shell idioms. Use explicit `if/then/else/fi` blocks rather than compact `&&`/`||` or `[[ ... ]] && ...` chains; keep one statement per line (no `;`-joining); a simple exit-status check like `if ! cmd; then` is fine.
+      - For build/run commands, pipe output to `tee` rather than `>` redirection so it stays visible.
