@@ -865,3 +865,35 @@ MYS_PUBLIC float mys_env_f32(const char *name, float default_val)
 {
     return mys_str_to_f32(getenv(name), default_val);
 }
+
+// See man setenv(3)
+MYS_PUBLIC int mys_setenv_str(const char *name, const char *val)
+{
+    return setenv(name, val, 1);
+}
+
+MYS_PUBLIC int mys_setenv_int(const char *name, int val)
+{
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%d", val);
+    return setenv(name, buf, 1);
+}
+
+MYS_PUBLIC int mys_setenv_long(const char *name, long val)
+{
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%ld", val);
+    return setenv(name, buf, 1);
+}
+
+MYS_PUBLIC int mys_setenv_sizet(const char *name, size_t val)
+{
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%zu", val);
+    return setenv(name, buf, 1);
+}
+
+MYS_PUBLIC int mys_unsetenv(const char *name)
+{
+    return unsetenv(name);
+}

@@ -297,6 +297,12 @@ MYS_PUBLIC int32_t mys_env_i32(const char *name, int32_t default_val);
 MYS_PUBLIC double mys_env_f64(const char *name, double default_val);
 MYS_PUBLIC float mys_env_f32(const char *name, float default_val);
 
+MYS_PUBLIC int mys_setenv_str(const char *name, const char *val);
+MYS_PUBLIC int mys_setenv_int(const char *name, int val);
+MYS_PUBLIC int mys_setenv_long(const char *name, long val);
+MYS_PUBLIC int mys_setenv_sizet(const char *name, size_t val);
+MYS_PUBLIC int mys_unsetenv(const char *name);
+
 
 /////// check memory leak by valgrind
 /* gcc -I${MYS_DIR}/include -Wall -Wextra ./prun.c && valgrind --leak-check=full --track-fds=yes --track-fds=yes ./a.out
