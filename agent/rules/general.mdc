@@ -11,7 +11,7 @@ This is user rule "general".
 - Linting: Skip linters for projects meant to run on remote machines (cluster/HPC).
 - Context Summarization: When summarizing/compacting context, preserve user rules and user skills verbatim in the summary, and keep fully following them afterwards (re-read the relevant files after you summarize).
 - Code Styles and Constraints:
-  (1) Enforce a maximum line length of around 140 characters (excluding LaTeX files).
+  (1) Do not enforce any maximum line length. Allow lines of any length when it improves readability or preserves code structure.
   (2) Avoid unnecessary line breaks, keep individual lines concise yet highly readable.
   (3) Avoid unnecessary comments and lengthy explanations. When necessary, generate minimal, focused, and concise comments.
   (4) Naming: avoid cryptic abbreviations and single-letter names. Conventional single letters are fine where idiomatic: loop indices `i`/`j`/`k`, grid/coordinate axes `x`/`y`/`z`, matrix dimensions `m`/`n`. Otherwise use descriptive and meaningful names (e.g. `length` not `L`, `count` not `C`, `num_nodes` not `N`); when in doubt, prefer descriptive and meaningful names.
