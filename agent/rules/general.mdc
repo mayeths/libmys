@@ -19,3 +19,4 @@ This is user rule "general".
       - One-off command sequences (not production scripts): prefer a step-by-step, flat shell-history layout over a batch script — one command per line, in execution order, with a short `#` comment per step.
       - Batch/standalone scripts: aim for Python-like readability, i.e. clear structured control flow over terse shell idioms. Use explicit `if/then/else/fi` blocks rather than compact `&&`/`||` or `[[ ... ]] && ...` chains; keep one statement per line (no `;`-joining); a simple exit-status check like `if ! cmd; then` is fine.
       - For build/run commands, pipe output to `tee` rather than `>` redirection so it stays visible.
+      - Do not use rg (ripgrep).
