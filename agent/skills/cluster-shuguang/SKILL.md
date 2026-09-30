@@ -28,7 +28,7 @@ SSH 配置（本机 `~/.ssh/config`，登录入口 `zzeshell.scnet.cn:65032`）�
 ```bash
 tmux has-session -t AISG 2>/dev/null || tmux new-session -d -s AISG -n cmd1
 tmux list-windows -t AISG | grep -q 'cmd1' || tmux new-window -t AISG -n cmd1
-tmux capture-pane -t AISG:cmd1 -p | tail -n 30
+tmux capture-pane -t AISG:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20
 ```
 
 如果还未进入曙光登录节点，在对应 window 中发送：
@@ -70,12 +70,12 @@ benchmark、MPI/OpenMP、训练、推理或长时间重负载任务。
 ```bash
 tmux send-keys -t AISG:cmd1 '<command>; echo __AISG_DONE_$?__' Enter
 sleep 2
-tmux capture-pane -t AISG:cmd1 -p -S -120 | tail -n 80
+tmux capture-pane -t AISG:cmd1 -p -J -S -200 | grep -v '^$' | tail -n 80
 ```
 
 如果没有看到 `__AISG_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
-如果使用类似`tmux capture-pane -t AI:cmd1 -p -S -80`的capture功能发现命令未结束时，则后面不应给用户`sleep 20; tmux capture-pane -t AI:cmd1 -p -S -80`这样的命令。
-应去掉其中的`sleep 20`，由用户确认运行结束后手动点击确认，直接执行`tmux capture-pane -t AI:cmd1 -p -S -80`。
+如果使用类似`tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`的capture功能发现命令未结束时，则后面不应给用户`sleep 20; tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`这样的命令。
+应去掉其中的`sleep 20`，由用户确认运行结束后手动点击确认，直接执行`tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`。
 如果需要sleep，则一般sleep 5或10秒，如果10秒后还未结束，则再sleep 10秒。如果能确认会等得久一些，可以停止自我sleep等待，让用户来确认结束后唤醒。
 
 ## 工作环境与计算节点
@@ -101,7 +101,7 @@ tmux capture-pane -t AISG:cmd1 -p -S -120 | tail -n 80
 ```bash
 tmux list-windows -t AISG | grep -q 'salloc1' || tmux new-window -t AISG -n salloc1
 tmux send-keys -t AISG:salloc1 'ssh shuguang' Enter
-tmux capture-pane -t AISG:salloc1 -p | tail -n 30
+tmux capture-pane -t AISG:salloc1 -p -J -S -100 | grep -v '^$' | tail -n 20
 ```
 
 确认 `salloc1` 已在曙光登录节点 prompt 后再申请资源（分区见下文）：

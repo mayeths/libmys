@@ -19,7 +19,7 @@ YC 集群默认通过本地 tmux 会话进入 `ssh yc`。除非只是无状态�
 ```bash
 tmux has-session -t AIYC 2>/dev/null || tmux new-session -d -s AIYC -n cmd1
 tmux list-windows -t AIYC | grep -q 'cmd1' || tmux new-window -t AIYC -n cmd1
-tmux capture-pane -t AIYC:cmd1 -p | tail -n 30
+tmux capture-pane -t AIYC:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20
 ```
 
 集群 VPN 与登录会话约 30 分钟空闲后可能断开。若集群长时间无响应，通常说明网络或登录连接已中断，需要重新 `ssh yc`。当前 SSH 已使用 `~/.ssh/control-XXX` 做连接持久化。
@@ -41,12 +41,12 @@ tmux send-keys -t AIYC:cmd1 'ssh yc' Enter
 ```bash
 tmux send-keys -t AIYC:cmd1 '<command>; echo __AIYC_DONE_$?__' Enter
 sleep 2
-tmux capture-pane -t AIYC:cmd1 -p -S -120 | tail -n 80
+tmux capture-pane -t AIYC:cmd1 -p -J -S -200 | grep -v '^$' | tail -n 80
 ```
 
 如果没有看到 `__AIYC_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
-如果使用类似`tmux capture-pane -t AI:cmd1 -p -S -80`的capture功能发现命令未结束时，则后面不应给用户`sleep 20; tmux capture-pane -t AI:cmd1 -p -S -80`这样的命令。
-应去掉其中的`sleep 20`，由用户确认运行结束后手动点击确认，直接执行`tmux capture-pane -t AI:cmd1 -p -S -80`。
+如果使用类似`tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`的capture功能发现命令未结束时，则后面不应给用户`sleep 20; tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`这样的命令。
+应去掉其中的`sleep 20`，由用户确认运行结束后手动点击确认，直接执行`tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`。
 如果需要sleep，则一般sleep 5或10秒，如果10秒后还未结束，则再sleep 10秒。如果能确认会等得久一些，可以停止自我sleep等待，让用户来确认结束后唤醒。
 
 ## 工作环境

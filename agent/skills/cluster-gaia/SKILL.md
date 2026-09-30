@@ -22,7 +22,7 @@ GAIA 默认通过本地 tmux 会话进入 `ssh gaia`。除非只是无状态、�
 ```bash
 tmux has-session -t AIGAIA 2>/dev/null || tmux new-session -d -s AIGAIA -n cmd1
 tmux list-windows -t AIGAIA | grep -q 'cmd1' || tmux new-window -t AIGAIA -n cmd1
-tmux capture-pane -t AIGAIA:cmd1 -p | tail -n 30
+tmux capture-pane -t AIGAIA:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20
 ```
 
 如果还未进入 GAIA 登录节点，在对应 window 中发送：
@@ -46,12 +46,12 @@ tmux send-keys -t AIGAIA:cmd1 'ssh gaia' Enter
 ```bash
 tmux send-keys -t AIGAIA:cmd1 '<command>; echo __AIGAIA_DONE_$?__' Enter
 sleep 2
-tmux capture-pane -t AIGAIA:cmd1 -p -S -120 | tail -n 80
+tmux capture-pane -t AIGAIA:cmd1 -p -J -S -200 | grep -v '^$' | tail -n 80
 ```
 
 如果没有看到 `__AIGAIA_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
-如果使用类似`tmux capture-pane -t AI:cmd1 -p -S -80`的capture功能发现命令未结束时，则后面不应给用户`sleep 20; tmux capture-pane -t AI:cmd1 -p -S -80`这样的命令。
-应去掉其中的`sleep 20`，直接执行`tmux capture-pane -t AI:cmd1 -p -S -80`，由用户确认运行结束后手动点击确认。
+如果使用类似`tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`的capture功能发现命令未结束时，则后面不应给用户`sleep 20; tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`这样的命令。
+应去掉其中的`sleep 20`，直接执行`tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`，由用户确认运行结束后手动点击确认。
 如果需要sleep，则一般sleep 5或10秒，如果10秒后还未结束，则再sleep 10秒。如果能确认会等得久一些，可以停止自我sleep等待，让用户来确认结束后唤醒。
 
 ## 工作环境与计算节点
@@ -75,7 +75,7 @@ GAIA 的工作路径是：
 ```bash
 tmux list-windows -t AIGAIA | grep -q 'salloc1' || tmux new-window -t AIGAIA -n salloc1
 tmux send-keys -t AIGAIA:salloc1 'ssh gaia' Enter
-tmux capture-pane -t AIGAIA:salloc1 -p | tail -n 30
+tmux capture-pane -t AIGAIA:salloc1 -p -J -S -100 | grep -v '^$' | tail -n 20
 ```
 
 确认 `salloc1` 已在 GAIA 登录节点 prompt 后，再发送：
@@ -89,7 +89,7 @@ tmux send-keys -t AIGAIA:salloc1 'salloc -p GAIA -N 1 --gres=gpu:8 --time=0:30:0
 ```bash
 tmux list-windows -t AIGAIA | grep -q 'node1' || tmux new-window -t AIGAIA -n node1
 tmux send-keys -t AIGAIA:node1 'ssh <allocated-dgx-gaia-node>' Enter
-tmux capture-pane -t AIGAIA:node1 -p | tail -n 30
+tmux capture-pane -t AIGAIA:node1 -p -J -S -100 | grep -v '^$' | tail -n 20
 ```
 
 确认 `node1` 已在计算节点 prompt 后，再发送：
