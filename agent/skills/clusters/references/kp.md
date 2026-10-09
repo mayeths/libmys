@@ -1,3 +1,5 @@
+This is user skill reference "clusters/kp". Last modified: 2026-10-09.
+
 # KP 集群 Practice
 
 本文档只描述 KP 集群的平台操作方式，不包含具体项目规则。KP 是基于华为鲲鹏 920（aarch64）的 openEuler 24.03 LTS-SP2 + Slurm 集群。

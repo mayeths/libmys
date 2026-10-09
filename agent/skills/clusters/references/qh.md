@@ -1,3 +1,5 @@
+This is user skill reference "clusters/qh". Last modified: 2026-10-09.
+
 # QH 集群 Practice
 
 本文档只描述 QH 集群的平台操作方式，不包含具体项目规则。QH 是 Rocky Linux 8.9（x86_64）+ Slurm 的异构集群，含 Intel Xeon Max（HBM）与 AMD EPYC 两类节点。

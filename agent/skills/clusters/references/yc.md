@@ -1,3 +1,5 @@
+This is user skill reference "clusters/yc". Last modified: 2026-10-09.
+
 # YC 集群 Practice
 
 本文档只描述 YC 集群的平台操作方式，不包含具体项目规则。

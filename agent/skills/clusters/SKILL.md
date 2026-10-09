@@ -5,7 +5,7 @@ description: >-
   集群：ssh host `kp`、`yc`、`qh`、`eos`、`gaia`、`shuguang`、`lineshine`。
 ---
 
-This is user skill "clusters".
+This is user skill "clusters". Last modified: 2026-10-09.
 
 # 集群操作规范
 

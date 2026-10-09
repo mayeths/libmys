@@ -8,7 +8,7 @@ description: >-
   或用户提到 libmys、mys.h、MYS_IMPL、ILOG/DLOG/ASSERT 等场景。
 ---
 
-This is user skill "mys".
+This is user skill "mys". Last modified: 2026-10-09.
 
 # libmys 使用 Practice
 

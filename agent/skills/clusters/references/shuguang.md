@@ -1,3 +1,5 @@
+This is user skill reference "clusters/shuguang". Last modified: 2026-10-09.
+
 # 曙光 Shuguang 平台 Practice
 
 本文档只描述曙光平台的操作方式，不包含具体项目规则。这是国家超算互联网核心节点分区一（郑州）的 Sugon OS 8.9 + Slurm 集群，计算节点搭载海光 DCU（`gfx936`），软件栈为 DTK + HIP + RCCL。

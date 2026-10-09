@@ -1,3 +1,5 @@
+This is user skill reference "clusters/eos". Last modified: 2026-10-09.
+
 # EOS 平台 Practice
 
 本文档只描述 EOS 平台的操作方式，不包含具体项目规则。EOS 是 NVIDIA 内部 x86_64 Ubuntu + Slurm 平台，登录节点 prompt 类似 `haopengh@login-eos01:~$`，常用工作路径为 `~/eos-fs`。

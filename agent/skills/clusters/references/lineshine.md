@@ -1,3 +1,5 @@
+This is user skill reference "clusters/lineshine". Last modified: 2026-10-09.
+
 # LineShine 集群 Practice
 
 本文档只描述 LineShine 集群，不包含具体项目规则。LineShine 是大规模鲲鹏 ARM 集群。LineShine 也称 Shenchao、深超、国家超级计算深圳中心二期等。

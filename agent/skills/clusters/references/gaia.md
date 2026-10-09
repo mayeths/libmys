@@ -1,3 +1,5 @@
+This is user skill reference "clusters/gaia". Last modified: 2026-10-09.
+
 # GAIA 平台 Practice
 
 本文档只描述 GAIA 平台的操作方式，不包含具体项目规则。GAIA 是 NVIDIA 内部 Ubuntu 22.04 + Slurm GPU 平台，登录节点为 `tlv01-e2e-slurm12`，计算节点为 `dgx-gaia-*`。

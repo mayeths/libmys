@@ -1,3 +1,5 @@
+This is user skill reference "mys/reference". Last modified: 2026-10-09.
+
 # libmys 模块参考
 
 `include/mys` 各模块的用途与招牌 API。这里只列代表性接口帮助定位；**完整、最新签名请直接读 `include/mys/<模块>.h`**。
