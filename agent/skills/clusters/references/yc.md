@@ -57,6 +57,8 @@ tmux capture-pane -t AIYC:cmd1 -p -J -S -200 | grep -v '^$' | tail -n 80
 xuew@psn002 ~ ❯
 ```
 
+个人环境中的平台标识为 `HUANGHAOPENG_PLATFORM_ID=yc`。
+
 一般使用 `rsync` 传输文件（除非明确指示，否则不使用 `--delete`）。使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。
 
 ## 作业提交与调度系统

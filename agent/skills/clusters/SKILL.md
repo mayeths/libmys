@@ -35,13 +35,14 @@ This is user skill "clusters". Last modified: 2026-10-09.
 
 新增或重写集群 reference 时，参考 `references/yc.md`、`references/kp.md` 和 `references/gaia.md` 的结构，包含连接、tmux、账号与路径、环境、文件同步、调度、计算节点硬件、网络和互联网。
 
-创建集群 reference 时，探测并记录集群的静态平台信息。使用只读命令分别探测登录节点和计算节点；异构集群分别探测各类计算节点。命令不存在时跳过并注明。
+创建集群 reference 时，探测并记录集群的静态平台信息。使用只读命令分别探测登录节点和计算节点；异构集群分别探测各类计算节点。命令不存在时跳过并注明。探测时注意环境变量 `HUANGHAOPENG_PLATFORM_ID`，并把值记录到 reference。若变量未设置，创建 reference 时通知用户去 `.bashrc` 或 `.zshrc` 等环境文件添加。
 
 示例：
 ```bash
 # 身份与操作系统
 whoami
 hostname
+echo $HUANGHAOPENG_PLATFORM_ID
 uname -a
 cat /etc/os-release
 # CPU、Cache、NUMA与内存

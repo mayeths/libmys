@@ -64,6 +64,8 @@ source /online1/xuewei_group/xuewei/huanghp/set_env
 
 `set_env` 会把 `HOME` 切到个人目录并 `cd` 过去、source 个人 libmys 环境、清理 module 后加载个人默认软件栈。如确需其他软件，再用 `module load` 追加。
 
+个人环境中的平台标识为 `HUANGHAOPENG_PLATFORM_ID=qh`。
+
 一般使用 `rsync` 传输文件（除非明确指示，否则不使用 `--delete`）。使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。
 
 ## 作业提交与调度系统

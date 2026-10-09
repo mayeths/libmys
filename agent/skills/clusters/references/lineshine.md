@@ -55,6 +55,8 @@ tmux capture-pane -t AILS:cmd1 -p -J -S -200 | grep -v '^$' | tail -n 80
 /home/share/nsls_huanghaopeng
 ```
 
+当前新账号的 `~/.bashrc` 设置了 `HUANGHAOPENG_PLATFORM_ID=lineshine`。
+
 项目应放在该目录下的个人子目录中。第一次同步某个项目时，先检查项目根目录 `.vscode/sftp.json`；若其中没有 LineShine 目标路径，应向用户确认，不要默认写入旧账号目录。
 
 一般使用 `rsync` 传输文件，除非用户明确要求，否则不使用 `--delete`。使用 `rsync` 或 `scp` 时使用绝对路径，不依赖 `~`。实验输出通常较大，向集群同步源码时应明确排除本地结果目录；从集群回收结果时只同步需要的输出。

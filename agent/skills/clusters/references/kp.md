@@ -53,6 +53,7 @@ KP 使用个人账号 `huanghp`，家目录为：
 
 共享存储 `/A` 通过 NFSv4 挂载（家目录、project、module 均在其下）。与 YC 不同，KP 登录 `bash` 时 `.bashrc` 会自动 `source ~/project/libmys/etc/profile` 加载个人环境，无需额外的启动脚本。环境就绪后：
 
+- 平台标识环境变量为 `HUANGHAOPENG_PLATFORM_ID=kp`。
 - 模块系统为 Lmod（`module avail` / `module load`），个人模块树在 `~/module/CONFIG`。
 - 默认已加载 `mpi/hpcx/2.21.3`（HPC-X OpenMPI），`mpicc` / `mpirun` 即来自 HPC-X；另有 mpich、mvapich、多版本 openmpi 可按需 `module load`。
 - 系统自带 gcc / gfortran / cmake / make；可 `module load compiler/gcc/13.2.0` 等切换编译器。
