@@ -71,7 +71,7 @@ tmux capture-pane -t AIGAIA:salloc1 -p -J -S -100 | grep -v '^$' | tail -n 20
 确认 `salloc1` 已在 GAIA 登录节点 prompt 后，再发送：
 
 ```bash
-tmux send-keys -t AIGAIA:salloc1 'salloc -p GAIA -N 1 --gres=gpu:8 --time=0:30:00' Enter
+tmux send-keys -t AIGAIA:salloc1 'salloc -p GAIA -N 1 --exclusive -J test.huanghaopeng --time=0:30:00' Enter
 ```
 
 看到 `salloc` 分配到节点后，在单独 window 进入该计算节点：
@@ -92,19 +92,31 @@ tmux send-keys -t AIGAIA:node1 'cd ~/gaia-fs; echo __AIGAIA_NODE_READY__' Enter
 
 ## 工作环境
 
-GAIA 使用个人账号 `haopengh`，默认 shell 为 `bash`，家目录为：
+GAIA 使用个人账号 `haopengh`，默认 shell 为 `bash`。
 
 ```text
-/labhome/haopengh
+登录节点: tlv01-e2e-slurm12.lab.nvidia.com
+家目录: /labhome/haopengh（NFS，配额 5 GB，已用约 82%）
+工作路径: ~/gaia-fs -> /mnt/lustre/gaia/haopengh（Lustre /gaiafs，约 518 TB，仅计算节点挂载）
+本地盘: 计算节点 /raid，约 28 TB ext4（md RAID）
+平台标识: HUANGHAOPENG_PLATFORM_ID=gaia（在 ~/.bashrc 中设置）
 ```
 
-默认 `.bashrc` 只设置少量别名、`ENROOT_CONFIG_PATH=$HOME/.config/enroot`、`ngc-cli` 和 `$HOME/.local/bin`。默认没有已加载 module。如需 CUDA、MPI、NCCL、Python、容器等环境，先在计算节点上确认现有模块或项目脚本，不要假设登录节点和计算节点环境完全一致。
+家目录配额很小，项目、产物、容器镜像都放到 `~/gaia-fs`，不要放在家目录。
+
+默认 `.bashrc` 只设置少量别名、`ENROOT_CONFIG_PATH=$HOME/.config/enroot`、`ngc-cli` 和 `$HOME/.local/bin`。`module` 命令存在但没有可用模块。计算节点自带软件栈：
+
+- CUDA：`/usr/local/cuda` 指向 CUDA 13.0，另装有 `/usr/local/cuda-12.4`；驱动 580.95.05。
+- MPI：系统 MLNX OFED 自带 `/usr/mpi/gcc/openmpi-4.1.9a1`，另有 `ucx_info`。
+- 容器：计算节点有 `enroot`，`srun` 支持 Pyxis 的 `--container-image`；登录节点没有 `enroot`。
+
+登录节点没有 `nvidia-smi`、`ibv_devinfo` 等工具，硬件与软件环境以计算节点为准。
 
 一般使用 `rsync` 传输文件（除非明确指示，否则不使用 `--delete`）。使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。涉及工作区内容时优先在计算节点确认 `~/gaia-fs` 的真实路径与可用性。
 
 ## 作业提交与调度系统
 
-本平台使用 Slurm 管理。默认分区为 `GAIA`，节点范围为 `dgx-gaia-[09-63]`。`salloc` window 用于持有 allocation；真正工作应通过 SSH 进入分配到的计算节点执行。若没有比较明确的指定时间，默认按 30 分钟申请。
+本平台使用 Slurm 22.05.2 管理。只有一个分区 `GAIA`（默认），节点范围为 `dgx-gaia-[09-63]`，共 55 台；分区 `DefaultTime=8:00:00`、`MaxTime=UNLIMITED`、`OverSubscribe=EXCLUSIVE`；`sacctmgr` 查不到关联账号，申请时无需 `-A`。`salloc` window 用于持有 allocation；真正工作应通过 SSH 进入分配到的计算节点执行。分区默认时间是 8 小时，因此必须显式写 `--time`；若没有比较明确的指定时间，默认按 30 分钟申请。
 
 作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。作业无特殊要求，一律使用 `--exclusive`。
 
@@ -126,17 +138,28 @@ salloc -p GAIA -N 1 --exclusive -J test.huanghaopeng --time=0:30:00
 
 ## 节点硬件
 
-`dgx-gaia-*` 计算节点探测到的 Slurm 配置大致如下：
+`dgx-gaia-*` 计算节点为 DGX H100，代表节点 `dgx-gaia-38` 实测配置：
 
 ```text
-CPU: 224 logical CPUs/node, 2 sockets, 56 cores/socket, 2 threads/core
-内存: 约 2,063,900 MB/node
-GPU: gpu:8
-OS: Ubuntu 22.04 系列，计算节点为 NVIDIA 内核
+OS: Ubuntu 22.04.4 LTS，Linux 5.15.0-1093-nvidia
+CPU: Intel Xeon Platinum 8480C（Sapphire Rapids），2 sockets × 56 cores × 2 threads = 224 logical CPUs
+NUMA: 2 个 domain，每 socket 一个；GPU0 亲和 NUMA 0（CPU 0-55,112-167），完整映射用 `nvidia-smi topo -m` 查看
+内存: 约 2 TiB/node（每 NUMA 约 1 TB），无 swap；Slurm RealMemory 2063900 MB
+Cache/core: 48 KiB L1d + 32 KiB L1i + 2 MiB L2；每 socket 105 MiB L3
+指令集: AVX-512（含 FP16/BF16/VNNI）、AMX（BF16/INT8）、AVX-VNNI
+GPU: 8 × NVIDIA H100 80GB HBM3，全互联 NVLink（NV18，每 link 26.6 GB/s）
+GPU 驱动: 580.95.05，CUDA 13.0
+网络: 12 个 mlx5 HCA，均为 InfiniBand
+  mlx5_0/3/4/5/6/9/10/11: 400 Gb/s NDR，计算网络，每 NUMA 4 张
+  mlx5_1/7: 200 Gb/s
+  mlx5_2/8: PORT_DOWN
+Slurm GRES: gpu:8（少数节点报告 gpu:1）；Features 为 su1–su4
 ```
+
+登录节点 `tlv01-e2e-slurm12` 是 4 vCPU（AMD EPYC Genoa）、15 GiB 内存的虚拟机，Ubuntu 22.04.4，Linux 5.15.0-174-generic，不能用来代替计算节点数据。
 
 节点状态经常变化，运行前以 `sinfo` 为准，避开 `down`、`drain`、`inval` 等不可用节点。
 
 ## 互联网网络
 
-当前登录环境没有检测到 `http_proxy` / `https_proxy`。不要假设 GAIA 可直接访问互联网；需要 `git clone`、`pip install`、容器拉取或外部下载时，先做轻量网络探测或向用户确认可用代理、镜像和凭据。
+登录节点和计算节点都没有设置 `http_proxy` / `https_proxy`，但实测可以直接访问 `pypi.org` 和 `github.com`，`git clone`、`pip install` 等无需代理。
