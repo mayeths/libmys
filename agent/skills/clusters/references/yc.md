@@ -1,11 +1,3 @@
----
-name: cluster-yc
-description: >-
-  YC 盐城 Slurm 集群操作规范。适用于 ssh host `yc`，以及用户要求在 yc 上运行、构建、测试、查看内容的场景。
----
-
-This is user skill "cluster-yc".
-
 # YC 集群 Practice
 
 本文档只描述 YC 集群的平台操作方式，不包含具体项目规则。
@@ -45,9 +37,9 @@ tmux capture-pane -t AIYC:cmd1 -p -J -S -200 | grep -v '^$' | tail -n 80
 ```
 
 如果没有看到 `__AIYC_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
-如果使用类似`tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`的capture功能发现命令未结束时，则后面不应给用户`sleep 20; tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`这样的命令。
-应去掉其中的`sleep 20`，由用户确认运行结束后手动点击确认，直接执行`tmux capture-pane -t AI:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`。
-如果需要sleep，则一般sleep 5或10秒，如果10秒后还未结束，则再sleep 10秒。如果能确认会等得久一些，可以停止自我sleep等待，让用户来确认结束后唤醒。
+如果使用类似 `tmux capture-pane -t AIYC:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20` 的 capture 功能发现命令未结束，则后面不应给用户 `sleep 20; tmux capture-pane -t AIYC:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20` 这样的命令。
+应去掉其中的 `sleep 20`，由用户确认运行结束后手动点击确认，直接执行 `tmux capture-pane -t AIYC:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`。
+如果需要 sleep，则一般 sleep 5 或 10 秒；如果 10 秒后还未结束，则再 sleep 10 秒。如果能确认会等得久一些，可以停止自我 sleep 等待，让用户来确认结束后唤醒。
 
 ## 工作环境
 
@@ -63,17 +55,15 @@ tmux capture-pane -t AIYC:cmd1 -p -J -S -200 | grep -v '^$' | tail -n 80
 xuew@psn002 ~ ❯
 ```
 
-一般使用`rsync`传输文件（除非明确指示，否则不使用`--delete`）。使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。
+一般使用 `rsync` 传输文件（除非明确指示，否则不使用 `--delete`）。使用 `scp` 或 `rsync` 时不要依赖 `~`，应使用绝对路径。
 
 ## 作业提交与调度系统
 
 本集群使用 Slurm 管理。登录节点 `psn002` 等只用于轻量操作，不要在登录节点运行 benchmark、MPI/OpenMP、训练、推理或长时间重负载任务。
 
-`salloc` 返回的 shell 仍在登录节点，只是持有 allocation；
-真正运行到计算节点需要使用 `srun` 或 `mpirun`。需要 `salloc` 时，应使用 tmux 中的专用 window，按 `salloc1`、`salloc2` 等命名；
-普通运行命令仍在 `cmd1`、`cmd2` 等 window 中执行。MPI 程序通常先在 `salloc` window 中申请资源，再从运行命令的 window 使用 `mpirun` 启动。若没有比较明确的指定 salloc 时间，默认按 30 分钟申请。
-作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。作业无特殊要求，一律使用`--exclusive`。
+`salloc` 返回的 shell 仍在登录节点，只是持有 allocation；真正运行到计算节点需要使用 `srun` 或 `mpirun`。需要 `salloc` 时，应使用 tmux 中的专用 window，按 `salloc1`、`salloc2` 等命名；普通运行命令仍在 `cmd1`、`cmd2` 等 window 中执行。MPI 程序通常先在 `salloc` window 中申请资源，再从运行命令的 window 使用 `mpirun` 启动。若没有比较明确的指定 salloc 时间，默认按 30 分钟申请。
 
+作业名一般使用 `<jobname>.huanghaopeng` 形式，例如 `test.huanghaopeng`。作业无特殊要求，一律使用 `--exclusive`。
 
 常用 Slurm 分区：
 
@@ -87,22 +77,39 @@ tmux list-windows -t AIYC | grep -q 'salloc1' || tmux new-window -t AIYC -n sall
 tmux send-keys -t AIYC:salloc1 'salloc -p q_amd_share -N <nodes> --exclusive -J test.huanghaopeng --time=0:30:00' Enter
 ```
 
-## AMD 节点硬件
+## 节点硬件
 
-`q_amd_share` / `bn` 节点大致配置如下：
+`q_amd_share` / `bn` 节点实测配置：
 
 ```text
+OS: CentOS 7，Linux 3.10
 CPU: AMD EPYC 7H12, 2 sockets × 64 cores = 128 cores/node
 线程: 1 thread/core
 NUMA: 2 个 NUMA domain，0-63 与 64-127
 内存: 约 188 GiB/node，无 swap
-网络: Mellanox ConnectX-5, 100 Gb/s EDR InfiniBand
+Cache/core: 32 KiB L1d + 32 KiB L1i + 512 KiB L2；lscpu 报告 16 MiB L3
+网络: 1 × Mellanox ConnectX-5，100 Gb/s InfiniBand
 指令集: AVX2，无 AVX-512
 ```
 
+`q_intel_share` / `dn` 节点实测配置：
+
+```text
+OS: CentOS 7，Linux 3.10
+CPU: Intel Xeon Platinum 8358，2 sockets × 32 cores = 64 cores/node
+线程: 1 thread/core
+NUMA: 2 个 domain，每域 32 核
+内存: 约 251 GiB/node，无 swap
+Cache/core: 48 KiB L1d + 32 KiB L1i + 1.25 MiB L2；lscpu 报告 48 MiB L3
+网络: 1 × Mellanox ConnectX-5，100 Gb/s InfiniBand
+指令集: AVX-512、AVX-VNNI
+```
+
+共享文件系统 `/online1` 为约 7 PiB Lustre over InfiniBand。
+
 ## 互联网网络
 
-yc 访问互联网需要 HTTP proxy，默认 `.bashrc` 已设置：
+YC 访问互联网需要 HTTP proxy，默认 `.bashrc` 已设置：
 
 ```bash
 export http_proxy=http://174.0.250.13:3128
