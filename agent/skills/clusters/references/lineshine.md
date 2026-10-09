@@ -78,6 +78,14 @@ export OMPI_CXX=g++
 
 本集群使用 Donau Scheduler，不是 Slurm。登录节点只用于轻量操作、编译、编辑、查询调度系统、提交作业和管理文件。不要在登录节点运行 benchmark、多节点 MPI/OpenMP、训练、推理或长时间重负载任务；登录节点没有计算节点的 RDMA 网络环境。
 
+以下 Donau CLI 原始帮助见 [../misc/donau.md](../misc/donau.md)：
+
+- `dsub --help`
+- `djob --help`
+- `dinfo --help`
+
+需要完整参数、构造复杂提交命令或诊断调度问题时再读取。
+
 常用命令：
 
 ```bash
