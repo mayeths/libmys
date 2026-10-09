@@ -98,6 +98,10 @@ jobs:
 
       - name: Run tests in test/ folder
         timeout-minutes: 10
+        env:
+          # ubuntu-latest exposes an Azure MANA RDMA device, mana_0. Intel MPI's OFI verbs provider aborts in MPI_Init when it selects that device.
+          FI_PROVIDER: tcp
+          I_MPI_OFI_PROVIDER: tcp
         run: |
           cd test
           ./ex01.hello-gcc.exe
@@ -187,6 +191,9 @@ jobs:
 
       - name: Run tests in test/ folder
         timeout-minutes: 10
+        env:
+          # ubuntu-latest exposes an Azure MANA RDMA device, mana_0. MPICH's UCX ud_verbs provider aborts in MPI_Init when it selects that device.
+          UCX_TLS: tcp,sm,self
         run: |
           cd test
           ./ex01.hello-gcc.exe
