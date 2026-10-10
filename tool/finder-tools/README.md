@@ -24,7 +24,7 @@ brew install xcodegen
 ## Build and install
 
 ```bash
-cd "$MYS_DIR/tools/finder-tools"
+cd "$MYS_DIR/tool/finder-tools"
 
 # Generate the Xcode project and build an ad-hoc signed local application
 bash scripts/build.sh
