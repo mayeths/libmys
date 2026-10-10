@@ -24,7 +24,7 @@ final class FinderSync: FIFinderSync {
                 return nil
             }
 
-            return makeMenu(title: "Copy Folder Path", action: #selector(copyTargetedFolderPath(_:)))
+            return makeMenu(title: "Copy Path", action: #selector(copyTargetedFolderPath(_:)))
 
         default:
             return nil

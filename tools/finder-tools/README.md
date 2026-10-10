@@ -4,7 +4,7 @@ FinderTools is a small macOS application containing a Finder Sync extension. It 
 
 - **Copy Path** for one selected item
 - **Copy Paths** for multiple selected items, with one absolute path per line
-- **Copy Folder Path** for the background of the current folder
+- **Copy Path** for the background of the current folder
 
 The extension monitors `/`, so the commands are available in local folders, mounted volumes, and Finder sidebars where macOS permits Finder Sync extensions.
 
