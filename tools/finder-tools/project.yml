@@ -1,0 +1,61 @@
+name: FinderTools
+
+options:
+  minimumXcodeGenVersion: 2.34.0
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "13.0"
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+
+targets:
+  FinderTools:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/App
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mayeths.FinderTools
+        PRODUCT_NAME: FinderTools
+        INFOPLIST_FILE: Resources/App-Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - target: FinderToolsExtension
+        embed: true
+
+  FinderToolsExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Sources/FinderExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mayeths.FinderTools.FinderSync
+        PRODUCT_NAME: FinderToolsExtension
+        INFOPLIST_FILE: Resources/Extension-Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: Config/FinderExtension.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+
+schemes:
+  FinderTools:
+    build:
+      targets:
+        FinderTools: all
+        FinderToolsExtension: all
+    run:
+      config: Debug
+    archive:
+      config: Release
