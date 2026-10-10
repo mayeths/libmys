@@ -33,7 +33,7 @@
     # os_icon               # os identifier
     context
     dir                     # current directory
-    vcs                     # git status via gitstatusd
+    # vcs                     # git status via gitstatusd
     # mpi_env                 # see prompt_mpi_env
     prompt_char             # prompt symbol
   )
