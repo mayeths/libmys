@@ -15,7 +15,7 @@ This is user skill "clusters". Last modified: 2026-10-09.
 
 1. 根据用户消息、SSH host、终端 prompt、节点名和项目上下文识别目标集群。
 2. 读取该集群对应的 reference。
-3. 按 reference 完成连接、环境初始化、路径选择、资源申请和命令执行。
+3. 按 reference 完成连接、环境初始化、路径选择、资源申请和命令执行。可能会使用 tmux 等软件。
 
 ## 集群索引
 
