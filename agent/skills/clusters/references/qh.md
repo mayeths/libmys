@@ -13,7 +13,7 @@ QH 集群默认通过本地 tmux 会话进入 `ssh qh`。除非只是无状态�
 ```bash
 tmux has-session -t AIQH 2>/dev/null || tmux new-session -d -s AIQH -n cmd1
 tmux list-windows -t AIQH | grep -q 'cmd1' || tmux new-window -t AIQH -n cmd1
-tmux capture-pane -t AIQH:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20
+tmux capture-pane -t AIQH:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20
 ```
 
 若集群长时间无响应，通常说明网络或登录连接已中断，需要重新 `ssh qh`。
@@ -30,18 +30,18 @@ tmux send-keys -t AIQH:cmd1 'ssh qh' Enter
 
 不要在已经进入 qh 时重复执行 `ssh qh`，以免产生嵌套 SSH。
 
-运行命令时，应在命令后加上完成标记，方便判断命令是否结束以及退出码：
+发送命令时追加完成标记。`send-keys` 和首次 `capture-pane` 可以放在同一次 Shell tool call 中执行，中间加sleep等待执行：
 
 ```bash
-tmux send-keys -t AIQH:cmd1 '<command>; echo __AIQH_DONE_$?__' Enter
-sleep 2
-tmux capture-pane -t AIQH:cmd1 -p -J -S -200 | grep -v '^$' | tail -n 80
+tmux send-keys -t AIQH:cmd1 '<command>; echo __AIQH_DONE_$?__' Enter;
+sleep 5;
+tmux capture-pane -t AIQH:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20
 ```
 
 如果没有看到 `__AIQH_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
-如果使用类似 `tmux capture-pane -t AIQH:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20` 的 capture 功能发现命令未结束，则后面不应给用户 `sleep 20; tmux capture-pane -t AIQH:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20` 这样的命令。
-应去掉其中的 `sleep 20`，由用户确认运行结束后手动点击确认，直接执行 `tmux capture-pane -t AIQH:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20`。
-如果需要 sleep，则一般 sleep 5 或 10 秒；如果 10 秒后还未结束，则再 sleep 10 秒。如果能确认会等得久一些，可以停止自我 sleep 等待，让用户来确认结束后唤醒。
+如果使用首次 `tmux capture-pane -t AIQH:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20` 发现命令未结束，后面不应给用户 `sleep 20; tmux capture-pane -t AIQH:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20` 这样的命令。
+应去掉其中的 `sleep 20`，告知用户由他确认运行结束后手动点击确认，直接执行 `tmux capture-pane -t AIQH:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20`。
+如果需要 sleep，则一般 sleep 5 或 10 秒；如果 10 秒后还未结束，则再 sleep 10 秒。如果能确认会等得久一些，可以停止自我 sleep 等待，告知用户让他确认结束后唤醒。
 
 ## 工作环境
 

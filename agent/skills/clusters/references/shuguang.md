@@ -16,7 +16,7 @@ SSH 账号：
 ```bash
 tmux has-session -t AISG 2>/dev/null || tmux new-session -d -s AISG -n cmd1
 tmux list-windows -t AISG | grep -q 'cmd1' || tmux new-window -t AISG -n cmd1
-tmux capture-pane -t AISG:cmd1 -p -J -S -100 | grep -v '^$' | tail -n 20
+tmux capture-pane -t AISG:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20
 tmux send-keys -t AISG:cmd1 'ssh shuguang' Enter
 ```
 
@@ -36,13 +36,18 @@ SSH 私钥通常有 30 天有效期。过期后从国家超算互联网控制台
 
 `AISG` window 按 `cmd1`、`cmd2`、`salloc1` 等命名。登录节点严禁直接运行程序，只用于编辑、编译、调度查询、资源申请和文件管理。
 
+发送命令时追加完成标记。`send-keys` 和首次 `capture-pane` 可以放在同一次 Shell tool call 中执行，中间加sleep等待执行：
+
 ```bash
-tmux send-keys -t AISG:cmd1 '<command>; echo __AISG_DONE_$?__' Enter
-sleep 2
-tmux capture-pane -t AISG:cmd1 -p -J -S -200 | grep -v '^$' | tail -n 80
+tmux send-keys -t AISG:cmd1 '<command>; echo __AISG_DONE_$?__' Enter;
+sleep 5;
+tmux capture-pane -t AISG:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20
 ```
 
-没有看到 `__AISG_DONE_...__` 时，不要向同一 window 发送无关命令。发现命令未结束时，不应自动执行 `sleep 20; capture`；由用户确认后再直接 capture。短等待一般使用 5 或 10 秒。
+如果没有看到 `__AISG_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
+如果使用首次 `tmux capture-pane -t AISG:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20` 发现命令未结束，后面不应给用户 `sleep 20; tmux capture-pane -t AISG:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20` 这样的命令。
+应去掉其中的 `sleep 20`，告知用户由他确认运行结束后手动点击确认，直接执行 `tmux capture-pane -t AISG:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20`。
+如果需要 sleep，则一般 sleep 5 或 10 秒；如果 10 秒后还未结束，则再 sleep 10 秒。如果能确认会等得久一些，可以停止自我 sleep 等待，告知用户让他确认结束后唤醒。
 
 ## 工作路径与计算节点
 
