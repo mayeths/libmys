@@ -6,7 +6,7 @@ This is user skill reference "clusters/shuguang". Last modified: 2026-10-09.
 
 ## 登录与连接
 
-曙光默认通过本地 tmux 会话进入 `ssh shuguang`。除非只是无状态、无需环境加载、只读且轻量的探测命令，否则不要使用一次性 SSH 命令。使用本地持久 tmux 会话 `AISG` 保留登录、allocation、工作路径和环境状态。
+曙光默认通过本地 tmux 会话进入 `ssh shuguang`。几乎不要使用一次性 `ssh shuguang 'cmd'`，这类方式只用于只读、不加载环境、能马上结束的探测。远程侧只能有一条命令，引号里的命令本身不超过 20 个字符，例如 `date`、`hostname`。通常情况、或者更长命令的情况都放进 tmux。使用本地持久 tmux 会话 `AISG` 保留登录、allocation、工作路径和环境状态。
 
 SSH 账号：
 

@@ -6,7 +6,7 @@ This is user skill reference "clusters/lineshine". Last modified: 2026-10-09.
 
 ## 登录与连接
 
-LineShine 默认通过本地 tmux 会话进入 `ssh lineshine`。除非只是无状态、无需环境加载、只读且轻量的探测命令，否则不要使用 `ssh lineshine 'cmd'` 这类一次性命令。使用本地持久 tmux 会话 `AILS` 可以保留登录、工作路径、环境等，用户也可以随时 attach 查看或协助。
+LineShine 默认通过本地 tmux 会话进入 `ssh lineshine`。几乎不要使用一次性 `ssh lineshine 'cmd'`，这类方式只用于只读、不加载环境、能马上结束的探测。远程侧只能有一条命令，引号里的命令本身不超过 20 个字符，例如 `date`、`hostname`。通常情况、或者更长命令的情况都放进 tmux。使用本地持久 tmux 会话 `AILS` 可以保留登录、工作路径、环境等，用户也可以随时 attach 查看或协助。
 
 查看或创建会话，并确保默认 window `cmd1` 存在：
 
