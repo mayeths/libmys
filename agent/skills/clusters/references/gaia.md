@@ -1,4 +1,4 @@
-This is user skill reference "clusters/gaia". Last modified: 2026-10-09.
+This is user skill reference "clusters/gaia". Last modified: 2026-10-26.
 
 # GAIA 平台 Practice
 
@@ -12,7 +12,7 @@ GAIA 默认通过本地 tmux 会话进入 `ssh gaia`。几乎不要使用一次�
 
 ```bash
 tmux has-session -t AIGAIA 2>/dev/null || tmux new-session -d -s AIGAIA -n cmd1
-tmux list-windows -t AIGAIA | grep -q 'cmd1' || tmux new-window -t AIGAIA -n cmd1
+tmux list-windows -t AIGAIA | grep -q 'cmd1' || tmux new-window -d -t AIGAIA -n cmd1
 tmux capture-pane -t AIGAIA:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20
 ```
 
@@ -30,18 +30,32 @@ tmux send-keys -t AIGAIA:cmd1 'ssh gaia' Enter
 
 登录节点 `tlv01-e2e-slurm12` 只用于轻量操作、查询 Slurm、申请资源和管理文件。不要在登录节点运行 benchmark、MPI/OpenMP、训练、推理或长时间重负载任务。
 
-发送命令时追加完成标记。`send-keys` 和首次 `capture-pane` 可以放在同一次 Shell tool call 中执行，中间加sleep等待执行：
+### 短时间命令
+
+预计 10 秒内结束的命令追加 `echo "__DONE_$?__"` 以获取退出码，`send-keys`、`sleep 5` 和 `capture-pane` 放在同一次 Shell tool call 中。最后一个 prompt 上方的 DONE 即本次结果；5 秒后没看到，就用 `poll_tmux_done.sh` 接着等，TID 传 `-`（见下方长时间命令）。
 
 ```bash
-tmux send-keys -t AIGAIA:cmd1 '<command>; echo __AIGAIA_DONE_$?__' Enter;
-sleep 5;
+tmux send-keys -t AIGAIA:cmd1 '<command>; echo "__DONE_$?__"' Enter
+sleep 5
 tmux capture-pane -t AIGAIA:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20
 ```
 
-如果没有看到 `__AIGAIA_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
-如果使用首次 `tmux capture-pane -t AIGAIA:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20` 发现命令未结束，后面不应给用户 `sleep 20; tmux capture-pane -t AIGAIA:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20` 这样的命令。
-应去掉其中的 `sleep 20`，告知用户由他确认运行结束后手动点击确认，直接执行 `tmux capture-pane -t AIGAIA:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20`。
-如果需要 sleep，则一般 sleep 5 或 10 秒；如果 10 秒后还未结束，则再 sleep 10 秒。如果能确认会等得久一些，可以停止自我 sleep 等待，告知用户让他确认结束后唤醒。
+### 长时间命令
+
+更久的命令追加完成标记 `__TASK_${TID}_DONE_$?__`，标记用 `${TID}` 拼接，不要写死（`TID` 按 `T001`、`T002` 递增），再用 skill 目录下的 `tools/poll_tmux_done.sh` 等待 DONE，多步骤任务可在中间打印 `__TASK_${TID}_STEP<n>_$?__`。快的任务 deadline 60 秒、间隔 5 秒；更长的任务每轮 240 秒、间隔 15 秒。接 `| tee` 时用 `${PIPESTATUS[0]}` 代替 `$?`。
+
+`ssh`、`salloc`、`srun --pty` 等切换 shell 的命令无法追加标记，先发送，再用 `tools/poll_tmux_change.sh` 等待：最后一行不再含关键词（命令走完），且 pane 连续几轮不变（输出刷完）。关键词用命令名，不要用会出现在 prompt 里的节点名。
+
+```bash
+tmux send-keys -t AIGAIA:cmd1 'export TID=T001; bash long_task.sh; echo "__TASK_${TID}_DONE_$?__"' Enter
+bash ~/.claude/skills/clusters/tools/poll_tmux_done.sh AIGAIA:cmd1 T001 60 5
+bash ~/.claude/skills/clusters/tools/poll_tmux_done.sh AIGAIA:cmd1 - 60 5
+#
+tmux send-keys -t AIGAIA:cmd1 'salloc ...' Enter
+bash ~/.claude/skills/clusters/tools/poll_tmux_change.sh AIGAIA:cmd1 60 5 3 'salloc'
+```
+
+工具支持后台等待（如 Cursor 的 `AwaitShell`）时，后台等待`poll_tmux_done.sh`等脚本结束。
 
 ## 工作环境与计算节点
 
@@ -63,29 +77,32 @@ GAIA 的工作路径是：
 示例：
 
 ```bash
-tmux list-windows -t AIGAIA | grep -q 'salloc1' || tmux new-window -t AIGAIA -n salloc1
+tmux list-windows -t AIGAIA | grep -q 'salloc1' || tmux new-window -d -t AIGAIA -n salloc1
 tmux send-keys -t AIGAIA:salloc1 'ssh gaia' Enter
+sleep 5
 tmux capture-pane -t AIGAIA:salloc1 -p -J -S -30 | grep -v '^$' | tail -n 20
 ```
 
-确认 `salloc1` 已在 GAIA 登录节点 prompt 后，再发送：
+确认 `salloc1` 已在 GAIA 登录节点 prompt 后，申请节点：
 
 ```bash
 tmux send-keys -t AIGAIA:salloc1 'salloc -p GAIA -N 1 --exclusive -J test.huanghaopeng --time=0:30:00' Enter
+bash ~/.claude/skills/clusters/tools/poll_tmux_change.sh AIGAIA:salloc1 60 5 3 'salloc'
 ```
 
-看到 `salloc` 分配到节点后，在单独 window 进入该计算节点：
+看到 `Nodes ... are ready for job` 后，在单独 window 进入该计算节点：
 
 ```bash
-tmux list-windows -t AIGAIA | grep -q 'node1' || tmux new-window -t AIGAIA -n node1
+tmux list-windows -t AIGAIA | grep -q 'node1' || tmux new-window -d -t AIGAIA -n node1
 tmux send-keys -t AIGAIA:node1 'ssh <allocated-dgx-gaia-node>' Enter
+sleep 10
 tmux capture-pane -t AIGAIA:node1 -p -J -S -30 | grep -v '^$' | tail -n 20
 ```
 
 确认 `node1` 已在计算节点 prompt 后，再发送：
 
 ```bash
-tmux send-keys -t AIGAIA:node1 'cd ~/gaia-fs; echo __AIGAIA_NODE_READY__' Enter
+tmux send-keys -t AIGAIA:node1 'cd ~/gaia-fs' Enter
 ```
 
 其中 `<allocated-dgx-gaia-node>` 应替换为 `salloc` 输出中的节点名，例如 `dgx-gaia-14`。本机 SSH 配置已为 `dgx-gaia-*` 设置通过 `gaia` 跳板连接。如需确认当前 allocation，可在登录节点运行 `squeue -u $(whoami)`。
