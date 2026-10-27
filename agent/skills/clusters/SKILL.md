@@ -1,8 +1,8 @@
 ---
 name: clusters
 description: >-
-  远程集群操作practice，适用于用户要求在这些集群上运行、构建、测试、查看内容的场景。
-  集群：ssh host `kp`、`yc`、`qh`、`eos`、`gaia`、`shuguang`、`lineshine`。
+  远程集群操作practice，适用于用户要求在这些集群上登录、运行、构建、测试、查看内容的场景。
+  访问以下集群需阅读本SKILL：`kp`、`yc`、`qh`、`eos`、`gaia`、`shuguang`、`lineshine`。
 ---
 
 This is user skill "clusters". Last modified: 2026-10-09.
