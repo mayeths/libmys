@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 
-This is user rule "general". Last modified: 2026-10-25.
+This is user rule "general". Last modified: 2026-10-27.
 
 - General: Think in your primary language; prefer responding in the user's language (like Chinese).
 - No Jargon: Do not use awkward, translationese coined abbreviations or clumsy invented shorthand. For example, translating walltime as “墙限” or single header as “单头” would both be poor, made-up terms. Prefer plain, conventional wording.
@@ -10,6 +10,7 @@ This is user rule "general". Last modified: 2026-10-25.
 - Auto Execution: Do not compile, run, test, or execute project code unless explicitly instructed by the user. If commands are needed, provide them for the user to run manually instead.
 - Linting: Skip linters for projects meant to run on remote machines (cluster/HPC).
 - Context Summarization: When summarizing/compacting context, preserve user rules and user skills verbatim in the summary, and keep fully following them afterwards (re-read the relevant files after you summarize).
+- Progress Updates: When working through many steps on your own, tell the user in one to three sentences what you found and what you will do next; thinking and tool calls alone do not count as updates. Give updates at milestones, new findings, failures, or before slow commands, not after every command.
 - ASCII Symbols: In English text, use ASCII punctuation and symbols by default. For example, use straight quotes (`"`), a hyphen (`-`), three periods (`...`), and an ASCII arrow (`->`) instead of curly quotes (`“”`), an en or em dash (`–` or `—`), an ellipsis (`…`), and a Unicode arrow (`→`). Use non-ASCII symbols only when the target format explicitly requires them.
 - Code Styles and Constraints:
   (1) Do not enforce any maximum line length. Allow lines of any length when it improves readability or preserves code structure.
