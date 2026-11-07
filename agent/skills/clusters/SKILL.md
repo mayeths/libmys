@@ -2,7 +2,7 @@
 name: clusters
 description: >-
   远程集群操作practice，适用于用户要求在这些集群上登录、运行、构建、测试、查看内容的场景。
-  访问以下集群需阅读本SKILL：`kp`、`yc`、`qh`、`eos`、`gaia`、`shuguang`、`lineshine`。
+  访问以下集群需阅读本SKILL：`kp`、`yc`、`qh`、`eos`、`gaia`、`oci`、`shuguang`、`lineshine`。
 ---
 
 This is user skill "clusters". Last modified: 2026-10-09.
@@ -28,6 +28,7 @@ This is user skill "clusters". Last modified: 2026-10-09.
 | `qh` | `references/qh.md` |
 | `eos` | `references/eos.md` |
 | `gaia` | `references/gaia.md` |
+| `oci` | `references/oci.md` |
 | `shuguang` | `references/shuguang.md` |
 | `lineshine` | `references/lineshine.md` |
 
