@@ -31,14 +31,22 @@ done
 # --- mapping table: "SRC_SUBDIR|MODE|TARGET" ---------------------------------
 # MODE=dir   : symlink agent/SRC_SUBDIR itself to TARGET (whole folder).
 # MODE=items : symlink each entry inside agent/SRC_SUBDIR into TARGET dir.
+# MODE=items-mdc : like items, but a *.md entry is linked as *.mdc.
+#   Cursor loads ~/.cursor/rules/*.mdc by the link name, so the link stays *.mdc
+#   while the file it points at is *.md.
+#   Claude Code loads ~/.claude/rules/*.md and also checks the target's extension,
+#   so those links are plain items pointing at the *.md files.
 # Add/remove lines freely.
 MAPPINGS=(
   "skills|items|$CURSOR_HOME/skills"
   "skills|items|$CLAUDE_HOME/skills"
   "skills|items|$CODEX_HOME/skills"
 
-  # Cursor global rules: a bootstrap User Rule reads ~/.cursor/rules/*.mdc.
-  "rules|items|$CURSOR_HOME/rules"
+  # Cursor global rules: link name stays *.mdc. Target is the *.md source.
+  "rules|items-mdc|$CURSOR_HOME/rules"
+
+  # Claude Code user rules: ~/.claude/rules/*.md must point at a *.md file.
+  "rules|items|$CLAUDE_HOME/rules"
 )
 
 # --- helpers -----------------------------------------------------------------
@@ -124,6 +132,11 @@ for entry in "${MAPPINGS[@]}"; do
     [ "$base" = ".gitkeep" ] && continue
     src="$(abspath "$item")"
     target="$dest/$base"
+    if [ "$mode" = "items-mdc" ]; then
+      if [ "${base%.md}" != "$base" ]; then
+        target="$dest/${base%.md}.mdc"
+      fi
+    fi
     if [ "$UNLINK" -eq 1 ]; then unlink_one "$src" "$target"; else link_one "$src" "$target"; fi
   done
 done
