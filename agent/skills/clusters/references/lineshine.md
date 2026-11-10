@@ -1,4 +1,4 @@
-This is user skill reference "clusters/lineshine". Last modified: 2026-10-09.
+This is user skill reference "clusters/lineshine". Last modified: 2026-11-11.
 
 # LineShine 集群 Practice
 
@@ -20,6 +20,7 @@ tmux capture-pane -t AILS:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20
 
 ```bash
 tmux send-keys -t AILS:cmd1 'ssh lineshine' Enter
+bash ~/.claude/skills/clusters/tools/poll_tmux_change.sh AILS:cmd1 60 5 3 'ssh'
 ```
 
 不要在已经进入 LineShine 时重复执行 SSH，以免产生嵌套连接。若长时间无响应，通常说明本地内网、VPN、跳板或 SSH 连接已经中断，需要重新连接。当前本机 SSH 使用 ControlMaster 复用连接；首次连接可能需要认证，后续连接可能复用已有 control socket。
@@ -32,20 +33,34 @@ ssh lineshine_zyx # DIDA 项目中周永潇使用的账号
 
 ## 命令与脚本
 
-为支持并行任务，tmux window 按 `cmd1`、`cmd2` 等命名。普通命令默认在 `cmd1` 中运行。
+为支持并行任务，tmux window 按 `cmd1`、`cmd2` 等命名。普通命令默认在 `cmd1` 中运行。本集群使用 Donau，没有 `salloc`。
 
-发送命令时追加完成标记。`send-keys` 和首次 `capture-pane` 可以放在同一次 Shell tool call 中执行，中间加sleep等待执行：
+### 短时间命令
+
+预计 10 秒内结束的命令追加 `echo "__DONE_$?__"` 以获取退出码，`send-keys`、`sleep 5` 和 `capture-pane` 放在同一次 Shell tool call 中。最后一个 prompt 上方的 DONE 即本次结果；5 秒后没看到，就用 `poll_tmux_done.sh` 接着等，TID 传 `-`（见下方长时间命令）。
 
 ```bash
-tmux send-keys -t AILS:cmd1 '<command>; echo __AILS_DONE_$?__' Enter;
-sleep 5;
+tmux send-keys -t AILS:cmd1 '<command>; echo "__DONE_$?__"' Enter
+sleep 5
 tmux capture-pane -t AILS:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20
 ```
 
-如果没有看到 `__AILS_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
-如果使用首次 `tmux capture-pane -t AILS:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20` 发现命令未结束，后面不应给用户 `sleep 20; tmux capture-pane -t AILS:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20` 这样的命令。
-应去掉其中的 `sleep 20`，告知用户由他确认运行结束后手动点击确认，直接执行 `tmux capture-pane -t AILS:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20`。
-如果需要 sleep，则一般 sleep 5 或 10 秒；如果 10 秒后还未结束，则再 sleep 10 秒。如果能确认会等得久一些，可以停止自我 sleep 等待，告知用户让他确认结束后唤醒。
+### 长时间命令
+
+更久的命令追加完成标记 `__TASK_${TID}_DONE_$?__`，标记用 `${TID}` 拼接，不要写死（`TID` 按 `T001`、`T002` 递增），再用 skill 目录下的 `tools/poll_tmux_done.sh` 等待 DONE，多步骤任务可在中间打印 `__TASK_${TID}_STEP<n>_$?__`。快的任务 deadline 60 秒、间隔 5 秒；更长的任务每轮 180 秒、间隔 15 秒。每轮 deadline 和后台等待时长（如 `AwaitShell` 的 `block_until_ms`）都最长 300 秒（5分钟），用一两句话向用户汇报进度（最新 STEP、日志尾部），让用户知道任务仍在正常运行，而不是某个环节已经出错还在空等。接 `| tee` 时用 `${PIPESTATUS[0]}` 代替 `$?`。
+
+`ssh` 会切换 shell，无法追加标记，先发送，再用 `tools/poll_tmux_change.sh` 等待：最后一行不再含关键词（命令走完），且 pane 连续几轮不变（输出刷完）。关键词用命令名，不要用会出现在 prompt 里的节点名。`dsub` 提交完就返回，按普通命令追加 DONE 或 TASK 标记。
+
+```bash
+tmux send-keys -t AILS:cmd1 'export TID=T001; bash long_task.sh; echo "__TASK_${TID}_DONE_$?__"' Enter
+bash ~/.claude/skills/clusters/tools/poll_tmux_done.sh AILS:cmd1 T001 60 5
+bash ~/.claude/skills/clusters/tools/poll_tmux_done.sh AILS:cmd1 - 60 5
+#
+tmux send-keys -t AILS:cmd1 'ssh lineshine' Enter
+bash ~/.claude/skills/clusters/tools/poll_tmux_change.sh AILS:cmd1 60 5 3 'ssh'
+```
+
+工具支持后台等待（如 Cursor 的 `AwaitShell`）时，后台等待`poll_tmux_done.sh`等脚本结束。
 
 ## 工作环境与文件同步
 
@@ -98,6 +113,8 @@ dkill <job_id> # 杀死任务
 ```
 
 当前队列为 `q_grapes`。节点状态和队列随时变化，提交前重新执行 `dinfo -q`，只把 `OK` 节点视为当前可用；不把旧实验的坏节点排除列表永久写进统一 Skill。
+
+`dsub` 在 tmux 里按普通命令发送，追加 `__DONE_$?__` 或 `__TASK_${TID}_DONE_$?__`，用 `poll_tmux_done.sh` 等待。
 
 典型 `dsub` 参数：
 

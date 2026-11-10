@@ -1,4 +1,4 @@
-This is user skill reference "clusters/qh". Last modified: 2026-10-09.
+This is user skill reference "clusters/qh". Last modified: 2026-11-11.
 
 # QH 集群 Practice
 
@@ -20,28 +20,43 @@ tmux capture-pane -t AIQH:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20
 
 ## 命令与脚本
 
-为了支持并行任务，`AIQH` 中的 tmux window 按 `cmd1`、`cmd2` 等命名。通常情况下，普通命令在默认的 `cmd1` 中运行。
+为了支持并行任务，`AIQH` 中的 tmux window 按 `cmd1`、`cmd2`、`salloc1` 等命名。通常情况下，普通命令在默认的 `cmd1` 中运行。
 
-如果还未进入 qh 集群，在对应 window 中发送：
+如果还未进入 qh 集群，在对应 window 中发送，再用 `poll_tmux_change.sh` 等待：
 
 ```bash
 tmux send-keys -t AIQH:cmd1 'ssh qh' Enter
+bash ~/.claude/skills/clusters/tools/poll_tmux_change.sh AIQH:cmd1 60 5 3 'ssh'
 ```
 
 不要在已经进入 qh 时重复执行 `ssh qh`，以免产生嵌套 SSH。
 
-发送命令时追加完成标记。`send-keys` 和首次 `capture-pane` 可以放在同一次 Shell tool call 中执行，中间加sleep等待执行：
+### 短时间命令
+
+预计 10 秒内结束的命令追加 `echo "__DONE_$?__"` 以获取退出码，`send-keys`、`sleep 5` 和 `capture-pane` 放在同一次 Shell tool call 中。最后一个 prompt 上方的 DONE 即本次结果；5 秒后没看到，就用 `poll_tmux_done.sh` 接着等，TID 传 `-`（见下方长时间命令）。
 
 ```bash
-tmux send-keys -t AIQH:cmd1 '<command>; echo __AIQH_DONE_$?__' Enter;
-sleep 5;
+tmux send-keys -t AIQH:cmd1 '<command>; echo "__DONE_$?__"' Enter
+sleep 5
 tmux capture-pane -t AIQH:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20
 ```
 
-如果没有看到 `__AIQH_DONE_...__`，说明命令可能仍在运行，或者正在等待输入。此时不要继续向同一 window 发送无关命令。
-如果使用首次 `tmux capture-pane -t AIQH:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20` 发现命令未结束，后面不应给用户 `sleep 20; tmux capture-pane -t AIQH:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20` 这样的命令。
-应去掉其中的 `sleep 20`，告知用户由他确认运行结束后手动点击确认，直接执行 `tmux capture-pane -t AIQH:cmd1 -p -J -S -30 | grep -v '^$' | tail -n 20`。
-如果需要 sleep，则一般 sleep 5 或 10 秒；如果 10 秒后还未结束，则再 sleep 10 秒。如果能确认会等得久一些，可以停止自我 sleep 等待，告知用户让他确认结束后唤醒。
+### 长时间命令
+
+更久的命令追加完成标记 `__TASK_${TID}_DONE_$?__`，标记用 `${TID}` 拼接，不要写死（`TID` 按 `T001`、`T002` 递增），再用 skill 目录下的 `tools/poll_tmux_done.sh` 等待 DONE，多步骤任务可在中间打印 `__TASK_${TID}_STEP<n>_$?__`。快的任务 deadline 60 秒、间隔 5 秒；更长的任务每轮 180 秒、间隔 15 秒。每轮 deadline 和后台等待时长（如 `AwaitShell` 的 `block_until_ms`）都最长 300 秒（5分钟），用一两句话向用户汇报进度（最新 STEP、日志尾部），让用户知道任务仍在正常运行，而不是某个环节已经出错还在空等。接 `| tee` 时用 `${PIPESTATUS[0]}` 代替 `$?`。
+
+`ssh`、`salloc` 等切换 shell 的命令无法追加标记，先发送，再用 `tools/poll_tmux_change.sh` 等待：最后一行不再含关键词（命令走完），且 pane 连续几轮不变（输出刷完）。关键词用命令名，不要用会出现在 prompt 里的节点名。`salloc` 排队时最后一行仍含 `salloc`，脚本会等到新 prompt 出现或到达 deadline。申请资源时 deadline 用 120 秒；超时就再开一轮，并说明还在排队。
+
+```bash
+tmux send-keys -t AIQH:cmd1 'export TID=T001; bash long_task.sh; echo "__TASK_${TID}_DONE_$?__"' Enter
+bash ~/.claude/skills/clusters/tools/poll_tmux_done.sh AIQH:cmd1 T001 60 5
+bash ~/.claude/skills/clusters/tools/poll_tmux_done.sh AIQH:cmd1 - 60 5
+#
+tmux send-keys -t AIQH:salloc1 'salloc ...' Enter
+bash ~/.claude/skills/clusters/tools/poll_tmux_change.sh AIQH:salloc1 120 5 3 'salloc'
+```
+
+工具支持后台等待（如 Cursor 的 `AwaitShell`）时，后台等待`poll_tmux_done.sh`等脚本结束。
 
 ## 工作环境
 
@@ -56,7 +71,7 @@ QH 使用共享账号 `xuewei`（组 `xuewei_group`）。始终使用登录默�
 
 工作和算例一律放在个人目录 `/online1/xuewei_group/xuewei/huanghp`（`~/data/huanghp`），与共享账号其他用户隔离。
 
-进入 qh 后，加载环境统一 source 个人 `set_env`（必须 source，不能直接执行，因为它会重设 `HOME`）：
+进入 qh 后，加载环境统一 source 个人 `set_env`（必须 source，不能直接执行，因为它会重设 `HOME`）。`source set_env` 会返回，按普通命令追加 `__DONE_$?__`：
 
 ```bash
 source /online1/xuewei_group/xuewei/huanghp/set_env
@@ -72,7 +87,7 @@ source /online1/xuewei_group/xuewei/huanghp/set_env
 
 本集群使用 Slurm 23.02 管理。登录节点 `login01` 只用于轻量操作，不要在登录节点运行 benchmark、MPI/OpenMP、训练、推理或长时间重负载任务。
 
-`salloc` 返回的 shell 仍在登录节点，只是持有 allocation；真正运行到计算节点需要使用 `srun` 或 `mpirun`。需要 `salloc` 时，应使用 tmux 中的专用 window，按 `salloc1`、`salloc2` 等命名；普通运行命令仍在 `cmd1`、`cmd2` 等 window 中执行。若没有明确指定时间，默认按 30 分钟申请。
+`salloc` 返回的 shell 仍在登录节点，只是持有 allocation；真正运行到计算节点需要使用 `srun` 或 `mpirun`。需要 `salloc` 时，应使用 tmux 中的专用 window，按 `salloc1`、`salloc2` 等命名；普通运行命令仍在 `cmd1`、`cmd2` 等 window 中执行。`srun` 和 `mpirun` 按普通命令追加 DONE 或 TASK 标记。若没有明确指定时间，默认按 30 分钟申请。
 
 作业名一般使用 `<jobname>.huanghaopeng`，无特殊要求一律使用 `--exclusive`。
 
@@ -84,7 +99,10 @@ source /online1/xuewei_group/xuewei/huanghp/set_env
 
 ```bash
 tmux list-windows -t AIQH | grep -q 'salloc1' || tmux new-window -t AIQH -n salloc1
+tmux send-keys -t AIQH:salloc1 'ssh qh' Enter
+bash ~/.claude/skills/clusters/tools/poll_tmux_change.sh AIQH:salloc1 60 5 3 'ssh'
 tmux send-keys -t AIQH:salloc1 'salloc -p intel -N <nodes> --exclusive -J test.huanghaopeng --time=0:30:00' Enter
+bash ~/.claude/skills/clusters/tools/poll_tmux_change.sh AIQH:salloc1 120 5 3 'salloc'
 ```
 
 ## 节点硬件
